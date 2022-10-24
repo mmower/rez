@@ -1,0 +1,117 @@
+@game begin
+  name: "Twisty Maze Adventure"
+  IFID: "051F7581-43EF-48A7-93C3-A84A70203917"
+  initial_scene: #cards
+
+  @alias sword = item # begin
+    category: "equipment"
+    slot: #sword_slot
+  end
+
+  @actor player begin
+    name: "The Adventurer"
+  end
+
+  @inventory player_inv begin
+    title: "Player inventory"
+    category: "equipment"
+    slots: #{#sword_slot #ring_slot}
+  end
+
+  @slot sword_slot begin
+    name: "sword"
+    compatible: #sword
+    size: 1
+  end
+
+  @slot ring_slot begin
+    name: "ring"
+    compatible: #ring
+    size: 2
+  end
+
+  @item topic_the_ring begin
+    type: :topic
+    memory: "You remember Gandalf mentioning the ring to you, a plain
+    gold band of Bilbo's that he was often touching or playing with in his
+    pocket but seemed quite secretive about."
+  end
+
+  @slot spell_slot begin
+    name: "spell"
+    compatible: #spell
+    size: 5
+  end
+
+  @inventory player_spells begin
+    title: "Player spells"
+    category: "spells"
+    slots: #{#spell_slot}
+  end
+
+  @scene cards begin
+    title: "The beginning"
+    location: #foo
+    initial_card: #psg1
+    on_start: (game, evt) => {return game;}
+  end
+
+  @actor wizard begin
+    name: "Wizard of Frobbz"
+    race: #wizard
+  end
+
+  %% This is a line comment, the next line is an include macro
+  %(items.rez)
+
+  @sword elvish_sword begin
+    name: "elvish sword"
+    bearing: #elvish
+  end
+
+  @list place_names begin
+    values: ["the white house" "the underground" "Festeron"]
+  end
+
+  @list magic_numbers begin
+    values: [42]
+  end
+
+  @effect eff1 begin
+    type: #spell
+    on_apply: (game, evt) => {return game;}
+  end
+
+  @card psg1 begin
+    template: """
+    Markdown here!
+    """
+  end
+
+  @asset img1 begin
+    type: #image
+    tags: [#foo #bar #baz]
+    path: "/path/to/asset.jpg"
+    width: 340
+    height: 280
+  end
+
+  @asset snd1 begin
+    type: #sound
+    path: "/baz/sound.mp3"
+  end
+
+  @asset mov1 begin
+    type: #movie
+    path: "/moo.mpg"
+  end
+
+  @script begin
+    // Javascript code goes here
+  end
+
+  @style begin
+    /* CSS goes here */
+  end
+
+end

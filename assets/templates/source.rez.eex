@@ -1,0 +1,160 @@
+%%
+%% Game created with Rez <%= Rez.version %>
+%% http://rez-lang.com/
+%% By Matt Mower <self@mattmower.com>
+%% Released 2022 under the GPLv3 license
+%%
+
+@game begin
+  name: "<%= @name %>"
+  archive_format: 1
+  title: "<%= @game_title %>"
+  author: "<%= @author_name %>"
+  author_email: "<%= @author_email %>"
+  game_homepage: "<%= @game_homepage %>"
+  IFID: "<%= @ifid %>"
+  version: "<%= Rez.version %>"
+  created: "<%= @created %>"
+  initial_scene: #scene_one
+  on_init: (game, event) => {console.log("Beginning the game");}
+
+  layout: """
+  {{{scene}}}
+  """
+
+  %(stdlib.rez)
+
+  @actor player begin
+    name: "The adventurer"
+  end
+
+  @actor troll begin
+    name: "A big ugly troll"
+    race: :troll
+  end
+
+  @derive :sword :item
+  @derive :belt :item
+  @derive :bottle :item
+
+  @alias sword = item # begin
+    type: :sword
+  end
+
+  @sword elvish_sword begin
+    description: """
+    A sword that glows with a pale light
+    """
+  end
+
+  @item water_bottle begin
+    type: :bottle
+    description: """
+    A water bottle
+    """
+  end
+
+  @slot sword_slot begin
+    accepts: :sword
+  end
+
+  @slot belt_slot begin
+    accepts: :belt
+  end
+
+  @slot backpack_slot begin
+    accepts: :item
+  end
+
+  @inventory player_inventory begin
+    title: "Player inventory"
+    slots: #{#sword_slot #belt_slot}
+  end
+
+  @scene scene_one begin
+    title: "A Maze of Twisty Cards"
+    blocks: []
+    layout: """
+    {{{content}}}
+    """
+    initial_card: #twisty_passage
+    on_start: (game, evt) => {return game;}
+  end
+
+  @scene battle_with_the_troll begin
+    layout: """
+    {{{content}}}
+    """
+    title: "The Troll Battle"
+    initial_card: #troll_attacks
+  end
+
+  @card troll_attacks begin
+    content: """
+    A huge troll attacks you. [[Run Away|scene_one]]
+    """
+  end
+
+  @list names begin
+    values: [
+      "Frobz"
+      "Kroz"
+    ]
+  end
+
+  @effect eff1 begin
+    type: :spell
+    on_add: (game, evt) => {return game;}
+    on_remove: (game, evt) => {return game;}
+  end
+
+  @card twisty_passage begin
+    pick_up_bottle: (choice) => {
+      if( Math.random() < 0.5 ) {
+        choice.allow("Hit the troll with the bottle", "battle_with_the_troll");
+      } else {
+        choice.deny("No bottle for you!");
+      }
+    }
+    content: """
+    You are in a maze of [[another twisty passage]], all alike.
+    There is a bottle of water here. [[*pick_up_bottle]]
+    """
+  end
+
+  @card another_twisty_passage begin
+    content: """
+    You can only go back to the first [[twisty passage]] from here.
+    """
+  end
+
+  @asset img1 begin
+    _ignore_missing: true
+    type: #image
+    tags: #{:foo :bar :baz}
+    file_name: "asset.jpg"
+    width: "340"
+    height: "280"
+  end
+
+  @asset snd1 begin
+    _ignore_missing: true
+    type: #sound
+    file_name: "sound.mp3"
+  end
+
+  @asset mov1 begin
+    _ignore_missing: true
+    type: #movie
+    file_name: "moo.mpg"
+  end
+
+  @script begin
+    // Javascript code goes here
+  end
+
+  @style begin
+    /* CSS goes here */
+  end
+
+end

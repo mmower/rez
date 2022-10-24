@@ -1,0 +1,2 @@
+# Do not start EPMD, hopefully no firewall warnings now
+-start_epmd false -epmd_module Elixir.Burrito.Util.EpmdShim
