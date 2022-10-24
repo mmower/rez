@@ -233,6 +233,18 @@ For example:
 
 Elements describe in-game content in terms of attributes. Directives are more varied and typically alter how game content is defined. See the <a href="#directives-catalog">catalog</a> for more info.
 
+## Content Elements
+
+The `@game`, `@scene`, and `@card` elements all specify content that will be presented to the player. In the case of the `@game` and `@scene` this is their `layout` attribute, in the case of `@card` it is the `content` attribute.
+
+What appears on screen is the current card (or stack of cards for) content wrapped in the scene and then game layouts.
+
+This makes it easy to have an overall layout with different layouts for different scenes (although scenes may also share layouts) wrapping the card content itself.
+
+Content can be written as Markdown or plain HTML and is passed to the [Handlebars](https://handlebarsjs.com/) compiler and turned into a rendering function. This also means that all the facilities of Handlebars templates are available when creating dynamic content.
+
+By default Rez uses the [Bulma CSS framework](https://bulma-css.com/) for styling and makes the [Alpine.js](https://alpinejs.dev/) library available for effects.
+
 ## Scripts and Styles
 
 If you need to include custom Javascript code (outside of the in-game event handlers) or CSS styles in your game you can use the `@script` and `@style` elements respectively. These elements do not have an ID, nor do they have attibutes and are written as follows:
