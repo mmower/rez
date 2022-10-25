@@ -86,6 +86,9 @@ defmodule Rez.AST.Card do
 
   @scene_resume_syntax~r/\[\[([^|]+)\|\s*!!\]\]/
 
+  @doc """
+  Converts a form `[[Link Text|!!]] into an invocation of the `r_resume` Handlebars helpers.
+  """
   def convert_resume_links(text) do
     Regex.replace(@scene_resume_syntax, text, fn _, title ->
       "{{r_resume '#{title}'}}"

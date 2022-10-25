@@ -61,7 +61,7 @@ Rez depends upon NPM to deliver dependencies of the game:
 
 ## Source code format
 
-Rez is written in plain UTF-8 text files with a `.rez` extension.
+Rez games are written in plain text files with a `.rez` extension.
 
 The characters `%` and `@` are important when writing Rez source.
 
@@ -242,6 +242,50 @@ What appears on screen is the current card (or stack of cards for) content wrapp
 This makes it easy to have an overall layout with different layouts for different scenes (although scenes may also share layouts) wrapping the card content itself.
 
 Content can be written as Markdown or plain HTML and is passed to the [Handlebars](https://handlebarsjs.com/) compiler and turned into a rendering function. This also means that all the facilities of Handlebars templates are available when creating dynamic content.
+
+A game is all about the actions you take. In Rez these will usually be represented by links that load new cards or scenes, or trigger events that you can respond to. There are many ways to generate such links:
+
+### Linking to other content
+
+Borrowing from Twine we can load a new card into the scene as follows:
+
+    [[Link text|card_id]]
+
+This presents a link labelled "Link text" that, when clicked, loads the card with the specified id.
+
+    [[Link Text]]
+
+This will convert the display text "Link Text" into the snake_case `link_text` and look for a card with that id. Clicking the link will load the specified card.
+
+Additionally we have three other convenient link syntaxes:
+
+    [[*attribute_name]]
+
+This is the dynamic link syntax. It looks for the attribute with name `attribute_name` on the current card and calls it passing a `RezDynamicLink` that allows the script to customise the link or hide it. This allows for creating conditionally enabled links (e.g. only works after dark, or only with a specific item) or hiding links (only visible while wearing special glasses etc…)
+
+    [[>Link text|scene_id]]
+
+This presents a link labelled "Link text" that, when clicked, ends the current scene and loads a new scene with id `scene_id`.
+
+    [[!Link text|scene_id]]
+
+This presents a link labelled "Link text" that, when clicked, interrupts the current scene and loads a new scene, with id `scene_id`, as an interlude. This is designed such that the interrupted scene can be resumed. For example you might have a scene that implements a player profile view. When the player switches to this scene we expect that, when it ends, the previous scene will continue from where they left off.
+
+    [[Link Text|!!]]
+
+This presents a link labelled "Link text" that, when clicked, ends a scene interlude and resumes the previous scene where it left off.
+
+### Including assets
+
+Rez includes a Handlebars helper `r_asset` for including asset content. The helper will generate an appropriate tag for the assert. So, for example:
+
+    {{r_asset "image_01"}}
+
+Would generate an appropriate `<img />` tag to include the asset with id `image_01`. At present only image assets are fully supported however sound and movie assets will be implemented in a future version.
+
+To access the raw path to the asset file get the corresponding `RezAsset` object and access its `path` attribute.
+
+### CS & JS
 
 By default Rez uses the [Bulma CSS framework](https://bulma-css.com/) for styling and makes the [Alpine.js](https://alpinejs.dev/) library available for effects.
 
