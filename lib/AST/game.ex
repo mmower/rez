@@ -37,9 +37,9 @@ defmodule Rez.AST.Game do
             zones: %{},
             template: nil
 
-  def add_child(%Attribute{name: name} = attr, %Game{attributes: attributes} = game) do
-    %{game | attributes: Map.put(attributes, name, attr)}
-  end
+  # def add_child(%Attribute{name: name} = attr, %Game{attributes: attributes} = game) do
+  #   %{game | attributes: Map.put(attributes, name, attr)}
+  # end
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: scripts ++ [script]}
@@ -224,7 +224,15 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
         attribute_has_type?(:function)),
 
       attribute_if_present?("on_load",
-        attribute_has_type?(:function))
+        attribute_has_type?(:function)),
+
+      attribute_if_present?("links",
+        attribute_has_type?(:list,
+          attribute_coll_of?(:string))),
+
+      attribute_if_present?("scripts",
+        attribute_has_type?(:list,
+          attribute_coll_of?(:string)))
     ]
   end
 end

@@ -26,10 +26,13 @@ defmodule Rez.AST.NodeHelper do
   # I wonder if there is a way to do this via pattern matching as
   # get_attr_value(%{attributes: %{^name: %{value: value}}}, name), do: value
   # doesn't work though
-  def get_attr_value(%{attributes: attributes} = _object, name) when not is_nil(attributes) and is_binary(name) do
+  def get_attr_value(%{attributes: attributes} = _object, name, default \\ nil) when not is_nil(attributes) and is_binary(name) do
     case Map.get(attributes, name) do
-      nil -> nil
-      attribute -> Map.get(attribute, :value)
+      nil ->
+        default
+
+      attribute ->
+        Map.get(attribute, :value)
     end
   end
 

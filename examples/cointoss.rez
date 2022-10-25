@@ -1,0 +1,82 @@
+@game begin
+  name: "Test Game"
+  IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
+  archive_format: 1
+  initial_scene: #play_game
+  layout: """
+  {{{scene}}}
+  """
+
+  @actor player begin
+    score: 0
+  end
+
+  @scene play_game begin
+    initial_card: #play_round
+    blocks: [#sidebar]
+    layout_mode: :single
+
+    layout: """
+    <div class="columns">
+      <div class="column">{{{sidebar}}}</div>
+      <div class="column">{{{content}}}</div>
+    </div>
+    """
+  end
+
+  @card sidebar begin
+    bindings: {player: "player"}
+    content: """
+    Score: {{$ player "score"}}
+    """
+  end
+
+  @card play_round begin
+    on_start: (card, event) => {
+      card.setAttribute("coin", coin_flip());
+    }
+    content: """
+    Do you [[Choose heads]] or [[Choose tails]]?
+    """
+  end
+
+  @alias result_card = card # begin
+    bindings: {player: "player"}
+    content: """
+    {{$ card "response"}}
+    [[Play again|play_round]]
+    """
+  end
+
+  @result_card choose_heads begin
+    on_start: (card, event) => {
+      const flip = card.$("play_round").getAttribute("coin");
+      won_or_lost(card, flip == "heads");
+    }
+  end
+
+  @result_card choose_tails begin
+    on_start: (card, event) => {
+      const flip = card.$("play_round").getAttribute("coin");
+      won_or_lost(card, flip == "tails");
+    }
+  end
+
+  @script begin
+    function won_or_lost(card, winner) {
+      const player = card.$("player");
+
+      if(winner) {
+        card.setAttribute("response", "Congratulations");
+        player.incAttribute("score", 2);
+      } else {
+        card.setAttribute("response", "Bad luck");
+        player.decAttribute("score");
+      }
+    }
+
+    function coin_flip() {
+      return (Math.random() < 0.5) ? "heads" : "tails";
+    }
+  end
+end

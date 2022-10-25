@@ -396,6 +396,19 @@ let basic_object = {
     return this;
   },
 
+  incAttribute(name, amount = 1) {
+    let value = this.getAttribute(name);
+    if(typeof(value) == "number") {
+      this.setAttribute(name, value+amount);
+    } else {
+      throw "Attempt to inc/dec non-numeric attribute: " + name;
+    }
+  },
+
+  decAttribute(name, amount = 1) {
+    this.incAttribute(name, -amount);
+  },
+
   /*
    * Effect Management
    */
@@ -1703,6 +1716,14 @@ let scene_proto = {
         card.runEvent(form_name, {form: evt.target});
       });
     });
+  },
+
+  getCard(card_id) {
+    const card = this.$(card_id);
+    if(card.constructor != RezCard) {
+      throw "Attempt to get id which does not correspond to a card";
+    }
+    return card;
   },
 
   render() {

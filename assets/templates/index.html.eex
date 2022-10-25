@@ -6,11 +6,15 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="<%= NodeHelper.get_attr_value(@game, "author_name") %>">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= NodeHelper.get_attr_value(@game, "title") %></title>
     <script src="assets/alpinejs.min.js" defer=""></script>
     <script src="assets/handlebars.min.js"></script>
     <script src="assets/runtime.js"></script>
+    <%= for {:string, url} <- NodeHelper.get_attr_value(@game, "links", []) do %>
+      <link rel="stylesheet" href="<%= url %>">
+    <% end %>
     <link rel="stylesheet" href="assets/bulma.min.css">
     <style type="text/css">
       /* Custom game styles */
@@ -23,6 +27,9 @@
     <div id="game-container">
       <!-- Game output will be inserted here -->
     </div>
+    <%= for {:string, url} <- NodeHelper.get_attr_value(@game, "scripts", []) do %>
+      <script src="<%= url %>"></script>
+    <% end %>
     <script type="text/javascript">
       // Custom game scripts
       <%= for script <- @game.scripts do %>

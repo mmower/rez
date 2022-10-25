@@ -390,7 +390,9 @@ defmodule Rez.Parser.AttributeParser do
     ],
     label: "attribute",
     debug: true,
-    ast: fn [id, {type, value}] -> %Rez.AST.Attribute{name: id, type: type, value: value} end)
+    ast: fn [id, {type, value}] ->
+      %Rez.AST.Attribute{name: id, type: type, value: value}
+    end)
   end
 
 end
