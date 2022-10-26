@@ -48,7 +48,9 @@ defmodule Rez.AST.TemplateHelper do
   def log_html(%{id: id} = node) do
     if Debug.dbg_do?(:debug) do
       html = Map.get(node, @intermediate_key)
-      File.write!("cache/#{id}.html", html)
+      if html do
+        File.write!("cache/#{id}.html", html)
+      end
     end
 
     node

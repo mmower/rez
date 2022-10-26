@@ -33,6 +33,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.AddDefaultAssets,
     Rez.Compiler.ValidateNodes,
     Rez.Compiler.ProcessAST,
+    Rez.Compiler.NodeCheck,
     # Everything in the Game needs to be ready at this point
     Rez.Compiler.CreateRuntime,
     Rez.Compiler.WriteGameFile,

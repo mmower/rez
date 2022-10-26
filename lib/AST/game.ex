@@ -133,6 +133,10 @@ defmodule Rez.AST.Game do
     TypeHierarchy.fan_out(is_a, tag)
   end
 
+  def all_nodes(game) do
+    [game | Node.children(game)]
+  end
+
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do

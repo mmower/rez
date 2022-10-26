@@ -1,4 +1,7 @@
 defmodule Rez.Compiler.Compilation do
+  alias __MODULE__
+  alias Rez.AST.Game
+
   @moduledoc """
   `Rez.Compiler.Compilation` defines the `Compilation` struct.
 
@@ -17,6 +20,9 @@ defmodule Rez.Compiler.Compilation do
             progress: [],
             errors: []
 
+  def set_game(%Compilation{} = compilation, %Game{} = game) do
+    %{compilation | game: game}
+  end
 
   def add_error(%__MODULE__{errors: errors} = compilation, error) do
     %{compilation | status: :error, errors: [error | errors]}

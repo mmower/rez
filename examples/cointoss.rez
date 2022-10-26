@@ -2,10 +2,70 @@
   name: "Test Game"
   IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
   archive_format: 1
-  initial_scene: #play_game
+  initial_scene: #intro
+  links: [
+    "https://jenil.github.io/bulmaswatch/journal/bulmaswatch.min.css"
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+  ]
   layout: """
   {{{scene}}}
   """
+
+  @scene intro begin
+    initial_card: #get_name
+    layout_mode: :single
+    layout: """
+    <div class="container">
+    <h1 class="title">SuperCoinToss</h1>
+    <h2 class="subtitle">A game written with Rez</h2>
+    {{{content}}}
+    </div>
+    """
+  end
+
+  @card get_name begin
+    content: """
+    Before you play:
+
+    <form class="form" name="name_form" rez-live>
+      <div class="field">
+        <label class="label" for="name">Name</label>
+        <div class="control has-icons-left has-icons-right">
+          <input class="input is-success" type="text" name="name" placeholder="What is your name?"></input>
+          <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
+          <span class="icon is-small is-right"><i class="fas fa-check"></i></span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field" for="target_score">Target Score</label>
+        <div class="control">
+          <select class="select" name="target_score">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+      </div>
+    </form>
+    """
+    on_name_form: (card, event) => {
+      const name_field = event.form.elements["name"];
+      const name = name_field.value;
+
+      const score_field = event.form.elements["target_score"];
+      const score = score_field.value;
+
+      if(name != "") {
+        const player = card.$("player");
+        player.setAttribute("name", name);
+        player.setAttribute("target_score", score);
+        card.game.setCurrentScene("play_game");
+      } else {
+        name_field.className = "important";
+      }
+    }
+  end
 
   @actor player begin
     score: 0
@@ -17,9 +77,13 @@
     layout_mode: :single
 
     layout: """
-    <div class="columns">
-      <div class="column">{{{sidebar}}}</div>
-      <div class="column">{{{content}}}</div>
+    <div class="container">
+      <h1 class="title">SuperCoinToss</h1>
+      <h2 class="subtitle">A game written with Rez</h2>
+      <div class="columns">
+        <div class="column is-one-quarter">{{{sidebar}}}</div>
+        <div class="column">{{{content}}}</div>
+      </div>
     </div>
     """
   end
@@ -27,7 +91,8 @@
   @card sidebar begin
     bindings: {player: "player"}
     content: """
-    Score: {{$ player "score"}}
+    <p class="title is-3">{{$ player "name"}}</p>
+    <p class="subtitle is-5">Score: {{$ player "score"}}</p>
     """
   end
 
@@ -62,21 +127,48 @@
     }
   end
 
+  @card winner begin
+    content: """
+    You are a winner!
+    """
+  end
+
+  @card loser begin
+    content: """
+    Sorry, you lost!
+    """
+  end
+
   @script begin
     function won_or_lost(card, winner) {
       const player = card.$("player");
+      const game = card.game;
 
       if(winner) {
         card.setAttribute("response", "Congratulations");
         player.incAttribute("score", 2);
+        if(player.getAttributeValue("score") >= player.getAttributeValue("target_score")) {
+          game.getCurrentScene().playCardWithId("winner");
+        }
       } else {
         card.setAttribute("response", "Bad luck");
         player.decAttribute("score");
+        if(player.getAttributeValue("score") <= -player.getAttributeValue("target_score")) {
+          game.getCurrentScene().playCardWithId("loser");
+        }
       }
     }
 
     function coin_flip() {
       return (Math.random() < 0.5) ? "heads" : "tails";
     }
+  end
+
+  @style begin
+  .important {
+    border-style:solid;
+    border-width:2px;
+    border-color:red;
+  }
   end
 end
