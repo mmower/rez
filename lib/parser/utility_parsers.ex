@@ -38,6 +38,10 @@ defmodule Rez.Parser.UtilityParsers do
 
   def close_bracket(), do: char(?])
 
+  def caret(), do: char(?^)
+
+  def forward_slash(), do: char(?/)
+
   def arrow(), do: sequence([char(?=), char(?>)], label: "=>")
 
   def block_begin(block_type), do: ignore(literal("begin"), label: "IGN #{block_type} begin")
