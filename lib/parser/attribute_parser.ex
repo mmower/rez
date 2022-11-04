@@ -189,7 +189,7 @@ defmodule Rez.Parser.AttributeParser do
     sequence(
       [
         char([?_, ?$, [?a..?z], [?A..?Z]], label: "js_lead_char"),
-        many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "js_char"), min: 2)
+        many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "js_char"))
       ],
       label: label,
       debug: true,
@@ -359,6 +359,78 @@ defmodule Rez.Parser.AttributeParser do
     end)
   end
 
+  defp file_name_char() do
+    char([?a..?z, ?A..?Z, ?0..?9, ?_, ?., ?$, ?-])
+  end
+
+  defp file_name() do
+    many(file_name_char()) |> string()
+  end
+
+  def map_ext(file_path) do
+    case Path.extname(file_path) do
+      ".txt" -> :string
+      ".html" -> :string
+      ".md" -> :string
+      ".js" -> :function
+      _ -> :unknown
+    end
+  end
+
+  def read_javascript(raw_js) do
+    case Ergo.parse(function_value(), raw_js) do
+      %{status: :ok, ast: fun_val} ->
+        fun_val
+
+      %{status: {:error, err_info}} ->
+        {:error, err_info}
+    end
+  end
+
+  def read_file_var(file_name) do
+    case Path.wildcard("**/#{file_name}") do
+      [] -> # No files found
+        {:error, "No file found for #{file_name}"}
+
+      [file_path | []] -> # One file found
+        case map_ext(file_path) do
+          :string ->
+            {:string, File.read!(file_path)}
+
+          :function ->
+            read_javascript(File.read!(file_path))
+
+          :unknown ->
+            {:error, "File #{file_path} doesn't map to an attribute type"}
+        end
+
+      _ -> # Multiple files found
+        {:error, "Multiple files found for #{file_name}"}
+    end
+  end
+
+  def file_value() do
+    sequence([
+      ignore(literal("<<<")),
+      file_name(),
+      ignore(literal(">>>"))
+    ],
+    label: "file-value",
+    ctx: fn ctx ->
+      case ctx do
+        %{status: :ok, ast: file_name} ->
+          case read_file_var(file_name) do
+            {:error, reason} ->
+              IO.puts(">> Error #{reason}")
+              Context.add_error(ctx, :unknown_file, reason)
+
+            var ->
+              Context.set_ast(ctx, var)
+          end
+      end
+    end)
+  end
+
   def value() do
     choice(
       [
@@ -371,6 +443,7 @@ defmodule Rez.Parser.AttributeParser do
         keyword_value(),
         function_value(),
         ref_value(),
+        file_value(),
         lazy(set_value()),
         lazy(list_value()),
         lazy(table_value())
