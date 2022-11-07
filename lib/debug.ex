@@ -1,4 +1,9 @@
 defmodule Rez.Debug do
+  @moduledoc """
+  Tools for getting & setting a debug level, debug logging, and executing
+  code at an appropriate debug level. Uses an Agent to store the debug
+  level.
+  """
   use Agent
 
   @spec start_link(0..4) :: any()

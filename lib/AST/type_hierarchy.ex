@@ -1,4 +1,8 @@
 defmodule Rez.AST.TypeHierarchy do
+  @moduledoc """
+  Implements the %TypeHierarchy{} struct that is used to store is-a relationships
+  between atoms that represent in-game item (and possibly other) types.
+  """
   alias __MODULE__
 
   defstruct is_a: %{}

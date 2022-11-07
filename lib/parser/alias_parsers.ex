@@ -5,10 +5,21 @@ defmodule Rez.Parser.AliasParsers do
   """
 
   alias Ergo.Context
-  import Ergo.{Combinators, Terminals}
+  import Ergo.Combinators, only: [ignore: 1, sequence: 2]
+  import Ergo.Terminals, only: [char: 1]
 
   alias Rez.AST.NodeHelper
-  import Rez.Parser.{AttributeParser, StructureParsers, UtilityParsers}
+
+  import Rez.Parser.AttributeParser
+  import Rez.Parser.StructureParsers
+  import Rez.Parser.UtilityParsers, only: [
+    iws: 0,
+    elem_tag: 0,
+    iliteral: 1,
+    block_begin: 1,
+    block_end: 1
+  ]
+  import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Utils, only: [attr_list_to_map: 1]
 
   def is_reserved_tag_name?(name) when is_binary(name) do

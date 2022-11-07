@@ -11,6 +11,7 @@ defmodule Rez.Handlebars do
   @name :handlebars_compiler_service
 
   defmodule State do
+    @moduledoc false
     defstruct cache_path: nil
   end
 

@@ -1,4 +1,7 @@
 defmodule Rez.AST.System do
+  @moduledoc """
+  `Rez.AST.System` represents in-game systems for custom behaviours.
+  """
   alias __MODULE__
   alias Rez.AST.NodeHelper
 

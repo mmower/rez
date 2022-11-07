@@ -1,4 +1,8 @@
 defmodule Rez.Compiler.CopyStdlib do
+  @moduledoc """
+  Compiler phase that copies the stdlib.rez to the src folder
+  @todo Something odd about this...
+  """
   alias Rez.Compiler.{Config, Compilation, IOError}
 
   require EEx

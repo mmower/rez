@@ -8,10 +8,14 @@ defmodule Rez.Parser.StructureParsers do
   alias Ergo.Context
   import Ergo.{Combinators, Terminals, Meta}
 
+  alias LogicalFile
+
   alias Rez.AST.Node
   import Rez.Parser.{UtilityParsers, AttributeParser}
+  import Rez.Parser.ValueParsers, only: [keyword_value: 0]
+  import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
+
   import Rez.Utils, only: [attr_list_to_map: 1]
-  alias LogicalFile
 
   def attribute_list() do
     many(

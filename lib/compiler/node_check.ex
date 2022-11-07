@@ -1,4 +1,8 @@
 defmodule Rez.Compiler.NodeCheck do
+  @moduledoc """
+  Compiler phase that checks for error status in any of the nodes after they
+  have been processed and fails the compiler with the collected error info.
+  """
   alias Rez.AST.Node
   alias Rez.AST.Game
   alias Rez.Compiler.Compilation

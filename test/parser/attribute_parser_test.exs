@@ -3,7 +3,24 @@ defmodule Rez.Parser.AttributeParserTest do
   doctest Rez.Parser.AttributeParser
 
   alias Ergo.Context
-  import Rez.Parser.AttributeParser
+
+  import Ergo.Combinators, only: [sequence: 1]
+  import Ergo.Terminals, only: [literal: 1]
+
+  import Rez.Parser.AttributeParser, only: [attribute: 0]
+
+  import Rez.Parser.CollectionParser, only: [
+    list: 0,
+    table: 0
+  ]
+
+  import Rez.Parser.ValueParsers, only: [
+    heredoc_value: 0,
+    string_value: 0
+  ]
+
+  import Rez.Parser.UtilityParsers, only: [iows: 0]
+
 
   test "parses heredoc value" do
     input = """
@@ -30,11 +47,11 @@ defmodule Rez.Parser.AttributeParserTest do
   end
 
   test "parses lists" do
-    ctx = Ergo.parse(list_value(), "[]")
+    ctx = Ergo.parse(list(), "[]")
     assert :ok = ctx.status
     assert {:list, []} = ctx.ast
 
-    ctx = Ergo.parse(list_value(), "[1 2 3]")
+    ctx = Ergo.parse(list(), "[1 2 3]")
     assert :ok = ctx.status
     assert {:list, [{:number, 1}, {:number, 2}, {:number, 3}]} = ctx.ast
   end
@@ -44,7 +61,7 @@ defmodule Rez.Parser.AttributeParserTest do
     {}
     """
 
-    assert %Context{status: :ok, ast: {:table, %{}}} = Ergo.parse(table_value(), input)
+    assert %Context{status: :ok, ast: {:table, %{}}} = Ergo.parse(table(), input)
   end
 
   test "parses one level table value" do
@@ -58,7 +75,7 @@ defmodule Rez.Parser.AttributeParserTest do
     }
     """
 
-    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true}, "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1}, "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"}, "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"}, "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}}}} = Ergo.parse(table_value(), input)
+    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true}, "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1}, "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"}, "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"}, "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}}}} = Ergo.parse(table(), input)
   end
 
   test "parses nested table value" do
@@ -70,13 +87,10 @@ defmodule Rez.Parser.AttributeParserTest do
     }
     """
 
-    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :table, value: %{"beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}}}}}} = Ergo.parse(table_value(), input)
+    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :table, value: %{"beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}}}}}} = Ergo.parse(table(), input)
   end
 
   test "parse double iows" do
-    import Ergo.{Combinators, Terminals}
-    import Rez.Parser.UtilityParsers, only: [iows: 0]
-
     parser = sequence([literal("a"), iows(), iows(), literal("b")])
     assert %Context{status: :ok, ast: ["a", "b"]} = Ergo.parse(parser, "ab")
   end

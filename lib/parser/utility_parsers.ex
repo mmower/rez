@@ -16,6 +16,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def not_double_quote(), do: char(-?")
 
+  def equals(), do: char(?=)
+
   def comma(), do: char(?,)
 
   def colon(), do: char(?:)

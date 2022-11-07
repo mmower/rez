@@ -1,4 +1,8 @@
 defmodule Rez.AST.TemplateHelper do
+  @moduledoc """
+  Tools to convert attributes representing templates into Handlebars pre-compiled
+  template functions.
+  """
   alias Rez.AST.NodeHelper
   alias Rez.{Debug, Handlebars}
   import Rez.Utils
