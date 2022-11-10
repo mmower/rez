@@ -1603,19 +1603,82 @@ This script will be called during game initialization and before the game has st
 * <a href="#behaviour_fail">`FAIL`</a>
 
 ## <a name="behaviour_sequence">`SEQUENCE`</a>
+
+The `SEQUENCE` behaviour takes two or more children and when executed will execute its children in turn. If any child fails then `SEQUENCE` will stop at that point and fail. If all the children suceeed then `SEQUENCE` will succeed.
+
 ## <a name="behaviour_select">`SELECT`</a>
+
+The `SELECT` behaviour takes two or more children and when executed will execute its children in turn. If a child succeeds then `SELECT` will immediately stop executing and succeed. If all the children fail then `SELECT` will fail.
+
 ## <a name="behaviour_selectp">`SELECT_P`</a>
+
+The `SELECT_P` behaviour is a variant on `SELECT`. It takes a probability option `p` and before executing any child will test `p`. If the test succeeds it will execute that child and behaviour similar to `SELECT`. If no children get executed or all the children fail then `SELECT_P` will fail.
+
+### Options
+
+* `p` — (1-100) — of any given child getting executed
+
 ## <a name="behaviour_loop">`LOOP`</a>
+
+The `LOOP` behaviour takes one child and executes it a number of times specified by the option `count`. If the child should fail then `LOOP` fails. If the child succeeds each time then `LOOP` succeeds.
+
+### Options
+
+* `count` — positive integer — number of times to execute the child
+
 ## <a name="behaviour_loop_until">`LOOP_UNTIL`</a>
+
+The `LOOP_UNTIL` behaviour takes one child and attempts to execute it a number of times specified by the option `attempts`. If the child succeeds then `LOOP_UNTIL` succeeds. If the child never succeeds then `LOOP_UNTIL` fails.
+
+### Options
+
+* `attempts` — positive integer — number of attempts to execute the child
+
 ## <a name="behaviour_maybe">`MAYBE`</a>
+
+The `MAYBE` behaviour takes one child and based on a probability option `p` decides whether to attempt to execute it or not. If the `p` test succeeds the child gets executed and `MAYBE` will succeed or fail based on whether the child succeeds or fails. If the `p` test fails then `MAYBE` fails.
+
+### Options
+
+* `p` — (1-100) — of the child being executed
+
 ## <a name="behaviour_either">`EITHER`</a>
+
+The `EITHER` behaviour takes two children and based on the probability option `p` decides whether to execute the first or the second child. If the `p` test succeeds then the first child is executed, otherwise the second child is executed. `EITHER` succeeds or fails based on whether the child it executes succeeds or fails.
+
+### Options
+
+* `p` — (1-100) — of the first child getting executed
+
 ## <a name="behaviour_random_choice">`RANDOM_CHOICE`</a>
+
+The `RANDOM_CHOICE` behaviour takes at least two children and executes one child at random. If the child succeeds then `RANDOM_CHOICE` succeeds, otherwise it fails.
+
 ## <a name="behaviour_random_each">`RANDOM_EACH`</a>
+
+The `RANDOM_EACH` beahviour takes at least two children and executes child one at random. `RANDOM_EACH` succeeds or fails based on the selected child succeeding or failing.
+
+Once a child has been executed it cannot be selected again until all the other children have, likewise, been executed. When all the children have been executed `RANDOM_EACH` will begin again with a new random order of children.
+
 ## <a name="behaviour_invert">`INVERT`</a>
+
+The `INVERT` behaviour takes one child and executes it. If the child succeeds then `INVERT` fails, likewise if the child fails then `INVERT` will succeed.
+
 ## <a name="behaviour_always">`ALWAYS`</a>
+
+The `ALWAYS` beahviour takes one child and executes it. It ignores whether the child succeeds or fails and always suceeds itself.
+
 ## <a name="behaviour_never">`NEVER`</a>
+
+The `NEVER` behaviour takes one child and executes it. It ignores whether the child succeeds or fails, always failing itself. It's a shorthand for `[INVERT [ALWAYS ...]]`.
+
 ## <a name="behaviour_succeed">`SUCCEED`</a>
+
+The `SUCEED` behaviour takes no chilren and when executed it always succeeds.
+
 ## <a name="behaviour_fail">`FAIL`</a>
+
+The `FAIL` behaviour takes no children and when executed it always fails.
 
 # API Reference
 
