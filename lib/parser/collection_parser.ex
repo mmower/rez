@@ -62,26 +62,26 @@ defmodule Rez.Parser.CollectionParser do
 
   def list() do
     sequence(
-      [
-        ignore(open_bracket()),
-        iows(),
-        optional(
-          sequence([
-            collection_value(),
-            many(
-              sequence([
-                iws(),
-                collection_value()
-              ])
-            ),
-          ])
-        ),
-        iows(),
-        ignore(close_bracket())
-      ],
-      label: "list-value",
-      debug: true,
-      ast: fn ast -> {:list, List.flatten(ast)} end)
+    [
+      ignore(open_bracket()),
+      iows(),
+      optional(
+        sequence([
+          collection_value(),
+          many(
+            sequence([
+              iws(),
+              collection_value()
+            ])
+          ),
+        ])
+      ),
+      iows(),
+      ignore(close_bracket())
+    ],
+    label: "list-value",
+    debug: true,
+    ast: fn ast -> {:list, List.flatten(ast)} end)
   end
 
   # Table

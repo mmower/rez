@@ -19,6 +19,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("asset", Rez.AST.Asset)
   end
 
+  def behaviour_block() do
+    block_with_id("behaviour", Rez.AST.Behaviour)
+  end
+
   def effect_block() do
     block_with_id("effect", Rez.AST.Effect)
   end
@@ -87,6 +91,7 @@ defmodule Rez.Parser.Parser do
         # Now the pre-defined blocks
         actor_block(),
         asset_block(),
+        behaviour_block(),
         effect_block(),
         faction_block(),
         group_block(),

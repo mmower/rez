@@ -351,6 +351,58 @@ All game objects have a `game` attribute, a reference to the root game object fr
 
 See the [API Reference](#api-reference) for a complete breakdown of the objects, methods, and events in the Rez runtime.
 
+# Behaviour Trees
+
+Rez includes a mechanism for implementing a limited kind of intelligence into games, the behaviour tree. What you can do with behaviour trees can be done with scripts but behvaiour trees provide a data-driven approach to adding behaviour to your actors.
+
+The Rez standard library defines a number of ["core behaviours"](#behaviour-catalog) that are used to structure behaviour trees. As an author you will create custom behaviour elements tailored to your game.
+
+    @actor wilmer begin
+      behaviours: ^[SEQUENCE [
+        [ACTOR_ALONE_WITH actor=sam_spade]
+        [ACTOR_HAS_BEEF_WITH actor=sam_space]
+        [ACTOR_HAS item=handgun]
+        [ACTOR_SHOOTS item=handgun target=sam_spade]
+      ]]
+    end
+
+Wilma has a very simple behaviour. If they are in the same location as Sam they will attempt to shoot Sam. This example shows one of the default library behaviours `SEQUENCE`. `SEQUENCE` takes a number of children and attempts to execute them in turn, stopping (and failing) if any child fails. So, for example, if Wilma isn't in the same location as Sam the sequence will fail. It will also fail if there are other actors present, or Wilma doesn't have a beef with Sam, or Wilma has been disarmed.
+
+In this case the `SEQUENCE` behaviour is provded by Rez while the author must provide behaviours like `ACTOR_ALONE_WITH`, `ACTOR_HAS_BEEF_WITH`, `ACTOR_HAS`, and `ACTOR_SHOOTS`. The exact details of how these behaviours get implemented will vary from game to game.
+
+It should be noted that the same behaviour could be implemented in Javascript as a function. However behaviour trees provide a declarative style that is suited to creating more complex behaviours.
+
+    @actor wilmer begin
+      behaviours: ^[SELECT [
+        [SEQUENCE [
+          [ACTOR_ALONE_WITH actor=sam_spade]
+          [ACTOR_HAS_BEEF_WITH actor=sam_spade]
+          [ACTOR_HAS item=handgun]
+          [ACTOR_SHOOTS item=handgun target=sam_spade]
+        ]]
+        [SEQUENCE [
+          [INVERST [ACTOR_HAS item=handgun]]
+          [LOCATION_HAS item=handgun]
+          [ACTOR_TAKES item=handgun]
+        ]]
+        [SEQUENCE [
+          [ACTOR_WITH actor=sam_spade]
+          [ACTOR_WITH actor=kaspar_gutman]
+          [ACTOR_THREATENS actor=sam]
+        ]]
+      ]]
+    end
+
+In this slightly more complex example we combined the `SEQUENCE` behaviour with the `SELECT` behaviour. Wilmer will now attempt to shoot Sam if he can, if he's been disarmed he'll attempt to take any available handgun, failing that if he's in the same place as Sam & Gutman he'll attempt to threaten Sam. Note the use of the `INVERT` decorator to change the meaning of the `ACTOR_HAS` conditional behaviour.
+
+You can see how with these two simple concepts we can create a more complex behaviour and this is just the beginning. It's also easier to understand and modify than if this had been written as code.
+
+A useful way to think about behaviours is as composites, decorators, and leafs. Composites are behaviours like `SEQUENCE` and `SELECT` that take potentially many children. They tend to provide structure in how those children gets processed. Decorators like `MAYBE` and `INVERT` take one child and manipulate how that child is executed or its result. Finally leaves like `ACTOR_HAS` and `ACTOR_TAKES` do not have children, but are often the most powerful since they are written for your game and implement specific tests and actions that do useful stuff.
+
+Note that Rez behaviour trees do not presently support a 'running' status such as is common with some popular behaviour tree implementations (e.g. Crysis on which this is loosely based). A real-time FPS requires 'running' because some of its actions may take many game ticks (e.g. pathfinding to a new location). This is assumed not to be the case for Rez games. Support for 'running' may be implemented in the future if it turns out to be useful.
+
+Note that the working memory is reset each time the behaviour tree is executed. In future it may be possible to specify that the working memory (or parts of it) are preserved between executions. At the moment to make a lasting change you need to modify the attribute of an in-game object. This could be the behaviour itself.
+
 # Attributes
 
 A Rez element is defined in terms of attributes. Some attributes are expected (and perhaps required) by the game (e.g. the `content` attribute of `@card`) while some you will define yourself and use in your event handlers and glue code.
@@ -490,6 +542,34 @@ A `{}` bracketed list of name/value pairs where the name follows the attribute n
 
 Note that key/value pairs in tables are whitespace, not comma, separated. Table items have no specific order.
 
+### Behaviour Tree
+
+A behaviour tree is a list type structure prefixed with `^` that describes behaviours that can be implemented by an element. Each behaviour is of the form:
+
+    [BEHAVIOUR_ID option1=value1 option2=value2 ... [list of children]]
+
+E.g. SELECT which takes no options but has children:
+
+    [SELECT [[BEHAVIOUR_1 ...] [BEHAVIOUR_2 ...]]]
+
+or MAYBE which has one option `p` meaning probability and takes exactly one child:
+
+    [MAYBE p=25 [BEHAVIOUR_3 ...]]
+
+or INVERT which takes no options and has one child
+
+    [INVERT [BEHAVIOUR_4 ...]]
+
+or we can imagine a behaviour such as:
+
+    [ACTOR_SPEAKS actor=sam_spade line="You know, that's good, because if you actually were as innocent as you pretend to be, we'd never get anywhere"]
+
+Here we can see the three different kinds of behaviours: a composite such as `SELECT` that takes many children and organises whether & how they are executed, a decorator such as `INVERT` that takes one child and modifies how it is interpreted, and a leaf such as `ACTOR_SPEAKS` that has no children and interacts at the in-game level.
+
+By combining these different types of behaviours we can create quite complex plans for our game components (which may principally be actors but could be anything).
+
+See the [behaviours catalog](#behaviours-catalog) for more on the built in behaviours.
+
 ## Notes
 
 Please note that sets, lists, and tables use whitespace as a separator between elements/pairs rather than a comma as is common in many programming languages.
@@ -516,6 +596,7 @@ A few Rez elements like `@game` and `@zone` contain other elements but most do n
 
 * [`@actor`](#actor-element)
 * [`@asset`](#asset-element)
+* [`@behaviour`](#behaviour-element)
 * [`@card`](#card-element)
 * [`@effect`](#effect-element)
 * [`@faction`](#faction-element)
@@ -741,6 +822,54 @@ Assets are the key to using asset groups that can be used for showing different 
 #### on_init: `(asset, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
+
+## <a name="behaviour-element">Behaviour</a>
+
+Behaviours are elements that can be composed to create a behaviour tree. A behaviour tree is a way of modelling a plan that you want an agent (e.g. an Actor) to perform.
+
+Note that, by convention, we use UPPER CASE ids for behaviour elements.
+
+The core of the behaviour is the execute attribute which implements the behaviour. We talk about behaviours being conditions (that test something about the world) or actions (that alter the world) but both are created in the same way and use execute.
+
+### Example
+
+    @behaviour ACTOR_IN begin
+      options: [:actor :location]
+
+      execute: (behaviour, wmem) => {
+        const actor = behaviour.game.$(behaviour.option("actor"));
+        if(actor.getAttributeValue("location") == location) {
+          return {success: true, wmem: wmem};
+        } else {
+          return {success: false, error: "Actor is not in location", wmem: wmem};
+        }
+      }
+    end
+
+In this example we have defined a behaviour that tests whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
+
+    ^[SEQUENCE [
+      [ACTOR_IN actor=sam_spade location=sams_office]
+      [ACTOR_RELOADS item=sams_gun]
+    ]]
+
+### Required Attributes
+
+* options
+
+A list of keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
+
+* execute
+
+A script attribute that is expected to take two parameters `behaviour` that is a reference to the behaviour itself and `wmem` which is a reference to a map of "working memory" that can be used to record behaviour state or pass state between behaviours.
+
+The return value must either be `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+
+### Optional Attributes
+
+* min_children
+* max_children
+* check_*
 
 ## <a name="card-element">Card</a>
 
@@ -1455,6 +1584,38 @@ Individual locations must be defined in a zone. If you don't require multiple zo
 #### on_init: `(zone, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
+
+# <a name="behaviours_catalog">Behaviours Catalog</a>
+
+* <a href="#behaviour_sequence">`SEQUENCE`</a>
+* <a href="#behaviour_select">`SELECT`</a>
+* <a href="#behaviour_selectp">`SELECT_P`</a>
+* <a href="#behaviour_loop">`LOOP`</a>
+* <a href="#behaviour_loop_until">`LOOP_UNTIL`</a>
+* <a href="#behaviour_maybe">`MAYBE`</a>
+* <a href="#behaviour_either">`EITHER`</a>
+* <a href="#behaviour_random_choice">`RANDOM_CHOICE`</a>
+* <a href="#behaviour_random_each">`RANDOM_EACH`</a>
+* <a href="#behaviour_invert">`INVERT`</a>
+* <a href="#behaviour_always">`ALWAYS`</a>
+* <a href="#behaviour_never">`NEVER`</a>
+* <a href="#behaviour_succeed">`SUCCEED`</a>
+* <a href="#behaviour_fail">`FAIL`</a>
+
+## <a name="behaviour_sequence">`SEQUENCE`</a>
+## <a name="behaviour_select">`SELECT`</a>
+## <a name="behaviour_selectp">`SELECT_P`</a>
+## <a name="behaviour_loop">`LOOP`</a>
+## <a name="behaviour_loop_until">`LOOP_UNTIL`</a>
+## <a name="behaviour_maybe">`MAYBE`</a>
+## <a name="behaviour_either">`EITHER`</a>
+## <a name="behaviour_random_choice">`RANDOM_CHOICE`</a>
+## <a name="behaviour_random_each">`RANDOM_EACH`</a>
+## <a name="behaviour_invert">`INVERT`</a>
+## <a name="behaviour_always">`ALWAYS`</a>
+## <a name="behaviour_never">`NEVER`</a>
+## <a name="behaviour_succeed">`SUCCEED`</a>
+## <a name="behaviour_fail">`FAIL`</a>
 
 # API Reference
 

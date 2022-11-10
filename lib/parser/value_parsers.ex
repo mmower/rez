@@ -145,7 +145,7 @@ defmodule Rez.Parser.ValueParsers do
     sequence(
       [
       ignore(colon()),
-      many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "kw_char"), min: 2)
+      many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "kw_char"), min: 1)
       ],
       label: "keyword-value",
       debug: true,

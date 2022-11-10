@@ -56,6 +56,14 @@ defmodule Rez.Parser.AttributeParserTest do
     assert {:list, [{:number, 1}, {:number, 2}, {:number, 3}]} = ctx.ast
   end
 
+  test "parses list attribute" do
+    src = """
+    options: [1 :a]
+    """
+    assert %{status: :ok, ast: ast} = Ergo.parse(attribute(), src)
+    assert %{value: [{:number, 1}, {:keyword, "a"}]} = ast
+  end
+
   test "parses empty table value" do
     input = """
     {}

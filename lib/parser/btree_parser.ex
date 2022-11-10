@@ -20,8 +20,7 @@ defmodule Rez.Parser.BTreeParser do
     iows: 0,
     equals: 0,
     open_bracket: 0,
-    close_bracket: 0,
-    forward_slash: 0
+    close_bracket: 0
   ]
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
@@ -53,34 +52,11 @@ defmodule Rez.Parser.BTreeParser do
     ast: fn _ -> [] end)
   end
 
-  def progress(parser, message) do
-    Ergo.Parser.combinator(
-      :progress,
-      "progress",
-      fn ctx ->
-        new_ctx = Ergo.Parser.invoke(ctx, parser)
-
-        input = Ergo.Utils.printable_string(Ergo.Utils.ellipsize(new_ctx.input))
-
-        case new_ctx.status do
-          :ok ->
-            IO.puts("OK  #{message} <<#{input}>>")
-
-          {:error, _err} ->
-            IO.puts("ERR #{message} <<#{input}>>")
-        end
-
-        new_ctx
-      end,
-      child_info: Ergo.Parser.child_info_for_telemetry(parser)
-    )
-  end
-
   def bt_node() do
     sequence([
         ignore(open_bracket()),
         iows(),
-        bt_selector(),
+        js_identifier(),
         bt_options(),
         optional(bt_children()),
         iows(),
@@ -99,31 +75,6 @@ defmodule Rez.Parser.BTreeParser do
 
         [selector, %{} = options, children] when is_list(children) ->
           {:node, selector, options, children}
-      end
-    end)
-  end
-
-  def bt_selector() do
-    sequence([
-      js_identifier(),
-      optional(
-        sequence([
-          ignore(forward_slash()),
-          js_identifier()
-        ])
-      )
-    ],
-    err: fn ctx ->
-      IO.puts("BT_SELECTOR failed")
-      ctx
-    end,
-    ast: fn ast ->
-      case ast do
-        [behaviour] ->
-          {"rez", behaviour}
-
-        [namespace, [behaviour]] ->
-          {namespace, behaviour}
       end
     end)
   end
