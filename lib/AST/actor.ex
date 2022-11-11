@@ -51,7 +51,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
 
       attribute_if_present?("on_turn",
         attribute_has_type?(:function,
-          validate_expects_params?(["actor", "event"])))
+          validate_expects_params?(["actor", "event"]))),
+
+      attribute_if_present?("behaviours",
+        attribute_has_type?(:btree,
+          validate_is_btree?()))
     ]
   end
 end

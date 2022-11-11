@@ -31,7 +31,9 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  alias Rez.AST.{Node, NodeHelper, Game}
+  alias Rez.AST.Node
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.Game
   alias Rez.AST.NodeValidator.Validation
 
   def validate_root(%Game{} = game) do
@@ -401,6 +403,93 @@ defmodule Rez.AST.NodeValidator do
         {false, _} ->
           {:error, "Attribute: '#{name}' was expected to be a function with arguments: #{inspect(expected_params)}, found: #{inspect(params)}"}
       end
+    end
+  end
+
+  def validate_is_btree?(chained_validator \\ nil) do
+    fn %{name: name, type: type, value: value} = attr, node, game ->
+      case {type, value} do
+        {:btree, bnode} ->
+          case {validate_bnode(game, bnode), is_nil(chained_validator)} do
+            {:ok, true} ->
+              :ok
+
+            {:ok, false} ->
+              chained_validator.(attr, node, game)
+
+            {error, _} ->
+              error
+          end
+
+        invalid_tree ->
+          {:error, "Attribute: '#{name}' was expected to be a behaviour tree! Got: #{inspect(invalid_tree)}"}
+      end
+    end
+  end
+
+  defp validate_bnode(%Game{behaviours: behaviours} = game, {:node, b_id, options, children}) do
+    case Map.get(behaviours, b_id) do
+      nil ->
+        {:error, "Undefined behaviour #{b_id}"}
+
+      behaviour ->
+        with :ok <- validate_child_count(behaviour, Enum.count(children)),
+              :ok <- validate_options(behaviour, options),
+              :ok <- validate_children(game, children) do
+            :ok
+        end
+    end
+  end
+
+  defp validate_bnode(_game, _) do
+    {:error, "expected to be a behaviour tree"}
+  end
+
+  defp validate_child_count(behaviour, child_count) do
+    min_children = NodeHelper.get_attr_value(behaviour, "min_children", -1)
+    max_children = NodeHelper.get_attr_value(behaviour, "max_children", :infinity)
+
+    case {child_count < min_children, child_count > max_children} do
+      {false, false} ->
+        :ok
+
+      {false, true} ->
+        {:error, "Requires at most #{max_children} children"}
+
+      {true, false} ->
+        {:error, "Requires at least #{min_children} children"}
+
+      {true, true} ->
+        {:error, "Something impossible happened. Both too few and too many children. What gives?"}
+    end
+  end
+
+  defp validate_options(behaviour, options) do
+    required_opts = NodeHelper.get_attr_value(behaviour, "options", [])
+    Enum.reduce_while(required_opts, :ok, fn {_, opt}, status ->
+      case Map.has_key?(options, opt) do
+        true ->
+          {:cont, status}
+
+        false ->
+          {:halt, {:error, "Missing required option #{opt}"}}
+      end
+    end)
+  end
+
+  defp validate_children(game, children) do
+    child_errors =
+      children
+      |> Enum.map(fn child -> validate_bnode(game, child) end)
+      |> Enum.reject(fn result -> result == :ok end)
+      |> Enum.map(fn {:error, reason} -> reason end)
+
+    case child_errors do
+      [] ->
+        :ok
+
+      errors ->
+        {:error, Enum.join(errors, ", ")}
     end
   end
 
