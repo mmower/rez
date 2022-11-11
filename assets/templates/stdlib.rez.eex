@@ -31,6 +31,21 @@
   }
 end
 
+@system actor_behaviours begin
+  enabled: true
+  priority: 10
+  on_tick: (event) => {
+    console.log("Running actor_behaviours system");
+    const game = event.game;
+    const actors = game.getAll("actor").filter((actor) => {return actor.hasAttribute("behaviours")});
+    const wmem = {};
+    actors.forEach((actor) => {
+      const btree = actor.getAttributeValue("behaviours");
+      btree.execute(wmem);
+    });
+  }
+end
+
 %% Standard behaviours
 %% By convention we give behaviours an UPPER CASE id to make it less likely
 %% they will clash with author generated id's. The core of these behaviours

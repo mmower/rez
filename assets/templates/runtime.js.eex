@@ -1201,12 +1201,12 @@ let game_proto = {
     return this.
       getAll("system").
         filter((system) => system.getAttribute("enabled") == true).
-        sort((sys1, sys2) => sys1.getAttribute("priority") > sys2.getAttribute("priority"));
+        sort((sys1, sys2) => sys1.getAttributeValue("priority") > sys2.getAttributeValue("priority"));
   },
 
   runTick() {
     this.getEnabledSystems().forEach(function(system) {
-      system.runEvent("tick", {});
+      system.runEvent("tick", {game: game});
     });
   }
 };
