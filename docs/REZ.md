@@ -1554,7 +1554,45 @@ The styles defined in the game's `@style` directives will be automatically inclu
 
 ## <a name="system-element">System</a>
 
-<emph>As of v0.8 the system element is a placeholder for future functionality.</emph>
+The `@system` element describes an in-game author defined __system__ that can query and update the game state on every game tick (that is, whenever the `runTick` method is called a the `RezGame` instance).
+
+### Example
+
+    %% Here is a system that maintains wall clock time, advancing the clock
+    %% by one hour on each game tick. It also maintains a description of the
+    %% hour in terms of morning, afternoon, etc…
+
+    @system clock_system begin
+      enabled: true
+      priority: 1
+
+      wallTime: 0
+      description: ""
+
+      on_tick: (system, evt) => {
+        let wallTime = system.getAttributeValue("wallTime");
+        let description;
+        wallTime += 1;
+        if(wallTime > 18) {
+          description = "evening";
+        } else if(wallTime > 12) {
+          description = "afternoon";
+        } else if(wallTime > 6) {
+          description = "morning";
+        } else {
+          description = "night";
+        }
+        game.setAttribute("wallTime", wallTime);
+        game.setAttribute("description", description);
+      }
+    end
+
+### Required Attributes
+
+* `enabled` — if false, this system will not be run
+* `priority` — systems are run in priority order
+
+### Optional Attributes
 
 ### Event Handlers
 
@@ -1562,9 +1600,13 @@ The styles defined in the game's `@style` directives will be automatically inclu
 
 This script will be called during game initialization and before the game has started.
 
+#### on_tick: `(system, event = {}) => {...}
+
+As long as the system `enabled` attribute is `true` this script will be called every time the `RezGame` method `runTick` is called.
+
 ## <a name="task-element">Task</a>
 
-Tasks are elements that describe components of a behaviour tree. Author defined tasks are usually 'conditions' (that test the state of the game) and 'actions' (that change the state of the game).
+Tasks are elements that describe components of a behaviour tree. Author defined tasks are usually __conditions__ (that test the state of the game) and __actions__ (that change the state of the game). The built in tasks provided in the stdlib are __composites__ (that work on groups of tasks) and __decorators__ (that modify the meaning of other tasks)
 
 Note that, by convention, we use UPPER CASE ids for task elements.
 
@@ -1587,12 +1629,11 @@ The core of the task is the execute attribute which implements the functionality
       }
     end
 
-In this example we have defined a task that tests whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
+In this example we have defined a condition task to test whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
 
     ^[SEQUENCE [
       [ACTOR_IN actor=sam_spade location=sams_office]
-      [ACTOR_RELOADS item=sams_gun]
-    ]]
+      [ACTOR_RELOADS item=sams_gun]]]
 
 ### Required Attributes
 
