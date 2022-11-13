@@ -4,25 +4,28 @@ A language, compiler, and runtime system for creating interactive fiction games 
 
 By Matt Mower <self@mattmower.com>
 
+Version 0.9 — 13 Nov 2022
 Version 0.8 — 24 Oct 2022
 
 # The Rez Language
 
-Rez is a language for writing interactive fiction games built primarily using HTML incorportating Javascript, CSS, and optionally graphics, audio, and movie files.
+Rez is a language for writing interactive fiction/RPG/simulation games using HTML and incorportating Javascript, CSS, and optionally graphics, audio, and movie files.
 
-Rez shares a little DNA with [Twine](https://twinery.org/) which describes itself as an "open source tool for telling interactive, nonlinear stories." Where Twine shines is in making it relatively easy for those with little development experience to get started.
+Rez started as a __quick__ alternative to [Twine](https://twinery.org/) for an author who had become frustrated with using Twine.
 
-By contrast Rez was designed to make games whose complexity does not suit them well to being developed using Twine and for authors who are comfortable writing small amounts of Javascript. In terms of complexity Rez sits somewhere between Twine and Inform/TADS.
+Twine describes itself as an "open source tool for telling interactive, nonlinear stories," and this is where it shines. It makes it relatively easy for those with almost no development experience to get started and create a choice-based game.
 
-Rez has a standard library including support for creating NPCs, item & inventory management, scenes, and maps. Rez also features a simple but powerful layout and templating system.
+Rez, by contrast, is designed for making games whose complexity is not well suited to Twine and for authors who are comfortable writing small amounts of Javascript. Rez's complexity sits somewhere between Twine and an authoring system like [Inform](https://ganelson.github.io/inform-website/) or [TADS](https://www.tads.org/).
 
-Rez is designed to be flexible enough to support a number of use-cases while offering a useful framework for getting started.
+Rez has a standard library including support for creating NPCs, item & inventory management, scenes, and maps and a behaviour tree system to introduce AI behaivour. Rez also features a simple, yet powerful, layout & templating system.
+
+Rez is designed to be flexible enough to create a really complex and ambitious game while offering a simple & usable framework for those just getting started.
 
 # Outline of a Rez Game
 
-Rez games are built from `.rez` source files and are composed of elements and directives that describe different parts of the game.
+Rez games are compiled into HTML & Javascript sources (plus associated assets like images, movies and sounds) and written in `.rez` source files that are composed of elements and directives that describe the various aspects of the game.
 
-At the top level is the `@game` element that contains the game metadata and other elements that make up the game.
+At the top level is the `@game` element that contains the game metadata and all the other elements that make up the game.
 
 ## Creating a new game
 
@@ -48,8 +51,7 @@ The following defaults are set by the framework:
 * Dynamic UI support comes from [Apline.js](https://alpinejs.dev/)
 * In game templates are rendered using [Handlebars.js](https://handlebarsjs.com/)
 
-In a future version it will be possible to vary the CSS framework and JS
-library.
+In a future version it will be possible to vary the CSS framework and JS library.
 
 ### NPM
 
@@ -353,9 +355,33 @@ See the [API Reference](#api-reference) for a complete breakdown of the objects,
 
 # Behaviour Trees
 
-Rez includes a mechanism for implementing a limited kind of intelligence into games, the behaviour tree. What you can do with behaviour trees can be done with scripts but behvaiour trees provide a data-driven approach to adding behaviour to your actors.
+A Rez game can include elements of artificial intelligence using behaviour trees ([ref1](https://opsive.com/support/documentation/behavior-designer/what-is-a-behavior-tree/), [ref2](https://towardsdatascience.com/designing-ai-agents-behaviors-with-behavior-trees-b28aa1c3cf8a)) that are implemented as a native part of the language.
 
-The Rez standard library defines a number of ["core behaviours"](#behaviour-catalog) that are used to structure behaviour trees. As an author you will create custom behaviour elements tailored to your game.
+While it is possible to script __intelligent__ behaviour using Javascript based script attributes, behaviour trees offer an alternative, more declarative, approach that focus on the action, not the code.
+
+A behaviour tree is specified in terms of __tasks__ that can be of one of four types (composite, decorator, condition, and action) that get executed and either succeed or fail.
+
+## composite (sometimes known as control) tasks
+
+Composite tasks like `SEQUENCE` and `SELECT` take a number of child tasks and organise how they are executed. For example `SEQUENCE` tries to execute all of its children, while `SELECT` executes until one of them succeeds.
+
+## decorator tasks
+
+Decorator tasks like `INVERT` and `ALWAYS` take a single child task and modifies how that childs success or failure is represented to the rest of the tree. For example `INVERT` changes success to failure and vice verca while `ALWAYS` ignores whether the childs succeeds or fails and always succeeds itself.
+
+## condition tasks
+
+Condition tasks are implemented by the author and allow the behaviour tree to query the state of the game.
+
+## action tasks
+
+Action tasks are implemented by the author and allow the behaviour tree to change the state of the game.
+
+## Standard Library
+
+The Rez standard library defines a number of ["core tasks"](#task_catalog) (composites and decorators) that can be used to structure your behaviour trees. As an author you will implement condition & action task elements tailored to your game.
+
+## Example
 
     @actor wilmer begin
       behaviours: ^[SEQUENCE [
@@ -366,9 +392,11 @@ The Rez standard library defines a number of ["core behaviours"](#behaviour-cata
       ]]
     end
 
-Wilma has a very simple behaviour. If they are in the same location as Sam they will attempt to shoot Sam. This example shows one of the default library behaviours `SEQUENCE`. `SEQUENCE` takes a number of children and attempts to execute them in turn, stopping (and failing) if any child fails. So, for example, if Wilma isn't in the same location as Sam the sequence will fail. It will also fail if there are other actors present, or Wilma doesn't have a beef with Sam, or Wilma has been disarmed.
+Wilmer has a very simple behaviour. If they are alone in the same location as Sam Spade, they've got a beef with Sam, and they are armed, they will attempt to shoot Sam. This example shows one of the default library tasks `SEQUENCE`.
 
-In this case the `SEQUENCE` behaviour is provded by Rez while the author must provide behaviours like `ACTOR_ALONE_WITH`, `ACTOR_HAS_BEEF_WITH`, `ACTOR_HAS`, and `ACTOR_SHOOTS`. The exact details of how these behaviours get implemented will vary from game to game.
+`SEQUENCE` takes a number of children and attempts to execute them in turn, stopping (and failing) if any child fails. So, for example, if Wilmer isn't in the same location as Sam the `SEQUENCE` will fail at that point. It will also fail if there are other actors present, or Wilmer doesn't have a beef with Sam, or Wilmer has been disarmed.
+
+In this case the `SEQUENCE` task is provded by Rez while the author must provide behaviours like `ACTOR_ALONE_WITH`, `ACTOR_HAS_BEEF_WITH`, `ACTOR_HAS`, and `ACTOR_SHOOTS`. The exact details of how these task should be implemented will vary from game to game.
 
 It should be noted that the same behaviour could be implemented in Javascript as a function. However behaviour trees provide a declarative style that is suited to creating more complex behaviours.
 
@@ -393,15 +421,11 @@ It should be noted that the same behaviour could be implemented in Javascript as
       ]]
     end
 
-In this slightly more complex example we combined the `SEQUENCE` behaviour with the `SELECT` behaviour. Wilmer will now attempt to shoot Sam if he can, if he's been disarmed he'll attempt to take any available handgun, failing that if he's in the same place as Sam & Gutman he'll attempt to threaten Sam. Note the use of the `INVERT` decorator to change the meaning of the `ACTOR_HAS` conditional behaviour.
+In this slightly more complex example we combined the `SEQUENCE` behaviour with the `SELECT` behaviour. Wilmer will now attempt to shoot Sam if he can, if he's been disarmed he'll attempt to take any available handgun, failing that if he's in the same place as Sam & Gutman he'll attempt to threaten Sam. Note the use of the `INVERT` decorator to change the meaning of the `ACTOR_HAS` condition task.
 
-You can see how with these two simple concepts we can create a more complex behaviour and this is just the beginning. It's also easier to understand and modify than if this had been written as code.
-
-A useful way to think about behaviours is as composites, decorators, and leafs. Composites are behaviours like `SEQUENCE` and `SELECT` that take potentially many children. They tend to provide structure in how those children gets processed. Decorators like `MAYBE` and `INVERT` take one child and manipulate how that child is executed or its result. Finally leaves like `ACTOR_HAS` and `ACTOR_TAKES` do not have children, but are often the most powerful since they are written for your game and implement specific tests and actions that do useful stuff.
+You can see how with a few simple concepts we can create more and more complex behaviours, and this is just the beginning. It can also be a lot easier to understand and modify a complex behaviour tree than the equivalent JS code.
 
 Note that Rez behaviour trees do not presently support a 'running' status such as is common with some popular behaviour tree implementations (e.g. Crysis on which this is loosely based). A real-time FPS requires 'running' because some of its actions may take many game ticks (e.g. pathfinding to a new location). This is assumed not to be the case for Rez games. Support for 'running' may be implemented in the future if it turns out to be useful.
-
-Note that the working memory is reset each time the behaviour tree is executed. In future it may be possible to specify that the working memory (or parts of it) are preserved between executions. At the moment to make a lasting change you need to modify the attribute of an in-game object. This could be the behaviour itself.
 
 # Attributes
 
@@ -1709,100 +1733,100 @@ Individual locations must be defined in a zone. If you don't require multiple zo
 
 This script will be called during game initialization and before the game has started.
 
-# <a name="behaviours_catalog">Behaviours Catalog</a>
+# <a name="task_catalog">Task Catalog</a>
 
-* <a href="#behaviour_sequence">`SEQUENCE`</a>
-* <a href="#behaviour_select">`SELECT`</a>
-* <a href="#behaviour_selectp">`SELECT_P`</a>
-* <a href="#behaviour_loop">`LOOP`</a>
-* <a href="#behaviour_loop_until">`LOOP_UNTIL`</a>
-* <a href="#behaviour_maybe">`MAYBE`</a>
-* <a href="#behaviour_either">`EITHER`</a>
-* <a href="#behaviour_random_choice">`RANDOM_CHOICE`</a>
-* <a href="#behaviour_random_each">`RANDOM_EACH`</a>
-* <a href="#behaviour_invert">`INVERT`</a>
-* <a href="#behaviour_always">`ALWAYS`</a>
-* <a href="#behaviour_never">`NEVER`</a>
-* <a href="#behaviour_succeed">`SUCCEED`</a>
-* <a href="#behaviour_fail">`FAIL`</a>
+* <a href="#task_sequence">`SEQUENCE`</a>
+* <a href="#task_select">`SELECT`</a>
+* <a href="#task_selectp">`SELECT_P`</a>
+* <a href="#task_loop">`LOOP`</a>
+* <a href="#task_loop_until">`LOOP_UNTIL`</a>
+* <a href="#task_maybe">`MAYBE`</a>
+* <a href="#task_either">`EITHER`</a>
+* <a href="#task_random_choice">`RANDOM_CHOICE`</a>
+* <a href="#task_random_each">`RANDOM_EACH`</a>
+* <a href="#task_invert">`INVERT`</a>
+* <a href="#task_always">`ALWAYS`</a>
+* <a href="#task_never">`NEVER`</a>
+* <a href="#task_succeed">`SUCCEED`</a>
+* <a href="#task_fail">`FAIL`</a>
 
-## <a name="behaviour_sequence">`SEQUENCE`</a>
+## <a name="task_sequence">`SEQUENCE`</a>
 
-The `SEQUENCE` behaviour takes two or more children and when executed will execute its children in turn. If any child fails then `SEQUENCE` will stop at that point and fail. If all the children suceeed then `SEQUENCE` will succeed.
+The `SEQUENCE` task takes two or more children and when executed will execute its children in turn. If any child fails then `SEQUENCE` will stop at that point and fail. If all the children suceeed then `SEQUENCE` will succeed.
 
-## <a name="behaviour_select">`SELECT`</a>
+## <a name="task_select">`SELECT`</a>
 
-The `SELECT` behaviour takes two or more children and when executed will execute its children in turn. If a child succeeds then `SELECT` will immediately stop executing and succeed. If all the children fail then `SELECT` will fail.
+The `SELECT` task takes two or more children and when executed will execute its children in turn. If a child succeeds then `SELECT` will immediately stop executing and succeed. If all the children fail then `SELECT` will fail.
 
-## <a name="behaviour_selectp">`SELECT_P`</a>
+## <a name="task_selectp">`SELECT_P`</a>
 
-The `SELECT_P` behaviour is a variant on `SELECT`. It takes a probability option `p` and before executing any child will test `p`. If the test succeeds it will execute that child and behaviour similar to `SELECT`. If no children get executed or all the children fail then `SELECT_P` will fail.
+The `SELECT_P` task is a variant on `SELECT`. It takes a probability option `p` and before executing any child will test `p`. If the test succeeds it will execute that child and task similar to `SELECT`. If no children get executed or all the children fail then `SELECT_P` will fail.
 
 ### Options
 
 * `p` — (1-100) — of any given child getting executed
 
-## <a name="behaviour_loop">`LOOP`</a>
+## <a name="task_loop">`LOOP`</a>
 
-The `LOOP` behaviour takes one child and executes it a number of times specified by the option `count`. If the child should fail then `LOOP` fails. If the child succeeds each time then `LOOP` succeeds.
+The `LOOP` task takes one child and executes it a number of times specified by the option `count`. If the child should fail then `LOOP` fails. If the child succeeds each time then `LOOP` succeeds.
 
 ### Options
 
 * `count` — positive integer — number of times to execute the child
 
-## <a name="behaviour_loop_until">`LOOP_UNTIL`</a>
+## <a name="task_loop_until">`LOOP_UNTIL`</a>
 
-The `LOOP_UNTIL` behaviour takes one child and attempts to execute it a number of times specified by the option `attempts`. If the child succeeds then `LOOP_UNTIL` succeeds. If the child never succeeds then `LOOP_UNTIL` fails.
+The `LOOP_UNTIL` task takes one child and attempts to execute it a number of times specified by the option `attempts`. If the child succeeds then `LOOP_UNTIL` succeeds. If the child never succeeds then `LOOP_UNTIL` fails.
 
 ### Options
 
 * `attempts` — positive integer — number of attempts to execute the child
 
-## <a name="behaviour_maybe">`MAYBE`</a>
+## <a name="task_maybe">`MAYBE`</a>
 
-The `MAYBE` behaviour takes one child and based on a probability option `p` decides whether to attempt to execute it or not. If the `p` test succeeds the child gets executed and `MAYBE` will succeed or fail based on whether the child succeeds or fails. If the `p` test fails then `MAYBE` fails.
+The `MAYBE` task takes one child and based on a probability option `p` decides whether to attempt to execute it or not. If the `p` test succeeds the child gets executed and `MAYBE` will succeed or fail based on whether the child succeeds or fails. If the `p` test fails then `MAYBE` fails.
 
 ### Options
 
 * `p` — (1-100) — of the child being executed
 
-## <a name="behaviour_either">`EITHER`</a>
+## <a name="task_either">`EITHER`</a>
 
-The `EITHER` behaviour takes two children and based on the probability option `p` decides whether to execute the first or the second child. If the `p` test succeeds then the first child is executed, otherwise the second child is executed. `EITHER` succeeds or fails based on whether the child it executes succeeds or fails.
+The `EITHER` task takes two children and based on the probability option `p` decides whether to execute the first or the second child. If the `p` test succeeds then the first child is executed, otherwise the second child is executed. `EITHER` succeeds or fails based on whether the child it executes succeeds or fails.
 
 ### Options
 
 * `p` — (1-100) — of the first child getting executed
 
-## <a name="behaviour_random_choice">`RANDOM_CHOICE`</a>
+## <a name="task_random_choice">`RANDOM_CHOICE`</a>
 
-The `RANDOM_CHOICE` behaviour takes at least two children and executes one child at random. If the child succeeds then `RANDOM_CHOICE` succeeds, otherwise it fails.
+The `RANDOM_CHOICE` task takes at least two children and executes one child at random. If the child succeeds then `RANDOM_CHOICE` succeeds, otherwise it fails.
 
-## <a name="behaviour_random_each">`RANDOM_EACH`</a>
+## <a name="task_random_each">`RANDOM_EACH`</a>
 
-The `RANDOM_EACH` beahviour takes at least two children and executes child one at random. `RANDOM_EACH` succeeds or fails based on the selected child succeeding or failing.
+The `RANDOM_EACH` task takes at least two children and executes one child at random. `RANDOM_EACH` succeeds or fails based on the selected child succeeding or failing.
 
-Once a child has been executed it cannot be selected again until all the other children have, likewise, been executed. When all the children have been executed `RANDOM_EACH` will begin again with a new random order of children.
+Once a child has been executed it is not eligible to be selected again until all the other children of `RANDOM_EACH` have, likewise, been executed. When all the children have been executed `RANDOM_EACH` will begin again with a new random order of children.
 
-## <a name="behaviour_invert">`INVERT`</a>
+## <a name="task_invert">`INVERT`</a>
 
-The `INVERT` behaviour takes one child and executes it. If the child succeeds then `INVERT` fails, likewise if the child fails then `INVERT` will succeed.
+The `INVERT` task takes one child and executes it. If the child succeeds then `INVERT` fails, likewise if the child fails then `INVERT` will succeed.
 
-## <a name="behaviour_always">`ALWAYS`</a>
+## <a name="task_always">`ALWAYS`</a>
 
-The `ALWAYS` beahviour takes one child and executes it. It ignores whether the child succeeds or fails and always suceeds itself.
+The `ALWAYS` task takes one child and executes it. It ignores whether the child succeeds or fails and always suceeds itself.
 
-## <a name="behaviour_never">`NEVER`</a>
+## <a name="task_never">`NEVER`</a>
 
-The `NEVER` behaviour takes one child and executes it. It ignores whether the child succeeds or fails, always failing itself. It's a shorthand for `[INVERT [ALWAYS ...]]`.
+The `NEVER` task takes one child and executes it. It ignores whether the child succeeds or fails, always failing itself. It's a shorthand for `[INVERT [ALWAYS ...]]`.
 
-## <a name="behaviour_succeed">`SUCCEED`</a>
+## <a name="task_succeed">`SUCCEED`</a>
 
-The `SUCEED` behaviour takes no chilren and when executed it always succeeds.
+The `SUCEED` task takes no chilren and when executed it always succeeds.
 
-## <a name="behaviour_fail">`FAIL`</a>
+## <a name="task_fail">`FAIL`</a>
 
-The `FAIL` behaviour takes no children and when executed it always fails.
+The `FAIL` task takes no children and when executed it always fails.
 
 # API Reference
 
