@@ -4,6 +4,7 @@ defmodule Rez.Compiler.ParseSource do
   consolidated game content and creates the AST representation from it.
   """
 
+  alias LogicalFile
   alias Rez.Compiler.Compilation
   alias Rez.Parser.Parser
   alias Rez.AST.Game
@@ -44,9 +45,10 @@ defmodule Rez.Compiler.ParseSource do
         Compilation.add_error(compilation, reason)
 
       {:error, reasons, line, col, _input} ->
+        {file, _logical_line} = LogicalFile.resolve_line(source, line)
         context = source_context(source, line, col)
         reasons = Enum.map_join(reasons, "\n", fn {_line, _col, reason} -> reason end)
-        Compilation.add_error(compilation, "L#{line}:#{col} Unable to compile source: #{reasons}\n#{context}")
+        Compilation.add_error(compilation, "#{file} L#{line}:#{col} Unable to compile source: #{reasons}\n#{context}")
     end
   end
 

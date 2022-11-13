@@ -544,25 +544,106 @@ Note that key/value pairs in tables are whitespace, not comma, separated. Table 
 
 ### Behaviour Tree
 
-A behaviour tree is a list type structure prefixed with `^` that describes behaviours that can be implemented by an element. Each behaviour is of the form:
+A behaviour tree is a collection of tasks (which can be an action, condition, composite, or decorator), assembled into a hierarchy with a root task at the top. Syntacically a behaviour tree is written:
 
-    [BEHAVIOUR_ID option1=value1 option2=value2 ... [list of children]]
+    ^[root_task]
 
-E.g. SELECT which takes no options but has children:
+Each task is described as a list:
 
-    [SELECT [[BEHAVIOUR_1 ...] [BEHAVIOUR_2 ...]]]
+    [task_id option=value option=value ... child_list]
+
+Some tasks have options and some (usually composites) will take children.
+
+The standard library includes a number of composite and decorator tasks that are typically used to structure and manipulate other tasks.
+
+Action tasks alter the game while condition tasks test the state of the game. For example we could imagine a condition task like:
+
+    [ACTOR_SEES actor=sam_spade item=whisky_bottle]
+
+We can imagine that `ACTOR_SEES` would be written to see if the `whisky_bottle` item is in the same location as the actor `sam_spade` succeeding if it is or fail. Such a task might be implemented as follows:
+
+    @task ACTOR_SEES begin
+      options: [:actor, :item]
+
+      execute: (task, wmem) => {
+        const game = action.game;
+        const actor_id = task.options("actor");
+        const actor = task.$(actor_id);
+        const location_id = actor.getAttributeValue("location");
+        if(location_id == null) {
+          return {
+            success: false,
+            error: "Actor " + actor_id + " is off-stage",
+            wmem: wmem
+          };
+        };
+        const location = task.$(location_id);
+        const container_id = location.getAttributeValue("container");
+        if(container_id == null) {
+          return {
+            success: false,
+            error: "Location " + location_id + " does not have a container",
+            wmem: wmem
+          };
+        }
+
+        const item_id = task.options("item");
+        const slot_id = container.contains_item(item_id);
+
+        if(slot_id == null) {
+          return {
+            success: false,
+            error: "It not in actors location",
+            wmem: wmem
+          };
+        } else {
+          return {
+            success: true,
+            wmem: wmem
+          };
+        }
+      }
+    end
+
+Let's pair that with another behaviour:
+
+    [ACTOR_TAKES]
+
+We can imagine this task putting a previously identified item into an actors inventory. We could make this action happen by using the composite task `SEQUENCE` as follows:
+
+    [SEQUENCE [
+      [ACTOR_SEES actor=sam_spade item=whisky_bottle]
+      [ACTOR_TAKES_ITEM]]]
+
+If `ACTOR_SEES` fails the `SEQUENCE` will fail before the `ACTOR_TAKES` can be executed. We can stack up more than one of this type of `SEQUENCE` using the `SELECT` composite as follows:
+
+    [SELECT [
+      [SEQUENCE [
+        [ACTOR_SEES actor=sam_spade item_tagged=booze]
+        [ACTOR_TAKES_ITEM]]]
+      [SEQUENCE [
+        [ACTOR_HUNGOVER actor=sam_spade]
+        [ACTOR_HAS item=whisky_bottle]
+        []
+      ]]
+    ]]
+
+
+
+
+    ^[SELECT [[BEHAVIOUR_1 ...] [BEHAVIOUR_2 ...]]]
 
 or MAYBE which has one option `p` meaning probability and takes exactly one child:
 
-    [MAYBE p=25 [BEHAVIOUR_3 ...]]
+    ^[MAYBE p=25 [BEHAVIOUR_3 ...]]
 
 or INVERT which takes no options and has one child
 
-    [INVERT [BEHAVIOUR_4 ...]]
+    ^[INVERT [BEHAVIOUR_4 ...]]
 
 or we can imagine a behaviour such as:
 
-    [ACTOR_SPEAKS actor=sam_spade line="You know, that's good, because if you actually were as innocent as you pretend to be, we'd never get anywhere"]
+    ^[ACTOR_SPEAKS actor=sam_spade line="You know, that's good, because if you actually were as innocent as you pretend to be, we'd never get anywhere"]
 
 Here we can see the three different kinds of behaviours: a composite such as `SELECT` that takes many children and organises whether & how they are executed, a decorator such as `INVERT` that takes one child and modifies how it is interpreted, and a leaf such as `ACTOR_SPEAKS` that has no children and interacts at the in-game level.
 
@@ -596,7 +677,7 @@ A few Rez elements like `@game` and `@zone` contain other elements but most do n
 
 * [`@actor`](#actor-element)
 * [`@asset`](#asset-element)
-* [`@behaviour`](#behaviour-element)
+* [`@task`](#task-element)
 * [`@card`](#card-element)
 * [`@effect`](#effect-element)
 * [`@faction`](#faction-element)
@@ -822,54 +903,6 @@ Assets are the key to using asset groups that can be used for showing different 
 #### on_init: `(asset, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
-
-## <a name="behaviour-element">Behaviour</a>
-
-Behaviours are elements that can be composed to create a behaviour tree. A behaviour tree is a way of modelling a plan that you want an agent (e.g. an Actor) to perform.
-
-Note that, by convention, we use UPPER CASE ids for behaviour elements.
-
-The core of the behaviour is the execute attribute which implements the behaviour. We talk about behaviours being conditions (that test something about the world) or actions (that alter the world) but both are created in the same way and use execute.
-
-### Example
-
-    @behaviour ACTOR_IN begin
-      options: [:actor :location]
-
-      execute: (behaviour, wmem) => {
-        const actor = behaviour.game.$(behaviour.option("actor"));
-        if(actor.getAttributeValue("location") == location) {
-          return {success: true, wmem: wmem};
-        } else {
-          return {success: false, error: "Actor is not in location", wmem: wmem};
-        }
-      }
-    end
-
-In this example we have defined a behaviour that tests whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
-
-    ^[SEQUENCE [
-      [ACTOR_IN actor=sam_spade location=sams_office]
-      [ACTOR_RELOADS item=sams_gun]
-    ]]
-
-### Required Attributes
-
-* options
-
-A list of keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
-
-* execute
-
-A script attribute that is expected to take two parameters `behaviour` that is a reference to the behaviour itself and `wmem` which is a reference to a map of "working memory" that can be used to record behaviour state or pass state between behaviours.
-
-The return value must either be `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
-
-### Optional Attributes
-
-* min_children
-* max_children
-* check_*
 
 ## <a name="card-element">Card</a>
 
@@ -1528,6 +1561,56 @@ The styles defined in the game's `@style` directives will be automatically inclu
 #### on_init: `(system, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
+
+## <a name="task-element">Task</a>
+
+Tasks are elements that describe components of a behaviour tree. Author defined tasks are usually 'conditions' (that test the state of the game) and 'actions' (that change the state of the game).
+
+Note that, by convention, we use UPPER CASE ids for task elements.
+
+The core of the task is the execute attribute which implements the functionality of the task and returns a value indicating success or failure. Optionally a task can update the working memory that is passed through the tree as it gets executed.
+
+### Example
+
+    @task ACTOR_IN begin
+      options: [:actor :location]
+
+      execute: (task, wmem) => {
+        const actor_id = task.option("actor");
+        const actor = task.$(actor_id);
+        const location_id = task.option("location");
+        if(actor.getAttributeValue("location") == location_id) {
+          return {success: true, wmem: wmem};
+        } else {
+          return {success: false, error: "Actor is not in location", wmem: wmem};
+        }
+      }
+    end
+
+In this example we have defined a task that tests whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
+
+    ^[SEQUENCE [
+      [ACTOR_IN actor=sam_spade location=sams_office]
+      [ACTOR_RELOADS item=sams_gun]
+    ]]
+
+### Required Attributes
+
+* options
+
+A list of keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
+
+* execute
+
+A script attribute that is expected to take two parameters `task` (a reference to the task itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between tasks.
+
+The return value must either be `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+
+### Optional Attributes
+
+* min_children
+* max_children
+* check_*
 
 ## <a name="zone-element">Zone</a>
 

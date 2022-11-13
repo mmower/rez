@@ -409,8 +409,8 @@ defmodule Rez.AST.NodeValidator do
   def validate_is_btree?(chained_validator \\ nil) do
     fn %{name: name, type: type, value: value} = attr, node, game ->
       case {type, value} do
-        {:btree, bnode} ->
-          case {validate_bnode(game, bnode), is_nil(chained_validator)} do
+        {:btree, root_task} ->
+          case {validate_task(game, root_task), is_nil(chained_validator)} do
             {:ok, true} ->
               :ok
 
@@ -427,27 +427,27 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  defp validate_bnode(%Game{behaviours: behaviours} = game, {:node, b_id, options, children}) do
-    case Map.get(behaviours, b_id) do
+  defp validate_task(%Game{tasks: tasks} = game, {:node, task_id, options, children}) do
+    case Map.get(tasks, task_id) do
       nil ->
-        {:error, "Undefined behaviour #{b_id}"}
+        {:error, "Undefined behaviour #{task_id}"}
 
-      behaviour ->
-        with :ok <- validate_child_count(behaviour, Enum.count(children)),
-              :ok <- validate_options(behaviour, options),
+      task ->
+        with :ok <- validate_child_count(task, Enum.count(children)),
+              :ok <- validate_options(task, options),
               :ok <- validate_children(game, children) do
             :ok
         end
     end
   end
 
-  defp validate_bnode(_game, _) do
-    {:error, "expected to be a behaviour tree"}
+  defp validate_task(_game, _) do
+    {:error, "expected to be a task"}
   end
 
-  defp validate_child_count(behaviour, child_count) do
-    min_children = NodeHelper.get_attr_value(behaviour, "min_children", -1)
-    max_children = NodeHelper.get_attr_value(behaviour, "max_children", :infinity)
+  defp validate_child_count(task, child_count) do
+    min_children = NodeHelper.get_attr_value(task, "min_children", -1)
+    max_children = NodeHelper.get_attr_value(task, "max_children", :infinity)
 
     case {child_count < min_children, child_count > max_children} do
       {false, false} ->
@@ -464,8 +464,8 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  defp validate_options(behaviour, options) do
-    required_opts = NodeHelper.get_attr_value(behaviour, "options", [])
+  defp validate_options(task, options) do
+    required_opts = NodeHelper.get_attr_value(task, "options", [])
     Enum.reduce_while(required_opts, :ok, fn {_, opt}, status ->
       case Map.has_key?(options, opt) do
         true ->
@@ -480,7 +480,7 @@ defmodule Rez.AST.NodeValidator do
   defp validate_children(game, children) do
     child_errors =
       children
-      |> Enum.map(fn child -> validate_bnode(game, child) end)
+      |> Enum.map(fn child -> validate_task(game, child) end)
       |> Enum.reject(fn result -> result == :ok end)
       |> Enum.map(fn {:error, reason} -> reason end)
 

@@ -18,7 +18,6 @@ defmodule Rez.AST.Game do
             attributes: %{},
             actors: %{},
             assets: %{},
-            behaviours: %{},
             effects: %{},
             factions: %{},
             forms: %{},
@@ -34,6 +33,7 @@ defmodule Rez.AST.Game do
             slots: %{},
             styles: [],
             systems: %{},
+            tasks: %{},
             topics: %{},
             zones: %{},
             template: nil
@@ -155,7 +155,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Game.process_layout()
     |> NodeHelper.process_collection(:actors)
     |> NodeHelper.process_collection(:assets)
-    |> NodeHelper.process_collection(:behaviours)
+    |> NodeHelper.process_collection(:tasks)
     |> NodeHelper.process_collection(:cards)
     |> NodeHelper.process_collection(:effects)
     |> NodeHelper.process_collection(:factions)
@@ -182,7 +182,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     []
     |> Utils.append(Map.values(game.actors))
     |> Utils.append(Map.values(game.assets))
-    |> Utils.append(Map.values(game.behaviours))
+    |> Utils.append(Map.values(game.tasks))
     |> Utils.append(Map.values(game.cards))
     |> Utils.append(Map.values(game.effects))
     |> Utils.append(Map.values(game.factions))

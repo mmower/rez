@@ -619,66 +619,6 @@ RezAsset.prototype = asset_proto;
 RezAsset.prototype.constructor = RezAsset;
 
 //-----------------------------------------------------------------------------
-// Behaviour
-//-----------------------------------------------------------------------------
-
-let behaviour_proto = {
-  __proto__: basic_object,
-
-  option(name) {
-    return this.options[name];
-  },
-
-  firstChild() {
-      return this.children[0];
-  },
-
-  secondChild() {
-    return this.children[1];
-  },
-
-  getChild(idx) {
-    return this.children[idx];
-  },
-
-  children() {
-    return this.children;
-  },
-
-  childCount() {
-    return this.children.length;
-  },
-
-  execute(wmem) {
-    // By definition this is a function of two attributes
-    // (behaviour, wmem)
-    const handler = this.attributes["execute"];
-    return handler(this, wmem);
-  },
-
-  instantiate(options, children = []) {
-    const behaviour = this.copyWithAutoId();
-    behaviour.options = options;
-    behaviour.children = children;
-    return behaviour;
-  }
-};
-
-function RezBehaviour(id, attributes) {
-  this.id = id;
-  this.game_object_type = "behaviour";
-  this.auto_id_idx = 0;
-  this.options = {};
-  this.children = [];
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezBehaviour.prototype = behaviour_proto;
-RezBehaviour.prototype.constructor = RezBehaviour;
-
-//-----------------------------------------------------------------------------
 // Card
 //-----------------------------------------------------------------------------
 
@@ -1206,7 +1146,7 @@ let game_proto = {
 
   runTick() {
     this.getEnabledSystems().forEach(function(system) {
-      system.runEvent("tick", {game: game});
+      system.runEvent("tick", this.wmem);
     });
   }
 };
@@ -1218,6 +1158,7 @@ function RezGame(template, attributes) {
   this.scene_stack = [];
   this.current_scene_id = null;
   this.template = template;
+  this.wmem = {game: this};
   this.game_objects = new Map();
   this.init_objects = [this];
   this.properties_to_archive = ["scene_stack", "current_scene_id"];
@@ -1272,6 +1213,23 @@ let inventory_proto = {
 
   countItemsInSlot(slot_id) {
     return this.getContentsForSlot(slot_id).length;
+  },
+
+  /*
+   * Determines whether the specified item is contained in any slot in this inventory.
+   *
+   * Either returns the slot_id that contains the item, or null.
+   */
+  containsItem(item_id) {
+    for(const slot_id in this.contents) {
+      const contents = this.getContentsForSlot(slot_id);
+      if(contents.some((contained_item_id) => {
+        return contained_item_id == item_id;
+      })) {
+        return slot_id;
+      }
+    }
+    return null;
   },
 
   isOwned() {
@@ -1909,6 +1867,66 @@ RezSystem.prototype = system_proto;
 RezSystem.prototype.constructor = RezSystem;
 
 //-----------------------------------------------------------------------------
+// Task
+//-----------------------------------------------------------------------------
+
+let task_proto = {
+  __proto__: basic_object,
+
+  option(name) {
+    return this.options[name];
+  },
+
+  firstChild() {
+      return this.children[0];
+  },
+
+  secondChild() {
+    return this.children[1];
+  },
+
+  getChild(idx) {
+    return this.children[idx];
+  },
+
+  children() {
+    return this.children;
+  },
+
+  childCount() {
+    return this.children.length;
+  },
+
+  execute(wmem) {
+    // By definition this is a function of two attributes
+    // (task, wmem)
+    const handler = this.attributes["execute"];
+    return handler(this, wmem);
+  },
+
+  instantiate(options, children = []) {
+    const task = this.copyWithAutoId();
+    task.options = options;
+    task.children = children;
+    return task;
+  }
+};
+
+function RezTask(id, attributes) {
+  this.id = id;
+  this.game_object_type = "task";
+  this.auto_id_idx = 0;
+  this.options = {};
+  this.children = [];
+  this.attributes = attributes;
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+}
+
+RezTask.prototype = task_proto;
+RezTask.prototype.constructor = RezTask;
+
+//-----------------------------------------------------------------------------
 // Zone
 //-----------------------------------------------------------------------------
 
@@ -1948,12 +1966,12 @@ const game = new RezGame(
 
 basic_object.game = game;
 
-/* Encode behaviours that will be referred to in behaviour attributes */
-<%= for {id, behaviour} <- @game.behaviours do %>
+/* Encode tasks that will be referred to in behaviours attributes */
+<%= for {id, task} <- @game.tasks do %>
 game.addGameObject(
-  new RezBehaviour(
+  new RezTask(
     "<%= id %>",
-    <%= encode_attributes(behaviour.attributes) %>
+    <%= encode_attributes(task.attributes) %>
   )
 );
 <% end %>

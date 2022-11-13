@@ -53,17 +53,17 @@ end
 %% https://docs.cryengine.com/display/CEPROG/Modular+Behavior+Tree+Nodes
 %% See the Behaviour Tree part of the user guide for more information.
 
-@behaviour SELECT begin
-  %% The SELECT behaviour executes it's children in turn until one of them
+@task SELECT begin
+  %% The SELECT task executes it's children in turn until one of them
   %% succeeds, then SELECT succeeds. If no child succeeeds then SELECT fails.
 
   template: true
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     let result = {success: true, wmem: wmem};
-    for(const child of behaviour.children) {
+    for(const child of task.children) {
       result = child.execute(result.wmem);
       if(result.success) {
         break;
@@ -73,8 +73,8 @@ end
   }
 end
 
-@behaviour SELECT_P begin
-  %% The SELECT_P behaviour is similar to SELECT except that before ticking any
+@task SELECT_P begin
+  %% The SELECT_P task is similar to SELECT except that before ticking any
   %% child it does a probability check using the "p" option. If the check passes
   %% it ticks the child, otherwise it moves on to the next child. If a child
   %% succeeds SELECT_P succeeds. If no child succeeds, SELECT_P fails.
@@ -83,20 +83,20 @@ end
   options: [:p]
   min_children: 2
 
-  check_p: (behaviour, p) => {
+  check_p: (task, p) => {
     if(typeof(p) != "integer" || p < 0) {
-      behaviour.error = "p must be zero or a positive integer";
+      task.error = "p must be zero or a positive integer";
       return false;
     } else {
       return true;
     }
   }
 
-  execute: (behaviour, wmem) => {
-    const p = behaviour.config("p");
+  execute: (task, wmem) => {
+    const p = task.config("p");
     const die = new RezDie(1, 100, 0);
-    let result = {success: false, id: behaviour.id, wmem};
-    for(const child of behaviour.children) {
+    let result = {success: false, id: task.id, wmem};
+    for(const child of task.children) {
       if(die.roll() < p) {
         result = child.execute(result.wmem);
         if(result.success) {
@@ -108,8 +108,8 @@ end
   }
 end
 
-@behaviour SEQUENCE begin
-  %% The SEQUENCE behaviour executes its children in turn. If they all succeed
+@task SEQUENCE begin
+  %% The SEQUENCE task executes its children in turn. If they all succeed
   %% then the SEQUENCE succeeds. If a child fails the SEQUENCE fails and does
   %% not execute any further children.
 
@@ -117,9 +117,9 @@ end
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     let result = {success: true, wmem: wmem};
-    for(const child of behaviour.children) {
+    for(const child of task.children) {
       result = child.tick(result.wmem);
       if(result.success) {
         break;
@@ -128,8 +128,8 @@ end
   }
 end
 
-@behaviour LOOP begin
-  %% The LOOP behaviour takes one child and executes it 'count' times. If it
+@task LOOP begin
+  %% The LOOP task takes one child and executes it 'count' times. If it
   %% succeeds on every repetition the LOOP succeeds. If the child ever fails
   %% the LOOP fails.
 
@@ -138,8 +138,8 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const count = behaviour.option("count");
+  execute: (task, wmem) => {
+    const count = task.option("count");
     let result = {success: false, wmem: wmem};
     for(const i=0; i<count; i++) {
       result = child.execute(result.wmem);
@@ -152,8 +152,8 @@ end
   }
 end
 
-@behaviour LOOP_UNTIL begin
-  %% The LOOP_UNTIL behaviour takes one child and executes it until it
+@task LOOP_UNTIL begin
+  %% The LOOP_UNTIL task takes one child and executes it until it
   %% succeeds. The 'attempts' option specifies how many times it will
   %% executed. If the child ever succeeds, LOOP_UNTIL succeeds. If the
   %% child doesn't succeed in the number of attempts then LOOP_UNTIL fails.
@@ -163,7 +163,7 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     let result = {success: false, wmem: wmem};
     for(let i=0; i<this.count(); i++) {
       result = this.firstChild().tick(result.db);
@@ -176,8 +176,8 @@ end
   }
 end
 
-@behaviour MAYBE begin
-  %% The MAYBE behaviour takes one child and based on the option "p" determines
+@task MAYBE begin
+  %% The MAYBE task takes one child and based on the option "p" determines
   %% whether to execute it or not. If it executes the child then MAYBE succeeds
   %% if the child succeeds or fails if the child fails. If it doesn't execute
   %% the child then MAYBE fails.
@@ -187,20 +187,20 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const p = behaviour.option("p");
+  execute: (task, wmem) => {
+    const p = task.option("p");
     const die = new RezDie(1, 100, 0);
 
     if(die.roll() < p) {
-      return behaviour.firstChild().execute(wmem);
+      return task.firstChild().execute(wmem);
     } else {
-      return {success: false, id: behaviour.id, error: "Didn't execute"};
+      return {success: false, id: task.id, error: "Didn't execute"};
     }
   }
 end
 
-@behaviour EITHER begin
-  %% The EITHER behaviour takes two children and based on the probability
+@task EITHER begin
+  %% The EITHER task takes two children and based on the probability
   %% option "p" determines whether to execute the first or second child.
   %% Having decided which child to execute EITHER succeeds or fails based
   %% on whether the selected child succeeds or fails.
@@ -210,21 +210,21 @@ end
   min_children: 2
   max_children: 2
 
-  execute: (behaviour, wmem) => {
-    const p = behaviour.option("p");
+  execute: (task, wmem) => {
+    const p = task.option("p");
     const die = new RezDie(1, 100, 0);
     const roll = die.roll();
 
     if(roll < p) {
-      return behaviour.firstChild().execute(wmem);
+      return task.firstChild().execute(wmem);
     } else {
-      return behaviour.secondChild().execute(wmem);
+      return task.secondChild().execute(wmem);
     }
   }
 end
 
-@behaviour RANDOM_CHOICE begin
-  %% The RANDOM_CHOICE behaviour takes two or more children. When RANDOM_CHOICE
+@task RANDOM_CHOICE begin
+  %% The RANDOM_CHOICE task takes two or more children. When RANDOM_CHOICE
   %% executes it selects a child at random and executes it. If that child
   %% succeeds then RANDOM_CHOICE succeeds, otherwise it fails.
 
@@ -232,15 +232,15 @@ end
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
-    const die = new RezDie(1, behaviour.childCount(), 0);
-    const child = behaviour.getChild(die.roll());
+  execute: (task, wmem) => {
+    const die = new RezDie(1, task.childCount(), 0);
+    const child = task.getChild(die.roll());
     return child.execute(wmem);
   }
 end
 
-@behaviour RANDOM_EACH begin
-  %% The RANDOM_EACH behaviour takes two or more children. When RANDOM_EACH
+@task RANDOM_EACH begin
+  %% The RANDOM_EACH task takes two or more children. When RANDOM_EACH
   %% executes it selects a child, without replacement, and executes it. If
   %% the selected child succeeds then RANDOM_EACH succeeds, otherwise it
   %% fails. Without replacement means that no child can be selected twice
@@ -250,11 +250,11 @@ end
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     let child_walk = wmem[this];
 
     if(typeof(child_walk) == "undefined" || child_walk.length == 0) {
-      child_walk = Array.from(Array(behaviour.childCount()).keys()).shuffle();
+      child_walk = Array.from(Array(task.childCount()).keys()).shuffle();
     }
 
     const child = child_walk.shift();
@@ -264,8 +264,8 @@ end
   }
 end
 
-@behaviour ALWAYS begin
-  %% The ALWAYS behaviour takes one child and executes it, ALWAYS succeeds
+@task ALWAYS begin
+  %% The ALWAYS task takes one child and executes it, ALWAYS succeeds
   %% regardless of whether the child succeeds.
 
   template: true
@@ -273,15 +273,15 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     const result = this.firstChild().execute(wmem);
     result.success = true;
     return result;
   }
 end
 
-@behaviour NEVER begin
-  %% The NEVER behaviour takes one child and executes it, NEVER fails regardless
+@task NEVER begin
+  %% The NEVER task takes one child and executes it, NEVER fails regardless
   %% of whether the child fails.
 
   template: true
@@ -289,15 +289,15 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const result = behaviour.firstChild().execute(wmem);
+  execute: (task, wmem) => {
+    const result = task.firstChild().execute(wmem);
     result.success = false;
     return result;
   }
 end
 
-@behaviour INVERT begin
-  %% The INVERT behaviour takes one child and executes it. If the child succeeds
+@task INVERT begin
+  %% The INVERT task takes one child and executes it. If the child succeeds
   %% then INVERT will fail. If the child fails then INVERT will succeed.
 
   template: true
@@ -305,38 +305,38 @@ end
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     const result = this.firstChild().execute(wmem);
     if(result.success) {
       result.success = false;
       result.error = "Inversion";
-      result.id = behaviour.id;
+      result.id = task.id;
     } else {
       result.success = true;
     }
   }
 end
 
-@behaviour FAIL begin
-  %% The FAIL behaviour automatically fails.
+@task FAIL begin
+  %% The FAIL task automatically fails.
 
   template: true
   options: []
   max_children: 0
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     return {success: false, wmem: wmem};
   }
 end
 
-@behaviour SUCCEED begin
-  %% The SUCCEED behaviour automatically succeeds.
+@task SUCCEED begin
+  %% The SUCCEED task automatically succeeds.
 
   template: true
   options: []
   max_children: 0
 
-  execute: (behaviour, wmem) => {
+  execute: (task, wmem) => {
     return {success: true, wmem: wmem};
   }
 end
