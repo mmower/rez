@@ -2,7 +2,7 @@
 
 A language, compiler, and runtime system for creating interaction fiction games with HTML
 
-By Matt Mower <self@mattmower.com>
+By Matt Mower &lt;self@mattmower.com&gt;
 
 * Version 0.9 — 13 Nov 2022
 * Version 0.8 — 24 Oct 2022
