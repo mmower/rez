@@ -1444,15 +1444,17 @@ let list_proto = {
   },
 
   /*
-   * Returns a random element of the list without replacement, i.e. no
-   * item will be returned twice.
+   * Returns a random element of the list without replacement, i.e. no item
+   * will be returned twice in any given walk. At the end of a walk (i.e. all items
+   * have been returned), a new walk is automatically begun.
   */
   randomWalk(walk_id) {
-    const walk = this.getWalk(walk_id);
+    let walk = this.getWalk(walk_id);
     if(walk.length == 0) {
-      return null;
+      walk = this.resetWalk(walk_id);
     } else {
-      return walk.shift();
+      const idx = walk.shift();
+      return this.values().at(idx);
     }
   },
 
