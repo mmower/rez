@@ -45,10 +45,22 @@ compilation. Rez was written expecting Handlebars.js v4.7.7.
 
 Installation on macOS depends on [Homebrew](https://brew.sh/) and [ASDF](https://asdf-vm.com/). If you install ASDF directly the homebrew dependency is unnecessary.
 
-    brew install asdf           # We use ASDF for dependency management
-    asdf install                # Will bring in nodejs, erlang, and elixir
-    npm install                 # Will install handlebars, Bulma, and Alpine
-    ./build_escript             # Creates the `rez` compiler binary
+    # Get Rez
+    git clone git@github.com:mmower/rez.git
+    # We use ASDF for tool dependency management
+    brew install asdf
+    # Will bring in nodejs, erlang, and elixir
+    asdf install
+    # Will install handlebars, Bulma, and Alpine
+    npm install
+    # Install Elixir deps
+    mix deps.get
+    # Creates the `rez` compiler binary
+    ./build_escript
+    # Check the binary works
+    ./rez --version (should report v0.9.1)
+    # Copy to a folder in your path
+    cp rez ~/bin/
 
 ### Other OS
 
