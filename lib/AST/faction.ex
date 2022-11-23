@@ -10,7 +10,6 @@ defmodule Rez.AST.Faction do
     id: nil,
     attributes: %{},
   ]
-
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Faction do

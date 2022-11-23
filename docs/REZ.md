@@ -641,6 +641,8 @@ We can imagine this task putting a previously identified item into an actors inv
 
 If `ACTOR_SEES` fails the `SEQUENCE` will fail before the `ACTOR_TAKES` can be executed. We can stack up more than one of this type of `SEQUENCE` using the `SELECT` composite as follows:
 
+    [SELECT [[BEHAVIOUR_1 ...] [BEHAVIOUR_2 ...]]]
+
     [SELECT [
       [SEQUENCE [
         [ACTOR_SEES actor=sam_spade item_tagged=booze]
@@ -651,11 +653,6 @@ If `ACTOR_SEES` fails the `SEQUENCE` will fail before the `ACTOR_TAKES` can be e
         []
       ]]
     ]]
-
-
-
-
-    ^[SELECT [[BEHAVIOUR_1 ...] [BEHAVIOUR_2 ...]]]
 
 or MAYBE which has one option `p` meaning probability and takes exactly one child:
 
@@ -712,6 +709,7 @@ A few Rez elements like `@game` and `@zone` contain other elements but most do n
 * [`@list`](#list-element)
 * [`@location`](#location-element)
 * [`@plot`](#plot-element)
+* [`@rel`](#relationship-element)
 * [`@scene`](#scene-element)
 * [`@slot`](#slot-element)
 * [`@system`](#system-element)
@@ -1385,6 +1383,105 @@ This script will be called during game initialization and before the game has st
 
 This script will be called during game initialization and before the game has started.
 
+## <a name="relationship-element">Relationship</a>
+
+A `@rel` (short for relationship) element describes the relationship between two
+in-game elements (typically actors and factions but you could imagine reasons
+why it could be items or locations).
+
+A relationship has a source (the thing that has the relationship), target
+(the object of the relationship), and affinity (that describes the nature of
+the relationship).
+
+Affinities range from -5.0 to +5.0 where 0.0 is considered to be
+a neutral relationship. The meaning of -5.0 is assumed to be "source hates the
+target" and +5.0 to be "source loves the target" but it is up to the game to
+definte its own meanings for the value.
+
+Of course relationships can be extended with other game-specific attributes and
+tags can be used to enhance a relationship, for example you could apply tags
+like "partner", "husband", "lover", or "rival" to specify a relationship more
+completely.
+
+To keep the number of relationships manageable it may be preferable to setup
+relationships between [Factions](#faction-element) rather than specific actors
+as demonstrated in the examples below. However you can setup relationships in
+any combination you like.
+
+**Note:** the `@rel` element does not allow the author to specify an id. All
+relationships have an automatically generated id based on the source & target
+attributes. It is specified as:
+
+    rel_<source id>_<target id>
+    rel_player_gutman
+
+The `getRelationship(source, target)` API on the `RezGame` object is a short-
+hand for doing this lookup manually.
+
+### Example
+
+In these examples we are using faction-to-faction relationships.
+
+    @rel begin
+      source: #player_faction
+      target: #gutman_faction
+      affinity: -2.0
+    end
+
+    @rel begin
+      source: #gutman_faction
+      target: #player_faction
+      affinity: 0
+    end
+
+    @rel begin
+      source: #player_faction
+      target: #wannalee_faction
+      affinity: +2.5
+    end
+
+    @rel begin
+      source: #wannalee_faction
+      target: #player_faction
+      affinity: +4.0
+    end
+
+### Required Attributes
+
+* `source` — element ref of the element that holds the relationship
+* `target` - element ref of the element on which the relationship is held
+* `affinity` - number ranging from -5.0 to +5.0 indicating the strength of the relationship
+
+### Optional Attributes
+
+* `tags` — set of tags
+
+### Event Handlers
+
+#### on_init
+
+    on_init: (relationship, event) => {...}
+
+    event = {}
+
+#### on_change_affinity
+
+    on_change_affinity: (relationship, event) => {...}
+
+    event = {
+      prior: previous affinity value,
+      current: updated affinity value
+    }
+
+This event handler will be called whenever the relationship affinity changes and
+will be passed the prior & new affinity values.
+
+### API
+
+* `getAffinity()`
+* `setAffinity(new_affinity)`
+* `alterAffinity(change)`
+
 ## <a name="scene-element">Scene</a>
 
 A Game in Rez is authored in terms of `@scene`s and `@card`s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which `@card`s to present and how to respond to player input.
@@ -1511,15 +1608,13 @@ For example an inventory representing what a player is wearing might have slots 
 
 ### Required Attributes
 
-* name — string
-* accepts — keyword
+* `name` — string
+* `accepts` — keyword
 
 ### Optional Attributes
 
-* tags — set of keyword — tags applied to the slot
-* capacity — number — the sum of the size of items that fit in the slot
-* on_insert — script
-* on_remove — script
+* `tags` — set of keyword — tags applied to the slot
+* `capacity` — number — the sum of the size of items that fit in the slot
 
 ### Event Handlers
 

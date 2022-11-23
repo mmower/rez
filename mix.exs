@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "0.9.0"
+  @version "0.9.1"
 
   def project do
     case System.get_env("BUILD_MODE") do
@@ -49,8 +49,8 @@ defmodule Rez.MixProject do
       {:earmark, "~> 1.4"},
       {:ergo, "~> 0.9"},
       # {:ergo, path: "/Users/matt/Projects/Elixir/ergo"},
-      # {:logical_file, path: "/Users/matt/Projects/Elixir/logical_file"},
       {:logical_file, "~> 1.0"},
+      # {:logical_file, path: "/Users/matt/Projects/Elixir/logical_file"},
       {:mix_test_watch, "~> 1.0", only: :dev},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:elixir_uuid, "~> 1.2"},

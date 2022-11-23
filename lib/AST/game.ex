@@ -5,7 +5,13 @@ defmodule Rez.AST.Game do
   """
   alias __MODULE__
 
-  alias Rez.AST.{Node, NodeHelper, TemplateHelper, Attribute, Script, Style, TypeHierarchy}
+  alias Rez.AST.Node
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+  alias Rez.AST.Attribute
+  alias Rez.AST.Script
+  alias Rez.AST.Style
+  alias Rez.AST.TypeHierarchy
   import Rez.Utils
 
   defstruct status: :ok,
@@ -28,6 +34,7 @@ defmodule Rez.AST.Game do
             lists: %{},
             cards: %{},
             plots: %{},
+            relationships: %{},
             scenes: %{},
             scripts: [],
             slots: %{},
@@ -166,6 +173,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> process_item_types()
     |> NodeHelper.process_collection(:lists)
     |> NodeHelper.process_collection(:plots)
+    |> NodeHelper.process_collection(:relationships)
     |> NodeHelper.process_collection(:scenes)
     |> NodeHelper.process_collection(:systems)
     |> NodeHelper.process_collection(:topics)
@@ -192,6 +200,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append(Map.values(game.items))
     |> Utils.append(Map.values(game.lists))
     |> Utils.append(Map.values(game.plots))
+    |> Utils.append(Map.values(game.relationships))
     |> Utils.append(Map.values(game.scenes))
     |> Utils.append(Map.values(game.systems))
     |> Utils.append(Map.values(game.topics))

@@ -5,28 +5,38 @@ defmodule Rez.Parser.UtilityParsers do
   """
 
   import Ergo.{Combinators, Terminals}
+  alias Ergo.Combinators
 
-  def iws(), do: ignore(many(ws()), label: "WS")
+  require Rez.Parser.ParserCache, as: PC
+  alias Rez.Parser.ParserCache
 
-  def iows(), do: optional(iws(), label: "WS")
+  def iws(), do: PC.cached_parser(ignore(many(ws())))
 
-  def iliteral(string), do: ignore(literal(string))
+  def iows(), do: PC.cached_parser(optional(iws()))
 
-  def double_quote(), do: char(?")
+  def iliteral(s), do: ParserCache.get_parser("iliteral-#{s}", fn -> ignore(literal(s)) end)
 
-  def not_double_quote(), do: char(-?")
+  def double_quote(), do: ParserCache.get_parser("double-quote", fn -> char(?") end)
 
-  def equals(), do: char(?=)
+  def not_double_quote(), do: ParserCache.get_parser("not-double-quote", fn -> char(-?") end)
 
-  def comma(), do: char(?,)
+  def equals(), do: ParserCache.get_parser("equals", fn -> char(?=) end)
 
-  def colon(), do: char(?:)
+  def comma(), do: ParserCache.get_parser("comma", fn -> char(?,) end)
 
-  def hash(), do: char(?#)
+  def colon(), do: ParserCache.get_parser("colon", fn -> char(?:) end)
 
-  def dollar(), do: char(?$)
+  def hash(), do: ParserCache.get_parser("hash", fn -> char(?#) end)
 
-  def dot(), do: char(?.)
+  def dollar(), do: ParserCache.get_parser("dollar", fn -> char(?$) end)
+
+  def dot(), do: ParserCache.get_parser("dot", fn -> char(?.) end)
+
+  def plus(), do: ParserCache.get_parser("plus", fn -> char(?+) end)
+
+  def minus(), do: ParserCache.get_parser("minus", fn -> char(?-) end)
+
+  def at(), do: char(?@)
 
   def open_brace(), do: char(?{)
 
@@ -40,22 +50,26 @@ defmodule Rez.Parser.UtilityParsers do
 
   def close_bracket(), do: char(?])
 
+  def right_angle_bracket(), do: char(?>)
+
+  def amp(), do: char(?&)
+
   def caret(), do: char(?^)
 
   def forward_slash(), do: char(?/)
 
-  def arrow(), do: sequence([char(?=), char(?>)], label: "=>")
+  def arrow(), do: literal("=>")
 
-  def block_begin(block_type), do: ignore(literal("begin"), label: "IGN #{block_type} begin")
+  def block_begin(_block_type), do: ignore(literal("begin"))
 
-  def block_end(block_type), do: ignore(literal("end"), label: "IGN #{block_type} end")
+  def block_end(_block_type), do: ignore(literal("end"))
 
-  def elem_start_char(), do: char([?a..?z])
+  def elem_start_char(), do: ParserCache.get_parser("elem_start_char", fn -> char([?a..?z]) end)
 
-  def elem_body_char(), do: char([?_, ?a..?z])
+  def elem_body_char(), do: ParserCache.get_parser("elem_body_char", fn -> char([?_, ?a..?z]) end)
 
   def elem_tag() do
-    sequence(
+    Combinators.sequence(
       [
         elem_start_char(),
         many(elem_body_char())

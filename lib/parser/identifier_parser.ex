@@ -3,6 +3,8 @@ defmodule Rez.Parser.IdentifierParser do
   import Ergo.Combinators
   import Ergo.Terminals
 
+  # alias Rez.Parser.ParserCache
+
 # JSIdentifier
 
   #
@@ -21,7 +23,8 @@ defmodule Rez.Parser.IdentifierParser do
   #         {:error, :unexpected_char} -> blah
   #
   def js_identifier(label \\ "js_identifier") do
-    sequence(
+    Rez.Parser.ParserCache.get_parser("js_identifier##{label}", fn ->
+      sequence(
       [
         char([?_, ?$, [?a..?z], [?A..?Z]], label: "js_lead_char"),
         many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "js_char"))
@@ -35,8 +38,8 @@ defmodule Rez.Parser.IdentifierParser do
           _ -> ctx # Examples are things like :unexpected_eoi that we don't rewrite because it means a valid fail
         end
       end,
-      ast: fn [first_char, subsequent_chars] -> List.to_string([first_char | subsequent_chars]) end
-    )
+      ast: fn [first_char, subsequent_chars] -> List.to_string([first_char | subsequent_chars]) end)
+    end)
   end
 
 end

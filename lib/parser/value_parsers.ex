@@ -8,6 +8,8 @@ defmodule Rez.Parser.ValueParsers do
   import Rez.Parser.UtilityParsers
   import Rez.Utils
 
+  alias Rez.Parser.ParserCache
+
   # String
 
   def string_err_wrap(%Context{status: {:error, :unexpected_character}} = ctx) do
@@ -19,7 +21,8 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def string_value() do
-    sequence(
+    ParserCache.get_parser("string", fn ->
+      sequence(
       [
         ignore(double_quote()),
         many(not_double_quote()) |> string,
@@ -34,8 +37,8 @@ defmodule Rez.Parser.ValueParsers do
       end,
       err: &string_err_wrap/1,
       debug: true,
-      label: "string-value"
-    )
+      label: "string-value")
+    end)
   end
 
   # Heredoc
@@ -88,22 +91,24 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def heredoc_value() do
-    sequence(
-      [
-        ignore(literal("\"\"\"")),
-        many(
-          sequence([
-            not_lookahead(literal("\"\"\"")),
-            any()
-          ]),
-          ast: fn chars -> convert_heredoc_to_string(chars) end
-        ),
-        ignore(literal("\"\"\""))
-      ],
-      label: "here-doc",
-      debug: true,
-      ast: fn [str] -> {:string, str} end
-    )
+    ParserCache.get_parser("heredoc", fn ->
+      here_boundary_parser = literal("\"\"\"")
+      sequence(
+        [
+          ignore(here_boundary_parser),
+          many(
+            sequence([
+              not_lookahead(here_boundary_parser),
+              any()
+            ]),
+            ast: fn chars -> convert_heredoc_to_string(chars) end
+          ),
+          ignore(here_boundary_parser)
+        ],
+        label: "here-doc",
+        debug: true,
+        ast: fn [str] -> {:string, str} end)
+    end)
   end
 
   # Bool
@@ -119,154 +124,161 @@ defmodule Rez.Parser.ValueParsers do
       iex> assert %Context{status: :ok, ast: {:boolean, false}} = Ergo.parse(bool_value(), "no")
   """
   def bool_value() do
-    choice(
-      [
-        choice([
-          literal("true"),
-          literal("yes")]) |> transform(fn _ -> {:boolean, true} end),
-        choice([
-          literal("false"),
-          literal("no")]) |> transform(fn _ -> {:boolean, false} end)
-      ],
-      label: "boolean-value",
-      debug: true
-    )
+    ParserCache.get_parser("bool", fn ->
+      choice(
+        [
+          choice([literal("true"), literal("yes")]) |> transform(fn _ -> {:boolean, true} end),
+          choice([literal("false"), literal("no")]) |> transform(fn _ -> {:boolean, false} end)
+        ],
+        label: "boolean-value",
+        debug: true
+      )
+    end)
   end
 
   # Number
 
   def number_value() do
-    number() |> transform(fn number -> {:number, number} end)
+    ParserCache.get_parser("number", fn ->
+      number() |> transform(fn number -> {:number, number} end)
+    end)
   end
 
   # Keyword
 
   def keyword_value() do
-    sequence(
-      [
-      ignore(colon()),
-      many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "kw_char"), min: 1)
-      ],
-      label: "keyword-value",
-      debug: true,
-      ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end
-    )
+    ParserCache.get_parser("keyword", fn ->
+      sequence(
+        [
+          ignore(char(?:)),
+          many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "kw_char"), min: 1)
+        ],
+        label: "keyword-value",
+        debug: true,
+        ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end)
+    end)
   end
 
   # Element Ref
 
   def elem_ref_value() do
-    sequence(
-      [
-        not_lookahead(literal("#\{")), # Make sure this isn't a set
-        ignore(hash()),
-        commit(), # Otherwise it MUST be an elem_ref
-        js_identifier()
-      ],
-      label: "elem_ref-value",
-      debug: true,
-      ast: fn [expr] -> {:elem_ref, expr} end
-    )
-
-
+    ParserCache.get_parser("elem_ref", fn ->
+      set_start_parser = literal("#\{")
+      sequence(
+        [
+          not_lookahead(set_start_parser), # Make sure this isn't a set
+          ignore(hash()),
+          commit(), # Otherwise it MUST be an elem_ref
+          js_identifier()
+        ],
+        label: "elem_ref-value",
+        debug: true,
+        ast: fn [expr] -> {:elem_ref, expr} end
+      )
+    end)
   end
 
   # Attr Ref
 
   def attr_ref_value() do
-    sequence(
-      [
-        ignore(char(?&)),
-        js_identifier()
-      ],
-      label: "ref_value",
-      debug: true,
-      ast: fn [name] -> {:attr_ref, name} end
-    )
+    ParserCache.get_parser("attr_ref", fn ->
+      sequence(
+        [
+          ignore(amp()),
+          js_identifier()
+        ],
+        label: "ref_value",
+        debug: true,
+        ast: fn [name] -> {:attr_ref, name} end)
+    end)
   end
 
   # Function
 
   def function_value() do
-    sequence(
-      [
-        ignore(open_paren()),
-        iows(),
-        optional(
-          sequence(
-            [
-              js_identifier(),
-              iows(),
-              many(
-                sequence([
-                  ignore(comma()),
-                  iows(),
-                  js_identifier()
-                ])
-              )
-            ],
-            ast: &List.flatten/1
-          )
-        ),
-        ignore(close_paren()),
-        iows(),
-        ignore(arrow()),
-        iows(),
-        delimited_text(?{, ?})
-      ],
-      label: "function-value",
-      debug: true,
-      ast: fn
-        [args, body] ->
-          {:function, {args, body}}
-        [body] -> {:function, {[], body}}
-      end
-    )
+    ParserCache.get_parser("function", fn ->
+      sequence(
+        [
+          ignore(open_paren()),
+          iows(),
+          optional(
+            sequence(
+              [
+                js_identifier(),
+                iows(),
+                many(
+                  sequence([
+                    ignore(comma()),
+                    iows(),
+                    js_identifier()
+                  ])
+                )
+              ],
+              ast: &List.flatten/1
+            )
+          ),
+          ignore(close_paren()),
+          iows(),
+          ignore(arrow()),
+          iows(),
+          delimited_text(?{, ?})
+        ],
+        label: "function-value",
+        debug: true,
+        ast: fn
+          [args, body] ->
+            {:function, {args, body}}
+          [body] -> {:function, {[], body}}
+        end)
+    end)
   end
 
   # Dice
 
   def dice_value() do
-    sequence([
-      optional(number_value()),
-      ignore(char(?d)),
-      number_value(),
-      optional(
-        sequence([
-          choice([
-            char(?+),
-            char(?-)
-          ]),
-          number_value()
-        ])
-      )
-    ],
-    label: "dice-value",
-    ast: fn
-      # d6
-      [{:number, sides}] ->
-        {:roll, {1, sides, 0}}
+    ParserCache.get_parser("dice", fn ->
+      sequence([
+        optional(number_value()),
+        ignore(char(?d)),
+        number_value(),
+        optional(
+          sequence([
+            choice([
+              plus(),
+              minus()
+            ]),
+            number_value()
+          ])
+        )
+      ],
+      label: "dice-value",
+      ast: fn
+        # d6
+        [{:number, sides}] ->
+          {:roll, {1, sides, 0}}
 
-      # 2d6
-      [{:number, count}, {:number, sides}] ->
-        {:roll, {count, sides, 0}}
+        # 2d6
+        [{:number, count}, {:number, sides}] ->
+          {:roll, {count, sides, 0}}
 
-      # d6+1
-      [{:number, sides}, [?+, {:number, mod}]] ->
-        {:roll, {1, sides, mod}}
+        # d6+1
+        [{:number, sides}, [?+, {:number, mod}]] ->
+          {:roll, {1, sides, mod}}
 
-      # d6-1
-      [{:number, sides}, [?-, {:number, mod}]] ->
-        {:roll, {1, sides, -mod}}
+        # d6-1
+        [{:number, sides}, [?-, {:number, mod}]] ->
+          {:roll, {1, sides, -mod}}
 
-      # 2d6+1
-      [{:number, count}, {:number, sides}, [?+, {:number, mod}]] ->
-        {:roll, {count, sides, mod}}
+        # 2d6+1
+        [{:number, count}, {:number, sides}, [?+, {:number, mod}]] ->
+          {:roll, {count, sides, mod}}
 
-      # 2d6-1
-      [{:number, count}, {:number, sides}, [?-, {:number, mod}]] ->
-        {:roll, {count, sides, -mod}}
+        # 2d6-1
+        [{:number, count}, {:number, sides}, [?-, {:number, mod}]] ->
+          {:roll, {count, sides, -mod}}
+      end)
     end)
+
   end
 
   # String & Function from file
@@ -314,51 +326,57 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def file_value() do
-    sequence([
-      ignore(literal("<<<")),
-      commit(),
-      many(
-        sequence([
-          not_lookahead(literal(">>>")),
-          any()
-        ])),
-      ignore(literal(">>>"))
-    ],
-    label: "file-value",
-    ctx: fn ctx ->
-      case ctx do
-        %{status: :ok, ast: file_name_chars} ->
-          file_name = List.to_string(file_name_chars)
-          case read_file_var(file_name) do
-            {:error, reason} ->
-              Context.add_error(ctx, :unknown_file, reason)
+    ParserCache.get_parser("file", fn ->
+      open = literal("<<<")
+      close = literal(">>>")
 
-            var ->
-              Context.set_ast(ctx, var)
-          end
-      end
+      sequence([
+        ignore(open),
+        commit(),
+        many(
+          sequence([
+            not_lookahead(close),
+            any()
+          ])),
+        ignore(close)
+      ],
+      label: "file-value",
+      ctx: fn ctx ->
+        case ctx do
+          %{status: :ok, ast: file_name_chars} ->
+            file_name = List.to_string(file_name_chars)
+            case read_file_var(file_name) do
+              {:error, reason} ->
+                Context.add_error(ctx, :unknown_file, reason)
+
+              var ->
+                Context.set_ast(ctx, var)
+            end
+        end
+      end)
     end)
   end
 
   # Value
 
   def value() do
-    choice(
-      [
-        dice_value(),
-        number_value(),
-        bool_value(),
-        heredoc_value(),
-        string_value(),
-        elem_ref_value(),
-        keyword_value(),
-        function_value(),
-        attr_ref_value(),
-        file_value(),
-      ],
-      label: "value",
-      debug: true
-    )
+    ParserCache.get_parser("value", fn ->
+      choice(
+        [
+          dice_value(),
+          number_value(),
+          bool_value(),
+          heredoc_value(),
+          string_value(),
+          elem_ref_value(),
+          keyword_value(),
+          function_value(),
+          attr_ref_value(),
+          file_value(),
+        ],
+        label: "value",
+        debug: true)
+    end)
   end
 
 end

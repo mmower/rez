@@ -104,4 +104,18 @@ defmodule Rez.Utils do
     to ++ from
   end
 
+  @doc ~S"""
+  Generate a short-randomised string, e.g.:
+    ABKR6H1HCENF9
+    3EODQGCD0MRA3
+    2JKGI112I9MA58
+
+    From an answer to generating ids:
+    https://stackoverflow.com/questions/44082348/creating-uuids-in-elixir
+    by https://stackoverflow.com/users/575642/cdegroot
+  """
+  def random_str() do
+    Integer.to_string(:rand.uniform(4294967296), 32) <> Integer.to_string(:rand.uniform(4294967296), 32)
+  end
+
 end

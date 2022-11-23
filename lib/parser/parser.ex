@@ -4,12 +4,15 @@ defmodule Rez.Parser.Parser do
   AST node if parsing is successful.
   """
 
-  alias Ergo.{Context, Telemetry}
+  alias LogicalFile
+
+  alias Ergo.Context
+  alias Ergo.Telemetry
   import Ergo.Combinators
 
-  import Rez.Parser.{AliasParsers, StructureParsers, UtilityParsers}
-
-  alias LogicalFile
+  import Rez.Parser.AliasParsers
+  import Rez.Parser.StructureParsers
+  import Rez.Parser.UtilityParsers
 
   def actor_block() do
     block_with_id("actor", Rez.AST.Actor)
@@ -53,6 +56,18 @@ defmodule Rez.Parser.Parser do
 
   def plot_block() do
     block_with_id("plot", Rez.AST.Plot)
+  end
+
+  def relationship_block() do
+    block("rel", Rez.AST.Relationship,
+    fn attributes ->
+      with %{type: :elem_ref, value: source} <- Map.get(attributes, "source"),
+           %{type: :elem_ref, value: target} <- Map.get(attributes, "target") do
+        "rel_" <> source <> "_" <> target
+      else
+        nil -> "rel_" <> Rez.Utils.random_str()
+      end
+    end)
   end
 
   def scene_block() do
@@ -99,6 +114,7 @@ defmodule Rez.Parser.Parser do
         list_block(),
         card_block(),
         plot_block(),
+        relationship_block(),
         scene_block(),
         script_block(),
         slot_block(),
@@ -119,23 +135,34 @@ defmodule Rez.Parser.Parser do
   end
 
   def top_level() do
-    sequence([
-      iows(),
-      game_block()
-    ],
-    label: "top-level",
-    ast: &List.first/1)
+    sequence(
+      [
+        iows(),
+        game_block()
+      ],
+      label: "top-level",
+      ast: &List.first/1
+    )
   end
 
   def parse(%LogicalFile{} = source, telemetry \\ false) do
     if telemetry, do: Telemetry.start()
 
-    case Ergo.parse(top_level(), to_string(source), data: %{source: source, aliases: %{}, id_map: %{}}) do
+    case Ergo.parse(top_level(), to_string(source),
+           data: %{source: source, aliases: %{}, id_map: %{}}
+         ) do
       %Context{status: :ok, ast: ast, data: %{id_map: id_map}} ->
         {:ok, ast, id_map}
 
-      %Context{status: {code, reasons}, id: id, line: line, col: col, input: input} when code in [:error, :fatal] ->
-        if telemetry, do: File.write("compiler-output.opml", Ergo.Outline.OPML.generate_opml(id, Telemetry.get_events(id)))
+      %Context{status: {code, reasons}, id: id, line: line, col: col, input: input}
+      when code in [:error, :fatal] ->
+        if telemetry,
+          do:
+            File.write(
+              "compiler-output.opml",
+              Ergo.Outline.OPML.generate_opml(id, Telemetry.get_events(id))
+            )
+
         {:error, reasons, line, col, input}
     end
   end

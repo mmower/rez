@@ -1,4 +1,5 @@
 defmodule Rez.Parser.CollectionParser do
+  alias Rez.Parser.ParserCache
   import Ergo.Combinators, only: [
     choice: 1,
     ignore: 1,
@@ -34,54 +35,58 @@ defmodule Rez.Parser.CollectionParser do
   # Set
 
   def set() do
-    sequence(
-      [
-        ignore(hash()),
-        ignore(open_brace()),
+    ParserCache.get_parser("set", fn ->
+      sequence(
+        [
+          ignore(hash()),
+          ignore(open_brace()),
+          iows(),
+          optional(
+            sequence([
+              collection_value(),
+              many(
+                sequence([
+                  iws(),
+                  collection_value()
+                ])
+              )
+          ])
+        ),
         iows(),
-        optional(
-          sequence([
-            collection_value(),
-            many(
-              sequence([
-                iws(),
-                collection_value()
-              ])
-            )
-        ])
-      ),
-      iows(),
-      ignore(close_brace())
-      ],
-      label: "set-value",
-      debug: true,
-      ast: fn ast -> {:set, MapSet.new(List.flatten(ast))} end)
+        ignore(close_brace())
+        ],
+        label: "set-value",
+        debug: true,
+        ast: fn ast -> {:set, MapSet.new(List.flatten(ast))} end)
+    end)
   end
 
   # List
 
   def list() do
-    sequence(
-    [
-      ignore(open_bracket()),
-      iows(),
-      optional(
-        sequence([
-          collection_value(),
-          many(
+    ParserCache.get_parser("list", fn ->
+      sequence(
+        [
+          ignore(open_bracket()),
+          iows(),
+          optional(
             sequence([
-              iws(),
-              collection_value()
+              collection_value(),
+              many(
+                sequence([
+                  iws(),
+                  collection_value()
+                ])
+              ),
             ])
           ),
-        ])
-      ),
-      iows(),
-      ignore(close_bracket())
-    ],
-    label: "list-value",
-    debug: true,
-    ast: fn ast -> {:list, List.flatten(ast)} end)
+          iows(),
+          ignore(close_bracket())
+        ],
+        label: "list-value",
+        debug: true,
+        ast: fn ast -> {:list, List.flatten(ast)} end)
+    end)
   end
 
   # Table
@@ -102,29 +107,31 @@ defmodule Rez.Parser.CollectionParser do
   end
 
   def table() do
-    sequence([
-      ignore(open_brace()),
-      iows(),
-      optional(
-        many(
-          sequence([
-            iows(),
-            table_attribute()
-          ],
-          ast: fn [attribute] -> attribute end)
-        )
-      ),
-      iows(),
-      ignore(close_brace())
-    ],
-    label: "table-value",
-    debug: true,
-    ast: fn [ast] ->
-      Enum.reduce(ast, %{}, fn %Rez.AST.Attribute{name: name} = attr, table ->
-        Map.put(table, name, attr)
+    ParserCache.get_parser("table", fn ->
+      sequence([
+        ignore(open_brace()),
+        iows(),
+        optional(
+          many(
+            sequence([
+              iows(),
+              table_attribute()
+            ],
+            ast: fn [attribute] -> attribute end)
+          )
+        ),
+        iows(),
+        ignore(close_brace())
+      ],
+      label: "table-value",
+      debug: true,
+      ast: fn [ast] ->
+        Enum.reduce(ast, %{}, fn %Rez.AST.Attribute{name: name} = attr, table ->
+          Map.put(table, name, attr)
+        end)
       end)
+      |> transform(fn table -> {:table, table} end)
     end)
-    |> transform(fn table -> {:table, table} end)
   end
 
   # Collection

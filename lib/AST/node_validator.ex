@@ -376,6 +376,21 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
+  def validate_is_elem?(chained_validator \\ nil) do
+    fn %{name: name, value: value} = attr, node, %{id_map: id_map} = game ->
+      case {Map.has_key?(id_map, value), is_nil(chained_validator)} do
+        {true, true} ->
+          :ok
+
+        {true, false} ->
+          chained_validator.(attr, node, game)
+
+        {false, _} ->
+          {:error, "Attribute '#{name}' should refer to a valid id but ##{value} was not found."}
+      end
+    end
+  end
+
   def validate_has_params?(count, chained_validator \\ nil) do
     fn %{name: name, value: {params, _}} = attr, node, game ->
       case {count == Enum.count(params), is_nil(chained_validator)} do

@@ -6,14 +6,17 @@ defmodule Rez.Parser.AliasParsers do
 
   alias Ergo.Context
   import Ergo.Combinators, only: [ignore: 1, sequence: 2]
-  import Ergo.Terminals, only: [char: 1]
+  # import Ergo.Terminals, only: [char: 1, literal: 1]
 
   alias Rez.AST.NodeHelper
 
-  import Rez.Parser.AttributeParser
+  # import Rez.Parser.AttributeParser
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers, only: [
     iws: 0,
+    at: 0,
+    equals: 0,
+    hash: 0,
     elem_tag: 0,
     iliteral: 1,
     block_begin: 1,
@@ -29,7 +32,7 @@ defmodule Rez.Parser.AliasParsers do
   def tag() do
     sequence(
       [
-        ignore(char(?@)),
+        ignore(at()),
         elem_tag()
       ],
       label: "tag",
@@ -44,11 +47,11 @@ defmodule Rez.Parser.AliasParsers do
         iws(),
         elem_tag(),
         iws(),
-        ignore(char(?=)),
+        equals(),
         iws(),
         elem_tag(),
         iws(),
-        ignore(char(?#)),
+        hash(),
         iws(),
         block_begin("alias"),
         attribute_list(),
@@ -100,7 +103,7 @@ defmodule Rez.Parser.AliasParsers do
   def alias_block() do
     sequence(
       [
-        ignore(char(?@)),
+        ignore(at()),
         elem_tag(),
         iws(),
         js_identifier("alias_id"),

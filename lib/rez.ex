@@ -43,16 +43,26 @@ defmodule Rez do
     real_args(rest)
   end
 
-  @dialyzer {:no_return, quit: 2}
-  def quit(method, code) do
-    case method do
-      :halt -> System.halt(code)
-      :exit -> exit({:shutdown, code})
+  @dialyzer {:no_return, quit_fn: 1}
+  def quit_fn(:halt) do
+    fn code ->
+      System.halt(code)
     end
   end
 
+  def quit_fn(:exit) do
+    fn code ->
+      exit({:shutdown, code})
+    end
+  end
+
+  def quit_fn(:quit) do
+    fn _code -> IO.puts("SIMULATED QUIT") end
+  end
+
   @dialyzer {:no_return, run_command: 2}
-  def run_command(args, halt) do
+  def run_command(args, quit_method) do
+    quit = quit_fn(quit_method)
     {options, args} = parse_options(args, @options, @default_options)
 
     if Map.get(options, :version, false) do
@@ -63,7 +73,7 @@ defmodule Rez do
 
     if Enum.empty?(args) do
       IO.puts("No command specified")
-      quit(halt, 1)
+      quit.(1)
     else
       [command | args] = args
 
@@ -71,21 +81,21 @@ defmodule Rez do
         "new" ->
           if is_nil(options[:author_name]) || is_nil(options[:author_email]) do
             IO.puts("When creating a new game you must specify --author-name and --author-email")
-            quit(halt, 1)
+            quit.(1)
           end
 
           Rez.Generator.generate(args, options)
-          quit(halt, 0)
+          quit.(0)
 
         "compile" ->
           case Rez.Compiler.compile(args, options) do
-            :ok -> quit(halt, 0)
-            :error -> quit(halt, 1)
+            :ok -> quit.(0)
+            :error -> quit.(1)
           end
 
         unknown ->
           IO.puts("Error: command '#{unknown}' not recognised.")
-          quit(halt, 1)
+          quit.(1)
       end
     end
   end

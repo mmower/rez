@@ -57,14 +57,15 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def create_block(block_struct, nil, attributes, source_file, source_line, col)
-      when is_map(attributes) and is_binary(source_file) do
-    Node.pre_process(
-      struct(
-        block_struct,
-        position: {source_file, source_line, col},
-        attributes: attributes))
-  end
+  # def create_block(block_struct, nil, attributes, source_file, source_line, col)
+  #     when is_map(attributes) and is_binary(source_file) do
+  #   IO.puts("create_block:nil")
+  #   Node.pre_process(
+  #     struct(
+  #       block_struct,
+  #       position: {source_file, source_line, col},
+  #       attributes: attributes))
+  # end
 
   def create_block(block_struct, id, attributes, source_file, source_line, col)
       when is_map(attributes) and is_binary(source_file) do
@@ -77,6 +78,8 @@ defmodule Rez.Parser.StructureParsers do
       ))
   end
 
+  # Does the twin jobs of setting the AST to point to the block and map the ID of
+  # into the id_map.
   def ctx_with_block_and_id_mapped(%Context{data: %{id_map: id_map} = data} = ctx, block, id, label, file, line) do
     case Map.get(id_map, id) do
       nil ->
@@ -90,7 +93,10 @@ defmodule Rez.Parser.StructureParsers do
     end
   end
 
-  def block(label, block_struct) do
+  # Parser for a block that has no author assigned id or children. The id_fn
+  # parameter is expected to return a generated ID, otherwise a random ID will
+  # be assigned. The id_fn is passed the map of attributes
+  def block(label, block_struct, id_fn) do
     sequence(
       [
         iliteral("@#{label}"),
@@ -110,8 +116,9 @@ defmodule Rez.Parser.StructureParsers do
               } = ctx ->
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
-        block = create_block(block_struct, nil, attributes, source_file, source_line, col)
-        ctx_with_block_and_id_mapped(ctx, block, label, label, source_file, source_line)
+        auto_id = id_fn.(attributes)
+        block = create_block(block_struct, auto_id, attributes, source_file, source_line, col)
+        ctx_with_block_and_id_mapped(ctx, block, auto_id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
         Context.add_error(
