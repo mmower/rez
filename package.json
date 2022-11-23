@@ -3,7 +3,6 @@
     "alpinejs": "^3.4.2",
     "bulma": "^0.9.3",
     "handlebars": "^4.7.7",
-    "immutable": "^4.0.0-rc.15",
     "node": "^17.1.0"
   }
 }
