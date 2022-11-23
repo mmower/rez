@@ -9,7 +9,17 @@ By Matt Mower &lt;self@mattmower.com&gt;
 
 ## Intro
 
-Rez is a tool for writing interactive fiction games with HTML, that is games that are constructed from HTML markup, images, movies, and sounds. Typically, most of a players interaction with a these game is through clicking links that represent the actions the player can take.
+Rez is a tool for creating HTML-based interactive fiction games.
+
+What do we mean by that? It's for games that are made using HTML markup, images, movies, and sounds where players interact through clicking links representing actions they can take.
+
+Simpler examples of such games are choice based stories for which many authors use [Twine](https://twinery.org/). Rez is designed for a slightly more technical audience that want to create more ambitious games.
+
+Rez offers: asset management, actors & behaviours (both through Javascript callbacks and AI behaviour trees), items & inventory management, maps & locations, factions & relationships, scenes, plots, systems, and more.
+
+Rez uses a flexible template-based rendering system with a scene/card system that makes it easy to create any interface you want. It includes the [Bulma](https://bulma.io/) CSS framework and [Alpine.JS](https://alpinejs.dev/) for modern layout and dynamic UI.
+
+## Getting Started
 
 To write a game with Rez you create one or more `.rez` source files containing the definition of the game. The rez compiler then translates these into HTML+ javascript+assets required to play the game in the browser.
 
@@ -25,27 +35,24 @@ The ideal Rez user right now is probably creating a game that is ambitious for T
 
 ## Installation
 
-Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed.
+Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed. Rez currently targets Elixir v1.14 (OTP25) but should be compilable using v1.13.
 
 Rez uses Handlebars.js for it's template language and requires the Handlebars
 compiler to be available on the system path for converting templates during game
-compilation.
+compilation. Rez was written expecting Handlebars.js v4.7.7.
 
-https://handlebarsjs.com/installation/
+### macOS
 
-Rez was written expecting Handlebars.js v4.7.7 and is not tested with any other
-version.
+Installation on macOS depends on [Homebrew](https://brew.sh/) and [ASDF](https://asdf-vm.com/). If you install ASDF directly the homebrew dependency is unnecessary.
 
-### MacOS
-
-    download latest rez escript binary
-    brew install erlang
-    brew install elixir
-    npm install -g handlebars
+    brew install asdf           # We use ASDF for dependency management
+    asdf install                # Will bring in nodejs, erlang, and elixir
+    npm install                 # Will install handlebars, Bulma, and Alpine
+    ./build_escript             # Creates the `rez` compiler binary
 
 ### Other OS
 
-    I'm hoping users of other platforms will give me the steps required to get it working for their platform.
+I'm hoping users of other platforms will give me the steps required to get it working for their platform.
 
 ## Usage
 
@@ -63,9 +70,9 @@ A Rez game is compiled into a set of HTML, Javascript, and CSS files that repres
 
 From the game directory:
 
-    rez compile src/<file.rez>
+    rez compile [--verbose 0-4] src/<file.rez>
 
-This will build the game in the `dist` folder including assets (such as audio or image files).
+This will build the complete game in the `dist` folder including all assets referenced in the game.
 
 The resulting files can be archived for distribution either hosted on a server or potentially turned into an Eletron application.
 
