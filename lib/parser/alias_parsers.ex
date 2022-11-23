@@ -40,6 +40,37 @@ defmodule Rez.Parser.AliasParsers do
     )
   end
 
+  defp alias_ctx(%Context{ast: [alias_tag, target_tag, attributes], data: %{aliases: aliases} = data} = ctx) do
+    legal_alias = not is_reserved_tag_name?(alias_tag)
+    legal_target = is_reserved_tag_name?(target_tag)
+    case {legal_alias, legal_target} do
+      {false, _} ->
+        Context.add_error(
+          ctx,
+          :illegal_tag_name,
+          "#{alias_tag} is not a legal tag for an alias"
+        )
+
+      {_, false} ->
+        Context.add_error(
+          ctx,
+          :illegal_tag_name,
+          "#{target_tag} is not a valid target to be aliased"
+        )
+
+      {true, true} ->
+        %{
+          ctx
+          | ast: nil,
+            data: %{
+              data
+              | aliases:
+                  Map.put(aliases, alias_tag, {target_tag, attr_list_to_map(attributes)})
+            }
+        }
+    end
+  end
+
   def alias_define() do
     sequence(
       [
@@ -47,11 +78,11 @@ defmodule Rez.Parser.AliasParsers do
         iws(),
         elem_tag(),
         iws(),
-        equals(),
+        ignore(equals()),
         iws(),
         elem_tag(),
         iws(),
-        hash(),
+        ignore(hash()),
         iws(),
         block_begin("alias"),
         attribute_list(),
@@ -60,40 +91,7 @@ defmodule Rez.Parser.AliasParsers do
       ],
       debug: true,
       label: "alias-use",
-      ctx: fn %Context{
-                ast: [alias_tag, target_tag, attributes],
-                data: %{aliases: aliases} = data
-              } = ctx ->
-
-          legal_alias = not is_reserved_tag_name?(alias_tag)
-          legal_target = is_reserved_tag_name?(target_tag)
-          case {legal_alias, legal_target} do
-            {false, _} ->
-              Context.add_error(
-                ctx,
-                :illegal_tag_name,
-                "#{alias_tag} is not a legal tag for an alias"
-              )
-
-            {_, false} ->
-              Context.add_error(
-                ctx,
-                :illegal_tag_name,
-                "#{target_tag} is not a valid target to be aliased"
-              )
-
-            {true, true} ->
-              %{
-                ctx
-                | ast: nil,
-                  data: %{
-                    data
-                    | aliases:
-                        Map.put(aliases, alias_tag, {target_tag, attr_list_to_map(attributes)})
-                  }
-              }
-        end
-      end
+      ctx: &alias_ctx/1
     )
   end
 
