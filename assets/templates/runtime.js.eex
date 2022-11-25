@@ -168,8 +168,7 @@ Handlebars.registerHelper("r_resume", function(title) {
  * or audio) referenced by the asset.
  */
 Handlebars.registerHelper("r_asset", function(asset_id) {
-  const game = window.game;
-  const asset = game.$(asset_id);
+  const asset = $(asset_id);
   if(asset == null) {
     throw "Attempt to retrieve asset with id '" + asset_id + "' not found!";
   } else if(asset.game_object_type != "asset") {
@@ -178,6 +177,11 @@ Handlebars.registerHelper("r_asset", function(asset_id) {
     return asset.tag();
   }
 });
+
+Handlebars.registerHelper("r_asset_path", function(asset_id) {
+  const asset = $(asset_id);
+  return Handlebars.SafeString(asset.path);
+})
 
 //-----------------------------------------------------------------------------
 // Basic Object Prototype
@@ -1877,6 +1881,7 @@ let scene_proto = {
   start() {
     this.reset();
     this.init();
+    this.runEvent("start", {});
     this.playCardWithId(this.getAttribute("initial_card"))
   }
 };
