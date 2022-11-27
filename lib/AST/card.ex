@@ -68,7 +68,7 @@ defmodule Rez.AST.Card do
   """
   def convert_scene_shift_links(text) do
     Regex.replace(@scene_shift_syntax, text, fn _, title, scene_id ->
-      "{{r_shift card '#{String.trim(scene_id)}' '#{String.trim(title)}'}}"
+      "{{shift card '#{String.trim(scene_id)}' '#{String.trim(title)}'}}"
     end)
   end
 
@@ -80,7 +80,7 @@ defmodule Rez.AST.Card do
   """
   def convert_scene_interlude_links(text) do
     Regex.replace(@scene_interlude_syntax, text, fn _, title, scene_id ->
-      "{{r_interlude card '#{scene_id}' '#{title}'}}"
+      "{{interlude card '#{scene_id}' '#{title}'}}"
     end)
   end
 
@@ -91,7 +91,7 @@ defmodule Rez.AST.Card do
   """
   def convert_resume_links(text) do
     Regex.replace(@scene_resume_syntax, text, fn _, title ->
-      "{{r_resume '#{title}'}}"
+      "{{resume '#{title}'}}"
     end)
   end
 
@@ -102,7 +102,7 @@ defmodule Rez.AST.Card do
 
   def convert_event_links(text) do
     Regex.replace(@event_syntax, text, fn _, title, event_name ->
-      "{{r_event '#{String.trim(title)}' '#{String.trim(event_name)}'}}"
+      "{{event '#{String.trim(title)}' '#{String.trim(event_name)}'}}"
     end)
   end
 
@@ -119,7 +119,7 @@ defmodule Rez.AST.Card do
   """
   def convert_dynamic_links(text) do
     Regex.replace(~r/\[\[\*([\w\s]+)\]\]/, text, fn _, action ->
-      "{{r_link card '#{action}'}}"
+      "{{link card '#{action}'}}"
     end)
   end
 

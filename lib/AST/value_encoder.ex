@@ -50,7 +50,7 @@ defmodule Rez.AST.ValueEncoder do
     "\"#{e}\""
   end
 
-  defp encode_function({args, body}) do
+  def encode_function({args, body}) do
     arg_list = Enum.join(args, ", ")
     "(#{arg_list}) => #{body}"
   end

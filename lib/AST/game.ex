@@ -28,6 +28,7 @@ defmodule Rez.AST.Game do
             factions: %{},
             forms: %{},
             groups: %{},
+            helpers: %{},
             inventories: %{},
             locations: %{},
             items: %{},
@@ -167,6 +168,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:effects)
     |> NodeHelper.process_collection(:factions)
     |> NodeHelper.process_collection(:groups)
+    |> NodeHelper.process_collection(:helpers)
     |> NodeHelper.process_collection(:inventories)
     |> NodeHelper.process_collection(:slots)
     |> NodeHelper.process_collection(:items)
@@ -195,6 +197,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append(Map.values(game.effects))
     |> Utils.append(Map.values(game.factions))
     |> Utils.append(Map.values(game.groups))
+    |> Utils.append(Map.values(game.helpers))
     |> Utils.append(Map.values(game.inventories))
     |> Utils.append(Map.values(game.slots)) # We put slot before item since there is a dependency on accepts:
     |> Utils.append(Map.values(game.items))

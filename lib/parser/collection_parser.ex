@@ -17,6 +17,7 @@ defmodule Rez.Parser.CollectionParser do
     iws: 0,
     colon: 0,
     hash: 0,
+    comma: 0,
     open_brace: 0,
     close_brace: 0,
     open_bracket: 0,
@@ -75,6 +76,7 @@ defmodule Rez.Parser.CollectionParser do
               many(
                 sequence([
                   iws(),
+                  ignore(optional(sequence([comma(), iws()]))),
                   collection_value()
                 ])
               ),

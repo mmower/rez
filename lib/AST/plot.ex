@@ -39,6 +39,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
 
   def validators(_plot) do
     [
+      attribute_present?("priority",
+        attribute_has_type?(:number,
+        value_passes?(
+          fn value -> value >= 1 and value <= 100 end,
+          "Priority values must be between 1 (highest) and 100 (lowest)"))),
+
       attribute_if_present?("tags",
         attribute_is_keyword_set?()),
 

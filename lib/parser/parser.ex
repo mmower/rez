@@ -34,6 +34,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("group", Rez.AST.Group)
   end
 
+  def helper_block() do
+    block_with_id("helper", Rez.AST.Helper)
+  end
+
   def inventory_block() do
     block_with_id("inventory", Rez.AST.Inventory)
   end
@@ -109,6 +113,7 @@ defmodule Rez.Parser.Parser do
         effect_block(),
         faction_block(),
         group_block(),
+        helper_block(),
         inventory_block(),
         item_block(),
         list_block(),

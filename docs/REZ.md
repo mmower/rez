@@ -976,7 +976,7 @@ If specified this should be a map of keys to game object ids. When the card is r
       bindings: {player: #player}
 
       content: """
-      The player's name is {{$ player "name}}
+      The player's name is {{attr player "name"}}
       """
     end
 
