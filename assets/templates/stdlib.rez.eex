@@ -130,7 +130,7 @@ end
     } else if(asset.game_object_type != "asset") {
       throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
     } else {
-      return asset.tag();
+      return Handlebars.SafeString(asset.tag());
     }
   }
 end
