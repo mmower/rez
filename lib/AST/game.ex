@@ -24,6 +24,7 @@ defmodule Rez.AST.Game do
             attributes: %{},
             actors: %{},
             assets: %{},
+            cards: %{},
             effects: %{},
             factions: %{},
             forms: %{},
@@ -33,7 +34,7 @@ defmodule Rez.AST.Game do
             locations: %{},
             items: %{},
             lists: %{},
-            cards: %{},
+            objects: %{},
             plots: %{},
             relationships: %{},
             scenes: %{},
@@ -45,10 +46,6 @@ defmodule Rez.AST.Game do
             topics: %{},
             zones: %{},
             template: nil
-
-  # def add_child(%Attribute{name: name} = attr, %Game{attributes: attributes} = game) do
-  #   %{game | attributes: Map.put(attributes, name, attr)}
-  # end
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: scripts ++ [script]}
@@ -174,6 +171,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:items)
     |> process_item_types()
     |> NodeHelper.process_collection(:lists)
+    |> NodeHelper.process_collection(:objects)
     |> NodeHelper.process_collection(:plots)
     |> NodeHelper.process_collection(:relationships)
     |> NodeHelper.process_collection(:scenes)
@@ -202,6 +200,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append(Map.values(game.slots)) # We put slot before item since there is a dependency on accepts:
     |> Utils.append(Map.values(game.items))
     |> Utils.append(Map.values(game.lists))
+    |> Utils.append(Map.values(game.objects))
     |> Utils.append(Map.values(game.plots))
     |> Utils.append(Map.values(game.relationships))
     |> Utils.append(Map.values(game.scenes))

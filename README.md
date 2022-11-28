@@ -17,7 +17,9 @@ Simpler examples of such games are choice based stories for which many authors u
 
 Rez offers: asset management, actors & behaviours (both through Javascript callbacks and AI behaviour trees), items & inventory management, maps & locations, factions & relationships, scenes, plots, systems, and more.
 
-Rez uses a flexible template-based rendering system with a scene/card system that makes it easy to create any interface you want. It includes the [Bulma](https://bulma.io/) CSS framework and [Alpine.JS](https://alpinejs.dev/) for modern layout and dynamic UI.
+Rez uses a flexible template-based rendering system with a scene/card system that makes it easy to create any interface you want. It includes the [Bulma](https://bulma.io/) CSS framework and [Alpine.JS](https://alpinejs.dev/) for modern layout and dynamic UI and uses [Handlebars](https://handlebarsjs.com/) for dynamic content.
+
+See the [online documentation](https://github.com/mmower/rez/blob/main/docs/REZ.md) for a complete description of the language and runtime.
 
 ## Getting Started
 

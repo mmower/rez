@@ -23,34 +23,22 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   def pre_process(group), do: group
 
-  def process(%Group{attributes: %{"tags" => _tags}} = group) do
-    group
-  end
-
-  def process(%Group{attributes: %{"content" => _content}} = group) do
-    group
-  end
-
-  def process(%Group{attributes: %{"folder" => _folder}} = group) do
-    group
-  end
+  def process(%Group{} = group), do: group
 
   def children(_group), do: []
 
   def validators(_group) do
     [
-      attribute_one_of_present?(["tags", "content", "folder"], true),
+      attribute_present?("type",
+        attribute_value_is_one_of?(["image", "audio", "video"])),
 
-      attribute_if_present?("tags",
+      attribute_one_of_present?(["include_tags", "exclude_tags"], true),
+
+      attribute_if_present?("include_tags",
         attribute_is_keyword_set?()),
 
-      attribute_if_present?("content",
-        attribute_has_type?(:list,
-          attribute_not_empty_coll?(
-            attribute_coll_of?([:elem_ref, :keyword])))),
-
-      attribute_if_present?("folder",
-        attribute_has_type?(:string))
+      attribute_if_present?("exclude_tags",
+        attribute_is_keyword_set?())
     ]
   end
 end

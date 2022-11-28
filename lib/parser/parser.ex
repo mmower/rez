@@ -22,6 +22,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("asset", Rez.AST.Asset)
   end
 
+  def card_block() do
+    block_with_id("card", Rez.AST.Card)
+  end
+
   def effect_block() do
     block_with_id("effect", Rez.AST.Effect)
   end
@@ -54,8 +58,8 @@ defmodule Rez.Parser.Parser do
     block_with_id("location", Rez.AST.Location)
   end
 
-  def card_block() do
-    block_with_id("card", Rez.AST.Card)
+  def object_block() do
+    block_with_id("object", Rez.AST.Object)
   end
 
   def plot_block() do
@@ -110,6 +114,7 @@ defmodule Rez.Parser.Parser do
         # Now the pre-defined blocks
         actor_block(),
         asset_block(),
+        card_block(),
         effect_block(),
         faction_block(),
         group_block(),
@@ -117,7 +122,7 @@ defmodule Rez.Parser.Parser do
         inventory_block(),
         item_block(),
         list_block(),
-        card_block(),
+        object_block(),
         plot_block(),
         relationship_block(),
         scene_block(),

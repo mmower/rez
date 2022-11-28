@@ -235,6 +235,16 @@ For example:
 
 Elements describe in-game content in terms of attributes. Directives are more varied and typically alter how game content is defined. See the <a href="#directives-catalog">catalog</a> for more info.
 
+## Rendering
+
+What is displayed on screen is determined by three things:
+
+* The layout provided by the game
+* The layout provided by the current scene
+* The content provided by the card, or stack of cards
+
+
+
 ## Content Elements
 
 The `@game`, `@scene`, and `@card` elements all specify content that will be presented to the player. In the case of the `@game` and `@scene` this is their `layout` attribute, in the case of `@card` it is the `content` attribute.
@@ -708,6 +718,7 @@ A few Rez elements like `@game` and `@zone` contain other elements but most do n
 * [`@item`](#item-element)
 * [`@list`](#list-element)
 * [`@location`](#location-element)
+* [`@object`](#object-element)
 * [`@plot`](#plot-element)
 * [`@rel`](#relationship-element)
 * [`@scene`](#scene-element)
@@ -1367,12 +1378,155 @@ The run-time API supports selecting randomly from lists including with & without
 
 This script will be called during game initialization and before the game has started.
 
+## <a name="object-element">Object</a>
+
+An `@object` element describes an author-driven concept. Isn't everything in
+Rez an object of some kind? Yes, but elements like `@author`, `@item`, and
+`@plot` have built-in meaning and functionality. By contrast `@object` is a
+blank canvas that an author can use for anything they think of.
+
+### Example
+
+Imagine we are building a role-playing game and we want to introduce the notion
+of classes and skills. Rez does not provide these concepts out of the box. So
+we can use `@object` (and, optionally, `@alias`) to this ourselves.
+
+    @alias class = object # begin
+      description: "A class for players and NPCs"
+    end
+
+    @alias skill = object # begin
+      template: true
+      description: "Something an actor has learned how to do"
+      min: 0
+      max: 5
+      level: 0
+    end
+
+    @alias perk = object # begin
+      description: "Represents a class based bonus to skills and stats"
+    end
+
+    @alias stat = object # begin
+      template: true
+      description: "Represents how good or bad someone is at doing things"
+      min: 3
+      max: 18
+      level_gen: 3d6
+      level: &level_gen
+    end
+
+    @class detective begin
+      description: "Detectives are savvy at following clues and untangling mysteries."
+      primary_stat: #perception
+      perk: #gun_license
+      skills: #{#puzzling #gunplay #drinking}
+    end
+
+    @class hood begin
+      description: "Hoods supply the muscle and take care of problems."
+      primary_stat: #toughness
+      perk: #dont_go_down_easy
+      skills: #{#gunplay #fisticuffs #intimidate}
+    end
+
+    @class dame begin
+      description: "Dames are trouble"
+      primary_stat: #charisma
+      perk: #beguile
+      skills: #{#evade #fast_talk #scheming}
+    end
+
+    @perk gun_license begin
+      description: "Without this cops might pick you up for flashing your lead pumper."
+      ...
+    end
+
+    @perk dont_go_down_easy begin
+      description: "Takes more than a bullet to put you down."
+      ...
+    end
+
+    @perk beguile begin
+      description: "One look into your eyes and they're putty in your hands."
+      ...
+    end
+
+    @skill puzzling begin
+      description: "Figuring out how the clues fit together."
+    end
+
+    @skill gunplay begin
+      description: "Shooting straight, esp. when it matters."
+    end
+
+    @skill drinking begin
+      description: "Hold your liquour, yes sir!"
+    end
+
+    @skill fisticuffs begin
+      description: "Marquis of Queensbury be damned, hit 'em where it hurts."
+    end
+
+    @skill intimidate begin
+      description: "You don't actually **need** to shoot 'em."
+    end
+
+    @skill evade begin
+      description: "Never be in the wrong place at the wrong time."
+    end
+
+    @skill fast_talk begin
+      description: "They'll think it was you doing a favour for them!"
+    end
+
+    @skill scheming begin
+      description: "They'll never see it coming."
+    end
+
+    @stat perception begin
+      description: "Notice what others don't."
+    end
+
+    @stat toughness begin
+      description: "Take a licking and keep on ticking."
+    end
+
+    @stat charisma begin
+      description: "Charm their socks off."
+    end
+
+Now we can make use of our classes in-game:
+
+    @actor player begin
+      class: #detective
+    end
+
+Rez itself knows nothing about classes and detectives but your in-game code
+(scripts and behaviour tasks) can make use of the referenced objects &
+attributes.
+
+In this example `@perk` could have been a tag of some kind but we imagine that
+there may be perk-specific data or event handlers in a real use case.
+
+Note that we have set `template: true` on `@skill` and `@stat` reflecting that
+we probably want to create a copy of the object for each actor in particular,
+rather than them sharing the original (in this example the `level` attribute
+would could change as the game progresses).
+
+Note that because Rez doesn't know the "shape" of your custom objects it cannot
+validate them or their attributes. Extra care should be taken here that they
+are well-formed.
+
 ## <a name="plot-element">Plot</a>
 
 <emph>As of v0.8 the plot element is mainly a placeholder for future functionality.</emph>
 
 ### Example
 ### Required Attributes
+
+* priority
+
 ### Optional Attributes
 
 * tags — set of keyword
