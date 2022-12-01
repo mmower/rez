@@ -14,7 +14,7 @@ The `@object` element allows you to create a fully-custom object that has no bui
 
 Let's look at an example:
 
-    @object fighter_class begin
+    @object soldier begin
       specialisation: :combat
       perks: #{#two_weapon_style #pounce #shield_bash #second_wind}
     end
@@ -39,7 +39,7 @@ Let's look at an example:
       label: "When the chips are down, you come out fighting"
     end
 
-    @object mage_class begin
+    @object wizard begin
       specialisation: :magic
       perks: #{#fast_cast #mana_surge #concentration #max_damage}
     end
@@ -62,6 +62,12 @@ Let's look at an example:
     @object max_damage begin
       level: 9
       label: "Your fireballs are the crispiest"
+    end
+
+    @actor thaugrim_the_wise begin
+      %% Code dealing with this actor can lookup available perks from
+      %% the Wizards class object
+      class: #wizard
     end
 
 How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them.
@@ -105,6 +111,21 @@ Anywhere that you want a common way of defining multiple game objects, the alias
 # Using Decisions
 
 `RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
+
+You can use a decision like this:
+
+    const decision = new RezDecision("Include Adult themes", {info: "Toggle this on to include themes of sex & violence that might not be suitable for all. Leave it off for a family friendly experience."});
+    decision.default_no();
+    some_function_making_the_decision(decision);
+    if(decision.result) {
+      // do something
+    } else {
+      // do something else
+    }
+
+In this case the `some_function_making_the_decision(decision)` is expected to call either `decision.yes()` or `decision.no("reason")` before returning. In most cases you will be passing a decision to a script. In this case if neither function gets called the decision will default to 'no' (`false`). If we had used `decision.default_yes()` it would work the other way around.
+
+You can pass data into a decision either through the second argument to `new RezDecision()` or using the `setData(key, value)` API. After receiving a decision you can use the `data()` API to retrieve data. This way the callee can pass other information back with the decision.
 
 # Linking to things
 
