@@ -207,6 +207,7 @@ let basic_object = {
     const copy = new this.constructor(id, attributes);
     copy.runEvent("copy", {original: this});
     copy.setAttribute("template", false);
+    copy.setAttribute("copy_of", this.id);
     copy.init();
     return copy;
   },
@@ -294,6 +295,15 @@ let basic_object = {
     }
   },
 
+  getObjectViaAttribute(name, default_value) {
+    const id = this.getAttributeValue(name, default_value);
+    return $(id);
+  },
+
+  setObjectViaAttribute(name, object) {
+    this.setAttribute(name, object.id);
+  },
+
   attributeHasChanged(attr_name) {
     this.changed_attributes.push(attr_name);
   },
@@ -304,6 +314,41 @@ let basic_object = {
     }
     this.attributes[name] = value;
     this.attributeHasChanged(name);
+  },
+
+  addTag(tag) {
+    let tags = this.getAttribute("tags");
+    if(!tags) {
+      tags = new Set([tag]);
+    } else {
+      tags.add(tag);
+    }
+
+    this.setAttribute("tags", tags);
+    this.game.indexObjectForTag(this, tag);
+  },
+
+  removeTag(tag) {
+    let tags = this.getAttribute("tags");
+    if(!tags) {
+      tags = new Set();
+    } else {
+      tags.delete(tag);
+    }
+
+    this.setAttribute("tags", tags);
+    this.game.unindexObjectForTag(this, tag);
+  },
+
+  setTags(new_tags) {
+    new_tags = new Set(new_tags); // Just in case they are passed as an array
+    const old_tags = this.getAttributeValue("tags", new Set());
+
+    const to_remove = old_tags.difference(new_tags);
+    to_remove.forEach((tag) => this.removeTag(tag));
+
+    const to_add = new_tags.difference(old_tags);
+    to_add.forEach((tag) => this.addTag(tag));
   },
 
   putIn(path, value) {
@@ -615,12 +660,19 @@ let card_proto = {
       const custom_bindings = this.getAttribute("bindings") || {};
       const bindings = {};
       for(let binding_name of Object.keys(custom_bindings)) {
-        const binding_id = custom_bindings[binding_name];
-        const game_object = this.game.$(binding_id);
-        if(game_object == null) {
-          throw "Attempt to make binding to game object with id " + binding_id + " but no such object was found!";
+        const binding = custom_bindings[binding_name];
+        if(typeof(binding) == "string") {
+          // ID based binding
+          const binding_id = custom_bindings[binding_name];
+          const game_object = this.game.$(binding_id);
+          if(game_object == null) {
+            throw "Attempt to make binding to game object with id " + binding_id + " but no such object was found!";
+          }
+          bindings[binding_name] = game_object;
+        } else if(typeof(binding) == "function") {
+          // Query based binding
+          bindings[binding_name] = binding(this);
         }
-        bindings[binding_name] = game_object;
       }
       return bindings;
     } else {
@@ -990,6 +1042,33 @@ let game_proto = {
     this.runEvent("load", {});
   },
 
+  indexObjectForTag(obj, tag) {
+    let objects = this.tag_index[tag];
+    if(!objects) {
+      objects = new Set([obj.id]);
+      this.tag_index[tag] = objects;
+    } else {
+      objects.add(obj.id);
+    }
+  },
+
+  unindexObjectForTag(obj, tag) {
+    let objects = this.tag_index[tag];
+    if(objects) {
+      objects.delete(obj.id);
+    }
+  },
+
+  addToTagIndex(obj) {
+    const tags = obj.getAttributeValue("tags", new Set());
+    tags.forEach((tag) => this.indexObjectForTag(obj, tag));
+  },
+
+  removeFromTagIndex(obj) {
+    const tags = obj.getAttributeValue("tags", new Set());
+    tags.forEach((tag) => this.unindexObjectForTag(obj, tag));
+  },
+
   addGameObject(obj) {
     if(!obj.isGameObject()) {
       console.dir(obj);
@@ -998,6 +1077,7 @@ let game_proto = {
 
     obj.game = this;
     this.game_objects.set(obj.id, obj);
+    this.addToTagIndex(obj);
 
     // If we are in the pre-init we collect objects to be inited once game
     // setup is complete. We expect cloned objects to already have been
@@ -1026,6 +1106,15 @@ let game_proto = {
   <%# getByProto(proto) {
     return Array.from(this.game_objects.values).filter((obj) => obj.constructor.prototype == proto);
   }, %>
+
+  getTaggedWith(tag) {
+    const objects = this.tag_index[tag];
+    if(objects) {
+      return Array.from(objects);
+    } else {
+      return [];
+    }
+  },
 
   getAll(target_type) {
     return Array.from(this.game_objects.values()).filter((obj) => obj.game_object_type == target_type);
@@ -1130,13 +1219,14 @@ function RezGame(template, attributes) {
   this.id = "game";
   this.game_object_type = "game";
   this.attributes = attributes;
+  this.tag_index = {};
   this.scene_stack = [];
   this.current_scene_id = null;
   this.template = template;
   this.wmem = {game: this};
   this.game_objects = new Map();
   this.init_objects = [this];
-  this.properties_to_archive = ["scene_stack", "current_scene_id"];
+  this.properties_to_archive = ["scene_stack", "current_scene_id", "wmem", "tag_index"];
   this.changed_attributes = [];
   this.$ = this.getGameObject;
 }
