@@ -1,16 +1,76 @@
 # Rez Cookbook
 
-The following is a guide to some of Rez's features and common things you may
-want to be able to do.
+The following is a guide to some of Rez's features and common things you may want to be able to do.
+
+# Using `@object`
+
+Rez defines a number of generally useful elements like `@actor`, `@item`, `@inventory`, `@scene` and so forth. These elements have built-in behaviours designed to be useful but flexible.
+
+For example `@item` and `@inventory` can be used to define much more than physical objects. You could have an inventory representing things different actors know about and use an item for individual topics/thoughts. Or items could represent spells in an inventory spell-book. The `@item`/`@inventory` elements are flexible enough to cover a range of container/containment situations.
+
+However, there are going to be a range of concepts in a game for which Rez cannot plan or which may require very customised behaviour. A good example is that of "classes" as in RPG classes. There are so many possible ways to have a class work in a game that Rez cannot really offer a useful starting point. For this type of situation there is `@object`.
+
+The `@object` element allows you to create a fully-custom object that has no built-in behaviours (beyond what you get from the `__basic_object__` runtime prototype that all in-game objects share).
+
+Let's look at an example:
+
+    @object fighter_class begin
+      specialisation: :combat
+      perks: #{#two_weapon_style #pounce #shield_bash #second_wind}
+    end
+
+    @object two_weapon_style begin
+      level: 3
+      label: "Fight with two weapons almost as well as one"
+    end
+
+    @object pounce begin
+      level: 5
+      label: "Close distance to an enemy and engage them quicker"
+    end
+
+    @object shield_bash begin
+      level: 7
+      label: "Shields can be a weapon in the right hands"
+    end
+
+    @object second_wind begin
+      level: 9
+      label: "When the chips are down, you come out fighting"
+    end
+
+    @object mage_class begin
+      specialisation: :magic
+      perks: #{#fast_cast #mana_surge #concentration #max_damage}
+    end
+
+    @object fast_cast begin
+      level: 3
+      label: "Faster than a speeding magic missile"
+    end
+
+    @object mana_surge begin
+      level: 5
+      label: "You can always reach down for just one more spell"
+    end
+
+    @object concentration begin
+      level: 7
+      label: "Nothing can distract you"
+    end
+
+    @object max_damage begin
+      level: 9
+      label: "Your fireballs are the crispiest"
+    end
+
+How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them.
 
 # Avoiding Duplication with Aliases
 
-A common scenario is a number of scenes wanting to share the same layout. While
-it is possible to supply the same `layout:` attribute and duplicate the content
-Rez does offer a better way: aliases.
+A common scenario is a number of scenes wanting to share the same layout. While it is possible to supply the same `layout:` attribute and duplicate the content Rez does offer a better way: aliases.
 
-An alias specifies a type of element to create and default attributes to supply,
-so for example:
+An alias specifies a type of element to create and default attributes to supply, so for example:
 
     @alias std_scene = scene # begin
       layout: """
@@ -24,58 +84,63 @@ Allows us to define a scene with the common layout as:
     @std_scene scene_one begin
     end
 
-Anywhere that you want a common way of defining multiple game objects, the
-alias is a possible solution.
+Note that the values in an alias are a starting point and can be overriden:
+
+    @alias class = object # begin
+      description: "A class"
+      tags: #{:class}
+    end
+
+    @class fighter_class begin
+      description: "Fighter"
+      tags: #{:combat_class}
+    end
+
+The `figher_class` object will end up with the description "Fighter" not "A class" and this is what you want. However we might be suprised to find that `fighter_class` only has `tags: #{:combat_class}` and the `:class` tag has disappeared. This is because the use of the alias has overriden the whole attribute.
+
+In a future version we may introduce a syntax for collections that allows those provided by an alias to be amended, rather than overwritten.
+
+Anywhere that you want a common way of defining multiple game objects, the alias is a possible solution.
+
+# Using Decisions
+
+`RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
 
 # Linking to things
 
-The current scene will render its card which can include links to render other
-cards and other scenes. This is done by specifying either a card or scene id
-in a link.
+The current scene will render its card which can include links to render other cards and other scenes. This is done by specifying either a card or scene id in a link.
 
-If the id is of a card then the new card will be rendered as part of the layout
-of the existing scene. Depending on the scenes layout mode it will either
-replace the content of the previous card, or be appended to it.
+If the id is of a card then the new card will be rendered as part of the layout of the existing scene. Depending on the scenes layout mode it will either replace the content of the previous card, or be appended to it.
 
 If the id is of a scene then a transition to the new scene will be started.
 
 # Static Links
 
-A static link is always embedded and points directly at a card or scene. It is
-equivalent to a Twine passage link and has the same syntax as follows:
+A static link is always embedded and points directly at a card or scene. It is equivalent to a Twine passage link and has the same syntax as follows:
 
 ```
 [[Main Street]]
 ```
 
-This will embed a link to load a card with the id `main_street` and is syntactic
-sugar for writing:
+This will embed a link to load a card with the id `main_street` and is syntactic sugar for writing:
 
 ```
 [[Main Street|#main_street]]
 ```
 
-If no id is included the link text is converted into lower case and spacres are
-replaced with underscores, so "Main Street" becomes "main_street".
+If no id is included the link text is converted into lower case and spacres are replaced with underscores, so "Main Street" becomes "main_street".
 
 # Dynamic Links
 
-Sometimes you want more control over whether links are displayed at all, can
-be clicked, and what text they present. For example an option may be disabled
-with a message that informs the player why they can't take that action at
-present. Or hidden because it doesn't make sense yet.
+Sometimes you want more control over whether links are displayed at all, can be clicked, and what text they present. For example an option may be disabled with a message that informs the player why they can't take that action at present. Or hidden because it doesn't make sense yet.
 
-Rez supports dynamic links that give you this level of control. For
-example if you write:
+Rez supports dynamic links that give you this level of control. For example if you write:
 
 ```
 [[*main_street]]
 ```
 
-Rez will look for a `main_street` script attribute of the card and will
-call that script to determine whether a link should be displayed, what the
-text of the link should be, and whether the player can click it or not, and
-even what happens when they do.
+Rez will look for a `main_street` script attribute of the card and will call that script to determine whether a link should be displayed, what the text of the link should be, and whether the player can click it or not, and even what happens when they do.
 
 The options are:
 
