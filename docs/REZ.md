@@ -1179,6 +1179,153 @@ The `on_card_change` script is called whenever a new card is played into the cur
 
 The callback happens between the `on_leave` and `on_enter` scripts of the card that is being played.
 
+### API
+
+#### archive()
+
+Returns a JSON string containing the archived state of the game. This is used internally by the save() call.
+
+#### save()
+
+Archives the current game state and triggers a file download of a JSON save game. The file will automatically be named using the game name as a prefix and the date & time as a suffix.
+
+It works by adding the JSON to a `File` object and adding a link to the document link to that `File` and automatically clicking it.
+
+Before the download gets triggered a `save` event is raised allowing the game an opportunity to make changes before state gets archived.
+
+#### load(json)
+
+Retrieves a game state from the passed in JSON and attempts to reload it first checking that it has the same archive_version.
+
+After the state has been reloaded a `load` event is raised giving the game an opportunity to do any necessary work before the player sees the new state.
+
+#### addGameObject(obj)
+
+Adds a game object (one of the RezXXX object types) to the games database. Once an object has been added it becomes available using `$(obj_id)`.
+
+If the object has a `tags` attribute the object will be automatically indexed against its tags and will appear in searches using `getTaggedWith(tag)`.
+
+Note that unlike most other attributes it is inadvisable to use `obj.setAttribute("tag", ...)` to update tags. The `setTags()`, `addTag()` and `removeTag()` functions should be used instead and will automatically keep the game tag-index up to date.
+
+#### getGameObject(id, should_throw = true)
+
+Retrieves the game object with id.
+
+If `should_throw` is true (default: true) then an exception is thrown if the id is not in the game database.
+
+Returns:
+
+`null` if the specified `id` is not in the game database
+`ref` reference to the object with id `id`
+
+The compiler attempts to ensure that invalid id references are not used however this cannot be enforced when copies with dynamic ids get made.
+
+#### getRelationship(source_id, target_id)
+
+Returns a relationship from the source object towards the target object.
+
+Returns:
+
+`null` if there is no relationship from source to target
+`ref` a `RezRelationship` from source to target
+
+#### getTaggedWith(tag)
+
+Get objects that have the tag.
+
+Returns:
+
+`[]` if there are no objects with the tag
+`[...]` array of objects that have the tag
+
+#### getAll(target_type)
+
+Get objects that have the specified target type, e.g. 'actor', 'item', 'scene'.
+
+Returns:
+
+`[]` if there are no objects with this target type
+`[...]` array of objects of the target type
+
+#### getCurrentScene()
+
+Get a reference to the current scene.
+
+Returns:
+
+`ref` reference to the current `RezScene`
+
+#### setCurrentScene(new_scene_id)
+
+Transitions from the current scene to a new scene with id `new_scene_id`.
+
+The current scene will receive a call to `finish()` to give it an opportunity to clean up.
+
+The new scene will receive a call to `start()` to indicate it should get ready to render.
+
+#### getTarget(target_id)
+
+This method will probably be deprecated when the renderer gets rewritten.
+
+#### container()
+
+Gets the HTML element that the game is rendered inside.
+
+#### render()
+
+Triggers a render pass.
+
+The current scene is asked to render itself and the resulting content is passed into the game layout template.
+
+The `innerHTML` property of the HTML container is set to this content.
+
+The scene is then given an opportunity to transform links, forms, inputs and so on to add the `rez-live` functionality.
+
+The inner workings of the render method are likely to change when the renderer is rewritten. Do not depend upon them.
+
+#### interludeWithScene(scene_id)
+
+Interrupts the current scene with another scene.
+
+Unlike when the scene is changed with `setCurrentScene` the old scene is expected to be resumed.
+
+The current scene gets a call to `interrupt` to notify it that it is being interrupted and the new scene is started.
+
+Interrupted scenes are held in a stack allowing an interrupted scene to, itself, be interrupted.
+
+Use `resumePrevScene` to return to the last scene in the stack.
+
+#### resumePrevScene()
+
+Use to return to the previous scene after an interruption.
+
+The current scene will receive a call to `finish()` to let it know a scene change is coming.
+
+The last interrupted scene is then made the current scene again and receives a call to `resume()` to let it know that its on stage again.
+
+#### start(container_id)
+
+Used to start the game and tells it which HTML element it should live inside. An author should never need to call this as the framework does this automatically.
+
+#### getEnabledSystems()
+
+Returns a list of `RezSystem` objects that have `enabled: true` and ordered by `priority` with the highest priority system appearing first in the list.
+
+Returns:
+
+`[]` no systems are enabled
+`[...]` a list of systems in increasing priority order
+
+#### runTick()
+
+Sends a `tick` event to all enabled systems returned by `getEnabledSystems`.
+
+This area is not yet well thought out but the idea is that a 'tick' represents a unit of game time and probably there is a correspondence between player actions and ticks. After a player has taken an action use `runTick()` to allow the game systems to respond.
+
+For example a system might run actor behaviours, or create items, or whatever your game needs.
+
+There'll probably be more on this in the Cookbook as time goes on. Or maybe the whole thing will get rewritten.
+
 ## <a name="group-element">Group</a>
 
 <emph>As of v0.8 the group element is a placeholder for future functionality.</emph>

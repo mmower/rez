@@ -969,7 +969,7 @@ let game_proto = {
         archived["game"] = true;
         return value;
       } else if(value.isGameObject()) { // This is a game object
-        const goid = value.id;
+        const goid = value.id; // GameObjectID
         console.log("<- is a game object: " + goid);
         if(archived[goid]) {
           console.log("<- is already archived");
@@ -1087,9 +1087,13 @@ let game_proto = {
     }
   },
 
-  getGameObject(id) {
+  getGameObject(id, should_throw = true) {
     if(!this.game_objects.has(id)) {
-      throw "No such ID |"+id+"| found!";
+      if(should_throw) {
+        throw "No such ID |"+id+"| found!";
+      } else {
+        return null;
+      }
     }
     return this.game_objects.get(id);
   },
@@ -1100,7 +1104,7 @@ let game_proto = {
    */
   getRelationship(source_id, target_id) {
     const rel_id = "rel_" + source_id + "_" + target_id;
-    return this.getGameObject(rel_id);
+    return this.getGameObject(rel_id, false);
   },
 
   <%# getByProto(proto) {
