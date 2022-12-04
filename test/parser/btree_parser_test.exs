@@ -42,6 +42,7 @@ defmodule Rez.Parser.BTreeParserTest do
     %{status: :ok, ast: ast} = Ergo.parse(parser, src)
     {:btree, root_node} = ast
     {:node, "b_select", %{}, children} = root_node
+
     [
       {:node, "b_random_quote", %{"p" => {:number, 25}}, []},
       {:node, "b_random_quote", %{"p" => {:number, 50}}, []}
@@ -52,19 +53,23 @@ defmodule Rez.Parser.BTreeParserTest do
     src = """
     ^[b_select [[b_choose p=25 [[b_dice_roll sides=6 modifier=1 [[b_dmod]]]]] [b_dice_roll sides=8 modifier=1]]]
     """
+
     parser = BTreeParser.bt_parser()
     %{status: :ok, ast: {:btree, root_node}} = Ergo.parse(parser, src)
     {:node, "b_select", %{}, root_children} = root_node
+
     [
       {:node, "b_choose", %{"p" => {:number, 25}}, choose_children},
       {:node, "b_dice_roll", %{"sides" => {:number, 8}, "modifier" => {:number, 1}}, []}
     ] = root_children
+
     [
-      {:node, "b_dice_roll", %{"sides" => {:number, 6}, "modifier" => {:number, 1}}, dice_children}
+      {:node, "b_dice_roll", %{"sides" => {:number, 6}, "modifier" => {:number, 1}},
+       dice_children}
     ] = choose_children
+
     [
       {:node, "b_dmod", %{}, []}
     ] = dice_children
   end
-
 end

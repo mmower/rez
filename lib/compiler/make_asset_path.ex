@@ -31,5 +31,4 @@ defmodule Rez.Compiler.MakeAssetPath do
   def run_phase(compilation) do
     compilation
   end
-
 end

@@ -34,8 +34,8 @@ defmodule Rez.Parser.DeriveTest do
     }
 
     assert %TypeHierarchy{
-      is_a: ^types
-    } = is_a
+             is_a: ^types
+           } = is_a
 
     assert Game.is_a(game, "great_sword", "item")
     assert Game.is_a(game, "long_sword", "one_handed")

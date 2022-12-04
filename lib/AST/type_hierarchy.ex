@@ -12,8 +12,9 @@ defmodule Rez.AST.TypeHierarchy do
   end
 
   def add(%TypeHierarchy{is_a: is_a} = type_map, tag, parent) do
-    parents = Map.get(is_a, tag, MapSet.new())
-              |> MapSet.put(parent)
+    parents =
+      Map.get(is_a, tag, MapSet.new())
+      |> MapSet.put(parent)
 
     %{type_map | is_a: Map.put(is_a, tag, parents)}
   end
@@ -25,8 +26,13 @@ defmodule Rez.AST.TypeHierarchy do
 
       parents ->
         case MapSet.member?(parents, parent) do
-          true -> true
-          false -> Enum.any?(parents, fn search_parent -> search_is_a(type_hierarchy, search_parent, parent) end)
+          true ->
+            true
+
+          false ->
+            Enum.any?(parents, fn search_parent ->
+              search_is_a(type_hierarchy, search_parent, parent)
+            end)
         end
     end
   end
@@ -52,5 +58,4 @@ defmodule Rez.AST.TypeHierarchy do
     end)
     |> Poison.encode!()
   end
-
 end

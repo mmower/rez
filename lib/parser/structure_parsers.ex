@@ -75,21 +75,40 @@ defmodule Rez.Parser.StructureParsers do
         position: {source_file, source_line, col},
         id: id,
         attributes: attributes
-      ))
+      )
+    )
   end
 
   # Does the twin jobs of setting the AST to point to the block and map the ID of
   # into the id_map.
-  def ctx_with_block_and_id_mapped(%Context{data: %{id_map: id_map} = data} = ctx, block, id, label, file, line) do
+  def ctx_with_block_and_id_mapped(
+        %Context{data: %{id_map: id_map} = data} = ctx,
+        block,
+        id,
+        label,
+        file,
+        line
+      ) do
     case Map.get(id_map, id) do
       nil ->
         %{ctx | ast: block, data: %{data | id_map: Map.put(id_map, id, {label, file, line})}}
 
       {o_label, o_file, o_line} ->
-        %{ctx | ast: block, data: %{data | id_map: Map.put(id_map, id, [{label, file, line}, {o_label, o_file, o_line}])}}
+        %{
+          ctx
+          | ast: block,
+            data: %{
+              data
+              | id_map: Map.put(id_map, id, [{label, file, line}, {o_label, o_file, o_line}])
+            }
+        }
 
       matches when is_list(matches) ->
-        %{ctx | ast: block, data: %{data | id_map: Map.put(id_map, id, [{label, file, line} | matches])}}
+        %{
+          ctx
+          | ast: block,
+            data: %{data | id_map: Map.put(id_map, id, [{label, file, line} | matches])}
+        }
     end
   end
 
@@ -154,7 +173,7 @@ defmodule Rez.Parser.StructureParsers do
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
         block = create_block(block_struct, id, attributes, source_file, source_line, col)
         ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
-        end,
+      end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
         Context.add_error(
           ctx,
@@ -190,13 +209,22 @@ defmodule Rez.Parser.StructureParsers do
       ctx: fn %Context{entry_points: [{line, col} | _], ast: ast, data: %{source: source}} = ctx ->
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-        {id, block} = case ast do
-          [id] ->
-            {id, create_block(block_struct, id, %{}, source_file, source_line, col)}
+        {id, block} =
+          case ast do
+            [id] ->
+              {id, create_block(block_struct, id, %{}, source_file, source_line, col)}
 
-          [id, attr_list] ->
-            {id, create_block(block_struct, id, attr_list_to_map(attr_list), source_file, source_line, col)}
-        end
+            [id, attr_list] ->
+              {id,
+               create_block(
+                 block_struct,
+                 id,
+                 attr_list_to_map(attr_list),
+                 source_file,
+                 source_line,
+                 col
+               )}
+          end
 
         ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
       end,
@@ -233,7 +261,14 @@ defmodule Rez.Parser.StructureParsers do
         block =
           Enum.reduce(
             children,
-            create_block(block_struct, nil, attr_list_to_map(attr_list), source_file, source_line, col),
+            create_block(
+              block_struct,
+              nil,
+              attr_list_to_map(attr_list),
+              source_file,
+              source_line,
+              col
+            ),
             add_fn
           )
 
@@ -275,7 +310,14 @@ defmodule Rez.Parser.StructureParsers do
         block =
           Enum.reduce(
             children,
-            create_block(block_struct, id, attr_list_to_map(attr_list), source_file, source_line, col),
+            create_block(
+              block_struct,
+              id,
+              attr_list_to_map(attr_list),
+              source_file,
+              source_line,
+              col
+            ),
             add_fn
           )
 
@@ -292,17 +334,19 @@ defmodule Rez.Parser.StructureParsers do
   end
 
   def derive_define() do
-    sequence([
-      iliteral("@derive"),
-      iws(),
-      keyword_value(),
-      iws(),
-      keyword_value()
-    ],
-    label: "derive",
-    ast: fn [{:keyword, tag}, {:keyword, parent}] ->
-      {:derive, tag, parent}
-    end)
+    sequence(
+      [
+        iliteral("@derive"),
+        iws(),
+        keyword_value(),
+        iws(),
+        keyword_value()
+      ],
+      label: "derive",
+      ast: fn [{:keyword, tag}, {:keyword, parent}] ->
+        {:derive, tag, parent}
+      end
+    )
   end
 
   @doc """

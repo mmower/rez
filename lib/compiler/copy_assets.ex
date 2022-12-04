@@ -10,7 +10,10 @@ defmodule Rez.Compiler.CopyAssets do
   @doc """
   Copies the game asset files into the dist folder
   """
-  def run_phase(%Compilation{status: :ok, game: %Game{assets: assets}, options: %{output: true}} = compilation) do
+  def run_phase(
+        %Compilation{status: :ok, game: %Game{assets: assets}, options: %{output: true}} =
+          compilation
+      ) do
     Enum.reduce(assets, compilation, fn {_id, asset}, acc ->
       copy_asset(acc, asset)
     end)

@@ -200,9 +200,6 @@ let basic_object = {
   */
 
   copyAssigningId(id) {
-    if(!this.hasAttribute("template") || this.getAttribute("template") == false) {
-      throw "Attempt to copy object " + this.id + " which does not have template: true";
-    }
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
     copy.runEvent("copy", {original: this});

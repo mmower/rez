@@ -29,16 +29,19 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   def validators(_group) do
     [
-      attribute_present?("type",
-        attribute_value_is_one_of?(["image", "audio", "video"])),
-
+      attribute_present?(
+        "type",
+        attribute_value_is_one_of?(["image", "audio", "video"])
+      ),
       attribute_one_of_present?(["include_tags", "exclude_tags"], true),
-
-      attribute_if_present?("include_tags",
-        attribute_is_keyword_set?()),
-
-      attribute_if_present?("exclude_tags",
-        attribute_is_keyword_set?())
+      attribute_if_present?(
+        "include_tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "exclude_tags",
+        attribute_is_keyword_set?()
+      )
     ]
   end
 end

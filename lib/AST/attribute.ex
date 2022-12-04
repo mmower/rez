@@ -17,11 +17,9 @@ defmodule Rez.AST.Attribute do
   :elem_ref -> an id prefixed by "#"
   """
 
-  defstruct [
-    name: nil,
-    type: nil,
-    value: nil
-  ]
+  defstruct name: nil,
+            type: nil,
+            value: nil
 
   def boolean(name, value) do
     %Attribute{name: name, type: :boolean, value: value}
@@ -84,5 +82,4 @@ defmodule Rez.AST.Attribute do
 
   def is_list?(%Attribute{type: :list}), do: true
   def is_list?(%Attribute{}), do: false
-
 end

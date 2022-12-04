@@ -32,7 +32,8 @@ defmodule Rez do
       game_homepage: :string,
       ignore_missing_assets: :boolean,
       no_output: :boolean,
-      write_source: :boolean],
+      write_source: :boolean
+    ]
   ]
 
   def real_args(["rez_macos" | rest]) do
@@ -109,7 +110,6 @@ defmodule Rez do
     |> real_args()
     |> run_command(:halt)
   end
-
 
   @doc """
   When built to run using escript the entry point is `main/1`

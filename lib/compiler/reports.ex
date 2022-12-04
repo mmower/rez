@@ -9,7 +9,7 @@ defmodule Rez.Compiler.Reports do
   alias Rez.Compiler.Compilation
 
   def run_phase(%Compilation{status: :ok, progress: progress} = compilation) do
-    IO.puts("rez v#{Rez.version} — compiled to dist folder")
+    IO.puts("rez v#{Rez.version()} — compiled to dist folder")
 
     progress
     |> Enum.reverse()
@@ -19,7 +19,7 @@ defmodule Rez.Compiler.Reports do
   end
 
   def run_phase(%Compilation{status: :error, errors: errors} = compilation) do
-    IO.puts("rez v#{Rez.version} — compilation failed")
+    IO.puts("rez v#{Rez.version()} — compilation failed")
 
     errors
     |> Enum.reverse()

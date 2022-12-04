@@ -29,8 +29,8 @@ defmodule Rez.AST.Scene do
       :layout_template,
       fn html ->
         ~s(<div id="scene_#{scene_id}"" class="scene">) <>
-        html <>
-        "</div>"
+          html <>
+          "</div>"
       end
     )
   end
@@ -54,52 +54,77 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def validators(_scene) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("layout",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("layout_mode",
-        attribute_has_type?(:keyword,
-          attribute_value_is_one_of?(["single", "continuous"]))),
-
-      attribute_if_present?("blocks",
-        attribute_has_type?(:list,
-          attribute_coll_of?(:elem_ref,
-            attribute_list_references?("card")))),
-
-      attribute_if_present?("location",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("location"))),
-
-      attribute_present?("initial_card",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("card"))),
-
-      attribute_if_present?("on_init",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_start",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_finish",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_interrupt",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_resume",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_render",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_start_card",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_finish_card",
-        attribute_has_type?(:function))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "layout",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "layout_mode",
+        attribute_has_type?(
+          :keyword,
+          attribute_value_is_one_of?(["single", "continuous"])
+        )
+      ),
+      attribute_if_present?(
+        "blocks",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(
+            :elem_ref,
+            attribute_list_references?("card")
+          )
+        )
+      ),
+      attribute_if_present?(
+        "location",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("location")
+        )
+      ),
+      attribute_present?(
+        "initial_card",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("card")
+        )
+      ),
+      attribute_if_present?(
+        "on_init",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_start",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_finish",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_interrupt",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_resume",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_render",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_start_card",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_finish_card",
+        attribute_has_type?(:function)
+      )
     ]
   end
 end

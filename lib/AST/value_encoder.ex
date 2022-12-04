@@ -137,7 +137,8 @@ defmodule Rez.AST.ValueEncoder do
   def encode_map(map) when is_map(map) do
     Enum.reduce(map, %{}, fn {key, typed_value}, acc ->
       Map.put(acc, key, encode_value(typed_value))
-    end) |> to_js_code()
+    end)
+    |> to_js_code()
   end
 
   @doc """

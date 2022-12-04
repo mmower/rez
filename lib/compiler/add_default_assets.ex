@@ -9,7 +9,7 @@ defmodule Rez.Compiler.AddDefaultAssets do
   @default_assets [
     {"_alpine_js", "alpinejs.min.js"},
     {"_bulma_css", "bulma.min.css"},
-    {"_handlebars_js", "handlebars.min.js"},
+    {"_handlebars_js", "handlebars.min.js"}
   ]
 
   def game_with_assets(game, assets) do
@@ -38,5 +38,4 @@ defmodule Rez.Compiler.AddDefaultAssets do
   def run_phase(compilation) do
     compilation
   end
-
 end

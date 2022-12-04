@@ -23,21 +23,22 @@ defmodule Rez.Parser.ValueParsers do
   def string_value() do
     ParserCache.get_parser("string", fn ->
       sequence(
-      [
-        ignore(double_quote()),
-        many(not_double_quote()) |> string,
-        ignore(double_quote())
-      ],
-      ast: fn [string] ->
-        if String.match?(string, ~r/\$\{.*\}/) do
-          {:dstring, string}
-        else
-          {:string, string}
-        end
-      end,
-      err: &string_err_wrap/1,
-      debug: true,
-      label: "string-value")
+        [
+          ignore(double_quote()),
+          many(not_double_quote()) |> string,
+          ignore(double_quote())
+        ],
+        ast: fn [string] ->
+          if String.match?(string, ~r/\$\{.*\}/) do
+            {:dstring, string}
+          else
+            {:string, string}
+          end
+        end,
+        err: &string_err_wrap/1,
+        debug: true,
+        label: "string-value"
+      )
     end)
   end
 
@@ -79,7 +80,8 @@ defmodule Rez.Parser.ValueParsers do
     Enum.map_join(
       lines,
       "\n",
-      fn line -> String.replace_prefix(line, leading_match, "") end)
+      fn line -> String.replace_prefix(line, leading_match, "") end
+    )
   end
 
   def convert_heredoc_to_string(chars) do
@@ -93,6 +95,7 @@ defmodule Rez.Parser.ValueParsers do
   def heredoc_value() do
     ParserCache.get_parser("heredoc", fn ->
       here_boundary_parser = literal("\"\"\"")
+
       sequence(
         [
           ignore(here_boundary_parser),
@@ -107,7 +110,8 @@ defmodule Rez.Parser.ValueParsers do
         ],
         label: "here-doc",
         debug: true,
-        ast: fn [str] -> {:string, str} end)
+        ast: fn [str] -> {:string, str} end
+      )
     end)
   end
 
@@ -155,7 +159,8 @@ defmodule Rez.Parser.ValueParsers do
         ],
         label: "keyword-value",
         debug: true,
-        ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end)
+        ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end
+      )
     end)
   end
 
@@ -164,11 +169,14 @@ defmodule Rez.Parser.ValueParsers do
   def elem_ref_value() do
     ParserCache.get_parser("elem_ref", fn ->
       set_start_parser = literal("#\{")
+
       sequence(
         [
-          not_lookahead(set_start_parser), # Make sure this isn't a set
+          # Make sure this isn't a set
+          not_lookahead(set_start_parser),
           ignore(hash()),
-          commit(), # Otherwise it MUST be an elem_ref
+          # Otherwise it MUST be an elem_ref
+          commit(),
           js_identifier()
         ],
         label: "elem_ref-value",
@@ -189,7 +197,8 @@ defmodule Rez.Parser.ValueParsers do
         ],
         label: "ref_value",
         debug: true,
-        ast: fn [name] -> {:attr_ref, name} end)
+        ast: fn [name] -> {:attr_ref, name} end
+      )
     end)
   end
 
@@ -228,8 +237,11 @@ defmodule Rez.Parser.ValueParsers do
         ast: fn
           [args, body] ->
             {:function, {args, body}}
-          [body] -> {:function, {[], body}}
-        end)
+
+          [body] ->
+            {:function, {[], body}}
+        end
+      )
     end)
   end
 
@@ -237,48 +249,49 @@ defmodule Rez.Parser.ValueParsers do
 
   def dice_value() do
     ParserCache.get_parser("dice", fn ->
-      sequence([
-        optional(number_value()),
-        ignore(char(?d)),
-        number_value(),
-        optional(
-          sequence([
-            choice([
-              plus(),
-              minus()
-            ]),
-            number_value()
-          ])
-        )
-      ],
-      label: "dice-value",
-      ast: fn
-        # d6
-        [{:number, sides}] ->
-          {:roll, {1, sides, 0}}
+      sequence(
+        [
+          optional(number_value()),
+          ignore(char(?d)),
+          number_value(),
+          optional(
+            sequence([
+              choice([
+                plus(),
+                minus()
+              ]),
+              number_value()
+            ])
+          )
+        ],
+        label: "dice-value",
+        ast: fn
+          # d6
+          [{:number, sides}] ->
+            {:roll, {1, sides, 0}}
 
-        # 2d6
-        [{:number, count}, {:number, sides}] ->
-          {:roll, {count, sides, 0}}
+          # 2d6
+          [{:number, count}, {:number, sides}] ->
+            {:roll, {count, sides, 0}}
 
-        # d6+1
-        [{:number, sides}, [?+, {:number, mod}]] ->
-          {:roll, {1, sides, mod}}
+          # d6+1
+          [{:number, sides}, [?+, {:number, mod}]] ->
+            {:roll, {1, sides, mod}}
 
-        # d6-1
-        [{:number, sides}, [?-, {:number, mod}]] ->
-          {:roll, {1, sides, -mod}}
+          # d6-1
+          [{:number, sides}, [?-, {:number, mod}]] ->
+            {:roll, {1, sides, -mod}}
 
-        # 2d6+1
-        [{:number, count}, {:number, sides}, [?+, {:number, mod}]] ->
-          {:roll, {count, sides, mod}}
+          # 2d6+1
+          [{:number, count}, {:number, sides}, [?+, {:number, mod}]] ->
+            {:roll, {count, sides, mod}}
 
-        # 2d6-1
-        [{:number, count}, {:number, sides}, [?-, {:number, mod}]] ->
-          {:roll, {count, sides, -mod}}
-      end)
+          # 2d6-1
+          [{:number, count}, {:number, sides}, [?-, {:number, mod}]] ->
+            {:roll, {count, sides, -mod}}
+        end
+      )
     end)
-
   end
 
   # String & Function from file
@@ -305,10 +318,12 @@ defmodule Rez.Parser.ValueParsers do
 
   def read_file_var(file_name) do
     case Path.wildcard("**/#{file_name}") do
-      [] -> # No files found
+      # No files found
+      [] ->
         {:error, "No file found for #{file_name}"}
 
-      [file_path | []] -> # One file found
+      # One file found
+      [file_path | []] ->
         case map_ext(file_path) do
           :string ->
             {:string, File.read!(file_path)}
@@ -320,7 +335,8 @@ defmodule Rez.Parser.ValueParsers do
             {:error, "File #{file_path} doesn't map to an attribute type"}
         end
 
-      _ -> # Multiple files found
+      # Multiple files found
+      _ ->
         {:error, "Multiple files found for #{file_name}"}
     end
   end
@@ -330,30 +346,34 @@ defmodule Rez.Parser.ValueParsers do
       open = literal("<<<")
       close = literal(">>>")
 
-      sequence([
-        ignore(open),
-        commit(),
-        many(
-          sequence([
-            not_lookahead(close),
-            any()
-          ])),
-        ignore(close)
-      ],
-      label: "file-value",
-      ctx: fn ctx ->
-        case ctx do
-          %{status: :ok, ast: file_name_chars} ->
-            file_name = List.to_string(file_name_chars)
-            case read_file_var(file_name) do
-              {:error, reason} ->
-                Context.add_error(ctx, :unknown_file, reason)
+      sequence(
+        [
+          ignore(open),
+          commit(),
+          many(
+            sequence([
+              not_lookahead(close),
+              any()
+            ])
+          ),
+          ignore(close)
+        ],
+        label: "file-value",
+        ctx: fn ctx ->
+          case ctx do
+            %{status: :ok, ast: file_name_chars} ->
+              file_name = List.to_string(file_name_chars)
 
-              var ->
-                Context.set_ast(ctx, var)
-            end
+              case read_file_var(file_name) do
+                {:error, reason} ->
+                  Context.add_error(ctx, :unknown_file, reason)
+
+                var ->
+                  Context.set_ast(ctx, var)
+              end
+          end
         end
-      end)
+      )
     end)
   end
 
@@ -372,11 +392,11 @@ defmodule Rez.Parser.ValueParsers do
           keyword_value(),
           function_value(),
           attr_ref_value(),
-          file_value(),
+          file_value()
         ],
         label: "value",
-        debug: true)
+        debug: true
+      )
     end)
   end
-
 end

@@ -15,12 +15,10 @@ defmodule Rez.AST.Effect do
   Note: if we had a stat model baked into Rez it might be possible to specify
   effects declaratively.
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{}
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Effect do
@@ -36,20 +34,26 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
 
   def validators(_effect) do
     [
-      attribute_present?("type",
-        attribute_has_type?(:keyword)),
-
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_if_present?("on_apply",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_remove",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_turn",
-        attribute_has_type?(:function))
+      attribute_present?(
+        "type",
+        attribute_has_type?(:keyword)
+      ),
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "on_apply",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_remove",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_turn",
+        attribute_has_type?(:function)
+      )
     ]
   end
 end

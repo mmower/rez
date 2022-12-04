@@ -5,11 +5,9 @@ defmodule Rez.AST.Style do
   A `Style` contains user-specified CSS that gets included into the browser
   page.
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    styles: nil
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            styles: nil
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Style do

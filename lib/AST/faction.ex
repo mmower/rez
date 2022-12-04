@@ -4,12 +4,10 @@ defmodule Rez.AST.Faction do
   in-game groups of `Actor`s.
 
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{},
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Faction do
@@ -25,8 +23,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
 
   def validators(_faction) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?())
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      )
     ]
   end
 end

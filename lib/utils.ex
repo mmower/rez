@@ -115,7 +115,7 @@ defmodule Rez.Utils do
     by https://stackoverflow.com/users/575642/cdegroot
   """
   def random_str() do
-    Integer.to_string(:rand.uniform(4294967296), 32) <> Integer.to_string(:rand.uniform(4294967296), 32)
+    Integer.to_string(:rand.uniform(4_294_967_296), 32) <>
+      Integer.to_string(:rand.uniform(4_294_967_296), 32)
   end
-
 end

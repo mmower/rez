@@ -48,7 +48,7 @@ defmodule Rez.Compiler do
 
   def dbg_run_phase(phase, compilation) do
     {time, result} = :timer.tc(__MODULE__, :run_phase, [phase, compilation])
-    d_log("Elapsed time #{:erlang.float_to_binary(time/1_000_000, [decimals: 1])}s")
+    d_log("Elapsed time #{:erlang.float_to_binary(time / 1_000_000, decimals: 1)}s")
     result
   end
 
@@ -58,10 +58,11 @@ defmodule Rez.Compiler do
       exit(:shutdown)
     end
 
-    runner = case dbg_do?(:debug) do
-      true -> &dbg_run_phase/2
-      false -> &run_phase/2
-    end
+    runner =
+      case dbg_do?(:debug) do
+        true -> &dbg_run_phase/2
+        false -> &run_phase/2
+      end
 
     source_path = List.first(args)
 
@@ -69,7 +70,8 @@ defmodule Rez.Compiler do
       Enum.reduce(
         @compiler_phases,
         %Compilation{source_path: source_path, options: options},
-        runner)
+        runner
+      )
 
     status
   end

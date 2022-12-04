@@ -31,5 +31,4 @@ defmodule Rez.Compiler.Compilation do
   def verbose?(%__MODULE__{options: %{verbose: flag}}), do: flag
 
   def ignore_missing_assets?(%__MODULE__{options: %{ignore_missing_assets: flag}}), do: flag
-
 end

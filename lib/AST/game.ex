@@ -67,7 +67,8 @@ defmodule Rez.AST.Game do
   # @derive :weapon :usable
   # => %{:weapon => #MapSet<[:item, :usable]>}
   #
-  def add_child({:derive, tag, parent}, %Game{is_a: is_a} = game) when is_binary(tag) and is_binary(parent) do
+  def add_child({:derive, tag, parent}, %Game{is_a: is_a} = game)
+      when is_binary(tag) and is_binary(parent) do
     %{game | is_a: TypeHierarchy.add(is_a, tag, parent)}
   end
 
@@ -131,7 +132,9 @@ defmodule Rez.AST.Game do
 
   # Search the is_a tree for a connection between "tag" and "parent"
   def is_a(_, tag, tag), do: true
-  def is_a(%{is_a: is_a}, tag, parent) when is_binary(tag) and is_binary(parent) and tag != parent do
+
+  def is_a(%{is_a: is_a}, tag, parent)
+      when is_binary(tag) and is_binary(parent) and tag != parent do
     TypeHierarchy.search_is_a(is_a, tag, parent)
   end
 
@@ -142,7 +145,6 @@ defmodule Rez.AST.Game do
   def all_nodes(game) do
     [game | Node.children(game)]
   end
-
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do
@@ -197,7 +199,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append(Map.values(game.groups))
     |> Utils.append(Map.values(game.helpers))
     |> Utils.append(Map.values(game.inventories))
-    |> Utils.append(Map.values(game.slots)) # We put slot before item since there is a dependency on accepts:
+    # We put slot before item since there is a dependency on accepts:
+    |> Utils.append(Map.values(game.slots))
     |> Utils.append(Map.values(game.items))
     |> Utils.append(Map.values(game.lists))
     |> Utils.append(Map.values(game.objects))
@@ -213,44 +216,63 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   def validators(_game) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("name",
-        attribute_has_type?(:string)),
-
-      attribute_present?("archive_format",
-        attribute_has_type?(:number)),
-
-      attribute_present?("layout",
-        attribute_has_type?(:string)),
-
-      attribute_present?("initial_scene",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("scene"))),
-
-      attribute_present?("IFID",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("on_init",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_start",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_save",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_load",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("links",
-        attribute_has_type?(:list,
-          attribute_coll_of?(:string))),
-
-      attribute_if_present?("scripts",
-        attribute_has_type?(:list,
-          attribute_coll_of?(:string)))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "name",
+        attribute_has_type?(:string)
+      ),
+      attribute_present?(
+        "archive_format",
+        attribute_has_type?(:number)
+      ),
+      attribute_present?(
+        "layout",
+        attribute_has_type?(:string)
+      ),
+      attribute_present?(
+        "initial_scene",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("scene")
+        )
+      ),
+      attribute_present?(
+        "IFID",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "on_init",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_start",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_save",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_load",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "links",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:string)
+        )
+      ),
+      attribute_if_present?(
+        "scripts",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:string)
+        )
+      )
     ]
   end
 end

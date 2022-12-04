@@ -1,7 +1,7 @@
 defmodule Rez.Parser.AliasParsesTest do
   use ExUnit.Case
   import Rez.Parser.AliasParsers
-  alias Rez.AST.{Attribute, Scene}
+  alias Rez.AST.{Attribute, Object, Scene}
 
   def dummy_source(input, file \\ "test.rez", base_path \\ ".") do
     lines = String.split(input, ~r/\n/, trim: true)
@@ -71,10 +71,52 @@ defmodule Rez.Parser.AliasParsesTest do
                attributes: %{
                  "standard" => %Attribute{name: "standard", type: :boolean, value: true},
                  "layout" => %Attribute{name: "layout", type: :string, value: "{{{content}}}\n"},
-                 "asset" => %Attribute{name: "asset", type: :elem_ref, value: "colourful_background"},
+                 "asset" => %Attribute{
+                   name: "asset",
+                   type: :elem_ref,
+                   value: "colourful_background"
+                 },
                  "light_level" => %Attribute{name: "light_level", type: :number, value: 0.1}
                }
              }
            } = ctx
+  end
+
+  test "parse merges default & defined tags" do
+    input = """
+    @class warlord begin
+      tags: \#{:combat_class}
+    end
+    """
+
+    source = dummy_source(input)
+
+    aliases = %{
+      "class" =>
+        {"object",
+         %{
+           "tags" => %Attribute{
+             name: "tags",
+             type: :set,
+             value: MapSet.new([{:keyword, "class"}])
+           }
+         }}
+    }
+
+    assert %{status: :ok, ast: ast} =
+             Ergo.parse(alias_block(), input,
+               data: %{source: source, aliases: aliases, id_map: %{}}
+             )
+
+    assert %Object{
+             id: "warlord",
+             attributes: %{
+               "tags" => tags_attr
+             }
+           } = ast
+
+    assert %{name: "tags", type: :set, value: tags} = tags_attr
+    assert MapSet.member?(tags, {:keyword, "class"})
+    assert MapSet.member?(tags, {:keyword, "combat_class"})
   end
 end

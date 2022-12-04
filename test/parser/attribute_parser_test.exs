@@ -9,41 +9,66 @@ defmodule Rez.Parser.AttributeParserTest do
 
   import Rez.Parser.AttributeParser, only: [attribute: 0]
 
-  import Rez.Parser.CollectionParser, only: [
-    list: 0,
-    table: 0
-  ]
+  import Rez.Parser.CollectionParser,
+    only: [
+      list: 0,
+      table: 0,
+      set: 0
+    ]
 
-  import Rez.Parser.ValueParsers, only: [
-    heredoc_value: 0,
-    string_value: 0
-  ]
+  import Rez.Parser.ValueParsers,
+    only: [
+      heredoc_value: 0,
+      string_value: 0
+    ]
 
   import Rez.Parser.UtilityParsers, only: [iows: 0]
-
 
   test "parses heredoc value" do
     input = """
     \"\"\"Now is the winter of our discontent made glorious summer by this son of York.\"\"\"
     """
-    assert %Context{status: :ok, ast: {:string, "Now is the winter of our discontent made glorious summer by this son of York."}} = Ergo.parse(heredoc_value(), input)
+
+    assert %Context{
+             status: :ok,
+             ast:
+               {:string,
+                "Now is the winter of our discontent made glorious summer by this son of York."}
+           } = Ergo.parse(heredoc_value(), input)
   end
 
   test "parses string value" do
     input = "\"Now is the winter of our discontent made glorious summer by this son of York.\""
-    assert %Context{status: :ok, ast: {:string, "Now is the winter of our discontent made glorious summer by this son of York."}} = Ergo.parse(string_value(), input)
+
+    assert %Context{
+             status: :ok,
+             ast:
+               {:string,
+                "Now is the winter of our discontent made glorious summer by this son of York."}
+           } = Ergo.parse(string_value(), input)
   end
 
   test "parses interpolated string value" do
     input = "\"Now is the ${season} of our ${feeling}\""
-    assert %Context{status: :ok, ast: {:dstring, "Now is the ${season} of our ${feeling}"}} = Ergo.parse(string_value(), input)
+
+    assert %Context{status: :ok, ast: {:dstring, "Now is the ${season} of our ${feeling}"}} =
+             Ergo.parse(string_value(), input)
   end
 
   test "parses heredoc attribute" do
     input = """
     quote: \"\"\"Now is the winter of our discontent made glorious summer by this son of York.\"\"\"
     """
-    assert %Context{status: :ok, ast: %Rez.AST.Attribute{name: "quote", type: :string, value: "Now is the winter of our discontent made glorious summer by this son of York."}} = Ergo.parse(attribute(), input)
+
+    assert %Context{
+             status: :ok,
+             ast: %Rez.AST.Attribute{
+               name: "quote",
+               type: :string,
+               value:
+                 "Now is the winter of our discontent made glorious summer by this son of York."
+             }
+           } = Ergo.parse(attribute(), input)
   end
 
   test "parses lists" do
@@ -60,6 +85,7 @@ defmodule Rez.Parser.AttributeParserTest do
     src = """
     options: [1 :a]
     """
+
     assert %{status: :ok, ast: ast} = Ergo.parse(attribute(), src)
     assert %{value: [{:number, 1}, {:keyword, "a"}]} = ast
   end
@@ -83,7 +109,18 @@ defmodule Rez.Parser.AttributeParserTest do
     }
     """
 
-    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true}, "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1}, "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"}, "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"}, "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}}}} = Ergo.parse(table(), input)
+    assert %Context{
+             status: :ok,
+             ast:
+               {:table,
+                %{
+                  "alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true},
+                  "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1},
+                  "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"},
+                  "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"},
+                  "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}
+                }}
+           } = Ergo.parse(table(), input)
   end
 
   test "parses nested table value" do
@@ -95,7 +132,20 @@ defmodule Rez.Parser.AttributeParserTest do
     }
     """
 
-    assert %Context{status: :ok, ast: {:table, %{"alpha" => %Rez.AST.Attribute{name: "alpha", type: :table, value: %{"beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}}}}}} = Ergo.parse(table(), input)
+    assert %Context{
+             status: :ok,
+             ast:
+               {:table,
+                %{
+                  "alpha" => %Rez.AST.Attribute{
+                    name: "alpha",
+                    type: :table,
+                    value: %{
+                      "beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}
+                    }
+                  }
+                }}
+           } = Ergo.parse(table(), input)
   end
 
   test "parse double iows" do
@@ -103,4 +153,10 @@ defmodule Rez.Parser.AttributeParserTest do
     assert %Context{status: :ok, ast: ["a", "b"]} = Ergo.parse(parser, "ab")
   end
 
+  test "parse empty set" do
+    input = "\#{}"
+    empty_set = MapSet.new()
+
+    assert %Context{status: :ok, ast: {:set, ^empty_set}} = Ergo.parse(set(), input)
+  end
 end

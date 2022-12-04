@@ -16,7 +16,6 @@ defmodule Rez.Compiler.GetWorkingDirectory do
     end
   end
 
-
   @doc """
   Get the working directory
   """
@@ -27,14 +26,17 @@ defmodule Rez.Compiler.GetWorkingDirectory do
 
       path ->
         case File.cd(path) do
-          :ok -> get_cwd(compilation)
+          :ok ->
+            get_cwd(compilation)
 
           {:error, errno} ->
-            Compilation.add_error(compilation, "Unable to change to working dir #{path}: #{errno}")
+            Compilation.add_error(
+              compilation,
+              "Unable to change to working dir #{path}: #{errno}"
+            )
         end
     end
   end
 
   # No :error case is required because this is the first compilation phase
-
 end

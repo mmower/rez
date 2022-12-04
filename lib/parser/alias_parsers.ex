@@ -12,16 +12,19 @@ defmodule Rez.Parser.AliasParsers do
 
   # import Rez.Parser.AttributeParser
   import Rez.Parser.StructureParsers
-  import Rez.Parser.UtilityParsers, only: [
-    iws: 0,
-    at: 0,
-    equals: 0,
-    hash: 0,
-    elem_tag: 0,
-    iliteral: 1,
-    block_begin: 1,
-    block_end: 1
-  ]
+
+  import Rez.Parser.UtilityParsers,
+    only: [
+      iws: 0,
+      at: 0,
+      equals: 0,
+      hash: 0,
+      elem_tag: 0,
+      iliteral: 1,
+      block_begin: 1,
+      block_end: 1
+    ]
+
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Utils, only: [attr_list_to_map: 1]
 
@@ -40,9 +43,13 @@ defmodule Rez.Parser.AliasParsers do
     )
   end
 
-  defp alias_ctx(%Context{ast: [alias_tag, target_tag, attributes], data: %{aliases: aliases} = data} = ctx) do
+  defp alias_ctx(
+         %Context{ast: [alias_tag, target_tag, attributes], data: %{aliases: aliases} = data} =
+           ctx
+       ) do
     legal_alias = not is_reserved_tag_name?(alias_tag)
     legal_target = is_reserved_tag_name?(target_tag)
+
     case {legal_alias, legal_target} do
       {false, _} ->
         Context.add_error(
@@ -64,8 +71,7 @@ defmodule Rez.Parser.AliasParsers do
           | ast: nil,
             data: %{
               data
-              | aliases:
-                  Map.put(aliases, alias_tag, {target_tag, attr_list_to_map(attributes)})
+              | aliases: Map.put(aliases, alias_tag, {target_tag, attr_list_to_map(attributes)})
             }
         }
     end
@@ -96,6 +102,30 @@ defmodule Rez.Parser.AliasParsers do
   end
 
   @doc """
+  Merge the default attribute map (from the alias) with the defined attribute map
+  (from the use of the alias). Wherever there is an attribute defined in both, use
+  the value from the definition with the exception of the "tags" attribute. In the
+  case of "tags" merge the two tag sets.
+  """
+  def merge_attributes(default_attrs, defined_attrs) do
+    Map.merge(default_attrs, defined_attrs, fn key, default_value, defined_value ->
+      case key do
+        "tags" ->
+          with %{value: default_tags} <- default_value,
+               %{value: defined_tags} <- defined_value do
+            %{defined_value | value: MapSet.union(default_tags, defined_tags)}
+          else
+            _ ->
+              defined_value
+          end
+
+        _ ->
+          defined_value
+      end
+    end)
+  end
+
+  @doc """
   The `alias_block` parser
   """
   def alias_block() do
@@ -113,17 +143,32 @@ defmodule Rez.Parser.AliasParsers do
       ],
       label: "alias-block",
       debug: true,
-      ctx: fn %Context{ast: [alias_tag, alias_id, attr_list], entry_points: [{line, col} | _], data: %{source: source, aliases: aliases}} = ctx ->
+      ctx: fn %Context{
+                ast: [alias_tag, alias_id, attr_list],
+                entry_points: [{line, col} | _],
+                data: %{source: source, aliases: aliases}
+              } = ctx ->
         case Map.get(aliases, alias_tag) do
           nil ->
             Context.add_error(ctx, :undefined_alias, "Undefined alias #{alias_tag} found.")
 
           {target_tag, default_attrs} ->
             target_module = NodeHelper.node_for_tag(target_tag)
-            attributes = Map.merge(default_attrs, attr_list_to_map(attr_list))
+            defined_attrs = attr_list_to_map(attr_list)
+            attributes = merge_attributes(default_attrs, defined_attrs)
             {source_file, source_line} = LogicalFile.resolve_line(source, line)
-            block = create_block(target_module, alias_id, attributes, source_file, source_line, col)
-            ctx_with_block_and_id_mapped(ctx, block, alias_id, target_tag, source_file, source_line)
+
+            block =
+              create_block(target_module, alias_id, attributes, source_file, source_line, col)
+
+            ctx_with_block_and_id_mapped(
+              ctx,
+              block,
+              alias_id,
+              target_tag,
+              source_file,
+              source_line
+            )
         end
       end
     )

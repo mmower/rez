@@ -52,6 +52,7 @@ defmodule Rez.AST.TemplateHelper do
   def log_html(%{id: id} = node) do
     if Debug.dbg_do?(:debug) do
       html = Map.get(node, @intermediate_key)
+
       if html do
         File.write!("cache/#{id}.html", html)
       end
@@ -60,7 +61,8 @@ defmodule Rez.AST.TemplateHelper do
     node
   end
 
-  def make_template(%{} = node, source_attr, target_key, html_processor) when is_function(html_processor) do
+  def make_template(%{} = node, source_attr, target_key, html_processor)
+      when is_function(html_processor) do
     case NodeHelper.has_attr?(node, source_attr) do
       false ->
         node

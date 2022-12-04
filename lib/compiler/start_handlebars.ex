@@ -10,7 +10,8 @@ defmodule Rez.Compiler.StartHandlebars do
   Ensure that the handlebars template pre-processor can be called
   """
   def run_phase(
-        %Compilation{status: :ok, progress: progress, errors: errors, cache_path: cache_path} = compilation
+        %Compilation{status: :ok, progress: progress, errors: errors, cache_path: cache_path} =
+          compilation
       ) do
     try do
       {version, 0} = System.cmd("handlebars", ["-v"])

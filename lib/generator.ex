@@ -17,8 +17,13 @@ defmodule Rez.Generator do
   @external_resource "node_modules/bulma/css/bulma.min.css"
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
 
-  EEx.function_from_file(:def, :render_game, Path.expand("assets/templates/source.rez.eex"), [:assigns])
-  EEx.function_from_file(:def, :render_stdlib, Path.expand("assets/templates/stdlib.rez.eex"), [:assigns])
+  EEx.function_from_file(:def, :render_game, Path.expand("assets/templates/source.rez.eex"), [
+    :assigns
+  ])
+
+  EEx.function_from_file(:def, :render_stdlib, Path.expand("assets/templates/stdlib.rez.eex"), [
+    :assigns
+  ])
 
   def generate(args, options) when is_list(args) and is_map(options) do
     if Enum.count(args) < 1 do
@@ -48,25 +53,30 @@ defmodule Rez.Generator do
 
     Debug.v_log("Generating game template")
     game_source_path = Path.join(source_path, "#{name}.rez")
+
     if !File.exists?(game_source_path) || overwrite do
       ifid = UUID.uuid1() |> String.upcase()
       created = DateTime.utc_now() |> DateTime.to_string()
+
       File.write!(
         game_source_path,
-        render_game([
+        render_game(
           name: name,
           author_name: author_name,
           author_email: author_email,
           game_title: game_title,
           game_homepage: game_homepage,
           ifid: ifid,
-          created: created]))
+          created: created
+        )
+      )
     else
       Debug.v_log("Skipping game source write")
     end
 
     Debug.v_log("Generate stdlib template")
     stdlib_path = Path.join(source_path, "stdlib.rez")
+
     if !File.exists?(stdlib_path) || overwrite do
       File.write!(stdlib_path, render_stdlib([]))
     else
@@ -99,5 +109,4 @@ defmodule Rez.Generator do
     sound_path = Path.join(assets_path, "snd")
     File.mkdir_p!(sound_path)
   end
-
 end

@@ -16,6 +16,7 @@ defmodule Rez.AST.Asset do
 
   def search(%Asset{} = asset) do
     file_name = Asset.file_name(asset)
+
     case Path.wildcard("assets/**/#{file_name}") do
       [] ->
         Path.wildcard("assets/**/#{String.normalize(file_name, :nfc)}")
@@ -86,25 +87,33 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
           chained_validator.(attr, asset, game)
 
         {_, _} ->
-          {:error, "Multiple possible paths for asset: |#{NodeHelper.get_attr_value(asset, "file_name")}|"}
+          {:error,
+           "Multiple possible paths for asset: |#{NodeHelper.get_attr_value(asset, "file_name")}|"}
       end
     end
   end
 
   def validators(%Asset{} = _asset) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("file_name",
-        attribute_has_type?(:string,
-          refers_to_existing_file?())),
-
-      attribute_if_present?("width",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("height",
-        attribute_has_type?(:string))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "file_name",
+        attribute_has_type?(
+          :string,
+          refers_to_existing_file?()
+        )
+      ),
+      attribute_if_present?(
+        "width",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "height",
+        attribute_has_type?(:string)
+      )
     ]
   end
 end

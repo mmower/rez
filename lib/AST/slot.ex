@@ -15,12 +15,10 @@ defmodule Rez.AST.Slot do
   a single inventory. For example a "dress" slot might exclude `Items` from a
   "skirt" `Slot`.
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{}
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{}
 
   def process(%Slot{} = slot) do
     slot
@@ -49,23 +47,30 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
 
   def validators(_slot) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("accepts",
-        attribute_has_type?(:keyword)),
-
-      attribute_if_present?("name",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("capacity",
-        attribute_has_type?(:number)),
-
-      attribute_if_present?("on_insert",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_remove",
-        attribute_has_type?(:function))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "accepts",
+        attribute_has_type?(:keyword)
+      ),
+      attribute_if_present?(
+        "name",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "capacity",
+        attribute_has_type?(:number)
+      ),
+      attribute_if_present?(
+        "on_insert",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_remove",
+        attribute_has_type?(:function)
+      )
     ]
   end
 end

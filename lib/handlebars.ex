@@ -47,12 +47,13 @@ defmodule Rez.Handlebars do
         end
 
       {:error, error} ->
-        {:reply, {:error, "Unrecoverable error reading cache path: #{cache_path} #{error}"}, state}
+        {:reply, {:error, "Unrecoverable error reading cache path: #{cache_path} #{error}"},
+         state}
     end
   end
 
   defp hash_html(html) do
-    :crypto.hash(:md5 , html) |> Base.encode16()
+    :crypto.hash(:md5, html) |> Base.encode16()
   end
 
   defp cache_file_path(cache_path, hash) do
@@ -60,8 +61,14 @@ defmodule Rez.Handlebars do
   end
 
   def run_handlebars(template_path, output_path, label) do
-    {time, result} = :timer.tc(System, :cmd, ["handlebars", ["--simple", template_path, "-f", output_path]])
-    Debug.dbg_log(:verbose, "Created template #{label} in #{:erlang.float_to_binary(time/1000, [decimals: 1])}ms")
+    {time, result} =
+      :timer.tc(System, :cmd, ["handlebars", ["--simple", template_path, "-f", output_path]])
+
+    Debug.dbg_log(
+      :verbose,
+      "Created template #{label} in #{:erlang.float_to_binary(time / 1000, decimals: 1)}ms"
+    )
+
     result
   end
 
@@ -74,7 +81,5 @@ defmodule Rez.Handlebars do
     else
       e -> {:error, inspect(e)}
     end
-
   end
-
 end

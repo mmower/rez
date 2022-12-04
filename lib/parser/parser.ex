@@ -67,8 +67,7 @@ defmodule Rez.Parser.Parser do
   end
 
   def relationship_block() do
-    block("rel", Rez.AST.Relationship,
-    fn attributes ->
+    block("rel", Rez.AST.Relationship, fn attributes ->
       with %{type: :elem_ref, value: source} <- Map.get(attributes, "source"),
            %{type: :elem_ref, value: target} <- Map.get(attributes, "target") do
         "rel_" <> source <> "_" <> target

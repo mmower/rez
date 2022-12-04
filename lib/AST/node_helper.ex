@@ -27,7 +27,8 @@ defmodule Rez.AST.NodeHelper do
   # I wonder if there is a way to do this via pattern matching as
   # get_attr_value(%{attributes: %{^name: %{value: value}}}, name), do: value
   # doesn't work though
-  def get_attr_value(%{attributes: attributes} = _object, name, default \\ nil) when not is_nil(attributes) and is_binary(name) do
+  def get_attr_value(%{attributes: attributes} = _object, name, default \\ nil)
+      when not is_nil(attributes) and is_binary(name) do
     case Map.get(attributes, name) do
       nil ->
         default
@@ -41,7 +42,8 @@ defmodule Rez.AST.NodeHelper do
     Map.has_key?(attributes, name)
   end
 
-  def set_default_attr_value(%{attributes: _attributes} = node, name, value, setter) when is_binary(name) and is_function(setter) do
+  def set_default_attr_value(%{attributes: _attributes} = node, name, value, setter)
+      when is_binary(name) and is_function(setter) do
     case has_attr?(node, name) do
       true ->
         node
@@ -51,23 +53,28 @@ defmodule Rez.AST.NodeHelper do
     end
   end
 
-  def set_boolean_attr(%{attributes: attributes} = node, name, value) when is_binary(name) and is_boolean(value) do
+  def set_boolean_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_boolean(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.boolean(name, value))}
   end
 
-  def set_string_attr(%{attributes: attributes} = node, name, value) when is_binary(name) and is_binary(value) do
+  def set_string_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_binary(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.string(name, value))}
   end
 
-  def set_elem_ref_attr(%{attributes: attributes} = node, name, value) when is_binary(name) and is_binary(value) do
+  def set_elem_ref_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_binary(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.elem_ref(name, value))}
   end
 
-  def set_keyword_attr(%{attributes: attributes} = node, name, value) when is_binary(name) and is_binary(value) do
+  def set_keyword_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_binary(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.keyword(name, value))}
   end
 
-  def set_func_attr(%{attributes: attributes} = node, name, {params, body}) when is_binary(name) do
+  def set_func_attr(%{attributes: attributes} = node, name, {params, body})
+      when is_binary(name) do
     %{node | attributes: Map.put(attributes, name, Attribute.function(name, {params, body}))}
   end
 
@@ -75,7 +82,8 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.set(name, values))}
   end
 
-  def set_number_attr(%{attributes: attributes} = node, name, value) when is_binary(name) and is_number(value) do
+  def set_number_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_number(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.number(name, value))}
   end
 
@@ -94,7 +102,7 @@ defmodule Rez.AST.NodeHelper do
   def node_for_tag(tag) do
     tag
     |> String.capitalize()
-    |> then(&("Elixir.Rez.AST.#{&1}"))
+    |> then(&"Elixir.Rez.AST.#{&1}")
     |> String.to_existing_atom()
   end
 
@@ -133,5 +141,4 @@ defmodule Rez.AST.NodeHelper do
       coll -> Map.put(parent, coll_key, map_to_map(coll, &Node.process/1))
     end
   end
-
 end

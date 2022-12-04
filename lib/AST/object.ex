@@ -4,18 +4,23 @@ defmodule Rez.AST.Object do
   and has no built-in meaning or runtime functionality.
   """
 
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{},
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Object do
+  import Rez.AST.NodeValidator
+
   def node_type(_object), do: "object"
   def pre_process(object), do: object
   def process(object), do: object
   def children(_object), do: []
-  def validators(_object), do: []
+  def validators(_object), do: [
+    attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      )
+  ]
 end

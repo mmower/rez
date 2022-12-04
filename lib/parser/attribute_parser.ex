@@ -15,31 +15,33 @@ defmodule Rez.Parser.AttributeParser do
   alias Rez.Parser.BTreeParser
 
   def attr_value() do
-    choice([
-      CollectionParser.collection(),
-      ValueParsers.value(),
-      BTreeParser.bt_parser()
-    ],
-    err: fn ctx ->
-      Context.add_error(ctx, "Cannot read attribute value")
-    end,
-    label: "attr-value"
+    choice(
+      [
+        CollectionParser.collection(),
+        ValueParsers.value(),
+        BTreeParser.bt_parser()
+      ],
+      err: fn ctx ->
+        Context.add_error(ctx, "Cannot read attribute value")
+      end,
+      label: "attr-value"
     )
   end
 
   def attribute() do
-    sequence([
-      js_identifier(),
-      ignore(colon()),
-      iws(),
-      commit(),
-      attr_value()
-    ],
-    label: "attribute",
-    debug: true,
-    ast: fn [id, {type, value}] ->
-      %Rez.AST.Attribute{name: id, type: type, value: value}
-    end)
+    sequence(
+      [
+        js_identifier(),
+        ignore(colon()),
+        iws(),
+        commit(),
+        attr_value()
+      ],
+      label: "attribute",
+      debug: true,
+      ast: fn [id, {type, value}] ->
+        %Rez.AST.Attribute{name: id, type: type, value: value}
+      end
+    )
   end
-
 end

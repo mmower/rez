@@ -265,21 +265,21 @@ defmodule Rez.Parser.ParserTest do
 
     assert %{status: :ok} = context
 
-    tags = MapSet.new([keyword: "cloak", keyword: "wearable"])
+    tags = MapSet.new(keyword: "cloak", keyword: "wearable")
 
     assert %Rez.AST.Item{
              id: "blue_cloak",
              attributes: %{
-              "type" => %Rez.AST.Attribute{
-                name: "type",
-                type: :keyword,
-                value: "equipment"
-              },
-              "color" => %Rez.AST.Attribute{
-                name: "color",
-                type: :string,
-                value: "blue"
-              },
+               "type" => %Rez.AST.Attribute{
+                 name: "type",
+                 type: :keyword,
+                 value: "equipment"
+               },
+               "color" => %Rez.AST.Attribute{
+                 name: "color",
+                 type: :string,
+                 value: "blue"
+               },
                "tags" => %Rez.AST.Attribute{
                  name: "tags",
                  type: :set,

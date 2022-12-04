@@ -44,5 +44,4 @@ defmodule Rez.Debug do
       :debug -> 4
     end
   end
-
 end

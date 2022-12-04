@@ -1,5 +1,4 @@
 defmodule Rez.Parser.ParserCache do
-
   defmacro cached_parser(parser) do
     quote do
       Rez.Parser.ParserCache.get_parser(__ENV__.function, fn -> unquote(parser) end)

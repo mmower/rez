@@ -9,13 +9,11 @@ defmodule Rez.AST.Zone do
   alias __MODULE__
   alias Rez.AST.{Attribute, Location}
 
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{},
-    locations: %{}
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{},
+            locations: %{}
 
   def add_child(%Location{id: location_id} = location, %Zone{locations: locations} = zone) do
     %{zone | locations: Map.put(locations, location_id, location)}
@@ -24,7 +22,6 @@ defmodule Rez.AST.Zone do
   def add_child(%Attribute{name: name} = attr, %Zone{attributes: attributes} = zone) do
     %{zone | attributes: Map.put(attributes, name, attr)}
   end
-
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Zone do
@@ -41,11 +38,14 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
 
   def validators(_zone) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("name",
-        attribute_has_type?(:string))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "name",
+        attribute_has_type?(:string)
+      )
     ]
   end
 end

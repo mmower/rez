@@ -13,23 +13,21 @@ defmodule Rez.AST.Location do
 
   In particular `Item`s and `Actor`s may have a current location.
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    id: nil,
-    attributes: %{},
-    template: nil
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            id: nil,
+            attributes: %{},
+            template: nil
 
   # Locations support a handlebars template for their 'description' attribute
   def process(%Location{id: loc_id} = loc) do
     TemplateHelper.make_template(
-          loc,
-          "description",
-          :template,
-          fn html ->
-            ~s(<div id="loc_#{loc_id}" class="location">) <> html <> "</div>"
-          end
+      loc,
+      "description",
+      :template,
+      fn html ->
+        ~s(<div id="loc_#{loc_id}" class="location">) <> html <> "</div>"
+      end
     )
   end
 end
@@ -48,40 +46,61 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
 
   def validators(_location) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("name",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("alias",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("location"))),
-
-      attribute_if_present?("to_label",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("in_label",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("container",
-      attribute_has_type?(:elem_ref,
-        attribute_refers_to?("inventory"))),
-
-      attribute_if_present?("card",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("card"))),
-
-      attribute_if_present?("description",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("exits",
-        attribute_has_type?(:list,
-          attribute_coll_of?(:elem_ref,
-            attribute_list_references?("location")))),
-
-      attribute_if_present?("zone",
-        attribute_has_type?(:list,
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "name",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "alias",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("location")
+        )
+      ),
+      attribute_if_present?(
+        "to_label",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "in_label",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "container",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("inventory")
+        )
+      ),
+      attribute_if_present?(
+        "card",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("card")
+        )
+      ),
+      attribute_if_present?(
+        "description",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "exits",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(
+            :elem_ref,
+            attribute_list_references?("location")
+          )
+        )
+      ),
+      attribute_if_present?(
+        "zone",
+        attribute_has_type?(
+          :list,
           attribute_passes?(fn %Attribute{value: value}, _node, %Game{id_map: id_map} = _game ->
             case value do
               [{:elem_ref, zone_id}, {:elem_ref, locator} | []] ->
@@ -90,7 +109,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
                     :ok
 
                   {type, _, _} ->
-                    {:error, "'zone' attribute [#{zone_id} #{locator}] refers to #{type} not zone!"}
+                    {:error,
+                     "'zone' attribute [#{zone_id} #{locator}] refers to #{type} not zone!"}
 
                   _ ->
                     {:error, "'zone' attribute [#{zone_id} #{locator}] zone was not found!"}
@@ -99,7 +119,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
               _ ->
                 {:error, "'zone' attribute must be a two-element list [#zone-id #locator]"}
             end
-          end)))
+          end)
+        )
+      )
     ]
   end
 end

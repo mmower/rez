@@ -23,8 +23,7 @@ defmodule Rez.Compiler.ReadSource do
           options: %{write_source: write_source},
           source_path: source_path,
           progress: progress
-        } =
-          compilation
+        } = compilation
       ) do
     try do
       source = read_source(source_path)

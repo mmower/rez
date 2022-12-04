@@ -55,6 +55,8 @@ Installation on macOS depends on [Homebrew](https://brew.sh/) and [ASDF](https:/
     asdf install
     # Will install handlebars, Bulma, and Alpine
     npm install
+    # Copy handlebars binary into your path, e.g. /usr/local/bin
+    cp node_modules/handlebars/bin/handlebars /usr/local/bin/
     # Install Elixir deps
     mix deps.get
     # Creates the `rez` compiler binary

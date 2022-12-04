@@ -12,7 +12,7 @@ defmodule Rez.MixProject do
           elixir: "~> 1.13",
           start_permanent: Mix.env() == :prod,
           deps: deps(),
-          releases: releases(),
+          releases: releases()
         ]
 
       _ ->
@@ -82,5 +82,4 @@ defmodule Rez.MixProject do
       ]
     ]
   end
-
 end

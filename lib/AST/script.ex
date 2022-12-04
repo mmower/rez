@@ -5,11 +5,9 @@ defmodule Rez.AST.Script do
   A `Script` is user-generated Javascript that is added to the generated
   JS output.
   """
-  defstruct [
-    status: :ok,
-    position: {nil, 0, 0},
-    code: ""
-  ]
+  defstruct status: :ok,
+            position: {nil, 0, 0},
+            code: ""
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Script do

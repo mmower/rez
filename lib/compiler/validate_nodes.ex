@@ -22,5 +22,4 @@ defmodule Rez.Compiler.ValidateNodes do
   def run_phase(%Compilation{} = compilation) do
     compilation
   end
-
 end

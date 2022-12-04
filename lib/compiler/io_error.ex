@@ -7,11 +7,11 @@ defmodule Rez.Compiler.IOError do
   alias Rez.Compiler.Compilation
 
   def file_read_error(
-         %Compilation{errors: errors} = compilation,
-         code,
-         file_description,
-         file_path
-       ) do
+        %Compilation{errors: errors} = compilation,
+        code,
+        file_description,
+        file_path
+      ) do
     # Given a file read error, update the compilation error status & add a customised message
     case code do
       :enoent ->
@@ -55,11 +55,11 @@ defmodule Rez.Compiler.IOError do
   end
 
   def file_write_error(
-         %Compilation{errors: errors} = compilation,
-         code,
-         file_description,
-         file_path
-       ) do
+        %Compilation{errors: errors} = compilation,
+        code,
+        file_description,
+        file_path
+      ) do
     # Given a file write error, update the compilation error status & add a customised message
     case code do
       :enoent ->

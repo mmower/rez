@@ -189,11 +189,13 @@ defmodule Rez.AST.NodeValidator do
     attribute_if_present?("consumable",
       other_attributes_present?("uses"))
   """
-  def other_attributes_present?(required_attrs, chained_validator \\ nil) when is_list(required_attrs) do
+  def other_attributes_present?(required_attrs, chained_validator \\ nil)
+      when is_list(required_attrs) do
     fn attr, %{attributes: attributes} = node, game ->
-      missing = Enum.reject(required_attrs, fn attr_key ->
-        Map.has_key?(attributes, attr_key)
-      end)
+      missing =
+        Enum.reject(required_attrs, fn attr_key ->
+          Map.has_key?(attributes, attr_key)
+        end)
 
       case {Enum.empty?(missing), is_nil(chained_validator)} do
         {true, true} ->
@@ -204,16 +206,16 @@ defmodule Rez.AST.NodeValidator do
 
         {false, _} ->
           desc = missing |> Enum.map_join(", ", fn key -> "'" <> key <> "'" end)
-          {:error,
-            "Attribute '#{attr.name}' requires #{desc} to be present"}
+          {:error, "Attribute '#{attr.name}' requires #{desc} to be present"}
       end
     end
   end
 
   def attribute_is_keyword_set?(chained_validator \\ nil) do
-    attribute_has_type?(:set,
-      attribute_not_empty_coll?(
-        attribute_coll_of?(:keyword, chained_validator)))
+    attribute_has_type?(
+      :set,
+      attribute_not_empty_coll?(attribute_coll_of?(:keyword, chained_validator))
+    )
   end
 
   def attribute_has_type?(expected_type, chained_validator \\ nil) when is_atom(expected_type) do
@@ -236,7 +238,8 @@ defmodule Rez.AST.NodeValidator do
     fn %{name: name, value: value} = attr, node, game ->
       case {Enum.member?(values, value), is_nil(chained_validator)} do
         {false, _} ->
-          {:error, "Attribute '#{name}' is required to have a value from [#{inspect(values)}] but was #{value}"}
+          {:error,
+           "Attribute '#{name}' is required to have a value from [#{inspect(values)}] but was #{value}"}
 
         {true, true} ->
           :ok
@@ -280,7 +283,9 @@ defmodule Rez.AST.NodeValidator do
 
         {types, _} ->
           wrong_types = types |> Enum.uniq() |> Enum.join(", ")
-          {:error, "In collection #{name} found unexpected types (#{wrong_types}) expected one of (#{Enum.join(expected_types, ", ")})"}
+
+          {:error,
+           "In collection #{name} found unexpected types (#{wrong_types}) expected one of (#{Enum.join(expected_types, ", ")})"}
       end
     end
   end
@@ -302,9 +307,10 @@ defmodule Rez.AST.NodeValidator do
   """
   def attribute_list_references?(element, chained_validator \\ nil) when is_binary(element) do
     fn %{name: name, value: refs} = attr, node, %Game{id_map: id_map} = game ->
-      invalid_refs = Enum.reject(refs, fn {_, ref_id} ->
-        match?({^element, _, _}, Map.get(id_map, ref_id))
-      end)
+      invalid_refs =
+        Enum.reject(refs, fn {_, ref_id} ->
+          match?({^element, _, _}, Map.get(id_map, ref_id))
+        end)
 
       case {Enum.empty?(invalid_refs), is_nil(chained_validator)} do
         {true, true} ->
@@ -315,6 +321,7 @@ defmodule Rez.AST.NodeValidator do
 
         {false, _} ->
           bad_elem_refs = Enum.map_join(invalid_refs, ", ", fn {_id, ref_id} -> "##{ref_id}" end)
+
           {:error,
            "Attribute '#{name}' expected to refer to a list from '#{element}' but #{bad_elem_refs} does not"}
       end
@@ -325,7 +332,8 @@ defmodule Rez.AST.NodeValidator do
     fn %{name: name, value: value} = attr, node, %Game{id_map: id_map} = game ->
       case {Map.get(id_map, value), is_nil(chained_validator)} do
         {nil, _} ->
-          {:error, "Expected #{node.id}/#{name} to refer to a #{element} but the id '#{value}' was not found."}
+          {:error,
+           "Expected #{node.id}/#{name} to refer to a #{element} but the id '#{value}' was not found."}
 
         {{^element, _, _}, true} ->
           :ok
@@ -335,7 +343,6 @@ defmodule Rez.AST.NodeValidator do
 
         {{other_element, _, _}, _} ->
           {:error, "Expected #{value} to map to |#{element}| but found |#{other_element}|"}
-
       end
     end
   end
@@ -401,7 +408,8 @@ defmodule Rez.AST.NodeValidator do
           chained_validator.(attr, node, game)
 
         {false, _} ->
-          {:error, "Attribute: '#{name}' should be a function of #{count} arguments, found #{Enum.count(params)}!"}
+          {:error,
+           "Attribute: '#{name}' should be a function of #{count} arguments, found #{Enum.count(params)}!"}
       end
     end
   end
@@ -416,7 +424,8 @@ defmodule Rez.AST.NodeValidator do
           chained_validator.(attr, node, game)
 
         {false, _} ->
-          {:error, "Attribute: '#{name}' was expected to be a function with arguments: #{inspect(expected_params)}, found: #{inspect(params)}"}
+          {:error,
+           "Attribute: '#{name}' was expected to be a function with arguments: #{inspect(expected_params)}, found: #{inspect(params)}"}
       end
     end
   end
@@ -437,7 +446,8 @@ defmodule Rez.AST.NodeValidator do
           end
 
         invalid_tree ->
-          {:error, "Attribute: '#{name}' was expected to be a behaviour tree! Got: #{inspect(invalid_tree)}"}
+          {:error,
+           "Attribute: '#{name}' was expected to be a behaviour tree! Got: #{inspect(invalid_tree)}"}
       end
     end
   end
@@ -449,9 +459,9 @@ defmodule Rez.AST.NodeValidator do
 
       task ->
         with :ok <- validate_child_count(task, Enum.count(children)),
-              :ok <- validate_options(task, options),
-              :ok <- validate_children(game, children) do
-            :ok
+             :ok <- validate_options(task, options),
+             :ok <- validate_children(game, children) do
+          :ok
         end
     end
   end
@@ -481,6 +491,7 @@ defmodule Rez.AST.NodeValidator do
 
   defp validate_options(task, options) do
     required_opts = NodeHelper.get_attr_value(task, "options", [])
+
     Enum.reduce_while(required_opts, :ok, fn {_, opt}, status ->
       case Map.has_key?(options, opt) do
         true ->
@@ -507,5 +518,4 @@ defmodule Rez.AST.NodeValidator do
         {:error, Enum.join(errors, ", ")}
     end
   end
-
 end

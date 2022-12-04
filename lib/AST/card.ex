@@ -9,14 +9,12 @@ defmodule Rez.AST.Card do
   alias Earmark
   alias Rez.AST.TemplateHelper
 
-  defstruct [
-    status: :ok,
-    id: nil,
-    html: nil,
-    template: nil,
-    attributes: %{},
-    position: {nil, 0, 0},
-  ]
+  defstruct status: :ok,
+            id: nil,
+            html: nil,
+            template: nil,
+            attributes: %{},
+            position: {nil, 0, 0}
 
   @doc ~S"""
   Converts a string like "First Card" into a card id "first_card"
@@ -84,7 +82,7 @@ defmodule Rez.AST.Card do
     end)
   end
 
-  @scene_resume_syntax~r/\[\[([^|]+)\|\s*!!\]\]/
+  @scene_resume_syntax ~r/\[\[([^|]+)\|\s*!!\]\]/
 
   @doc """
   Converts a form `[[Link Text|!!]] into an invocation of the `r_resume` Handlebars helpers.
@@ -152,8 +150,8 @@ defmodule Rez.AST.Card do
       :template,
       fn html ->
         ~s(<div id="card_#{card_id}_{{render_id}}" data-card="#{card_id}" class="{{card_type}} card_#{card_id}>">) <>
-        process_links(html) <>
-        "</div>"
+          process_links(html) <>
+          "</div>"
       end
     )
   end
@@ -161,7 +159,6 @@ defmodule Rez.AST.Card do
   def process(%Card{} = card) do
     card
   end
-
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
@@ -178,29 +175,43 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
 
   def validators(_card) do
     [
-      attribute_if_present?("tags",
-        attribute_is_keyword_set?()),
-
-      attribute_present?("content",
-        attribute_has_type?(:string)),
-
-      attribute_if_present?("location",
-        attribute_has_type?(:elem_ref,
-          attribute_refers_to?("location"))),
-
-      attribute_if_present?("blocks",
-        attribute_has_type?(:list,
-          attribute_coll_of?(:elem_ref,
-            attribute_list_references?("card")))),
-
-      attribute_if_present?("on_start",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_finish",
-        attribute_has_type?(:function)),
-
-      attribute_if_present?("on_render",
-        attribute_has_type?(:function))
+      attribute_if_present?(
+        "tags",
+        attribute_is_keyword_set?()
+      ),
+      attribute_present?(
+        "content",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "location",
+        attribute_has_type?(
+          :elem_ref,
+          attribute_refers_to?("location")
+        )
+      ),
+      attribute_if_present?(
+        "blocks",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(
+            :elem_ref,
+            attribute_list_references?("card")
+          )
+        )
+      ),
+      attribute_if_present?(
+        "on_start",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_finish",
+        attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "on_render",
+        attribute_has_type?(:function)
+      )
     ]
   end
 end

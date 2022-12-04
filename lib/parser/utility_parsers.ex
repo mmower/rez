@@ -75,7 +75,7 @@ defmodule Rez.Parser.UtilityParsers do
         many(elem_body_char())
       ],
       ast: &(&1 |> List.flatten() |> List.to_string()),
-      label: "elem_tag")
+      label: "elem_tag"
+    )
   end
-
 end

@@ -10,7 +10,9 @@ defmodule Rez.Compiler.WriteGameFile do
 
   @index_file_name "index.html"
 
-  EEx.function_from_file(:def, :render_index, Path.expand("assets/templates/index.html.eex"), [:assigns])
+  EEx.function_from_file(:def, :render_index, Path.expand("assets/templates/index.html.eex"), [
+    :assigns
+  ])
 
   # @external_resource "assets/templates/index.html.eex"
   # @index_template File.read!("assets/templates/index.html.eex")
@@ -20,10 +22,15 @@ defmodule Rez.Compiler.WriteGameFile do
   index EEx template
   """
   def run_phase(
-         %Compilation{status: :ok, dist_path: dist_path, game: game, progress: progress, options: %{output: true}} =
-           compilation
-       ) do
-    html = render_index([game: game])
+        %Compilation{
+          status: :ok,
+          dist_path: dist_path,
+          game: game,
+          progress: progress,
+          options: %{output: true}
+        } = compilation
+      ) do
+    html = render_index(game: game)
 
     # html = EEx.eval_string(@index_template, assigns: [game: game])
     output_path = Path.join(dist_path, @index_file_name)

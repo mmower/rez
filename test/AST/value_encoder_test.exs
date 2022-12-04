@@ -17,7 +17,9 @@ defmodule Rez.AST.ValueEncoderTest do
   end
 
   test "encodes function to JS" do
-    encoding = encode_attribute(Attribute.function("on_start", {["game", "event"], "{return game;}"}))
+    encoding =
+      encode_attribute(Attribute.function("on_start", {["game", "event"], "{return game;}"}))
+
     assert {"on_start", "(game, event) => {return game;}"} = encoding
   end
 
@@ -26,8 +28,10 @@ defmodule Rez.AST.ValueEncoderTest do
       %Rez.AST.Game{}
       |> set_string_attr("title", "Twisty Maze Adventure")
       |> set_func_attr("on_start", {["game", "event"], "{return game;}"})
-    encoding = encode_attributes(game.attributes)
-    assert "{\"on_start\": (game, event) => {return game;},\n\"title\": \"Twisty Maze Adventure\"}" = encoding
-  end
 
+    encoding = encode_attributes(game.attributes)
+
+    assert "{\"on_start\": (game, event) => {return game;},\n\"title\": \"Twisty Maze Adventure\"}" =
+             encoding
+  end
 end
