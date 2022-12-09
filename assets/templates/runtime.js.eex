@@ -203,7 +203,7 @@ let basic_object = {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
     copy.runEvent("copy", {original: this});
-    copy.setAttribute("template", false);
+    //copy.setAttribute("template", false);
     copy.setAttribute("copy_of", this.id);
     copy.init();
     return copy;
@@ -505,15 +505,20 @@ let actor_proto = {
     }
   },
 
-  move(location_id) {
-    console.log("Moving |"+this.id+"| to |"+location_id+"|");
+  move(to_location_id) {
+    console.log("Moving |"+this.id+"| to |"+to_location_id+"|");
 
     if(this.hasAttribute("location")) {
-      this.runEvent("leave", {location_id: this.getAttributeValue("location")});
+      const from_location_id = this.getAttributeValue("location");
+      this.runEvent("leave", {location_id: from_location_id});
+      const from_location = $(from_location_id);
+      from_location.runEvent("actor_leaves", {actor_id: this.id});
     }
 
-    this.setAttribute("location", location_id);
-    this.runEvent("enter", {location_id: location_id});
+    this.setAttribute("location", to_location_id);
+    this.runEvent("enter", {location_id: to_location_id});
+    const to_location = $(to_location_id);
+    to_location.runEvent("actor_enters", {actor_id: this.id});
   }
 };
 
@@ -804,7 +809,7 @@ let die_proto = {
   }
 };
 
-function RezDie(count, sides, modifier) {
+function RezDie(count, sides, modifier = 0) {
   this.count = count;
   this.sides = sides;
   this.modifier = modifier;
