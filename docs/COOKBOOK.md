@@ -70,7 +70,7 @@ Let's look at an example:
       class: #wizard
     end
 
-How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them.
+How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
 
 # Avoiding Duplication with Aliases
 
@@ -102,9 +102,7 @@ Note that the values in an alias are a starting point and can be overriden:
       tags: #{:combat_class}
     end
 
-The `figher_class` object will end up with the description "Fighter" not "A class" and this is what you want. However we might be suprised to find that `fighter_class` only has `tags: #{:combat_class}` and the `:class` tag has disappeared. This is because the use of the alias has overriden the whole attribute.
-
-In a future version we may introduce a syntax for collections that allows those provided by an alias to be amended, rather than overwritten.
+The `figher_class` object will end up with the description "Fighter" not "A class" and this is what you want. Any `tags` attribute is treated specially however, and `fighter_class` has `tags: #{:class :combat_class}` beacuse it merges, rather than overwriting, the tags defines in the `@alias`.
 
 Anywhere that you want a common way of defining multiple game objects, the alias is a possible solution.
 

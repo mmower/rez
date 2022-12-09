@@ -2226,6 +2226,10 @@ The `FAIL` task takes no children and when executed it always fails.
 
 # API Reference
 
+* <a href="#object_prototype">Object.prototype</a>
+* <a href="#array_prototype">Array.prototype</a>
+* <a href="#string_prototype">String.prototype</a>
+* <a href="#set_prototype">Set.prototype</a>
 * <a href="#rez_object">`basic_object`</a>
 * <a href="#rez_actor">`RezActor`</a>
 * <a href="#rez_asset">`RezAsset`</a>
@@ -2245,64 +2249,312 @@ The `FAIL` task takes no children and when executed it always fails.
 * <a href="#rez_system">`RezSystem`</a>
 * <a href="#rez_zone">`RezZone`</a>
 
-## <a name="rez_object">basic_object</a>
+## <a name="object_prototype">`Object.prototype`</a>
+
+### `copy()`
+
+The `copy()` method returns a copy of `this` object.
+
+### `isGameObject()`
+
+Determines whther is object is a game-object derived from an @element.
+
+## <a name="rez_object">`basic_object`</a>
 
 The `basic_object` object is a prototype for all game objects representing game elements. You likely won't interact with it directly unless you are implementing a new game element or working on the Rez Stdlib but it provides a number of helper methods to the game objects you are likely to interact with in an event handler.
 
-* `$(obj_id)`
-* `copyAssigningId(obj_id)`
-* `copyWithAutoId()`
-* `willHandleEvent(event_name)`
-* `runEvent(event_name, evt_info)`
-* `getIn(path)`
-* `hasAttribute(name)`
-* `getAttribute(name)`
-* `getAttributeValue(name)`
-* `setAttribute(name, value)`
-* `putIn(path, value)`
-* `applyEffect(effect_id, item_id)`
-* `removeEffect(effect_id, item_id)`
-* `isGameObject(obj)`
+### `init()`
+
+This method is automatically called by the runtime and initialises the object.
+
+It also calls the "on_init" handler if one has been implemented.
+
+### `initRefAttributes()`
+
+This method initializes ref attributes (of the form `&attribute` where attribute is assumed to be a function or dice roll). It is called automatically from `init()` and not intended to be called directly by authors.
+
+### `elementInitializer()`
+
+The `elementInitializer()` method is called by `init()` after `initRefAttribute()` so all attributes can be assumed to have a value. Objects with `__basic_object__` as their prototype can use this to provide their own custom initialization.
+
+### `$(obj_id)`
+
+Returns:
+
+`ref` — reference to the object with the given id
+
+Raises: if the given object id cannot be resolved
+
+The `$` method is a shortcut to the metho of the same name in the `RezGame` instance this object is related to.
+
+### `copyAssigningId(obj_id)`
+
+Returns a copy of this object and gives the copy the specified id.
+
+It creates a copy of the attributes of `this` and calls the relevant constructor function with the copied attributes and specified id. It then calls the `copy` event on the copy passing a map `{original: this}`. Then it sets the `copy_of` attribute of the copy to `this.id`. Lastly it calls `init()` on the copy.
+
+### `copyWithAutoId()`
+
+Automatically generates an id and then calls `copyAssigningId(obj_id)` with it.
+
+### `willHandleEvent(event_name)`
+
+Determine whether this object has a handle for the given event. Handlers are named "on_<event_name>".
+
+### `runEvent(event_name, evt_info)`
+
+Runs the handler for the given event passing `evt_info` along. It's expected that `evt_info` be a map.
+
+### `getIn(path)`
+
+Returns a nested attribute value. For use with tables.
+
+The path is a string where segments of the path are separated by ".". The first segment must be the name of a table attribute. Further segments are used to look inside the structure of the table.
+
+    @object wizard begin
+      spells: {fire: {fireball: 0
+                      cone_of_flame: 1}
+              {earth: {stone_skin: 1
+                       earthquake: 0}
+              {water: {water_breathing: 0
+                       create_water: 1}
+              {air: {thunder: 1
+                     static: 1}}}}}
+    end
+
+To retrieve the level of the stone_skin spell you could use
+
+    $("wizard").getIn("spells.earth.stone_skin")
+
+### `hasAttribute(name)`
+
+Determines whether this object has an attribute with the given name.
+
+### `getAttribute(name)`
+
+Returns the attribute with the given name. For simple attribute types this is the value of the attribute however for functions and dice rolls you'll have to make an additional call. See `getAttributeValue()`.
+
+### `getAttributeValue(name)`
+
+Returns the value of the attribute with the given name. In the case of functions and dice rolls this will be the value of calling the function or rolling the dice.
+
+### `setAttribute(name, value)`
+
+Sets the value of the named attribute and tracks that this attribute has been changed.
+
+### `putIn(path, value)`
+
+Sets a nested value in a table attribute. See the example for `getIn(path)`:
+
+    $("wizard").putIn("spells.air.thunder", 2)
+
+This modifies the table attribute and stores the new value, tracking the change.
+
+### `incAttribute(name, amount = 1)`
+
+For a numeric attribute `name` increase its value by the specified amount.
+
+### `decAttribute(name, amount = 1)`
+
+For a numeric attribute `name` decrease its value by the specified amount.
+
+### `applyEffect(effect_id, item_id)`
+
+For elements that can be the target of effects add the specified effect coming from the specified item.
+
+This method is intended to be overridden by objects with this prototype to supply the required behaviour.
+
+### `removeEffect(effect_id, item_id)`
+
+For elements that can be the target of effects remove the specified effect coming from the specified item.
+
+This method is intended to be overridden by objects with this prototype to supply the required behaviour.
+
+### `needsArchiving()`
+
+Determines whether this object is the subject of changes that mean that it needs to be archived.
+
+### `archiveDataContainer()`
+
+Returns a data container into which this object can be archived.
+
+### `dataWithArchivedAttributes(data)`
+
+Annotates the `data` argument with a serialized version of the changed attributes of this object.
+
+### `dataWithArchivedProperties(data)`
+
+Annotates the `data` argument with a serialized version of the archivable properties of this object.
+
+### `toJSON()`
+
+Convert the object to a JSON representation of changed attributes and archivable properties.
+
+### `loadData(data)`
+
+Load attributes and properties of this object from the supplied `data`.
+
+### `isGameObject(obj)`
 
 ## <a name="rez_actor">RezActor</a>
 
 `RezActor` is the runtime counterpart of the authoring element `@actor`.
 
-* `move(location_id)`
+### `checkItem(inventory_id, slot_id, item_id)`
+
+Called to check whether the actor accepts the given object into the specified inventory & slot.
+
+Passes a `RezDecision` (default: yes) to an `accept_item` event handler defined by the actor.
+
+### `move(location_id)`
+
+Moves the actor to a new location.
+
+If the actor is on-stage it moves them out of the current location.
+
+If the actor was in a previous location they receive an event `leave:{location: <old_location_id>}` and the location receives an event `actor_leaves:{actor_id: <id>}`.
+
+After moving the actor receives an event `enter:{location: <new_location_id>}` and the new location receives `actor_enters:{actor_id: <id>}`.
 
 ## <a name="rez_asset">RezAsset</a>
 
 `RezAsset` is the runtime counterpart of the authoring element `@asset`.
 
-* `tag()`
-* `getDimensions()`
-* `audioTag()`
-* `imageTag()`
-* `videoTag()`
+### `tag()`
+
+Depending upon whether the asset is an image, audio, or video file returns an appropriately formatted HTML tag for including it.
+
+### `assetType()`
+
+Determines the major MIME type, e.g. for "image/jpg" returns "image" or found "video/mp4" returns "video".
+
+### `isImage()`
+
+Determines if the asset is an image file.
+
+### `isAudio()`
+
+Determines if the asset is an audio file.
+
+### `isVideo()`
+
+Determines if the asset is a video file.
+
+### `isText()`
+
+Determines if the asset is a text file.
+
+### `getDimensions()`
+
+For image assets returns its dimensions formatted appropriate for including within a CSS style.
+
+### `audioTag()`
+
+Return an audio element tag. **Not implemented**
+
+### `imageTag()`
+
+Returns an image element tag.
+
+### `videoTag()`
+
+Return a video element tag. **Not implemented**
 
 ## <a name="rez_card">RezCard</a>
+
+### `incRenderId()`
+
+Used to disambiguate different renderings of the same card.
+
+### `renderBlocks()`
+
+Returns a map containing a rendering of all the cards whose id is listed in the "blocks:" attribute of the card.
+
+### `customBindings()`
+
+Returns a map containing the results of evaluating all of the bindings listed in the "bindings:" attribute of the card.
+
+### `render()`
+
+Returns the fully-evaluated markup after rendering the card. This is usually composed by the scene as part of its layout.
 
 `RezCard` is the runtime counterpart of the authoring element `@card`.
 
 ## <a name="rez_decision">RezDecision</a>
 
-* `yes()`
-* `default_yes()`
-* `no(reason)`
-* `default_no()`
-* `wasMade()`
-* `usedDefault()`
-* `data()`
-* `setData(key, value)`
-* `result()`
-* `purpose()`
-* `reason()`
+### `new RezDecision(purpose, data = {})`
+
+Return a new `RezDecision` object with the given purpose (why a decision is being made) and a map of associated decision information.
+
+### `yes()`
+
+Call `yes()` on a decision to set the decision value to `true`.
+
+### `default_yes()`
+
+Call `default_yes()` on a decision before passing it. If the callee doesn't assign a decision value then it will default to `true`.
+
+### `no(reason = "none given")`
+
+Call `no(reason)` on a decision to set the decision value to `false` and assign a reason for the decision not being aproved.
+
+### `default_no()`
+
+Call `default_no()` on a decision before passing it. It the callee doesn't assign a decision value then it will default to `false`.
+
+### `wasMade()`
+
+If one of `default_yes()` or `default_no()` is called on the decision. Or the callee uses one of `yes()` or `no()` then this will return true. Otherwise it will return false.
+
+### `usedDefault()`
+
+Return `true` the decision result came from a `default_yes()` or `default_no()`.
+
+### `data()`
+
+Returns the map of data associated with the decision.
+
+### `setData(key, value)`
+
+Adds a key/value pair to the associated decision information.
+
+### `result()`
+
+Return the decision result, `true`|`false`.
+
+### `purpose()`
+
+Returns the purpose string associated with the decision.
+
+### `reason()`
+
+Return the reason given when either `default_no(reason)` or `no(reason)` are called.
 
 ## <a name="rez_die">RezDie</a>
 
-* `between(min, max`)`
-* `die()`
-* `roll()`
+## new RezDie(count, sides, modifier = 0)
+
+Return a new `RezDie` representing a die roll of a specified number of n-sided dice with an optional +/- modifier.
+
+    new RezDie(3, 6) — 3d6+0
+    new RezDie(2, 8, -1) - 2d8-1
+
+### `between(min, max`)`
+
+Returns a random number between `min` and `max` inclusive.
+
+    between(1, 6) — random number 1-6
+
+### `die()`
+
+Return a random value based on the number of sides of the die.
+
+### `roll()`
+
+Returns a random value based on a complete die roll.
+
+    die = new RezDie(3,6)
+    die.roll — value between 3 and 18
 
 ## <a name="rez_dynamic_link">RezDynamicLink</a>
 
