@@ -60,7 +60,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
       ),
       attribute_present?(
         "layout",
-        attribute_has_type?(:string)
+        attribute_has_type?(
+          :string,
+          validate_value_matches?(
+            ~r/{{{?content}}}?/,
+            "Expects layout attribute to include {{content}} tag!"
+          )
+        )
       ),
       attribute_if_present?(
         "layout_mode",

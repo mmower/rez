@@ -230,7 +230,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
       ),
       attribute_present?(
         "layout",
-        attribute_has_type?(:string)
+        attribute_has_type?(
+          :string,
+          validate_value_matches?(
+            ~r/{{{?content}}}?/,
+            "Expects layout attribute to include {{content}} tag!"
+          )
+        )
       ),
       attribute_present?(
         "initial_scene",

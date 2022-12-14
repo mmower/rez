@@ -358,12 +358,27 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  def validate_if_value?(test_value, chained_validator) do
+  def validate_if_value?(test_value, chained_validator \\ nil) do
     fn %{value: value} = attr, node, game ->
       if value == test_value do
         chained_validator.(attr, node, game)
       else
         :ok
+      end
+    end
+  end
+
+  def validate_value_matches?(regex, error, chained_validator \\ nil) do
+    fn %{value: value} = attr, node, game ->
+      case {String.match?(to_string(value), regex), is_nil(chained_validator)} do
+        {true, true} ->
+          :ok
+
+        {true, false} ->
+          chained_validator.(attr, node, game)
+
+        {false, _} ->
+          {:error, error}
       end
     end
   end
