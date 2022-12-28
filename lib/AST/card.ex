@@ -6,6 +6,7 @@ defmodule Rez.AST.Card do
   also links representing the actions the player can take.
   """
   alias __MODULE__
+  alias Rez.AST.NodeHelper
   alias Earmark
   alias Rez.AST.TemplateHelper
 
@@ -40,7 +41,7 @@ defmodule Rez.AST.Card do
   def convert_target_name_links(text) do
     Regex.replace(~r/\[\[([\w\s]+)\]\]/U, text, fn _, target_descriptor ->
       target_id = convert_target_name_to_id(target_descriptor)
-      "<a href='javascript:void(0)' data-target='#{target_id}'>#{target_descriptor}</a>"
+      "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_descriptor}</a>"
     end)
   end
 
@@ -54,7 +55,7 @@ defmodule Rez.AST.Card do
   """
   def convert_target_id_links(text) do
     Regex.replace(~r/\[\[([\w\s]+)\|([\w\s]+)\]\]/U, text, fn _, target_text, target_id ->
-      "<a href='javascript:void(0)' data-target='#{target_id}'>#{target_text}</a>"
+      "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_text}</a>"
     end)
   end
 
@@ -132,6 +133,33 @@ defmodule Rez.AST.Card do
     |> convert_dynamic_links()
   end
 
+  def build_template(%Card{id: card_id} = card) do
+    TemplateHelper.make_template(
+      card,
+      "content",
+      :template,
+      fn html ->
+        ~s(<div data-card="#{card_id}" class="card">) <>
+          process_links(html) <>
+          "</div>"
+      end
+    )
+  end
+
+
+  def build_template(%Card{id: card_id} = card, custom_css_class) do
+    TemplateHelper.make_template(
+      card,
+      "content",
+      :template,
+      fn html ->
+        ~s(<div data-card="#{card_id}" class="card #{custom_css_class}">) <>
+          process_links(html) <>
+          "</div>"
+      end
+    )
+  end
+
   @doc ~S"""
   ## Examples
       iex> alias Rez.AST.{NodeHelper, Card}
@@ -143,17 +171,14 @@ defmodule Rez.AST.Card do
       ...>  template: "{\"compiler\":[8,\">= 4.3.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3=\"function\", alias4=container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {\n        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {\n          return parent[propertyName];\n        }\n        return undefined\n    };\n\n  return \"<div id=\\\"card_test_\"\n    + alias4(((helper = (helper = lookupProperty(helpers,\"render_id\") || (depth0 != null ? lookupProperty(depth0,\"render_id\") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"render_id\",\"hash\":{},\"data\":data,\"loc\":{\"start\":{\"line\":1,\"column\":19},\"end\":{\"line\":1,\"column\":32}}}) : helper)))\n    + \"\\\" data-card=\\\"test\\\" class=\\\"\"\n    + alias4(((helper = (helper = lookupProperty(helpers,\"card_type\") || (depth0 != null ? lookupProperty(depth0,\"card_type\") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"card_type\",\"hash\":{},\"data\":data,\"loc\":{\"start\":{\"line\":1,\"column\":58},\"end\":{\"line\":1,\"column\":71}}}) : helper)))\n    + \" card_test>\\\"><p>\\nThis is <strong>bold</strong> text</p>\\n</div>\";\n},\"useData\":true}\n"
       ...> } = card
   """
-  def process(%Card{status: :ok, id: card_id} = card) do
-    TemplateHelper.make_template(
-      card,
-      "content",
-      :template,
-      fn html ->
-        ~s(<div id="card_#{card_id}_{{render_id}}" data-card="#{card_id}" class="{{card_type}} card_#{card_id}>">) <>
-          process_links(html) <>
-          "</div>"
-      end
-    )
+  def process(%Card{status: :ok} = card) do
+    case NodeHelper.get_attr_value(card, "css_class") do
+      nil ->
+        build_template(card)
+
+      class ->
+        build_template(card, class)
+    end
   end
 
   def process(%Card{} = card) do
@@ -199,6 +224,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
             attribute_list_references?("card")
           )
         )
+      ),
+      attribute_if_present?(
+        "css_clas",
+        attribute_has_type?(:string)
       ),
       attribute_if_present?(
         "on_start",

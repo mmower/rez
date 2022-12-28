@@ -28,7 +28,7 @@ defmodule Rez.AST.Scene do
       "layout",
       :layout_template,
       fn html ->
-        ~s(<div id="scene_#{scene_id}"" class="scene">) <>
+        ~s(<div id="scene_#{scene_id}" class="scene">) <>
           html <>
           "</div>"
       end
@@ -68,7 +68,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
           )
         )
       ),
-      attribute_if_present?(
+      attribute_present?(
         "layout_mode",
         attribute_has_type?(
           :keyword,

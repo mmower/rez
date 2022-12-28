@@ -7,6 +7,11 @@
 (function() {
   "use strict";
 
+function randomId() {
+  const rand = window.crypto.getRandomValues(new Uint32Array(1))[0];
+  return rand.toString(16);
+}
+
 //-----------------------------------------------------------------------------
 // Additions to JS stdlib
 //-----------------------------------------------------------------------------
@@ -23,6 +28,14 @@ Object.defineProperty(Object.prototype, "copy", {
       }
     }
     return copy;
+  }
+});
+
+Object.defineProperty(Object.prototype, "obj_map", {
+  value: function(f) {
+    const entries = Object.entries(this);
+    const new_entries = entries.map(([k, v]) => [k, f(v)]);
+    return Object.fromEntries(new_entries);
   }
 });
 
@@ -111,6 +124,10 @@ Object.defineProperty(Set.prototype, "hasSubset", {
   <% handler = get_attr_value(helper, "handler") %>
   Handlebars.registerHelper("<%= name %>", <%= encode_function(handler) %>);
 <% end %>
+
+window.rez = window.rez ?? {};
+
+<%= @view_code %>
 
 //-----------------------------------------------------------------------------
 // Basic Object Prototype
@@ -631,65 +648,7 @@ RezAsset.prototype.constructor = RezAsset;
 
 let card_proto = {
   __proto__: basic_object,
-  targetType: "card",
-
-  incRenderId() {
-    this.render_id += 1;
-    return this.render_id;
-  },
-
-  renderBlocks() {
-    const block_ids = this.attributes["blocks"];
-    if(block_ids == null) {
-      return {}
-    } else {
-      return block_ids.reduce((blocks, block_id) => {
-        const card = this.game.$(block_id);
-
-        if( card != null ) {
-          const block = card.render({"card_type": "block"});
-          blocks[block_id] = block;
-          return blocks;
-        } else {
-          throw "Attempt to render block with id '" + block_id + "'. Not found!";
-        }
-      }, {});
-    }
-  },
-
-  customBindings() {
-    if(this.hasAttribute("bindings")) {
-      const custom_bindings = this.getAttribute("bindings") || {};
-      const bindings = {};
-      for(let binding_name of Object.keys(custom_bindings)) {
-        const binding = custom_bindings[binding_name];
-        if(typeof(binding) == "string") {
-          // ID based binding
-          const binding_id = custom_bindings[binding_name];
-          const game_object = this.game.$(binding_id);
-          if(game_object == null) {
-            throw "Attempt to make binding to game object with id " + binding_id + " but no such object was found!";
-          }
-          bindings[binding_name] = game_object;
-        } else if(typeof(binding) == "function") {
-          // Query based binding
-          bindings[binding_name] = binding(this);
-        }
-      }
-      return bindings;
-    } else {
-      return {};
-    }
-  },
-
-  render(bindings) {
-    this.runEvent("render", {});
-    const default_bindings = {card: this, render_id: this.incRenderId()};
-    const block_bindings = this.renderBlocks();
-    const custom_bindings = this.customBindings();
-    const full_bindings = {...default_bindings, ...block_bindings, ...custom_bindings, ...bindings};
-    return this.template(full_bindings);
-  }
+  targetType: "card"
 };
 
 function RezCard(id, template, attributes) {
@@ -1135,12 +1094,14 @@ let game_proto = {
       throw "new_scene_id cannot be null!";
     }
 
-    if(this.current_scene_id != null) {
-      this.getCurrentScene().finish();
-    }
-
     this.current_scene_id = new_scene_id;
+    const scene = this.getCurrentScene();
+    this.setViewContent(scene.getLayout());
     this.getCurrentScene().start();
+  },
+
+  setViewContent(content) {
+    this.view.getLayout().addContent(content);
   },
 
   getTarget(target_id) {
@@ -1151,19 +1112,9 @@ let game_proto = {
     }
   },
 
-  container() {
-    return document.getElementById(this.container_id);
-  },
-
-  render() {
-    console.log("Render " + this.id);
-    const curr_scene = this.getCurrentScene();
-    const scene_render = curr_scene.render();
-    const html = this.template({scene: scene_render});
-    this.container().innerHTML = html;
-    curr_scene.transformLinksToEvents();
-    curr_scene.activateForms();
-    curr_scene.activateInputs();
+  updateView() {
+    console.log("Updating the view");
+    this.view.update();
   },
 
   interludeWithScene(interlude_scene_id) {
@@ -1176,11 +1127,10 @@ let game_proto = {
     console.log("Interlude from " + this.current_scene_id + " to " + interlude_scene_id);
 
     // Save the state of the current scene
-    this.getCurrentScene().interrupt();
-    this.scene_stack.push(this.current_scene_id);
+    this.pushScene();
 
-    this.current_scene_id = interlude_scene_id;
-    this.getCurrentScene().start();
+    this.setCurrentScene(interlude_scene_id);
+    this.updateView();
   },
 
   resumePrevScene() {
@@ -1191,20 +1141,40 @@ let game_proto = {
       // Let the interlude know we're done
       this.getCurrentScene().finish();
 
-      // Bring the previous scene back as the current scene
-      this.current_scene_id = this.scene_stack.pop();
-      this.getCurrentScene().resume();
+      this.popScene();
+      this.updateView();
     }
+  },
+
+  pushScene() {
+    this.getCurrentScene().interrupt();
+    this.scene_stack.push(this.current_scene_id);
+    this.view.pushLayout(new RezSingleLayout(this));
+  },
+
+  popScene() {
+    this.view.popLayout();
+    this.current_scene_id = this.scene_stack.pop();
+    this.getCurrentScene().resume();
+  },
+
+  setViewLayout(layout) {
+    this.view.setLayout(layout);
   },
 
   start(container_id) {
     console.log("> Game.start");
+    this.view = new RezView(container_id, this, new RezSingleLayout(this));
+
     // Init every object, will also trigger on_init for any object that defines it
     this.init_objects.forEach((obj) => {obj.init()});
     this.init_objects = null;
-    this.container_id = container_id;
+
+    // this.container_id = container_id;
     this.runEvent("start", {});
-    this.setCurrentScene(this.getAttribute("initial_scene"));
+
+    const initial_scene_id = this.getAttributeValue("initial_scene");
+    this.setCurrentScene(initial_scene_id);
   },
 
   getEnabledSystems() {
@@ -1212,6 +1182,103 @@ let game_proto = {
       getAll("system").
         filter((system) => system.getAttribute("enabled") == true).
         sort((sys1, sys2) => sys1.getAttributeValue("priority") > sys2.getAttributeValue("priority"));
+  },
+
+  // Handle events coming from the browser
+
+  handleBrowserEvent(evt) {
+    if(evt.type == "click") {
+      return this.handleBrowserClickEvent(evt);
+    } else if(evt.type == "input") {
+      return this.handleBrowserInputEvent(evt);
+    } else if(evt.type == "submit") {
+      return this.handleBrowserSubmitEvent(evt);
+    } else {
+      return false;
+    }
+  },
+
+  handleBrowserClickEvent(evt) {
+    if(!evt.target.dataset.event) {
+      return false;
+    }
+
+    const event = evt.target.dataset.event;
+    if(event == 'card') {
+      return this.handleCardEvent(evt);
+    } else if(event == 'shift') {
+      return this.handleShiftEvent(evt);
+    } else if(event == 'interlude') {
+      return this.handleInterludeEvent(evt);
+    } else if(event == 'resume') {
+      return this.handleResumeEvent(evt);
+    } else if(event == 'event') {
+      return this.handleCustomEvent(evt);
+    } else {
+      throw "Unexpected event type: " + event + "!";
+    }
+  },
+
+  handleCardEvent(evt) {
+    console.log("Handle card event");
+    const card_id = evt.target.dataset.target;
+    this.getCurrentScene().playCardWithId(card_id);
+    return true;
+  },
+
+  handleShiftEvent(evt) {
+    console.log("Handle shift event");
+    const scene_id = evt.target.dataset.target;
+    this.setCurrentScene(scene_id);
+    return true;
+  },
+
+  handleInterludeEvent(evt) {
+    console.log("Handle interlude event");
+    const scene_id = evt.target.dataset.target;
+    this.interludeWithScene(scene_id);
+    return true;
+  },
+
+  handleResumeEvent(evt) {
+    console.log("Handle resume event");
+    this.resumePrevScene();
+    return true;
+  },
+
+  handleBrowserInputEvent(evt) {
+    console.log("Handle input event");
+    const card_div = evt.target.closest(".active_card > div.card, .active_block > div.card");
+    if(!card_div) {
+      throw "Cannot find div for input " + evt.target.id + "!";
+    }
+
+    const card_id = card_div.dataset.card;
+    if(!card_id) {
+      throw "Cannot get card id for input" + evt.target.id + "!";
+    }
+
+    const card = $(card_id);
+    return card.runEvent("input", {evt: evt});
+  },
+
+  handleBrowserSubmitEvent(evt) {
+    console.log("Handle submit event");
+
+    const form_name = evt.target.getAttribute("name");
+    if(!form_name) {
+      throw "Cannot get form name!";
+    }
+
+    const card_div = evt.target.closest(".active_card > div.card, .active_block > div.card");
+    if(!card_div) {
+      throw "Cannot find div for form: " + form_name + "!";
+    }
+
+    const card_id = card_div.dataset.card;
+    const card = $(card_id);
+
+    return card.runEvent(form_name, {form: evt.target});
   },
 
   runTick() {
@@ -1232,7 +1299,7 @@ function RezGame(template, attributes) {
   this.wmem = {game: this};
   this.game_objects = new Map();
   this.init_objects = [this];
-  this.properties_to_archive = ["scene_stack", "current_scene_id", "wmem", "tag_index"];
+  this.properties_to_archive = ["scene_stack", "current_scene_id", "wmem", "tag_index", "renderer"];
   this.changed_attributes = [];
   this.$ = this.getGameObject;
 }
@@ -1792,6 +1859,9 @@ let scene_proto = {
     if(card) {
       this.runEvent("start_card", {card: card.id});
       card.runEvent("start", {scene: this.id});
+
+      const block = new RezBlock(card);
+      this.getLayout().addContent(block);
     }
   },
 
@@ -1805,217 +1875,33 @@ let scene_proto = {
 
     this.finishCurrentCard();
 
-    // In continuous layout mode we re-display the previous rendering of
-    // past cards
-    const layout_mode = this.getAttribute("layout_mode");
-    if(layout_mode == "continuous") {
-      this.cards_played.push(this.current_render);
-    }
-
     this.current_card_id = new_card_id;
     this.startNewCard();
-    this.current_render = this.getCurrentCard().render({"card_type": "card"});
-    this.game.render();
+
+    this.game.updateView();
     this.getCurrentCard().runEvent("ready", {});
-  },
-
-  currentCardSelector() {
-    const curr_card = this.getCurrentCard();
-    return "div.card#card_" + curr_card.id + "_" + curr_card.render_id;
-  },
-
-  liveLinkSelector() {
-    return [
-      this.currentCardSelector() + " a[data-target]",
-      this.currentCardSelector() + " a[data-event]",
-      "div.block a[data-target]",
-      "div.block a[data-event]"
-    ].join(", ");
-  },
-
-  anchorLinks() {
-    return document.querySelectorAll("a");
-  },
-
-  hotLinks() {
-    return document.querySelectorAll(this.liveLinkSelector());
-  },
-
-  transformLinksToEvents() {
-    const this_scene = this;
-
-    // First deactivate all links on the page
-    this.anchorLinks().forEach(function(elem) {
-      elem.classList.add("inactive");
-    });
-
-    // Then selectively re-enable links in the current card
-    // And links in blocks
-    this.hotLinks().forEach(function(elem) {
-      elem.classList.remove("inactive");
-      elem.classList.add("active");
-
-      elem.addEventListener("click", function(evt) {
-        if(evt.target.dataset.event) {
-          const event_name = evt.target.dataset.event;
-          const event_target = evt.target.parentElement.dataset.card;
-          console.log("Sending event " + event_name + " to " + event_target);
-          const card = this_scene.game.$(event_target);
-          if(card) {
-            card.runEvent(evt.target.dataset.event, evt.target.dataset);
-          } else {
-            throw "Event target " + event_target + " not found!";
-          }
-        } else if(evt.target.dataset.target) {
-          console.log("Target: " + evt.target.dataset.target);
-          let target_id = evt.target.dataset.target;
-          let target = this_scene.game.getTarget(target_id);
-          if(typeof(target) == "undefined") {
-            throw new Error("Attempt to reach undefined target: " + target_id);
-          } else {
-            if(target.targetType == "game") {
-              if(evt.target.dataset.op == "resume") {
-                target.resumePrevScene();
-              } else {
-                throw "Error, unexpected data-op: " + evt.target.dataset.op;
-              }
-            }
-            if(target.targetType == "card") {
-              this_scene.playCardWithId(target.id);
-            } else if(target.targetType == "scene") {
-              if(evt.srcElement.dataset.op == "shift") {
-                this_scene.game.setCurrentScene(target.id);
-              } else if(evt.srcElement.dataset.op == "interlude") {
-                this_scene.game.interludeWithScene(target.id);
-              } else {
-                console.dir(elem);
-                throw "Error, no data-op!";
-              }
-            }
-          }
-        } else {
-          throw "Link without data-event or data-target was enabled!";
-        }
-      });
-    });
-  },
-
-  formsSelector() {
-    return [
-      this.currentCardSelector() + " form[rez-live]",
-      "div.block form[rez-live]"].join(", ");
-  },
-
-  inputsSelector() {
-    return [
-      this.currentCardSelector() + " input[rez-live]",
-      "div.block form input[rez-live]"
-    ].join(", ");
-  },
-
-  activateInputs() {
-    const this_scene = this;
-    const inputs_selector = this.inputsSelector();
-    console.log("Inputs selector = " + inputs_selector);
-    document.querySelectorAll(this.inputsSelector()).forEach(function(elem) {
-      console.log("Activing inputs for " + elem.id);
-      elem.addEventListener("input", function(evt) {
-        const card_div = evt.target.closest(".card, .block");
-        if(!card_div) {
-          throw "Cannot find div for input " + elem.id + "!";
-        }
-
-        const card_id = card_div.dataset.card;
-        if(!card_id) {
-          throw "Cannot get card id for input " + elem.id + "!";
-        }
-
-        const card = this_scene.game.$(card_id);
-        if(!card) {
-          throw "Cannot locate card " + card_id + " for input " + elem.id + "!";
-        }
-
-        card.runEvent("input", {evt: evt});
-        return false;
-      });
-    });
-  },
-
-  activateForms() {
-    const this_scene = this;
-
-    document.querySelectorAll(this.formsSelector()).forEach(function(elem) {
-      elem.addEventListener("submit", function(evt) {
-        evt.preventDefault();
-
-        const form_name = evt.target.getAttribute("name");
-        if(!form_name) {
-          throw "Cannot get form name!";
-        }
-
-        const card_div = evt.target.closest(".card, .block");
-        if(!card_div) {
-          throw "Cannot find div for form: " + form_name + "!";
-        }
-
-        const card_id = card_div.dataset.card;
-        if(!card_id) {
-          throw "Cannot get card id of div form form: " + form_name + "!";
-        }
-
-        const card = this_scene.game.$(card_id);
-        if(!card) {
-          throw "Cannot locate card with id " + card_id + "!";
-        }
-
-        card.runEvent(form_name, {form: evt.target});
-      });
-    });
   },
 
   getCard(card_id) {
     const card = this.$(card_id);
-    if(card.constructor != RezCard) {
+    if(card.game_object_type != "card") {
       throw "Attempt to get id which does not correspond to a card";
     }
     return card;
   },
 
-  render() {
-    console.log("Rendering scene: " + this.id);
-    this.runEvent("render", {});
-    return this.renderLayout(this.renderCards(), this.renderBlocks());
-  },
-
-  renderLayout(card_contents, block_contents) {
-    const contents = {...block_contents, ...card_contents};
-    return this.layout_template(contents);
-  },
-
-  renderCards() {
-    const past_content = this.cards_played.join("\n");
-    const content = past_content + this.current_render;
-
-    return {
-      "content": content
-    }
-  },
-
-  renderBlocks() {
-    const block_ids = this.attributes["blocks"];
-    if(block_ids == null) {
-      return {}
+  createLayout() {
+    const layout_mode = this.getAttributeValue("layout_mode");
+    if(layout_mode == "continuous") {
+      return new RezMultiLayout(this);
     } else {
-      return block_ids.reduce((blocks, block_id) => {
-        const block = this.getCard(block_id);
-        if( block != null ) {
-          blocks[block_id] = block.render({"card_type": "block"});
-          return blocks;
-        } else {
-          throw "Attempt to render invalid block_id: " + block_id;
-        }
-      }, {});
+      return new RezSingleLayout(this);
     }
+  },
+
+  getLayout() {
+    this.layout = this.layout ?? this.createLayout();
+    return this.layout;
   },
 
   reset() {
@@ -2032,23 +1918,20 @@ let scene_proto = {
   resume() {
     console.log("Resuming " + this.id);
     this.runEvent("resume", {});
-
-    // We need to update the screen, now we're back
-    this.game.render();
   },
 
   start() {
     this.reset();
     this.init();
     this.runEvent("start", {});
-    this.playCardWithId(this.getAttribute("initial_card"))
+    this.playCardWithId(this.getAttribute("initial_card"));
   }
 };
 
-function RezScene(id, layout_template, attributes) {
+function RezScene(id, template, attributes) {
   this.id = id;
   this.game_object_type = "scene";
-  this.layout_template = layout_template;
+  this.template = template;
   this.attributes = attributes;
   this.properties_to_archive = ["current_card_id", "current_render", "cards_played"];
   this.changed_attributes = [];

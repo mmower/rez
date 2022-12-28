@@ -243,21 +243,56 @@ What is displayed on screen is determined by three things:
 * The layout provided by the current scene
 * The content provided by the card, or stack of cards
 
-
-
-## Content Elements
+### <a name="rendering_content_elements">Content Elements</a>
 
 The `@game`, `@scene`, and `@card` elements all specify content that will be presented to the player. In the case of the `@game` and `@scene` this is their `layout` attribute, in the case of `@card` it is the `content` attribute.
 
-What appears on screen is the current card (or stack of cards for) content wrapped in the scene and then game layouts.
+What appears on screen is the current card (or stack of cards) content wrapped in the scene and then game layouts.
 
 This makes it easy to have an overall layout with different layouts for different scenes (although scenes may also share layouts) wrapping the card content itself.
 
 Content can be written as Markdown or plain HTML and is passed to the [Handlebars](https://handlebarsjs.com/) compiler and turned into a rendering function. This also means that all the facilities of Handlebars templates are available when creating dynamic content.
 
-A game is all about the actions you take. In Rez these will usually be represented by links that load new cards or scenes, or trigger events that you can respond to. There are many ways to generate such links:
+A game is all about the actions you take. In Rez these will usually be represented by links that load new cards or scenes, or trigger events that you can respond to. There are many ways to generate such links (see [Linking To Other Content](#rendering_linking_to_other_content)).
 
-### Linking to other content
+### <a name="rendering_layout">Layout</a>
+
+The game uses a template:
+
+    <div class="game">
+      ...layout...
+    </div>
+
+So the `layout:` attribute of the `@game` is injected into the master game `<div>`. The `layout:` attribute is expected to include `{{scene}}` somewhere as this is what brings in the current `@scene` content. If `{{scene}}` is not included the layout will be empty.
+
+Scenes use a template:
+
+    <div id="scene_<scene_id>" class="scene">
+      ...layout...
+    </div>
+
+The `layout:` attribute of the `@scene` is expected to include `{{content}}` as this is what brings in the `@scene` content which can be the output of one or more cards depending on the scene's layout mode.
+
+Cards use a template:
+
+    <div id="card_<render_id>"
+         data-card="<card_id>"
+         class="card <card_type>"
+    >
+      ...content...
+    </div>
+
+The `render_id` is a unique value to disambiguate each rendered thing. This means that if a card is rendered twice, while the `card_id` will be the same, the `render_id` will disambiguate them.
+
+The rendererd `content:` attribute of the `@card` is injected into this HTML div. The `card_type` will be one of `block`, `card_active`, or `card_passive` depending on whether the content is coming from the scene's current card, an old card (in a scene with continuous layout), or a block.
+
+Block content comies from cards that are being rendered as part of another card. For example we might have a card `#sidebar` that we want to render as part of a scene layout. In this case we would include it in the `blocks:` attribute of the scene. It will be automatically rendered and have a `card_type` of `block` to distinguish it from other content.
+
+The rendering process disables links where `card_type` = `card_passive`. Hotlinks are only active from the current card and blocks.
+
+You can always target a card with the `card` CSS class and then distinguish particular kinds of card through the `block`, `card_active`, or `card_passive` classes.
+
+### <a name="rendering_linking_to_other_content">Linking to other content</a>
 
 Borrowing from Twine we can load a new card into the scene as follows:
 
@@ -287,7 +322,7 @@ This presents a link labelled "Link text" that, when clicked, interrupts the cur
 
 This presents a link labelled "Link text" that, when clicked, ends a scene interlude and resumes the previous scene where it left off.
 
-### Including assets
+### <a name="rendering_including_assets">Including assets</a>
 
 Rez includes a Handlebars helper `r_asset` for including asset content. The helper will generate an appropriate tag for the assert. So, for example:
 
@@ -297,11 +332,11 @@ Would generate an appropriate `<img />` tag to include the asset with id `image_
 
 To access the raw path to the asset file get the corresponding `RezAsset` object and access its `path` attribute.
 
-### CS & JS
+### <a name="rendering_cs_and_js">CS & JS</a>
 
 By default Rez uses the [Bulma CSS framework](https://bulma-css.com/) for styling and makes the [Alpine.js](https://alpinejs.dev/) library available for effects.
 
-## Scripts and Styles
+## <a name="scripts_and_styles">Scripts and Styles</a>
 
 If you need to include custom Javascript code (outside of the in-game event handlers) or CSS styles in your game you can use the `@script` and `@style` elements respectively. These elements do not have an ID, nor do they have attibutes and are written as follows:
 
@@ -963,6 +998,7 @@ Internally a card is transformed into a Javascript Handlerbars template so they 
 ### Optional Attributes
 
 * blocks — list of element-id
+* css_class — a string containing custom CSS classes to apply
 * bindings — map of label to element-id
 * tags — set of keywords
 

@@ -9,6 +9,8 @@ defmodule Rez.Compiler.CreateRuntime do
 
   alias Rez.Compiler.{Compilation, IOError}
 
+  EEx.function_from_file(:def, :render_viewjs, Path.expand("assets/templates/runtime/view.js"), [])
+
   EEx.function_from_file(:def, :render_runtime, Path.expand("assets/templates/runtime.js.eex"), [
     :assigns
   ])
@@ -25,7 +27,8 @@ defmodule Rez.Compiler.CreateRuntime do
           options: %{output: true}
         } = compilation
       ) do
-    runtime_code = render_runtime(game: game)
+    view_code = render_viewjs()
+    runtime_code = render_runtime(game: game, view_code: view_code)
     output_path = Path.join(dist_path, "assets/runtime.js")
 
     case File.write(output_path, runtime_code) do

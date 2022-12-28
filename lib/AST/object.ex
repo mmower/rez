@@ -17,10 +17,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
   def pre_process(object), do: object
   def process(object), do: object
   def children(_object), do: []
-  def validators(_object), do: [
-    attribute_if_present?(
+
+  def validators(_object),
+    do: [
+      attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
       )
-  ]
+    ]
 end

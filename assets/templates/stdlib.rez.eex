@@ -49,7 +49,7 @@ end
   args: ["card" "action"]
   handler: (card, action) => {
     let action_handler = card.attributes[action];
-    if( action_handler == null ) {
+    if(action_handler == null) {
       throw "No action handler for '" + action + "' on card '" + card.id + "'!";
     } else if(typeof(action_handler) != "function") {
       throw "Attribute '" + action + "' of card '" + card.id + "' is not a handler function!";
@@ -76,13 +76,11 @@ end
   name: "shift"
   args: ["card" "scene_id" "title"]
   handler: (card, scene_id, title) => {
-    const new_scene = card.game.$(scene_id);
-    if(new_scene == null) {
-      throw "Attempt to shift to scene with id '" + scene_id + "'. Not found!";
-    } else if(new_scene.game_object_type != "scene") {
+    const new_scene = card.$(scene_id);
+    if(new_scene.game_object_type != "scene") {
       throw "Attempt to shift to scene with id '" + scene_id + "'. Is of type '" + new_scene.game_object_type + "'";
     } else {
-      return new Handlebars.SafeString("<a href='javascript:void(0);' data-target='" + scene_id + "'' data-op='shift'>" + title + "</a>")
+      return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='shift' data-target='" + scene_id + "'>" + title + "</a>")
     }
   }
 end
@@ -94,13 +92,11 @@ end
   name: "interlude"
   args: ["card" "scene_id" "title"]
   handler: (card, scene_id, title) => {
-    const new_scene = card.game.$(scene_id);
-    if(new_scene == null) {
-      throw "Attempt to interlude to scene with id '" + scene_id + "'. Not found!";
-    } else if(new_scene.game_object_type != "scene") {
+    const new_scene = card.$(scene_id);
+    if(new_scene.game_object_type != "scene") {
       throw "Attempt to interlude to scene with id '" + scene_id + "'. Is of type '" + new_scene.game_object_type + "'";
     } else {
-      return new Handlebars.SafeString("<a href='javascript:void(0);' data-target='" + scene_id + "'' data-op='interlude'>" + title + "</a>")
+      return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='interlude' data-target='" + scene_id + "'>" + title + "</a>")
     }
   }
 end
@@ -113,7 +109,7 @@ end
   name: "resume"
   args: ["title"]
   handler: (title) => {
-    return new Handlebars.SafeString("<a href='javascript:void(0);' data-target='game' data-op='resume'>" + title + "</a>");
+    return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='resume'>" + title + "</a>");
   }
 end
 
@@ -156,6 +152,7 @@ end
     layout: """
     {{{content}}}
     """
+    layout_mode: :single
   end
 
 @card default_load_game_form begin
