@@ -83,8 +83,8 @@ defmodule Rez.AST.ValueEncoder do
     "`" <> encode_dquotes_and_newlines(s) <> "`"
   end
 
-  defp encode_roll({count, sides, modifier}) do
-    "new RezDie(#{count}, #{sides}, #{modifier})"
+  defp encode_roll({count, sides, modifier, rounds}) do
+    "new RezDie(#{count}, #{sides}, #{modifier}, #{rounds})"
   end
 
   defp encode_attr_ref(name) do

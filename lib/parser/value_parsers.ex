@@ -1,5 +1,6 @@
 defmodule Rez.Parser.ValueParsers do
   alias Ergo.Context
+  alias Ergo.Parser
   import Ergo.Combinators
   import Ergo.Terminals
   import Ergo.Numeric
@@ -247,11 +248,27 @@ defmodule Rez.Parser.ValueParsers do
 
   # Dice
 
+  def default(%Parser{} = parser, value) do
+    Parser.combinator(
+      :default,
+      "default->#{inspect(value)}",
+      fn %Context{} = ctx ->
+        case Parser.invoke(ctx, parser) do
+          %Context{status: :ok, ast: nil} = nil_ctx ->
+            %{nil_ctx | ast: value}
+
+          new_ctx ->
+            new_ctx
+        end
+      end
+    )
+  end
+
   def dice_value() do
     ParserCache.get_parser("dice", fn ->
       sequence(
         [
-          optional(number_value()),
+          optional(number_value()) |> default({:number, 1}),
           ignore(char(?d)),
           number_value(),
           optional(
@@ -261,34 +278,27 @@ defmodule Rez.Parser.ValueParsers do
                 minus()
               ]),
               number_value()
-            ])
-          )
+            ],
+            ast: fn [op, {:number, mod}] ->
+              case op do
+                ?+ -> {:number, mod}
+                ?- -> {:number, -mod}
+              end
+            end)
+          ) |> default({:number, 0}),
+          optional(
+            sequence([
+              ignore(colon()),
+              number_value()
+            ],
+            ast: fn [rounds] ->
+              {:number, rounds}
+            end)
+          ) |> default({:number, 1})
         ],
         label: "dice-value",
-        ast: fn
-          # d6
-          [{:number, sides}] ->
-            {:roll, {1, sides, 0}}
-
-          # 2d6
-          [{:number, count}, {:number, sides}] ->
-            {:roll, {count, sides, 0}}
-
-          # d6+1
-          [{:number, sides}, [?+, {:number, mod}]] ->
-            {:roll, {1, sides, mod}}
-
-          # d6-1
-          [{:number, sides}, [?-, {:number, mod}]] ->
-            {:roll, {1, sides, -mod}}
-
-          # 2d6+1
-          [{:number, count}, {:number, sides}, [?+, {:number, mod}]] ->
-            {:roll, {count, sides, mod}}
-
-          # 2d6-1
-          [{:number, count}, {:number, sides}, [?-, {:number, mod}]] ->
-            {:roll, {count, sides, -mod}}
+        ast: fn [{:number, count}, {:number, sides}, {:number, mod}, {:number, rounds}] ->
+          {:roll, {count, sides, mod, rounds}}
         end
       )
     end)

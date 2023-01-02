@@ -88,7 +88,7 @@ function RezBlock(source) {
 
 RezBlock.prototype = block_proto;
 RezBlock.prototype.constructor = RezBlock;
-window.rez.block = RezBlock;
+window.Rez.block = RezBlock;
 
 //-----------------------------------------------------------------------------
 // Layout
@@ -143,7 +143,7 @@ function RezSingleLayout(source) {
 
 RezSingleLayout.prototype = single_layout_proto;
 RezSingleLayout.prototype.constructor = RezSingleLayout;
-window.rez.single_layout = RezSingleLayout;
+window.Rez.single_layout = RezSingleLayout;
 
 //-----------------------------------------------------------------------------
 // Multi Layout
@@ -173,7 +173,7 @@ function RezMultiLayout(source) {
 
 RezMultiLayout.prototype = multi_layout_proto;
 RezMultiLayout.prototype.constructor = RezMultiLayout;
-window.rez.multi_layout = RezMultiLayout;
+window.Rez.multi_layout = RezMultiLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers

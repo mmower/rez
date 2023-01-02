@@ -19,7 +19,8 @@ defmodule Rez.Parser.AttributeParserTest do
   import Rez.Parser.ValueParsers,
     only: [
       heredoc_value: 0,
-      string_value: 0
+      string_value: 0,
+      dice_value: 0
     ]
 
   import Rez.Parser.UtilityParsers, only: [iows: 0]
@@ -158,5 +159,10 @@ defmodule Rez.Parser.AttributeParserTest do
     empty_set = MapSet.new()
 
     assert %Context{status: :ok, ast: {:set, ^empty_set}} = Ergo.parse(set(), input)
+  end
+
+  test "parse dice" do
+    input = "d6"
+    assert %Context{status: :ok, ast: {:roll, {1, 6, 0, 1}}} = Ergo.parse(dice_value(), input)
   end
 end

@@ -7,10 +7,29 @@
 (function() {
   "use strict";
 
+window.Rez = window.Rez ?? {};
+
 function randomId() {
   const rand = window.crypto.getRandomValues(new Uint32Array(1))[0];
   return rand.toString(16);
 }
+
+window.Rez.randomId = randomId;
+
+function range(from, to = 1) {
+  if(from>to) {
+    return range(to, from);
+  }
+
+  const vals = [];
+  for(let i = from; i<=to; i++) {
+    vals.push(i);
+  }
+
+  return vals;
+}
+
+window.Rez.range = range;
 
 //-----------------------------------------------------------------------------
 // Additions to JS stdlib
@@ -62,6 +81,22 @@ Object.defineProperty(Array.prototype, "randomElement", {
 Object.defineProperty(Array.prototype, "randomIndex", {
   value: function() {
     return Math.floor(Math.random() * this.length);
+  }
+});
+
+Object.defineProperty(Array.prototype, "frequencies", {
+  value: function() {
+    const freqs = new Map();
+    for(const v of this) {
+      let val = freqs.get(v);
+      if(typeof(val) == "undefined") {
+        val = 1;
+      } else {
+        val = val + 1;
+      }
+      freqs.set(v, val);
+    }
+    return freqs;
   }
 });
 
@@ -124,8 +159,6 @@ Object.defineProperty(Set.prototype, "hasSubset", {
   <% handler = get_attr_value(helper, "handler") %>
   Handlebars.registerHelper("<%= name %>", <%= encode_function(handler) %>);
 <% end %>
-
-window.rez = window.rez ?? {};
 
 <%= @view_code %>
 
@@ -550,6 +583,7 @@ function RezActor(id, attributes) {
 
 RezActor.prototype = actor_proto;
 RezActor.prototype.constructor = RezActor;
+window.Rez.Actor = RezActor;
 
 //-----------------------------------------------------------------------------
 // Asset
@@ -641,6 +675,7 @@ function RezAsset(id, path, attributes) {
 
 RezAsset.prototype = asset_proto;
 RezAsset.prototype.constructor = RezAsset;
+window.Rez.Asset = RezAsset;
 
 //-----------------------------------------------------------------------------
 // Card
@@ -663,6 +698,7 @@ function RezCard(id, template, attributes) {
 
 RezCard.prototype = card_proto;
 RezCard.prototype.constructor = RezCard;
+window.Rez.Card = RezCard;
 
 //-----------------------------------------------------------------------------
 // Decision
@@ -745,6 +781,7 @@ function RezDecision(purpose, data = {}) {
 
 RezDecision.prototype = decision_proto;
 RezDecision.prototype.constructor = RezDecision;
+window.Rez.Decision = RezDecision;
 
 //-----------------------------------------------------------------------------
 // Die
@@ -759,23 +796,38 @@ let die_proto = {
     return this.between(1, this.sides);
   },
 
-  roll() {
+  rollOnce() {
     let sum = this.modifier;
     for(let i = 0; i<this.count; i++) {
       sum += this.die();
     }
     return sum;
+  },
+
+  cl_avg(sum) {
+    const f = Math.random() < 0.5 ? Math.ceil : Math.floor;
+    return f(sum/this.rounds);
+  },
+
+  roll() {
+    let sum = 0;
+    for(let i = 0; i<this.rounds; i++) {
+      sum += this.rollOnce();
+    }
+    return this.cl_avg(sum);
   }
 };
 
-function RezDie(count, sides, modifier = 0) {
+function RezDie(count = 1, sides = 6, modifier = 0, rounds = 1) {
   this.count = count;
   this.sides = sides;
   this.modifier = modifier;
+  this.rounds = rounds;
 }
 
 RezDie.prototype = die_proto;
 RezDie.prototype.constructor = RezDie;
+window.Rez.Die = RezDie;
 
 //-----------------------------------------------------------------------------
 // DynamicLink
@@ -834,6 +886,7 @@ function RezDynamicLink(card) {
 
 RezDynamicLink.prototype = dynamic_link_proto;
 RezDynamicLink.prototype.constructor = RezDynamicLink;
+window.Rez.DynamicLink = RezDynamicLink;
 
 //-----------------------------------------------------------------------------
 // Effect
@@ -853,6 +906,7 @@ function RezEffect(id, attributes) {
 
 RezEffect.prototype = effect_proto;
 RezEffect.prototype.constructor = RezEffect;
+window.Rez.Effect = RezEffect;
 
 //-----------------------------------------------------------------------------
 // Faction
@@ -872,6 +926,7 @@ function RezFaction(id, attributes) {
 
 RezFaction.prototype = faction_proto;
 RezFaction.prototype.constructor = RezFaction;
+window.Rez.Faction = RezFaction;
 
 //-----------------------------------------------------------------------------
 // Game
@@ -1306,6 +1361,7 @@ function RezGame(template, attributes) {
 
 RezGame.prototype = game_proto;
 RezGame.prototype.constructor = RezGame;
+window.Rez.Game = RezGame;
 
 //-----------------------------------------------------------------------------
 // Group
@@ -1382,6 +1438,7 @@ function RezGroup(id, attributes) {
 
 RezGroup.prototype = group_proto;
 RezGroup.prototype.constructor = RezGroup;
+window.Rez.Group = RezGroup;
 
 //-----------------------------------------------------------------------------
 // Inventory
@@ -1577,6 +1634,7 @@ function RezInventory(id, attributes) {
 
 RezInventory.prototype = inventory_proto;
 RezInventory.prototype.constructor = RezInventory;
+window.Rez.Inventory = RezInventory;
 
 //-----------------------------------------------------------------------------
 // Item
@@ -1602,6 +1660,7 @@ function RezItem(id, template, attributes) {
 
 RezItem.prototype = item_proto;
 RezItem.prototype.constructor = RezItem;
+window.Rez.Item = RezItem;
 
 //-----------------------------------------------------------------------------
 // Location
@@ -1622,6 +1681,7 @@ function RezLocation(id, template, attributes) {
 
 RezLocation.prototype = location_proto;
 RezLocation.prototype.constructor = RezLocation;
+window.Rez.Location = RezLocation;
 
 //-----------------------------------------------------------------------------
 // List
@@ -1629,6 +1689,21 @@ RezLocation.prototype.constructor = RezLocation;
 
 let list_proto = {
   __proto__: basic_object,
+
+  //---------------------------------------------------------------------------
+  // List
+  //---------------------------------------------------------------------------
+
+  /*
+   *  Returns a random element of the list with replacement.
+  */
+  randomElement() {
+    return this.values().randomElement();
+  },
+
+  //---------------------------------------------------------------------------
+  // Cycle
+  //---------------------------------------------------------------------------
 
   /*
    * Treat the list as a repeating cycle. Each cycle identified by an id
@@ -1648,12 +1723,49 @@ let list_proto = {
     return value;
   },
 
+  //---------------------------------------------------------------------------
+  // Bag
+  //---------------------------------------------------------------------------
+
   /*
-   *  Returns a random element of the list with replacement.
+   * Returns a random element from among those left in the bag. If the bag
+   * is empty, returns nil.
   */
-  randomElement() {
-    return this.values().randomElement();
+  randomRemaining(bag_id) {
+    let bag = this.getBag(bag_id);
+    if(bag.length == 0) {
+      return null;
+    } else {
+      return bag.randomElement();
+    }
   },
+
+  /*
+   * Removes the specified value from those in the bag
+  */
+  take_from(bag_id, value) {
+    let bag = this.getBag(bag_id);
+    bag = bag.filter((elem) => elem != value);
+    this.setBag(bag_id, bag);
+  },
+
+  getBag(bag_id) {
+    return this.bags[bag_id] ?? this.create_bag(bag_id);
+  },
+
+  setBag(bag_id, bag) {
+    this.bags[bag_id] = bag;
+  },
+
+  create_bag(bag_id) {
+    const bag = Array.from(this.values());
+    this.bags[bag_id] = bag;
+    return bag;
+  },
+
+  //---------------------------------------------------------------------------
+  // Walk
+  //---------------------------------------------------------------------------
 
   /*
    * Returns a random element of the list without replacement, i.e. no item
@@ -1695,12 +1807,14 @@ function RezList(id, attributes) {
   this.attributes = attributes;
   this.cycles = {};
   this.walks = {};
+  this.bags = {};
   this.properties_to_archive = ["cycles", "walks"];
   this.changed_attributes = [];
 }
 
 RezList.prototype = list_proto;
 RezList.prototype.constructor = RezList;
+window.Rez.List = RezList;
 
 //-----------------------------------------------------------------------------
 // Object
@@ -1726,6 +1840,7 @@ function RezObject(id, attributes) {
 
 RezObject.prototype = object_proto;
 RezObject.prototype.constructor = RezObject;
+window.Rez.Object = RezObject;
 
 //-----------------------------------------------------------------------------
 // Plot
@@ -1764,6 +1879,7 @@ function RezPlot(id, attributes) {
 
 RezPlot.prototype = plot_proto;
 RezPlot.prototype.constructor = RezPlot;
+window.Rez.Plot = RezPlot;
 
 //-----------------------------------------------------------------------------
 // Relationship
@@ -1823,6 +1939,7 @@ function RezRelationship(id, attributes) {
 
 RezRelationship.prototype = relationship_proto;
 RezRelationship.prototype.constructor = RezRelationship;
+window.Rez.Relationship = RezRelationship;
 
 //-----------------------------------------------------------------------------
 // Scene
@@ -1940,6 +2057,7 @@ function RezScene(id, template, attributes) {
 
 RezScene.prototype = scene_proto;
 RezScene.prototype.constructor = RezScene;
+window.Rez.Scene = RezScene;
 
 //-----------------------------------------------------------------------------
 // Slot
@@ -1963,6 +2081,7 @@ function RezSlot(id, attributes) {
 
 RezSlot.prototype = slot_proto;
 RezSlot.prototype.constructor = RezSlot;
+window.Rez.Slot = RezSlot;
 
 //-----------------------------------------------------------------------------
 // System
@@ -1982,6 +2101,7 @@ function RezSystem(id, attributes) {
 
 RezSystem.prototype = system_proto;
 RezSystem.prototype.constructor = RezSystem;
+window.Rez.System = RezSystem;
 
 //-----------------------------------------------------------------------------
 // Task
@@ -2042,6 +2162,7 @@ function RezTask(id, attributes) {
 
 RezTask.prototype = task_proto;
 RezTask.prototype.constructor = RezTask;
+window.Rez.Task = RezTask;
 
 //-----------------------------------------------------------------------------
 // Zone
@@ -2071,6 +2192,7 @@ function RezZone(id, attributes) {
 
 RezZone.prototype = zone_proto;
 RezZone.prototype.constructor = RezZone;
+window.Rez.Zone = RezZone;
 
 //-----------------------------------------------------------------------------
 // Initialize Game Objects
