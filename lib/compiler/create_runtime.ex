@@ -9,7 +9,12 @@ defmodule Rez.Compiler.CreateRuntime do
 
   alias Rez.Compiler.{Compilation, IOError}
 
-  EEx.function_from_file(:def, :render_viewjs, Path.expand("assets/templates/runtime/view.js"), [])
+  EEx.function_from_file(
+    :def,
+    :render_viewjs,
+    Path.expand("assets/templates/runtime/view.js"),
+    []
+  )
 
   EEx.function_from_file(:def, :render_runtime, Path.expand("assets/templates/runtime.js.eex"), [
     :assigns

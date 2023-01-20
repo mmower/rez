@@ -36,11 +36,12 @@ defmodule Rez.AST.Card do
 
   ## Examples
       iex> import Rez.AST.Card
-      iex> assert "<a href='javascript:void(0)' data-target='first_card'>First Card</a>" = convert_target_name_links("[[First Card]]")
+      iex> assert "<a href='javascript:void(0)' data-event='card' data-target='first_card'>First Card</a>" = convert_target_name_links("[[First Card]]")
   """
   def convert_target_name_links(text) do
     Regex.replace(~r/\[\[([\w\s]+)\]\]/U, text, fn _, target_descriptor ->
       target_id = convert_target_name_to_id(target_descriptor)
+
       "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_descriptor}</a>"
     end)
   end
@@ -51,7 +52,7 @@ defmodule Rez.AST.Card do
 
   ## Examples
       iex> import Rez.AST.Card
-      iex> assert "<a href='javascript:void(0)' data-target='new_scene_id'>New Scene</a>" = convert_target_id_links("[[New Scene|new_scene_id]]")
+      iex> assert "<a href='javascript:void(0)' data-event='card' data-target='new_scene_id'>New Scene</a>" = convert_target_id_links("[[New Scene|new_scene_id]]")
   """
   def convert_target_id_links(text) do
     Regex.replace(~r/\[\[([\w\s]+)\|([\w\s]+)\]\]/U, text, fn _, target_text, target_id ->
@@ -146,7 +147,6 @@ defmodule Rez.AST.Card do
     )
   end
 
-
   def build_template(%Card{id: card_id} = card, custom_css_class) do
     TemplateHelper.make_template(
       card,
@@ -168,7 +168,7 @@ defmodule Rez.AST.Card do
       iex> card = %Card{id: "test"} |> NodeHelper.set_string_attr("content", "This is **bold** text") |> Card.process()
       iex> assert %{
       ...>  status: :ok,
-      ...>  template: "{\"compiler\":[8,\">= 4.3.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3=\"function\", alias4=container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {\n        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {\n          return parent[propertyName];\n        }\n        return undefined\n    };\n\n  return \"<div id=\\\"card_test_\"\n    + alias4(((helper = (helper = lookupProperty(helpers,\"render_id\") || (depth0 != null ? lookupProperty(depth0,\"render_id\") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"render_id\",\"hash\":{},\"data\":data,\"loc\":{\"start\":{\"line\":1,\"column\":19},\"end\":{\"line\":1,\"column\":32}}}) : helper)))\n    + \"\\\" data-card=\\\"test\\\" class=\\\"\"\n    + alias4(((helper = (helper = lookupProperty(helpers,\"card_type\") || (depth0 != null ? lookupProperty(depth0,\"card_type\") : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"card_type\",\"hash\":{},\"data\":data,\"loc\":{\"start\":{\"line\":1,\"column\":58},\"end\":{\"line\":1,\"column\":71}}}) : helper)))\n    + \" card_test>\\\"><p>\\nThis is <strong>bold</strong> text</p>\\n</div>\";\n},\"useData\":true}\n"
+      ...>  template: "{\"compiler\":[8,\">= 4.3.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    return \"<div data-card=\\\"test\\\" class=\\\"card\\\"><p>\\nThis is <strong>bold</strong> text</p>\\n</div>\";\n},\"useData\":true}\n"
       ...> } = card
   """
   def process(%Card{status: :ok} = card) do

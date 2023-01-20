@@ -448,6 +448,10 @@ defmodule Rez.AST.NodeValidator do
   def validate_is_btree?(chained_validator \\ nil) do
     fn %{name: name, type: type, value: value} = attr, node, game ->
       case {type, value} do
+        # Allow empty task trees although this may break later when we attempt to interpret it
+        {:btree, []} ->
+          :ok
+
         {:btree, root_task} ->
           case {validate_task(game, root_task), is_nil(chained_validator)} do
             {:ok, true} ->
@@ -473,19 +477,19 @@ defmodule Rez.AST.NodeValidator do
         {:error, "Undefined behaviour #{task_id}"}
 
       task ->
-        with :ok <- validate_child_count(task, Enum.count(children)),
-             :ok <- validate_options(task, options),
-             :ok <- validate_children(game, children) do
+        with :ok <- validate_task_child_count(task, Enum.count(children)),
+             :ok <- validate_task_options(task, options),
+             :ok <- validate_child_tasks(game, children) do
           :ok
         end
     end
   end
 
-  defp validate_task(_game, _) do
-    {:error, "expected to be a task"}
+  defp validate_task(_game, node) do
+    {:error, "expected '#{inspect(node)}' to be a behaviour task"}
   end
 
-  defp validate_child_count(task, child_count) do
+  defp validate_task_child_count(task, child_count) do
     min_children = NodeHelper.get_attr_value(task, "min_children", -1)
     max_children = NodeHelper.get_attr_value(task, "max_children", :infinity)
 
@@ -504,7 +508,7 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  defp validate_options(task, options) do
+  defp validate_task_options(task, options) do
     required_opts = NodeHelper.get_attr_value(task, "options", [])
 
     Enum.reduce_while(required_opts, :ok, fn {_, opt}, status ->
@@ -518,7 +522,7 @@ defmodule Rez.AST.NodeValidator do
     end)
   end
 
-  defp validate_children(game, children) do
+  defp validate_child_tasks(game, children) do
     child_errors =
       children
       |> Enum.map(fn child -> validate_task(game, child) end)

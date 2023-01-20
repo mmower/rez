@@ -50,6 +50,11 @@ defmodule Rez.AST.ValueEncoder do
     "\"#{e}\""
   end
 
+  def encode_std_function({args, body}) do
+    arg_list = Enum.join(args, ", ")
+    "function(#{arg_list}) #{body}"
+  end
+
   def encode_function({args, body}) do
     arg_list = Enum.join(args, ", ")
     "(#{arg_list}) => #{body}"
@@ -106,6 +111,10 @@ defmodule Rez.AST.ValueEncoder do
     |> MapSet.to_list()
     |> encode_list()
     |> then(fn encoded_list -> "new Set(" <> encoded_list <> ")" end)
+  end
+
+  def encode_btree([]) do
+    "[]"
   end
 
   def encode_btree({:node, behaviour_id, options, children}) when is_list(children) do

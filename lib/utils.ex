@@ -100,8 +100,12 @@ defmodule Rez.Utils do
   Appends the contents of the list `from_list` to the end of list `to_list`.
   This function is intended for use in |> since you can't easily pipe ++
   """
-  def append(to, from) when is_list(to) and is_list(from) do
+  def append_list(to, from) when is_list(to) and is_list(from) do
     to ++ from
+  end
+
+  def append_list(lst, e) when is_list(lst) and not is_list(e) do
+    lst ++ [e]
   end
 
   @doc ~S"""

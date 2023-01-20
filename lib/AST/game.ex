@@ -11,7 +11,9 @@ defmodule Rez.AST.Game do
   alias Rez.AST.Attribute
   alias Rez.AST.Script
   alias Rez.AST.Style
+  alias Rez.AST.Patch
   alias Rez.AST.TypeHierarchy
+
   import Rez.Utils
 
   defstruct status: :ok,
@@ -35,6 +37,7 @@ defmodule Rez.AST.Game do
             items: %{},
             lists: %{},
             objects: %{},
+            patches: [],
             plots: %{},
             relationships: %{},
             scenes: %{},
@@ -48,11 +51,15 @@ defmodule Rez.AST.Game do
             template: nil
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
-    %{game | scripts: scripts ++ [script]}
+    %{game | scripts: append_list(scripts, script)}
   end
 
   def add_child(%Style{} = style, %Game{styles: styles} = game) do
-    %{game | styles: styles ++ [style]}
+    %{game | styles: append_list(styles, style)}
+  end
+
+  def add_child(%Patch{} = patch, %Game{patches: patches} = game) do
+    %{game | patches: append_list(patches, patch)}
   end
 
   def add_child(%{} = child, %Game{} = game) do
@@ -190,28 +197,29 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   def children(%Game{} = game) do
     []
-    |> Utils.append(Map.values(game.actors))
-    |> Utils.append(Map.values(game.assets))
-    |> Utils.append(Map.values(game.tasks))
-    |> Utils.append(Map.values(game.cards))
-    |> Utils.append(Map.values(game.effects))
-    |> Utils.append(Map.values(game.factions))
-    |> Utils.append(Map.values(game.groups))
-    |> Utils.append(Map.values(game.helpers))
-    |> Utils.append(Map.values(game.inventories))
+    |> Utils.append_list(Map.values(game.actors))
+    |> Utils.append_list(Map.values(game.assets))
+    |> Utils.append_list(Map.values(game.tasks))
+    |> Utils.append_list(Map.values(game.cards))
+    |> Utils.append_list(Map.values(game.effects))
+    |> Utils.append_list(Map.values(game.factions))
+    |> Utils.append_list(Map.values(game.groups))
+    |> Utils.append_list(Map.values(game.helpers))
+    |> Utils.append_list(Map.values(game.inventories))
     # We put slot before item since there is a dependency on accepts:
-    |> Utils.append(Map.values(game.slots))
-    |> Utils.append(Map.values(game.items))
-    |> Utils.append(Map.values(game.lists))
-    |> Utils.append(Map.values(game.objects))
-    |> Utils.append(Map.values(game.plots))
-    |> Utils.append(Map.values(game.relationships))
-    |> Utils.append(Map.values(game.scenes))
-    |> Utils.append(Map.values(game.systems))
-    |> Utils.append(Map.values(game.topics))
-    |> Utils.append(Map.values(game.zones))
-    |> Utils.append(game.scripts)
-    |> Utils.append(game.styles)
+    |> Utils.append_list(Map.values(game.slots))
+    |> Utils.append_list(Map.values(game.items))
+    |> Utils.append_list(Map.values(game.lists))
+    |> Utils.append_list(Map.values(game.objects))
+    |> Utils.append_list(Map.values(game.plots))
+    |> Utils.append_list(Map.values(game.relationships))
+    |> Utils.append_list(Map.values(game.scenes))
+    |> Utils.append_list(Map.values(game.systems))
+    |> Utils.append_list(Map.values(game.topics))
+    |> Utils.append_list(Map.values(game.zones))
+    |> Utils.append_list(game.patches)
+    |> Utils.append_list(game.scripts)
+    |> Utils.append_list(game.styles)
   end
 
   def validators(_game) do

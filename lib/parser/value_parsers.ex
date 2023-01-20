@@ -205,8 +205,49 @@ defmodule Rez.Parser.ValueParsers do
 
   # Function
 
-  def function_value() do
-    ParserCache.get_parser("function", fn ->
+  def traditional_function_value() do
+    ParserCache.get_parser("t_function", fn ->
+      sequence(
+        [
+          ignore(literal("function")),
+          iows(),
+          ignore(open_paren()),
+          iows(),
+          optional(
+            sequence(
+              [
+                js_identifier(),
+                iows(),
+                many(
+                  sequence([
+                    ignore(comma()),
+                    iows(),
+                    js_identifier()
+                  ])
+                )
+              ],
+              ast: &List.flatten/1
+            )
+          ),
+          ignore(close_paren()),
+          iows(),
+          delimited_text(?{, ?})
+        ],
+        label: "function-value",
+        debug: true,
+        ast: fn
+          [args, body] ->
+            {:function, {args, body}}
+
+          [body] ->
+            {:function, {[], body}}
+        end
+      )
+    end)
+  end
+
+  def arrow_function_value() do
+    ParserCache.get_parser("a_function", fn ->
       sequence(
         [
           ignore(open_paren()),
@@ -246,6 +287,13 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
+  def function_value() do
+    choice([
+      traditional_function_value(),
+      arrow_function_value()
+    ])
+  end
+
   # Dice
 
   def default(%Parser{} = parser, value) do
@@ -272,29 +320,35 @@ defmodule Rez.Parser.ValueParsers do
           ignore(char(?d)),
           number_value(),
           optional(
-            sequence([
-              choice([
-                plus(),
-                minus()
-              ]),
-              number_value()
-            ],
-            ast: fn [op, {:number, mod}] ->
-              case op do
-                ?+ -> {:number, mod}
-                ?- -> {:number, -mod}
+            sequence(
+              [
+                choice([
+                  plus(),
+                  minus()
+                ]),
+                number_value()
+              ],
+              ast: fn [op, {:number, mod}] ->
+                case op do
+                  ?+ -> {:number, mod}
+                  ?- -> {:number, -mod}
+                end
               end
-            end)
-          ) |> default({:number, 0}),
+            )
+          )
+          |> default({:number, 0}),
           optional(
-            sequence([
-              ignore(colon()),
-              number_value()
-            ],
-            ast: fn [rounds] ->
-              {:number, rounds}
-            end)
-          ) |> default({:number, 1})
+            sequence(
+              [
+                ignore(colon()),
+                number_value()
+              ],
+              ast: fn [rounds] ->
+                {:number, rounds}
+              end
+            )
+          )
+          |> default({:number, 1})
         ],
         label: "dice-value",
         ast: fn [{:number, count}, {:number, sides}, {:number, mod}, {:number, rounds}] ->

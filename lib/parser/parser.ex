@@ -62,6 +62,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("object", Rez.AST.Object)
   end
 
+  def patch_block() do
+    block_with_id("patch", Rez.AST.Patch)
+  end
+
   def plot_block() do
     block_with_id("plot", Rez.AST.Plot)
   end
@@ -122,6 +126,7 @@ defmodule Rez.Parser.Parser do
         item_block(),
         list_block(),
         object_block(),
+        patch_block(),
         plot_block(),
         relationship_block(),
         scene_block(),
