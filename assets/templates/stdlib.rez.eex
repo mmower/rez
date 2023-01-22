@@ -297,7 +297,7 @@ end
     } else if(asset.game_object_type != "asset") {
       throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
     } else {
-      return Handlebars.SafeString(asset.tag());
+      return new Handlebars.SafeString(asset.tag());
     }
   }
 end
@@ -310,7 +310,7 @@ end
   args: ["asset_id"]
   handler: (asset_id) => {
     const asset = $(asset_id);
-    return Handlebars.SafeString(asset.path);
+    return new Handlebars.SafeString(asset.path);
   }
 end
 
