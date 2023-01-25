@@ -3,11 +3,31 @@
 %% ** Do not modify as local changes will be overwritten every time the game is compiled **
 
 %% ----------------------------------------------------------------------------
+%% Head Assets
+%% ----------------------------------------------------------------------------
+
+@asset _ALPINE_JS begin
+  file_name: "alpinejs.min.js"
+  defer: true
+  pre_runtime: true
+end
+
+@asset _HANDLEBARS_JS begin
+  file_name: "handlebars.min.js"
+  defer: false
+  pre_runtime: true
+end
+
+@asset _BULMA_CSS begin
+  file_name: "bulma.min.css"
+end
+
+%% ----------------------------------------------------------------------------
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
 
 @patch OBJECT_COPY begin
-  class: "Object"
+  patch: "Object"
   method: "copy"
   impl: function() {
     const copy = {};
@@ -24,7 +44,7 @@
 end
 
 @patch OBJECT_OBJ_MAP begin
-  class: "Object"
+  patch: "Object"
   method: "obj_map"
   impl: function(f) {
     const entries = Object.entries(this);
@@ -35,7 +55,7 @@ end
 
 @patch ARRAY_FY_SHUFFLE begin
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
-  class: "Array"
+  patch: "Array"
   method: "fy_shuffle"
   impl: function() {
     let idx = this.length;
@@ -48,7 +68,7 @@ end
 end
 
 @patch ARRAY_RANDOM_ELEMENT begin
-  class: "Array"
+  patch: "Array"
   method: "randomElement"
   impl: function() {
     return this.at(Math.floor(Math.random() * this.length));
@@ -56,7 +76,7 @@ end
 end
 
 @patch ARRAY_RANDOM_INDEX begin
-  class: "Array"
+  patch: "Array"
   method: "randomIndex"
   impl: function() {
     return Math.floor(Math.random() * this.length);
@@ -64,7 +84,7 @@ end
 end
 
 @patch ARRAY_FREQUENCIES begin
-  class: "Array"
+  patch: "Array"
   method: "frequencies"
   impl: function() {
     const freqs = new Map();
@@ -81,8 +101,27 @@ end
   }
 end
 
+@patch ARRAY_SUM begin
+  patch: "Array"
+  method: "sum"
+  impl: function() {
+    return this.reduce((a, b) => a+b, 0);
+  }
+end
+
+@patch ARRAY_EQUALS begin
+  patch: "Array"
+  function: "equals"
+  impl: function(a, b) {
+    return Array.isArray(a) &&
+        Array.isArray(b) &&
+        a.length === b.length &&
+        a.every((val, index) => val === b[index]);
+  }
+end
+
 @patch STRING_INTERPOLATE begin
-  class: "String"
+  patch: "String"
   method: "interpolate"
   impl: function(game) {
     return this;
@@ -90,7 +129,7 @@ end
 end
 
 @patch STRING_TO_SNAKE_CASE begin
-  class: "String"
+  patch: "String"
   method: "toSnakeCase"
   impl: function() {
       return this
@@ -101,7 +140,7 @@ end
 end
 
 @patch STRING_PARSE_TIME begin
-  class: "String"
+  patch: "String"
   method: "parseTime"
   impl: function() {
     const time_components = this.match( /(\d+)(?::(\d\d))?\s*(p?)/ );
@@ -133,7 +172,7 @@ end
 %% https://stackoverflow.com/a/31129384/7518
 
 @patch SET_UNION begin
-  class: "Set"
+  patch: "Set"
   method: "union"
   impl: function(otherSet) {
     return new Set([...this, ...otherSet]);
@@ -141,7 +180,7 @@ end
 end
 
 @patch SET_INTERSECTION begin
-  class: "Set"
+  patch: "Set"
   method: "intersection"
   impl: function(otherSet) {
     return new Set([...this].filter(x => otherSet.has(x)));
@@ -149,7 +188,7 @@ end
 end
 
 @patch SET_DIFFERENCE begin
-  class: "Set"
+  patch: "Set"
   method: "difference"
   impl: function(otherSet) {
     return new Set([...this].filter(x => !otherSet.has(x)));
@@ -157,7 +196,7 @@ end
 end
 
 @patch SET_EQUALS begin
-  class: "Set"
+  patch: "Set"
   method: "equals"
   impl: function(otherSet) {
     return this.size === otherSet.size &&
@@ -166,7 +205,7 @@ end
 end
 
 @patch SET_HAS_SUBSET begin
-  class: "Set"
+  patch: "Set"
   method: "hasSubset"
   impl: function(otherSet) {
     return this.intersection(otherSet).equals(otherSet);

@@ -152,6 +152,10 @@ defmodule Rez.AST.Game do
   def all_nodes(game) do
     [game | Node.children(game)]
   end
+
+  def patch_list(%Game{patches: patches}) do
+    patches |> Enum.sort_by(&(NodeHelper.get_attr_value(&1, "class")))
+  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do

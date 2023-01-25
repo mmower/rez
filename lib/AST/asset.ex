@@ -30,6 +30,36 @@ defmodule Rez.AST.Asset do
     File.exists?(file_path(asset))
   end
 
+  def script_asset?(%Asset{} = asset) do
+    ext(asset) == ".js"
+  end
+
+  def pre_runtime?(%Asset{} = asset) do
+    NodeHelper.get_attr_value(asset, "pre_runtime", false)
+  end
+
+  def style_asset?(%Asset{} = asset) do
+    ext(asset)  == ".css"
+  end
+
+  def ext(%Asset{} = asset) do
+    Path.extname(file_path(asset))
+  end
+
+  def asset_tag(%Asset{} = asset) do
+    case Path.extname(file_path(asset)) do
+      ".js" ->
+        if NodeHelper.get_attr_value(asset, "defer", false) do
+          ~s(<script src="#{Asset.asset_path(asset)}" defer></script>)
+        else
+          ~s(<script src="#{Asset.asset_path(asset)}"></script>)
+        end
+
+      ".css" ->
+        ~s(<link rel="stylesheet" href="#{Asset.asset_path(asset)}">)
+    end
+  end
+
   @doc """
   The `file_path` represents the on-disk location of the original asset
   file.

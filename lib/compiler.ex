@@ -30,7 +30,6 @@ defmodule Rez.Compiler do
     Rez.Compiler.CopyStdlib,
     Rez.Compiler.ReadSource,
     Rez.Compiler.ParseSource,
-    Rez.Compiler.AddDefaultAssets,
     Rez.Compiler.ValidateNodes,
     Rez.Compiler.ProcessAST,
     Rez.Compiler.NodeCheck,

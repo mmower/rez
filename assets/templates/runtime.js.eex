@@ -2,6 +2,7 @@
 // Do not modify as it will be overwritten when the game is next compiled.
 <% import Rez.AST.ValueEncoder, only: [encode_attributes: 1, encode_function: 1, encode_std_function: 1] %>
 <% import Rez.AST.NodeHelper, only: [get_attr_value: 2] %>
+<% import Rez.AST.Game, only: [patch_list: 1] %>
 <% alias Rez.AST.{Asset, Patch} %>
 
 (function() {
@@ -32,27 +33,20 @@ function range(from, to = 1) {
 window.Rez.range = range;
 
 //-----------------------------------------------------------------------------
-// Additions to JS stdlib
+// Extend JS objects
 //-----------------------------------------------------------------------------
 
-<%= for %Patch{} = patch <- @game.patches do %>
-  <% p_class = get_attr_value(patch, "class") %>
-  <% p_method = get_attr_value(patch, "method") %>
-  <% p_impl = encode_std_function(get_attr_value(patch, "impl")) %>
-Object.defineProperty(<%= p_class %>.prototype, "<%= p_method %>", {
-  value: <%= p_impl %>
-});
+<%= for %Patch{} = patch <- patch_list(@game) do %>
+  <%= case Patch.type(patch) do %>
+    <% :function -> %>
+      <%= Patch.object(patch) %>.<%= Patch.function(patch) %> = <%= encode_std_function(Patch.impl(patch)) %>;
+
+    <% :method -> %>
+      Object.defineProperty(<%= Patch.object(patch) %>.prototype, "<%= Patch.method(patch) %>", {
+        value: <%= encode_std_function(Patch.impl(patch)) %>
+      });
+  <% end %>
 <% end %>
-
-
-
-
-
-
-
-
-
-
 
 //-----------------------------------------------------------------------------
 // Register Handlebars Helpers
@@ -63,6 +57,10 @@ Object.defineProperty(<%= p_class %>.prototype, "<%= p_method %>", {
   <% handler = get_attr_value(helper, "handler") %>
   Handlebars.registerHelper("<%= name %>", <%= encode_function(handler) %>);
 <% end %>
+
+//-----------------------------------------------------------------------------
+// Add view management code
+//-----------------------------------------------------------------------------
 
 <%= @view_code %>
 
@@ -1917,8 +1915,8 @@ let scene_proto = {
 
   createLayout() {
     const layout_mode = this.getAttributeValue("layout_mode");
-    if(layout_mode == "continuous") {
-      return new RezMultiLayout(this);
+    if(layout_mode == "stack") {
+      return new RezStackLayout(this);
     } else {
       return new RezSingleLayout(this);
     }
@@ -2304,27 +2302,29 @@ game.addGameObject(
 <% end %>
 
 <%= for {id, zone} <- @game.zones do %>
+(function() {
   let zone = new RezZone(
     "<%= id %>",
     <%= encode_attributes(zone.attributes) %>
   )
-
   game.addGameObject(zone);
 
   <%= for {loc_id, location} <- zone.locations do %>
-    let location_<%= loc_id %> = new RezLocation(
-      "<%= loc_id %>",
-      <%= if is_nil(location.template) do %>
-      null
-      <% else %>
-      Handlebars.template(<%= location.template %>)
-      <% end %>,
-      <%= encode_attributes(location.attributes) %>
-    );
-
-    zone.addLocation(location_<%= loc_id %>);
-    game.addGameObject(location_<%= loc_id %>);
+    (function() {
+      let location = new RezLocation(
+        "<%= loc_id %>",
+        <%= if is_nil(location.template) do %>
+          null
+        <% else %>
+          Handlebars.template(<%= location.template %>)
+        <% end %>,
+        <%= encode_attributes(location.attributes) %>
+      );
+      zone.addLocation(location);
+      game.addGameObject(location);
+    })();
   <% end %>
+})();
 <% end %>
 
 <%= for {id, object} <- @game.objects do %>
