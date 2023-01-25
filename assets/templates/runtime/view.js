@@ -146,12 +146,12 @@ RezSingleLayout.prototype.constructor = RezSingleLayout;
 window.Rez.single_layout = RezSingleLayout;
 
 //-----------------------------------------------------------------------------
-// Multi Layout
+// Stack Layout
 //
 // This layout holds a list of blocks that are composed to form its content
 //-----------------------------------------------------------------------------
 
-let multi_layout_proto = {
+let stack_layout_proto = {
   __proto__: layout_proto,
 
   addContent(block) {
@@ -161,19 +161,19 @@ let multi_layout_proto = {
   renderContents() {
     const last_index = this.contents.length - 1;
     return this.contents.map((block, idx) => {
-      block.html("card", idx == last_index);
+      return block.html("card", idx == last_index);
     }).join("");
   }
 }
 
-function RezMultiLayout(source) {
+function RezStackLayout(source) {
   this.source = source;
   this.contents = [];
 }
 
-RezMultiLayout.prototype = multi_layout_proto;
-RezMultiLayout.prototype.constructor = RezMultiLayout;
-window.Rez.multi_layout = RezMultiLayout;
+RezStackLayout.prototype = stack_layout_proto;
+RezStackLayout.prototype.constructor = RezStackLayout;
+window.Rez.stack_layout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers

@@ -72,7 +72,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
         "layout_mode",
         attribute_has_type?(
           :keyword,
-          attribute_value_is_one_of?(["single", "continuous"])
+          attribute_value_is_one_of?(["single", "stack"])
         )
       ),
       attribute_if_present?(

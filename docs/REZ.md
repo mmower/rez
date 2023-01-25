@@ -200,7 +200,7 @@ For example:
       end
 
       @scene meet_sam_spade begin
-        layout_mode: :continuous
+        layout_mode: :stack
         initial_card: #sam_at_his_desk
         location: #sams_office
         blocks: [#sidebar]
@@ -284,7 +284,7 @@ Cards use a template:
 
 The `render_id` is a unique value to disambiguate each rendered thing. This means that if a card is rendered twice, while the `card_id` will be the same, the `render_id` will disambiguate them.
 
-The rendererd `content:` attribute of the `@card` is injected into this HTML div. The `card_type` will be one of `block`, `card_active`, or `card_passive` depending on whether the content is coming from the scene's current card, an old card (in a scene with continuous layout), or a block.
+The rendererd `content:` attribute of the `@card` is injected into this HTML div. The `card_type` will be one of `block`, `card_active`, or `card_passive` depending on whether the content is coming from the scene's current card, an old card (in a scene with stack layout), or a block.
 
 Block content comies from cards that are being rendered as part of another card. For example we might have a card `#sidebar` that we want to render as part of a scene layout. In this case we would include it in the `blocks:` attribute of the scene. It will be automatically rendered and have a `card_type` of `block` to distinguish it from other content.
 
@@ -560,11 +560,11 @@ Dice role based attributes are mainly a shorthand for games making use of proced
 
 A keyword is a `:` prefix followed by a Javascript compatible id, e.g.
 
-    :continuous
+    :stack
     :weapon
     :item
 
-Keywords are used for constant values, for example the type of an item (e.g. `:sword`) or the layout mode of a scene (`:continuous`).
+Keywords are used for constant values, for example the type of an item (e.g. `:sword`) or the layout mode of a scene (`:stack`).
 
 Keywords can be formed into hierarchies using the `@derive` directive.
 
@@ -948,7 +948,7 @@ Assets can be collected into groups (using the `@group` element) dynamically cho
 ### Example
 
     @asset hat_01 begin
-      file: "hat_01.png"
+      file_name: "hat_01.png"
       tags: #{:hat}
     end
 
@@ -1831,7 +1831,7 @@ A `@scene` requires an `initial_card: #card_ref` attribute that identifies the c
 
 Within the layout using the `{{{content}}}` macro to specify where scene content is inserted.
 
-A `@scene` requires a `layout_mode:` attribute which must be either `:single` or `:continuous`. In the `:single` layout mode only a single `@card` is ever displayed. While in `:continuous` mode each new `@card` is layed out after the previous one.
+A `@scene` requires a `layout_mode:` attribute which must be either `:single` or `:stack`. In the `:single` layout mode only a single `@card` is ever displayed. While in `:stack` mode each new `@card` is layed out after the previous one.
 
 Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` attribute. Each referenced `@card` will be rendered and it's content can be inserted into the layout using `{{{card_id_1}}}`, `{{card_id_2}}`, etc.
 
@@ -1858,7 +1858,7 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
 
 * title — string
 * initial_card — element-id
-* layout_mode — keyword — one of `:single` or `:continuous`
+* layout_mode — keyword — one of `:single` or `:stack`
 * layout — string|heredoc
 
 ### Optional Attributes

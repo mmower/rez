@@ -81,6 +81,13 @@ defmodule Rez.Parser.StructureParsers do
 
   # Does the twin jobs of setting the AST to point to the block and map the ID of
   # into the id_map.
+  #
+  # The present behaviour with the id_map is to:
+  # where there is no entry for the id, create an entry id -> {label, file, line}
+  # where there is an entry for the id, create an entry id -> [{existing_label, file, line}, {new_label, file, line}]
+  # where there is a list for the id, create an entry id -> [{new_label, file, line} | contents]
+  #
+  # In general we do not support using the same ID twice.
   def ctx_with_block_and_id_mapped(
         %Context{data: %{id_map: id_map} = data} = ctx,
         block,
