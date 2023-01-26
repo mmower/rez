@@ -239,13 +239,13 @@ end
 end
 
 @helper EVENT_HELPER begin
-  %% The $event handler returns an <a> tag that, when the player clicks on it,
+  %% The {{event}} handler returns an <a> tag that, when the player clicks on it,
   %% sends the specified event to the enclosing card.
 
   name: "event"
   args: ["title" "event_name"]
   handler: (title, event_name) => {
-    return new Handlebars.SafeString("<a href='#' class='event' data-event='" + event_name + "'>" + title + "</a>");
+    return new Handlebars.SafeString("<a href='javascript:void(0);' class='event' data-event='" + event_name + "'>" + title + "</a>");
   }
 end
 

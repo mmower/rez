@@ -1865,7 +1865,7 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
 
 * tags — set of keyword
 * blocks — list of element-id
-* bindings — list of element-id
+* bindings — table of binding-name: element-id pairs
 
 ## Event Handlers
 

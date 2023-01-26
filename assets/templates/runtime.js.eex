@@ -175,7 +175,7 @@ let basic_object = {
   */
 
   eventHandler(event_name) {
-    return this.attributes["on_" + event_name];
+    return this.getAttribute("on_" + event_name);
   },
 
   willHandleEvent(event_name) {
@@ -589,7 +589,16 @@ window.Rez.Asset = RezAsset;
 
 let card_proto = {
   __proto__: basic_object,
-  targetType: "card"
+  targetType: "card",
+
+  handleCustomEvent(event_name, evt) {
+    const handler = this.eventHandler(event_name);
+    if(handler && typeof(handler) == "function") {
+      return handler(this, evt);
+    } else {
+      console.log("No handler for custom event");
+    }
+  },
 };
 
 function RezCard(id, template, attributes) {
@@ -1164,19 +1173,26 @@ let game_proto = {
       return false;
     }
 
-    const event = evt.target.dataset.event;
-    if(event == 'card') {
+    const event_name = evt.target.dataset.event;
+    if(event_name == 'card') {
       return this.handleCardEvent(evt);
-    } else if(event == 'shift') {
+    } else if(event_name == 'shift') {
       return this.handleShiftEvent(evt);
-    } else if(event == 'interlude') {
+    } else if(event_name == 'interlude') {
       return this.handleInterludeEvent(evt);
-    } else if(event == 'resume') {
+    } else if(event_name == 'resume') {
       return this.handleResumeEvent(evt);
-    } else if(event == 'event') {
-      return this.handleCustomEvent(evt);
     } else {
-      throw "Unexpected event type: " + event + "!";
+      return this.handleCustomEvent(event_name, evt);
+    };
+  },
+
+  handleCustomEvent(event_name, evt) {
+    const handler = this.eventHandler(event_name);
+    if(handler && typeof(handler) == "function") {
+      return handler(this, evt);
+    } else {
+      return this.getCurrentScene().handleCustomEvent(event_name, evt);
     }
   },
 
@@ -1885,6 +1901,15 @@ let scene_proto = {
 
       const block = new RezBlock(card);
       this.getLayout().addContent(block);
+    }
+  },
+
+  handleCustomEvent(event_name, evt) {
+    const handler = this.eventHandler(event_name);
+    if(handler && typeof(handler) == "function") {
+      return handler(this, evt);
+    } else {
+      return this.getCurrentCard().handleCustomEvent(event_name, evt);
     }
   },
 

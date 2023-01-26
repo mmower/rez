@@ -228,7 +228,7 @@ let event_transformer_proto = {
     elem.addEventListener(event, function(evt) {
       evt.preventDefault();
       if(!receiver.handleBrowserEvent(evt)) {
-        throw "Unhandled " + event + " event!";
+        throw "Unhandled " + evt.target.dataset.event + " event!";
       }
     });
   },
