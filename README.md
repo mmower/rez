@@ -66,6 +66,48 @@ Installation on macOS depends on [Homebrew](https://brew.sh/) and [ASDF](https:/
     # Copy to a folder in your path
     cp rez ~/bin/
 
+### Windows
+
+  1. **Install Elixir and Erlang.**
+
+     Download the Elixir web installer from https://elixir-lang.org/install.html#windows and install v1.14.2 or newer (the installer will give you a choice of versions during install). Installing Elixir will also install the appropriate version of Erlang by default. If you have a prior install of Erlang, you may need to check that it's compatible with latest Elixir.
+    
+     Verify your install in Powershell with
+    
+         > elixir -v
+         Erlang/OTP 25 [erts-13.0.4] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit:ns]
+         Elixir 1.14.2 (compiled with Erlang/OTP 25)
+   
+  2. **Install Node.**
+
+     Install [NodeJS 19](https://nodejs.org/).  A optional version manager like [NVM for Windows](https://github.com/coreybutler/nvm-windows) can make this easier.
+     
+  3. **Clone the repo.**
+  
+         > git clone git@github.com:mmower/rez.git
+         > cd rez
+      
+  4. **Install dependencies.**
+  
+         > npm install
+         > mix deps.get
+      
+  5. **Build the rez compiler binary.**
+  
+     From Powershell:
+     
+         > $env:BUILD_MODE = 'escript'; $env:MIX_ENV = 'prod'; mix escript.build
+     
+     Verify your build:
+     
+         > .\rez --version
+
+  6. **Put rez in your path.**
+
+     Edit your environment variables and add the repo to your PATH. Now you should be able to run `rez` from any directory in your shell, undecorated. Check that you can print the version from the root directory:
+
+         > cd \; rez version
+
 ### Other OS
 
 I'm hoping users of other platforms will give me the steps required to get it working for their platform.
