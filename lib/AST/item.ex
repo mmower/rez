@@ -81,6 +81,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
 
   def node_type(_item), do: "item"
 
+  def js_ctor(item) do
+    NodeHelper.get_attr_value(item, "js_ctor", "RezItem")
+  end
+
   def pre_process(item), do: item
 
   def process(item), do: Item.process(item)
@@ -92,6 +96,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       ),
       attribute_if_present?(
         "description",

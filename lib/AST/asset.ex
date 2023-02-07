@@ -38,6 +38,10 @@ defmodule Rez.AST.Asset do
     NodeHelper.get_attr_value(asset, "pre_runtime", false)
   end
 
+  def js_runtime?(%Asset{} = asset) do
+    NodeHelper.get_attr_value(asset, "js_runtime", false)
+  end
+
   def style_asset?(%Asset{} = asset) do
     ext(asset)  == ".css"
   end
@@ -78,6 +82,10 @@ defmodule Rez.AST.Asset do
   def asset_path(%Asset{} = asset) do
     Path.join("assets", file_name(asset))
   end
+
+  def asset_content(%Asset{} = asset) do
+    File.read!(asset_path(asset))
+  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Asset do
@@ -85,6 +93,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
   alias Rez.AST.{NodeHelper, Asset}
 
   def node_type(_asset), do: "asset"
+
+  def js_ctor(asset) do
+    NodeHelper.get_attr_value(asset, "js_ctor", "RezAsset")
+  end
 
   def pre_process(asset) do
     %{asset | path_info: Asset.search(asset)}
@@ -128,6 +140,23 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
+      ),
+      attribute_if_present?(
+        "js_runtime",
+        attribute_has_type?(:boolean,
+        other_attributes_present?(["js_depends"]))
+      ),
+      attribute_if_present?(
+        "js_depends",
+        attribute_coll_of?(:string)
+      ),
+      attribute_if_present?(
+        "pre_runtime",
+        attribute_has_type?(:boolean)
       ),
       attribute_present?(
         "file_name",

@@ -4,7 +4,6 @@ defmodule Rez.AST.Actor do
 
   An `Actor` is used to represent e.g. the player, or NPCs in the game.
   """
-
   defstruct status: :ok,
             position: {nil, 0, 0},
             id: nil,
@@ -13,8 +12,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Actor do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_actor), do: "actor"
+
+  def js_ctor(actor) do
+    NodeHelper.get_attr_value(actor, "js_ctor", "RezActor")
+  end
 
   def pre_process(actor), do: actor
 
@@ -27,6 +31,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       ),
       attribute_if_present?(
         "on_accept_item",

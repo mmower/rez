@@ -34,9 +34,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Location do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{Attribute, Game, Location}
+  alias Rez.AST.{NodeHelper, Attribute, Game, Location}
 
   def node_type(_location), do: "location"
+
+  def js_ctor(location) do
+    NodeHelper.get_attr_value(location, "js_ctor", "RezLocation")
+  end
 
   def pre_process(location), do: location
 
@@ -121,6 +125,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
             end
           end)
         )
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

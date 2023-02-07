@@ -23,11 +23,15 @@ defmodule Rez.Compiler.CopyAssets do
     compilation
   end
 
+  def ignore_asset?(asset) do
+    NodeHelper.get_attr_value(asset, "_ignore_missing") || NodeHelper.get_attr_value(asset, "js_runtime", false)
+  end
+
   def copy_asset(
         %Compilation{status: :ok, dist_path: dist_path} = compilation,
         %Asset{} = asset
       ) do
-    if NodeHelper.get_attr_value(asset, "_ignore_missing") do
+    if ignore_asset?(asset) do
       compilation
     else
       file_name = Asset.file_name(asset)

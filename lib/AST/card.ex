@@ -188,9 +188,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
   import Rez.AST.NodeValidator
-  alias Rez.AST.Card
+  alias Rez.AST.{Card, NodeHelper}
 
   def node_type(_card), do: "card"
+
+  def js_ctor(card) do
+    NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
+  end
 
   def pre_process(card), do: card
 
@@ -203,6 +207,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       ),
       attribute_present?(
         "content",

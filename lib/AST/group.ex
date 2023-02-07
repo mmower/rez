@@ -16,10 +16,15 @@ defmodule Rez.AST.Group do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Group do
-  alias Rez.AST.Group
   import Rez.AST.NodeValidator
+  alias Rez.AST.Group
+  alias Rez.AST.NodeHelper
 
   def node_type(_group), do: "group"
+
+  def js_ctor(group) do
+    NodeHelper.get_attr_value(group, "js_ctor", "RezGroup")
+  end
 
   def pre_process(group), do: group
 
@@ -41,6 +46,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
       attribute_if_present?(
         "exclude_tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

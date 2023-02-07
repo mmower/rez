@@ -1,0 +1,16 @@
+//-----------------------------------------------------------------------------
+// Extend JS objects
+//-----------------------------------------------------------------------------
+<% alias Rez.AST.{Game, Patch, ValueEncoder} %>
+
+<%= for %Patch{} = patch <- Game.patch_list(@game) do %>
+  <%= case Patch.type(patch) do %>
+    <% :function -> %>
+      <%= Patch.object(patch) %>.<%= Patch.function(patch) %> = <%= ValueEncoder.encode_std_function(Patch.impl(patch)) %>;
+
+    <% :method -> %>
+      Object.defineProperty(<%= Patch.object(patch) %>.prototype, "<%= Patch.method(patch) %>", {
+        value: <%= ValueEncoder.encode_std_function(Patch.impl(patch)) %>
+      });
+  <% end %>
+<% end %>

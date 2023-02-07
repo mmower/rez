@@ -13,6 +13,10 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Script do
   def node_type(_script), do: "script"
 
+  def js_ctor(_script) do
+    raise "@script does not support a JS constructor!"
+  end
+
   def pre_process(script), do: script
 
   def process(script), do: script

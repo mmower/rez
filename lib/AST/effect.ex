@@ -23,8 +23,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Effect do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_effect), do: "effect"
+
+  def js_ctor(effect) do
+    NodeHelper.get_attr_value(effect, "js_ctor", "RezEffect")
+  end
 
   def pre_process(effect), do: effect
 
@@ -41,6 +46,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       ),
       attribute_if_present?(
         "on_apply",

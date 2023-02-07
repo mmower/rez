@@ -13,6 +13,10 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Style do
   def node_type(_style), do: "style"
 
+  def js_ctor(_style) do
+    raise "@style does not support a JS constructor!"
+  end
+
   def pre_process(style), do: style
 
   def process(style), do: style

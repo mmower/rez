@@ -16,6 +16,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Helper do
 
   def node_type(_helper), do: "helper"
 
+  def js_ctor(_helper) do
+    raise "@helper does not support JS constructor!"
+  end
+
   def pre_process(helper), do: helper
 
   def process(helper), do: helper
@@ -46,7 +50,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Helper do
           :function,
           validate_expects_params?(params)
         )
-      )
+      ),
+      attribute_must_not_be_present?("js_ctor")
     ]
   end
 end

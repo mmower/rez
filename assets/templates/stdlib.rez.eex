@@ -167,6 +167,15 @@ end
   }
 end
 
+@patch STRING_RANDOM_ID begin
+  patch: "String"
+  function: "randomId"
+  impl: function() {
+    const rand = window.crypto.getRandomValues(new Uint32Array(1))[0];
+    return rand.toString(16);
+  }
+end
+
 %% Some helpful set functions from:
 %% https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
 %% https://stackoverflow.com/a/31129384/7518
@@ -209,6 +218,29 @@ end
   method: "hasSubset"
   impl: function(otherSet) {
     return this.intersection(otherSet).equals(otherSet);
+  }
+end
+
+@patch NUMBER_RANGE begin
+  patch: "Number"
+  function: "range"
+  impl: function(from, to, step) {
+    step ??= 1
+
+    if(from>to) {
+      [from, to] = [to, from];
+    }
+
+    Array.from({
+      length: (to-from)/step+1
+    })
+
+    const vals = [];
+    for(let i = from; i<=to; i+=step) {
+      vals.push(i);
+    }
+
+    return vals;
   }
 end
 

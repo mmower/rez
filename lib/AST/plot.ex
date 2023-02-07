@@ -25,8 +25,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Plot do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_plot), do: "plot"
+
+  def js_ctor(plot) do
+    NodeHelper.get_attr_value(plot, "js_ctor", "RezPlot")
+  end
 
   def pre_process(plot), do: plot
 
@@ -61,6 +66,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
       attribute_if_present?(
         "on_tick",
         attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

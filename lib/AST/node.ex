@@ -30,4 +30,10 @@ defprotocol Rez.AST.Node do
   whether the node has been correctly specified.
   """
   def validators(node)
+
+  @doc """
+  `js_ctor/1` should return the Javascript constructor function for this node
+  type.
+  """
+  def js_ctor(node)
 end

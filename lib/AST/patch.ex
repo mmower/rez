@@ -46,6 +46,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
 
   def node_type(_patch), do: "patch"
 
+  def js_ctor(_patch) do
+    raise "@patch does not support a JS constructor!"
+  end
+
   def pre_process(patch), do: patch
 
   def process(patch), do: patch
@@ -58,7 +62,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
       attribute_if_present?("function", attribute_has_type?(:string)),
       attribute_if_present?("method", attribute_has_type?(:string)),
       attribute_one_of_present?(["function", "method"], true),
-      attribute_present?("impl", attribute_has_type?(:function))
+      attribute_present?("impl", attribute_has_type?(:function)),
+      attribute_must_not_be_present?("js_ctor")
     ]
   end
 end

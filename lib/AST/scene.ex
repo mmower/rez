@@ -43,8 +43,13 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
   import Rez.AST.NodeValidator
   alias Rez.AST.Scene
+  alias Rez.AST.NodeHelper
 
   def node_type(_scene), do: "scene"
+
+  def js_ctor(scene) do
+    NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
+  end
 
   def pre_process(scene), do: scene
 
@@ -130,6 +135,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
       attribute_if_present?(
         "on_finish_card",
         attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

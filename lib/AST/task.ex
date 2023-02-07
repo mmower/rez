@@ -13,8 +13,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Task do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_task), do: "task"
+
+  def js_ctor(task) do
+    NodeHelper.get_attr_value(task, "js_ctor", "RezTask")
+  end
 
   def pre_process(task), do: task
 
@@ -41,6 +46,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
           :function,
           validate_expects_params?(["task", "wmem"])
         )
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

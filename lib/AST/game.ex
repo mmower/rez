@@ -9,6 +9,7 @@ defmodule Rez.AST.Game do
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
   alias Rez.AST.Attribute
+  alias Rez.AST.Asset
   alias Rez.AST.Script
   alias Rez.AST.Style
   alias Rez.AST.Patch
@@ -46,7 +47,6 @@ defmodule Rez.AST.Game do
             styles: [],
             systems: %{},
             tasks: %{},
-            topics: %{},
             zones: %{},
             template: nil
 
@@ -156,6 +156,36 @@ defmodule Rez.AST.Game do
   def patch_list(%Game{patches: patches}) do
     patches |> Enum.sort_by(&(NodeHelper.get_attr_value(&1, "class")))
   end
+
+  def js_pre_runtime_assets(%Game{assets: assets}) do
+    assets
+    |> Map.values()
+    |> Enum.filter(fn %Asset{} = asset ->
+      Asset.script_asset?(asset) && !Asset.js_runtime?(asset) && Asset.pre_runtime?(asset)
+    end)
+  end
+
+  def js_post_runtime_assets(%Game{assets: assets}) do
+    assets
+    |> Map.values()
+    |> Enum.filter(fn %Asset{} = asset ->
+      Asset.script_asset?(asset) && !Asset.js_runtime?(asset) && !Asset.pre_runtime?(asset)
+    end)
+  end
+
+  def js_runtime_assets(%Game{assets: assets}) do
+    assets
+    |> Map.values()
+    |> Enum.filter(fn %Asset{} = asset ->
+        NodeHelper.get_attr_value(asset, "js_runtime", false)
+      end)
+  end
+
+  def style_assets(%Game{assets: assets}) do
+    assets
+    |> Map.values()
+    |> Enum.filter(&Asset.style_asset?/1)
+  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do
@@ -164,6 +194,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
   alias Rez.AST.{NodeHelper, Game, Item}
 
   def node_type(_game), do: "game"
+
+  def js_ctor(game) do
+    NodeHelper.get_attr_value(game, "js_ctor", "RezGame")
+  end
 
   def pre_process(game), do: game
 
@@ -189,7 +223,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:relationships)
     |> NodeHelper.process_collection(:scenes)
     |> NodeHelper.process_collection(:systems)
-    |> NodeHelper.process_collection(:topics)
     |> NodeHelper.process_collection(:zones)
   end
 
@@ -219,7 +252,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.relationships))
     |> Utils.append_list(Map.values(game.scenes))
     |> Utils.append_list(Map.values(game.systems))
-    |> Utils.append_list(Map.values(game.topics))
     |> Utils.append_list(Map.values(game.zones))
     |> Utils.append_list(game.patches)
     |> Utils.append_list(game.scripts)
@@ -231,6 +263,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       ),
       attribute_present?(
         "name",

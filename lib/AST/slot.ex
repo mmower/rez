@@ -32,10 +32,15 @@ defmodule Rez.AST.Slot do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Slot do
-  alias Rez.AST.Slot
   import Rez.AST.NodeValidator
+  alias Rez.AST.Slot
+  alias Rez.AST.NodeHelper
 
   def node_type(_slot), do: "slot"
+
+  def js_ctor(slot) do
+    NodeHelper.get_attr_value(slot, "js_ctor", "RezSlot")
+  end
 
   def pre_process(slot), do: slot
 
@@ -70,6 +75,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
       attribute_if_present?(
         "on_remove",
         attribute_has_type?(:function)
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

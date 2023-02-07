@@ -211,6 +211,18 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
+  def attribute_must_not_be_present?(attr_key) do
+    fn %{attributes: attributes} = _node, _game ->
+      case Map.get(attributes, attr_key) do
+        nil ->
+          :ok
+
+        value ->
+          {:error, "js_ctor is not permitted (was: #{value})"}
+      end
+    end
+  end
+
   def attribute_is_keyword_set?(chained_validator \\ nil) do
     attribute_has_type?(
       :set,

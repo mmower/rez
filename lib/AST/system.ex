@@ -19,8 +19,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.System do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_system), do: "system"
+
+  def js_ctor(system) do
+    NodeHelper.get_attr_value(system, "js_ctor", "RezSystem")
+  end
 
   def pre_process(system), do: system
 
@@ -51,6 +56,10 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
           :function,
           validate_has_params?(1)
         )
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

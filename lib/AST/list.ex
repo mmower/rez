@@ -14,8 +14,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.List do
   import Rez.AST.NodeValidator
+  alias Rez.AST.NodeHelper
 
   def node_type(_list), do: "list"
+
+  def js_ctor(list) do
+    NodeHelper.get_attr_value(list, "js_ctor", "RezList")
+  end
 
   def pre_process(list), do: list
 
@@ -32,6 +37,10 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
       attribute_present?(
         "values",
         attribute_has_type?(:list)
+      ),
+      attribute_if_present?(
+        "js_ctor",
+        attribute_has_type?(:string)
       )
     ]
   end

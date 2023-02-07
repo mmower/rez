@@ -227,8 +227,39 @@ let event_transformer_proto = {
     const receiver = this.getReceiver();
     elem.addEventListener(event, function(evt) {
       evt.preventDefault();
-      if(!receiver.handleBrowserEvent(evt)) {
-        throw "Unhandled " + evt.target.dataset.event + " event!";
+
+      // A handler can return an object with keys representing actions to
+      // be taken after the handler is complete. For example {scene: "xxx"}
+      // would then set the current scene to "xxx".
+      //
+      // Why is this better than the handler doing this and returning?
+      //
+      // Potentially it could mean that we require a return to validate that
+      // the handler has completed properly.
+      //
+      // It also means we can circumscribe the final action of any given
+      // handler.
+      //
+      // 1) We know that a handler has taken a correct action
+      // 2) Potentially different handlers can interact
+
+
+      const response = receiver.handleBrowserEvent(evt);
+      if(typeof(response) == "object") {
+
+        if(response.scene) {
+          receiver.setCurrentScene(response.scene);
+        }
+
+        if(response.card) {
+          receiver.playCard(response.card);
+        }
+
+        if(response.flash) {
+          receiver.addFlashMessage(response.flash);
+        }
+      } else if(typeof(response) == "undefined") {
+        throw "Event handlers must return a value, preferably an exec-object!";
       }
     });
   },
