@@ -53,6 +53,14 @@ end
   }
 end
 
+@patch OBJECT_DQ_WRAP begin
+  patch: "Object"
+  method: "dq_wrap"
+  impl: function() {
+    return "\"" + this + "\"";
+  }
+end
+
 @patch ARRAY_FY_SHUFFLE begin
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
@@ -225,22 +233,15 @@ end
   patch: "Number"
   function: "range"
   impl: function(from, to, step) {
-    step ??= 1
+    step ??= 1;
 
     if(from>to) {
       [from, to] = [to, from];
     }
 
-    Array.from({
-      length: (to-from)/step+1
-    })
-
-    const vals = [];
-    for(let i = from; i<=to; i+=step) {
-      vals.push(i);
-    }
-
-    return vals;
+    return Array.from(
+      {length: (to-from)/step+1},
+      (_, i) => from + (i * step));
   }
 end
 

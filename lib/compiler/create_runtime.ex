@@ -10,10 +10,19 @@ defmodule Rez.Compiler.CreateRuntime do
 
   alias Rez.AST.{Asset, Game, NodeHelper}
 
-  @js_stdlib Path.wildcard("assets/templates/runtime/rez_*.js")
-  |> Enum.sort()
-  |> Enum.map(fn file -> File.read!(Path.expand(file)) end)
-  |> Enum.join("\n")
+  @js_stdlib_dir "assets/templates/runtime"
+  @js_stdlib_files Path.join([@js_stdlib_dir, "rez_*.js"]) |> Path.wildcard() |> Enum.sort() |> Enum.map(&Path.expand/1)
+  for file <- @js_stdlib_files, do: @external_resource(file)
+  @js_stdlib Enum.map_join(@js_stdlib_files, "\n", &File.read!/1)
+
+  # @js_stdlib Path.wildcard("assets/templates/runtime/rez_*.js")
+  # |> Enum.sort()
+  # |> Enum.map(fn file ->
+  #   path = Path.expand(file)
+  #   @external_resource path
+  #   File.read!(path)
+  # end)
+  # |> Enum.join("\n")
 
   EEx.function_from_file(
     :def,

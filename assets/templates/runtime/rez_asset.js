@@ -45,29 +45,43 @@ let asset_proto = {
     return this.type == "text";
   },
 
-  getDimensions() {
-    const w = this.getAttribute("width");
-    const h = this.getAttribute("height");
-
-    if(w && h) {
-      return "width: " + w + "; height: " + h;
-    } else if(w) {
-      return "width: " + w;
-    } else if(h) {
-      return "height: " + h;
-    } else {
-      return "";
-    }
-  },
-
   audioTag() {
     console.log("Audio tags not implemented");
     return "";
   },
 
-  imageTag() {
-    const style = this.getDimensions();
-    return new Handlebars.SafeString("<img src='" + this.path + "' style='" + style + "' />");
+  widthAttribute(w) {
+    let width;
+    if(typeof(w) == "undefined") {
+      w = this.getAttribute("width");
+      if(typeof(w) != undefined) {
+        width = w;
+      }
+    } else {
+      width = w;
+    }
+
+    return width ? " width=" + width.dq_wrap() : "";
+  },
+
+  heightAttribute(h) {
+    let height;
+    if(typeof(h) == "undefined") {
+      h = this.getAttribute("height");
+      if(typeof(h) != undefined) {
+        height = h;
+      }
+    } else {
+      height = h;
+    }
+    return height ? " height=" + height.dq_wrap() : "";
+  },
+
+  imageTag(w, h) {
+    const id_str = this.id.dq_wrap();
+    const path_str = this.path.dq_wrap();
+    const tag = "<img asset-id=" + id_str + " src=" + path_str + this.widthAttribute(w) + this.heightAttribute(h) + ">";
+    return tag;
   },
 
   videoTag() {
