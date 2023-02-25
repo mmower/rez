@@ -202,6 +202,10 @@ let game_proto = {
     }
   },
 
+  filterObjects(pred) {
+    return Array.from(this.game_objects.values()).filter(pred);
+  },
+
   getAll(target_type) {
     return Array.from(this.game_objects.values()).filter((obj) => obj.game_object_type == target_type);
   },

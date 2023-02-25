@@ -50,38 +50,42 @@ let asset_proto = {
     return "";
   },
 
-  widthAttribute(w) {
-    let width;
-    if(typeof(w) == "undefined") {
-      w = this.getAttribute("width");
-      if(typeof(w) != undefined) {
-        width = w;
-      }
-    } else {
-      width = w;
+  getWidth(w) {
+    if(typeof(w) != "undefined") {
+      return w;
     }
 
-    return width ? " width=" + width.dq_wrap() : "";
+    const width = this.getAttribute("width");
+    if(typeof(width) != "undefined") {
+      return width;
+    }
+
+    throw "Asked for width of asset " + this.id + " which is not defined and no default was specified.";
   },
 
-  heightAttribute(h) {
-    let height;
-    if(typeof(h) == "undefined") {
-      h = this.getAttribute("height");
-      if(typeof(h) != undefined) {
-        height = h;
-      }
-    } else {
-      height = h;
+  getHeight(h) {
+    if(typeof(h) != "undefined") {
+      return h;
     }
-    return height ? " height=" + height.dq_wrap() : "";
+
+    const height = this.getAttribute("height");
+    if(typeof(height) != "undefined") {
+      return height;
+    }
+
+    throw "Asked for height of asset " + this.id + " which is not defined and no default was specified.";
+  },
+
+  imageElement(w, h) {
+    const el = document.createElement("img");
+    el.setAttribute("src", this.path);
+    el.setAttribute("width", this.getWidth(w));
+    el.setAttribute("height", this.getHeight(h));
+    return el;
   },
 
   imageTag(w, h) {
-    const id_str = this.id.dq_wrap();
-    const path_str = this.path.dq_wrap();
-    const tag = "<img asset-id=" + id_str + " src=" + path_str + this.widthAttribute(w) + this.heightAttribute(h) + ">";
-    return tag;
+    return this.imageElement(w, h).outerHTML;
   },
 
   videoTag() {

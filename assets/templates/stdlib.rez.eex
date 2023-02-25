@@ -184,6 +184,14 @@ end
   }
 end
 
+@patch STRING_WRAP_WITH begin
+  patch: "String"
+  method: "wrapWith"
+  impl: function(prefix, suffix) {
+    return prefix + this + suffix;
+  }
+end
+
 %% Some helpful set functions from:
 %% https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
 %% https://stackoverflow.com/a/31129384/7518
@@ -242,6 +250,49 @@ end
     return Array.from(
       {length: (to-from)/step+1},
       (_, i) => from + (i * step));
+  }
+end
+
+@patch NUMBER_RND_BETWEEN begin
+  patch: "Number"
+  function: "rnd_between"
+  impl: function(min, max) {
+    if(min > max) {
+      [min, max] = [max, min]
+    }
+    return Math.floor(min + Math.random() * (max - min + 1));
+  }
+end
+
+@patch NUMBER_RNDF_BETWEEN begin
+  patch: "Number"
+  function: "rndf_between"
+  impl: function(min, max) {
+    if(min > max) {
+      [min, max] = [max, min]
+    }
+
+    return min + (Math.random() * (max - min));
+  }
+end
+
+@patch NUMBER_ROUNDP begin
+  %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
+  patch: "Number"
+  method: "roundp"
+  impl: function(precision) {
+    var multiplier = Math.pow(10, precision || 0);
+    return Math.round(this * multiplier) / multiplier;
+  }
+end
+
+@patch NUMBER_CL_AVG begin
+  patch: "Number"
+  method: "cl_avg"
+  impl: function(rounds) {
+    rounds ??= 2;
+    const f = Math.random() < 0.5 ? Math.ceil : Math.floor;
+    return f(this/rounds);
   }
 end
 

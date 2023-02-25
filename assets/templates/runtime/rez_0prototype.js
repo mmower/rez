@@ -15,7 +15,7 @@
   It handles execution of named event handler.
 */
 
-let basic_object = {
+const basic_object = {
   game: null,
   initialised: false,
 
@@ -363,3 +363,6 @@ Object.defineProperty(Object.prototype, "isGameObject", {
       return basic_object.isPrototypeOf(this);
   }
 });
+
+window.Rez ??= {};
+window.Rez.basic_object = basic_object;

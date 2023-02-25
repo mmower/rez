@@ -10,6 +10,14 @@ let list_proto = {
   //---------------------------------------------------------------------------
 
   /*
+   * Indexed access
+  */
+
+  at: function(idx) {
+    return this.values().at(idx);
+  },
+
+  /*
    *  Returns a random element of the list with replacement.
   */
   randomElement() {
