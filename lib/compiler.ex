@@ -36,6 +36,7 @@ defmodule Rez.Compiler do
     # Everything in the Game needs to be ready at this point
     Rez.Compiler.CreateRuntime,
     Rez.Compiler.WriteGameFile,
+    Rez.Compiler.UpdateDeps,
     Rez.Compiler.CopyAssets,
     Rez.Compiler.Reports
   ]

@@ -122,4 +122,8 @@ defmodule Rez.Utils do
     Integer.to_string(:rand.uniform(4_294_967_296), 32) <>
       Integer.to_string(:rand.uniform(4_294_967_296), 32)
   end
+
+  def file_ctime!(file_path) do
+    File.stat!(file_path).ctime
+  end
 end

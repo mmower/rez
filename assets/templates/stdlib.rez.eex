@@ -296,6 +296,59 @@ end
   }
 end
 
+@patch NUMBER_ROUND_TO_NEAREST_HALF begin
+  %% rounds a number to the nearest 0.5
+  patch: "Number"
+  method: "r2nh"
+  impl: function() {
+    return Math.round(this * 2) / 2;
+  }
+end
+
+@patch MATH_DIST_ROUND begin
+  %% Because JS only gives us random numbers as floating point we sometimes
+  %% end up having to round when we want an. The question is whether we round
+  %% up or round down which can create a bias. The dist_round function randomly
+  %% round up or down to distribute values evenly.
+  patch: "Math"
+  function: "dist_round"
+  impl: function(v) {
+    if(Math.random() < 0.5) {
+      return Math.ceil(v);
+    } else {
+      return Math.floor(v);
+    }
+  }
+end
+
+@patch MATH_RAND_INT begin
+  patch: "Math"
+  function: "rand_int"
+  impl: function(lim) {
+    return Math.floor(Math.random() * lim);
+  }
+end
+
+@patch MATH_CLRAND_INT begin
+  patch: "Math"
+  function: "clrand_int"
+  impl: function(lim) {
+    const v1 = Math.rand_int(lim);
+    const v2 = Math.rand_int(lim);
+    return (v1+v2)/2;
+  }
+end
+
+@patch MATH_CLRANDR_INT begin
+  patch: "Math"
+  function: "clrandr_int"
+  impl: function(lo, hi) {
+    const v1 = Number.rnd_between(lo, hi);
+    const v2 = Number.rnd_between(lo, hi);
+    return Math.dist_round((v1+v2)/2);
+  }
+end
+
 %% ----------------------------------------------------------------------------
 %% Handlebars Helpers
 %% ----------------------------------------------------------------------------

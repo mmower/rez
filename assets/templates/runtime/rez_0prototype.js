@@ -46,10 +46,17 @@ const basic_object = {
 
       // We're looking for {ref: "attr_name"}
       if(typeof(value) == "object") {
-        const ref_name = value["attr_ref"];
-        if(typeof(ref_name) == "string") {
-          this.initRefAttribute(attr_name, ref_name);
+        if(value.hasOwnProperty("attr_ref")) {
+          this.initRefAttribute(attr_name, value["attr_ref"]);
+        } else if(value.hasOwnProperty("fn_ref")) {
+          this.initRefFn(attr_name, value["fn_ref"]);
         }
+
+
+        // const ref_name = value["attr_ref"];
+        // if(typeof(ref_name) == "string") {
+        //   this.initRefAttribute(attr_name, ref_name);
+        // }
       }
     }
   },
@@ -76,6 +83,23 @@ const basic_object = {
 
   initRefAttribute(attr_name, ref_name) {
     const value = this.refAttrValue(ref_name);
+    if(value != null) {
+      this.setAttribute(attr_name, value);
+    }
+  },
+
+  initRefFn(attr_name, fn_path) {
+    let ref = window;
+    if(fn_path[0] == "window") {
+      fn_path.shift();
+    }
+
+
+    for(let segment of fn_path) {
+      ref = ref[segment];
+    }
+
+    const value = ref();
     if(value != null) {
       this.setAttribute(attr_name, value);
     }

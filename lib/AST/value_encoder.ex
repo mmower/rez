@@ -33,6 +33,7 @@ defmodule Rez.AST.ValueEncoder do
       :keyword -> encode_keyword(value)
       :elem_ref -> encode_elem_ref(value)
       :attr_ref -> encode_attr_ref(value)
+      :fn_ref -> encode_fn_ref(value)
       :function -> encode_function(value)
       :roll -> encode_roll(value)
       :set -> encode_set(value)
@@ -94,6 +95,11 @@ defmodule Rez.AST.ValueEncoder do
 
   defp encode_attr_ref(name) do
     "{attr_ref: \"#{name}\"}"
+  end
+
+  defp encode_fn_ref(ids) do
+    ids = Enum.map_join(ids, ", ", fn id -> "\"#{id}\"" end)
+    "{fn_ref: [#{ids}]}"
   end
 
   defp encode_boolean(b) do

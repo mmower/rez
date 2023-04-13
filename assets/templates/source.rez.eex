@@ -19,7 +19,7 @@
   on_init: (game, event) => {console.log("Beginning the game");}
 
   layout: """
-  {{{scene}}}
+  {{{content}}}
   """
 
   %(stdlib.rez)

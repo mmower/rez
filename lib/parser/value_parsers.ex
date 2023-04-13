@@ -191,15 +191,39 @@ defmodule Rez.Parser.ValueParsers do
 
   def attr_ref_value() do
     ParserCache.get_parser("attr_ref", fn ->
-      sequence(
-        [
-          ignore(amp()),
-          js_identifier()
-        ],
-        label: "ref_value",
-        debug: true,
-        ast: fn [name] -> {:attr_ref, name} end
-      )
+      sequence([
+        ignore(amp()),
+        js_identifier()
+      ],
+      label: "ref_value",
+      debug: true,
+      ast: fn [name] -> {:attr_ref, name} end)
+    end)
+  end
+
+  def fn_ref_value() do
+    ParserCache.get_parser("fn_ref", fn ->
+      sequence([
+        ignore(amp()),
+        ignore(open_paren()),
+        iows(),
+        js_identifier(),
+        many(
+          sequence([
+            ignore(dot()),
+            js_identifier()
+          ]),
+          ast: &List.flatten/1
+        ),
+        iows(),
+        ignore(close_paren())
+      ],
+      label: "ref_value",
+      debug: true,
+      ast: fn
+        [id] -> {:fn_ref, [id]}
+        [id, ids] -> {:fn_ref, [id | List.flatten(ids)]}
+      end)
     end)
   end
 
@@ -456,6 +480,7 @@ defmodule Rez.Parser.ValueParsers do
           keyword_value(),
           function_value(),
           attr_ref_value(),
+          fn_ref_value(),
           file_value()
         ],
         label: "value",
