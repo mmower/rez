@@ -24,31 +24,65 @@ defmodule Rez.AST.ValueEncoder do
     {name, encode_value({type, value})}
   end
 
-  def encode_value({type, value}) do
-    case type do
-      :number -> encode_number(value)
-      :boolean -> encode_boolean(value)
-      :dstring -> encode_dstring(value)
-      :string -> encode_string(value)
-      :keyword -> encode_keyword(value)
-      :elem_ref -> encode_elem_ref(value)
-      :attr_ref -> encode_attr_ref(value)
-      :fn_ref -> encode_fn_ref(value)
-      :function -> encode_function(value)
-      :roll -> encode_roll(value)
-      :set -> encode_set(value)
-      :list -> encode_list(value)
-      :table -> encode_attributes(value)
-      :btree -> encode_btree(value)
-    end
+  def encode_value({:number, n}) do
+    to_string(n)
   end
 
-  defp encode_keyword(e) do
-    "\"#{e}\""
+  def encode_value({:boolean, b}) do
+    to_string(b)
   end
 
-  defp encode_elem_ref(e) do
-    "\"#{e}\""
+  def encode_value({:string, s}) do
+    "\"" <> encode_dquotes_and_newlines(s) <> "\""
+  end
+
+  def encode_value({:dstring, s}) do
+    "`" <> encode_dquotes_and_newlines(s) <> "`"
+  end
+
+  def encode_value({:keyword, k}) do
+    "\"#{k}\""
+  end
+
+  def encode_value({:dynamic_initializer, i}) do
+    "{initializer: \"#{i}\"}"
+  end
+
+  def encode_value({:elem_ref, r}) do
+    "\"#{r}\""
+  end
+
+  def encode_value({:function, f}) do
+    encode_function(f)
+  end
+
+  def encode_value({:roll, {count, sides, modifier, rounds}}) do
+    "new RezDie(#{count}, #{sides}, #{modifier}, #{rounds})"
+  end
+
+  def encode_value({:list, l}) do
+    encode_list(l)
+  end
+
+  def encode_value({:set, s}) do
+    s
+    |> MapSet.to_list()
+    |> encode_list()
+    |> then(fn encoded_list -> "new Set(" <> encoded_list <> ")" end)
+  end
+
+  def encode_value({:btree, t}) do
+    encode_btree(t)
+  end
+
+  def encode_value({:table, t}) do
+    encode_attributes(t)
+  end
+
+  defp encode_list(l) do
+    l
+    |> Enum.map_join(", ", &encode_value/1)
+    |> wrap_with("[", "]")
   end
 
   def encode_std_function({args, body}) do
@@ -59,10 +93,6 @@ defmodule Rez.AST.ValueEncoder do
   def encode_function({args, body}) do
     arg_list = Enum.join(args, ", ")
     "(#{arg_list}) => #{body}"
-  end
-
-  defp encode_number(n) do
-    to_string(n)
   end
 
   @new_line_regex ~r/\n/
@@ -79,44 +109,6 @@ defmodule Rez.AST.ValueEncoder do
 
   defp encode_dquotes_and_newlines(s) do
     s |> encode_newlines() |> encode_dquotes()
-  end
-
-  defp encode_string(s) do
-    "\"" <> encode_dquotes_and_newlines(s) <> "\""
-  end
-
-  defp encode_dstring(s) do
-    "`" <> encode_dquotes_and_newlines(s) <> "`"
-  end
-
-  defp encode_roll({count, sides, modifier, rounds}) do
-    "new RezDie(#{count}, #{sides}, #{modifier}, #{rounds})"
-  end
-
-  defp encode_attr_ref(name) do
-    "{attr_ref: \"#{name}\"}"
-  end
-
-  defp encode_fn_ref(ids) do
-    ids = Enum.map_join(ids, ", ", fn id -> "\"#{id}\"" end)
-    "{fn_ref: [#{ids}]}"
-  end
-
-  defp encode_boolean(b) do
-    to_string(b)
-  end
-
-  defp encode_list(lst) do
-    lst
-    |> Enum.map_join(", ", &encode_value/1)
-    |> wrap_with("[", "]")
-  end
-
-  defp encode_set(set) do
-    set
-    |> MapSet.to_list()
-    |> encode_list()
-    |> then(fn encoded_list -> "new Set(" <> encoded_list <> ")" end)
   end
 
   def encode_btree([]) do
@@ -154,24 +146,6 @@ defmodule Rez.AST.ValueEncoder do
       Map.put(acc, key, encode_value(typed_value))
     end)
     |> to_js_code()
-  end
-
-  @doc """
-  Encode a Numberlist into a JS array
-  """
-  def encode_numberlist(lst) do
-    lst
-    |> Enum.map_join(", ", &to_string/1)
-    |> wrap_with("[", "]")
-  end
-
-  @doc """
-  Encode a Stringlist into a JS array
-  """
-  def encode_stringlist(lst) do
-    lst
-    |> Enum.map_join(", ", &encode_string/1)
-    |> wrap_with("[", "]")
   end
 
   # Predicate for filtering attributes that should not be exposed to the JS

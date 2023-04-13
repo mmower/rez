@@ -154,7 +154,7 @@ defmodule Rez.AST.Game do
   end
 
   def patch_list(%Game{patches: patches}) do
-    patches |> Enum.sort_by(&(NodeHelper.get_attr_value(&1, "class")))
+    patches |> Enum.sort_by(&NodeHelper.get_attr_value(&1, "class"))
   end
 
   def js_pre_runtime_assets(%Game{assets: assets}) do
@@ -177,8 +177,8 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-        NodeHelper.get_attr_value(asset, "js_runtime", false)
-      end)
+      NodeHelper.get_attr_value(asset, "js_runtime", false)
+    end)
   end
 
   def style_assets(%Game{assets: assets}) do

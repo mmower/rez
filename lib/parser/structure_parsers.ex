@@ -11,7 +11,7 @@ defmodule Rez.Parser.StructureParsers do
   alias LogicalFile
 
   alias Rez.AST.Node
-  import Rez.Parser.{UtilityParsers, AttributeParser}
+  import Rez.Parser.{UtilityParsers, AttributeParser, DelimitedParser}
   import Rez.Parser.ValueParsers, only: [keyword_value: 0]
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
 
@@ -352,44 +352,6 @@ defmodule Rez.Parser.StructureParsers do
       label: "derive",
       ast: fn [{:keyword, tag}, {:keyword, parent}] ->
         {:derive, tag, parent}
-      end
-    )
-  end
-
-  @doc """
-  ## Examples
-      iex> alias Ergo.Context
-      iex> import Ergo.{Terminals}
-      iex> import Rez.Parser.Parser
-      iex> p = text_delimited_by_parsers(literal("begin"), literal("end"))
-      iex> input = "begin this is some text between delimiters end"
-      iex> assert %Context{status: :ok, ast: " this is some text between delimiters ", input: ""} = Ergo.parse(p, input)
-  """
-  def text_delimited_by_parsers(open_parser, close_parser, options \\ []) do
-    trim = Keyword.get(options, :trim, false)
-
-    sequence(
-      [
-        ignore(open_parser),
-        many(
-          sequence(
-            [
-              not_lookahead(close_parser),
-              any()
-            ],
-            ast: &List.first/1
-          )
-        ),
-        ignore(close_parser)
-      ],
-      label: "delimited-text",
-      ast: fn chars ->
-        str = List.to_string(chars)
-
-        case trim do
-          true -> String.trim(str)
-          false -> str
-        end
       end
     )
   end

@@ -43,7 +43,7 @@ defmodule Rez.AST.Asset do
   end
 
   def style_asset?(%Asset{} = asset) do
-    ext(asset)  == ".css"
+    ext(asset) == ".css"
   end
 
   def ext(%Asset{} = asset) do
@@ -147,8 +147,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
       ),
       attribute_if_present?(
         "js_runtime",
-        attribute_has_type?(:boolean,
-        other_attributes_present?(["js_depends"]))
+        attribute_has_type?(
+          :boolean,
+          other_attributes_present?(["js_depends"])
+        )
       ),
       attribute_if_present?(
         "js_depends",

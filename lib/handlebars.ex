@@ -62,10 +62,13 @@ defmodule Rez.Handlebars do
 
   def run_handlebars(template_path, output_path, label) do
     handlebars_args = ["--simple", template_path, "-f", output_path]
-    command = case :os.type() do
-      {:win32, _} -> ["cmd", ["/c", "handlebars"] ++ handlebars_args]
-      _ -> ["handlebars", handlebars_args]
-    end
+
+    command =
+      case :os.type() do
+        {:win32, _} -> ["cmd", ["/c", "handlebars"] ++ handlebars_args]
+        _ -> ["handlebars", handlebars_args]
+      end
+
     {time, result} = :timer.tc(System, :cmd, command)
 
     Debug.dbg_log(

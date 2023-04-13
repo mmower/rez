@@ -11,7 +11,10 @@ defmodule Rez.Compiler.CreateRuntime do
   alias Rez.AST.{Asset, Game, NodeHelper}
 
   @js_stdlib_dir "assets/templates/runtime"
-  @js_stdlib_files Path.join([@js_stdlib_dir, "rez_*.js"]) |> Path.wildcard() |> Enum.sort() |> Enum.map(&Path.expand/1)
+  @js_stdlib_files Path.join([@js_stdlib_dir, "rez_*.js"])
+                   |> Path.wildcard()
+                   |> Enum.sort()
+                   |> Enum.map(&Path.expand/1)
   for file <- @js_stdlib_files, do: @external_resource(file)
   @js_stdlib Enum.map_join(@js_stdlib_files, "\n", &File.read!/1)
 
@@ -48,9 +51,11 @@ defmodule Rez.Compiler.CreateRuntime do
   EEx.function_from_file(
     :def,
     :render_runtime,
-    Path.expand("assets/templates/runtime.js.eex"), [
-    :assigns
-  ])
+    Path.expand("assets/templates/runtime.js.eex"),
+    [
+      :assigns
+    ]
+  )
 
   @doc """
   Runs the game runtime template over the Game AST node.
@@ -64,25 +69,26 @@ defmodule Rez.Compiler.CreateRuntime do
           options: %{output: true}
         } = compilation
       ) do
-
     js_userlib =
       game
       |> Game.js_runtime_assets()
       |> Enum.map(fn %Asset{} = asset ->
-          asset
-          |> NodeHelper.get_attr_value("_path")
-          |> File.read!()
-        end)
+        asset
+        |> NodeHelper.get_attr_value("_path")
+        |> File.read!()
+      end)
       |> Enum.join("\n\n")
 
-    runtime_code = render_runtime(
-      game: game,
-      js_stdlib: @js_stdlib,
-      js_userlib: js_userlib,
-      patch_js_objects: patch_js_objects(game: game),
-      init_game_objects: init_game_objects(game: game),
-      register_handlebars_helpers: register_handlebars_helpers(game: game)
-    )
+    runtime_code =
+      render_runtime(
+        game: game,
+        js_stdlib: @js_stdlib,
+        js_userlib: js_userlib,
+        patch_js_objects: patch_js_objects(game: game),
+        init_game_objects: init_game_objects(game: game),
+        register_handlebars_helpers: register_handlebars_helpers(game: game)
+      )
+
     output_path = Path.join(dist_path, "assets/runtime.js")
 
     case File.write(output_path, runtime_code) do

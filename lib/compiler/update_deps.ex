@@ -20,7 +20,13 @@ defmodule Rez.Compiler.UpdateDeps do
     stored_ctime > file_ctime
   end
 
-  def conditionally_write_asset(%Compilation{progress: progress} = compilation, folder, file_name, content, ctime) do
+  def conditionally_write_asset(
+        %Compilation{progress: progress} = compilation,
+        folder,
+        file_name,
+        content,
+        ctime
+      ) do
     if asset_requires_update?(folder, file_name, ctime) do
       File.write!(Path.join(["assets", folder, file_name]), content)
       %{compilation | progress: ["Updated #{file_name}" | progress]}

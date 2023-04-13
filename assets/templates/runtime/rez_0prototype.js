@@ -33,76 +33,31 @@ const basic_object = {
   init() {
     if(!this.initialised) {
       console.log("Initialise " + this.id);
-      this.initRefAttributes();
+      this.initDynamicAttributes();
       this.elementInitializer();
       this.runEvent("init", {});
       this.initialised = true;
     }
   },
 
-  initRefAttributes() {
+  initDynamicAttributes() {
+    if(this.hasAttribute("$template") && this.getAttribute("$template") == true) {
+      return;
+    }
+
     for(let attr_name of Object.keys(this.attributes)) {
       const value = this.getAttribute(attr_name);
 
-      // We're looking for {ref: "attr_name"}
-      if(typeof(value) == "object") {
-        if(value.hasOwnProperty("attr_ref")) {
-          this.initRefAttribute(attr_name, value["attr_ref"]);
-        } else if(value.hasOwnProperty("fn_ref")) {
-          this.initRefFn(attr_name, value["fn_ref"]);
-        }
-
-
-        // const ref_name = value["attr_ref"];
-        // if(typeof(ref_name) == "string") {
-        //   this.initRefAttribute(attr_name, ref_name);
-        // }
+      if(typeof(value) == "object" && value.hasOwnProperty("initializer")) {
+        const initializer = value["initializer"];
+        this.setAttribute(attr_name, eval(initializer));
+      } else if(value.constructor == RezDie) {
+        this.setAttribute(attr_name, value.roll());
       }
     }
   },
 
   elementInitializer() {
-  },
-
-  refAttrValue(ref_name) {
-    const attr = this.getAttribute(ref_name);
-    if(typeof(attr) == "undefined") {
-      console.log("Ref '" + ref_name + "' does not point at a valid attribute");
-      return null;
-    } else {
-      if(typeof(attr) == "function") {
-        return attr(this.game, this);
-      } else if(attr.constructor == RezDie) {
-        return attr.roll();
-      } else {
-        console.log("Ref '" + ref_name + "' does not point to a valid type of attribute");
-        return null;
-      }
-    }
-  },
-
-  initRefAttribute(attr_name, ref_name) {
-    const value = this.refAttrValue(ref_name);
-    if(value != null) {
-      this.setAttribute(attr_name, value);
-    }
-  },
-
-  initRefFn(attr_name, fn_path) {
-    let ref = window;
-    if(fn_path[0] == "window") {
-      fn_path.shift();
-    }
-
-
-    for(let segment of fn_path) {
-      ref = ref[segment];
-    }
-
-    const value = ref();
-    if(value != null) {
-      this.setAttribute(attr_name, value);
-    }
   },
 
   /*
@@ -112,8 +67,8 @@ const basic_object = {
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
+    copy.setAttribute("$template", false);
     copy.runEvent("copy", {original: this});
-    //copy.setAttribute("template", false);
     copy.setAttribute("copy_of", this.id);
     copy.init();
     return copy;

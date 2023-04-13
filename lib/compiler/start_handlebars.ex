@@ -14,10 +14,12 @@ defmodule Rez.Compiler.StartHandlebars do
           compilation
       ) do
     try do
-      {version, 0} = case :os.type() do
-        {:win32, _} -> System.cmd("cmd", ["/c", "handlebars", "-v"])
-        _ -> System.cmd("handlebars", ["-v"])
-      end
+      {version, 0} =
+        case :os.type() do
+          {:win32, _} -> System.cmd("cmd", ["/c", "handlebars", "-v"])
+          _ -> System.cmd("handlebars", ["-v"])
+        end
+
       Rez.Handlebars.start_link(cache_path)
       %{compilation | progress: ["Using handlebars version #{String.trim(version)}" | progress]}
     rescue

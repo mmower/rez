@@ -7,6 +7,7 @@ defmodule Rez.Parser.ValueParsers do
   import Ergo.Meta
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
+  import Rez.Parser.DelimitedParser
   import Rez.Utils
 
   alias Rez.Parser.ParserCache
@@ -187,43 +188,17 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
-  # Attr Ref
+  # Dynamic Initializer
 
-  def attr_ref_value() do
-    ParserCache.get_parser("attr_ref", fn ->
-      sequence([
-        ignore(amp()),
-        js_identifier()
-      ],
-      label: "ref_value",
-      debug: true,
-      ast: fn [name] -> {:attr_ref, name} end)
-    end)
-  end
-
-  def fn_ref_value() do
-    ParserCache.get_parser("fn_ref", fn ->
-      sequence([
-        ignore(amp()),
-        ignore(open_paren()),
-        iows(),
-        js_identifier(),
-        many(
-          sequence([
-            ignore(dot()),
-            js_identifier()
-          ]),
-          ast: &List.flatten/1
-        ),
-        iows(),
-        ignore(close_paren())
-      ],
-      label: "ref_value",
-      debug: true,
-      ast: fn
-        [id] -> {:fn_ref, [id]}
-        [id, ids] -> {:fn_ref, [id | List.flatten(ids)]}
-      end)
+  def dynamic_initializer_value() do
+    ParserCache.get_parser("dynamic_initializer", fn ->
+      sequence(
+        [
+          ignore(amp()),
+          text_delimited_by_parsers(open_brace(), close_brace())
+        ],
+        ast: fn ast -> {:dynamic_initializer, List.first(ast)} end
+      )
     end)
   end
 
@@ -479,8 +454,7 @@ defmodule Rez.Parser.ValueParsers do
           elem_ref_value(),
           keyword_value(),
           function_value(),
-          attr_ref_value(),
-          fn_ref_value(),
+          dynamic_initializer_value(),
           file_value()
         ],
         label: "value",
