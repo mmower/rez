@@ -34,6 +34,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("faction", Rez.AST.Faction)
   end
 
+  def generator_block() do
+    block_with_id("generator", Rez.AST.Generator)
+  end
+
   def group_block() do
     block_with_id("group", Rez.AST.Group)
   end
@@ -120,6 +124,7 @@ defmodule Rez.Parser.Parser do
         card_block(),
         effect_block(),
         faction_block(),
+        generator_block(),
         group_block(),
         helper_block(),
         inventory_block(),

@@ -31,6 +31,7 @@ defmodule Rez.AST.Game do
             effects: %{},
             factions: %{},
             forms: %{},
+            generators: %{},
             groups: %{},
             helpers: %{},
             inventories: %{},
@@ -211,6 +212,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:cards)
     |> NodeHelper.process_collection(:effects)
     |> NodeHelper.process_collection(:factions)
+    |> NodeHelper.process_collection(:generators)
     |> NodeHelper.process_collection(:groups)
     |> NodeHelper.process_collection(:helpers)
     |> NodeHelper.process_collection(:inventories)
@@ -240,6 +242,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.cards))
     |> Utils.append_list(Map.values(game.effects))
     |> Utils.append_list(Map.values(game.factions))
+    |> Utils.append_list(Map.values(game.generators))
     |> Utils.append_list(Map.values(game.groups))
     |> Utils.append_list(Map.values(game.helpers))
     |> Utils.append_list(Map.values(game.inventories))

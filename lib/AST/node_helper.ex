@@ -73,9 +73,19 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.keyword(name, value))}
   end
 
-  def set_func_attr(%{attributes: attributes} = node, name, {params, body})
+  # def set_func_attr(%{attributes: attributes} = node, name, {params, body})
+  #     when is_binary(name) do
+  #   %{node | attributes: Map.put(attributes, name, Attribute.function(name, {params, body}))}
+  # end
+
+  def set_std_func_attr(%{attributes: attributes} = node, name, {params, body})
       when is_binary(name) do
-    %{node | attributes: Map.put(attributes, name, Attribute.function(name, {params, body}))}
+    %{node | attributes: Map.put(attributes, name, Attribute.std_function(name, {params, body}))}
+  end
+
+  def set_arrow_func_attr(%{attributes: attributes} = node, name, {params, body})
+      when is_binary(name) do
+    %{node | attributes: Map.put(attributes, name, Attribute.arrow_function(name, {params, body}))}
   end
 
   def set_set_attr(%{attributes: attributes} = node, name, values) when is_binary(name) do

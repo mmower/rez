@@ -85,12 +85,17 @@ defmodule Rez.AST.ValueEncoder do
     |> wrap_with("[", "]")
   end
 
-  def encode_std_function({args, body}) do
+  def encode_function({:std, args, body}) do
     arg_list = Enum.join(args, ", ")
     "function(#{arg_list}) #{body}"
   end
 
-  def encode_function({args, body}) do
+  # def encode_std_function({args, body}) do
+  #   arg_list = Enum.join(args, ", ")
+  #   "function(#{arg_list}) #{body}"
+  # end
+
+  def encode_function({:arrow, args, body}) do
     arg_list = Enum.join(args, ", ")
     "(#{arg_list}) => #{body}"
   end

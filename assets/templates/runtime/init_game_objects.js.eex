@@ -2,7 +2,7 @@
 // Initialize Game Objects
 //-----------------------------------------------------------------------------
 <% import Rez.AST.ValueEncoder %>
-<% alias Rez.AST.{Node, Asset} %>
+<% alias Rez.AST.{Node, NodeHelper, Asset} %>
 
 const game = new <%= Node.js_ctor(@game) %>(
   Handlebars.template(<%= @game.template %>),
@@ -192,4 +192,43 @@ game.addGameObject(
       <%= encode_attributes(object.attributes) %>
     )
   )
+<% end %>
+
+<%
+  generator_init = {
+    ["list", "event"],
+    """
+    {
+      const source = $(list.getAttribute("source"));
+      const copies = list.getAttribute("copies");
+      const customize = list.getAttribute("customize");
+      const objects = [];
+      for(let idx = 0; idx < copies; idx += 1) {
+        let copy = source.copyWithAutoId();
+        customize(copy);
+        objects.push(copy);
+      }
+      list.setAttribute("values", objects);
+    }
+    """
+  }
+%>
+
+<%= for {id, generator} <- @game.generators do %>
+  <%
+    generator = NodeHelper.set_std_func_attr(
+      generator,
+      "on_init",
+      generator_init
+    )
+  %>
+
+  (function() {
+    game.addGameObject(
+      new RezList(
+        "<%= id %>",
+        <%= encode_attributes(generator.attributes) %>
+      )
+    )
+  })();
 <% end %>

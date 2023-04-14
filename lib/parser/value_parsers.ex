@@ -236,10 +236,10 @@ defmodule Rez.Parser.ValueParsers do
         debug: true,
         ast: fn
           [args, body] ->
-            {:function, {args, body}}
+            {:function, {:std, args, body}}
 
           [body] ->
-            {:function, {[], body}}
+            {:function, {:std, [], body}}
         end
       )
     end)
@@ -277,10 +277,10 @@ defmodule Rez.Parser.ValueParsers do
         debug: true,
         ast: fn
           [args, body] ->
-            {:function, {args, body}}
+            {:function, {:arrow, args, body}}
 
           [body] ->
-            {:function, {[], body}}
+            {:function, {:arrow, [], body}}
         end
       )
     end)

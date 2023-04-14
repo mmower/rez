@@ -33,16 +33,16 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :string, value: value}
   end
 
-  # def string_value(%Attribute{type: :string, value: value}) do
-  #   value
-  # end
-
-  def function(name, {params, body}) do
-    %Attribute{name: name, type: :function, value: {params, body}}
+  def std_function(name, {params, body}) do
+    %Attribute{name: name, type: :function, value: {:std, params, body}}
   end
 
-  # def function_value(%Attribute{type: :function, value: {params, body}}) do
-  #   "(#{Enum.join(params, ",")} => #{body}"
+  def arrow_function(name, {params, body}) do
+    %Attribute{name: name, type: :function, value: {:arrow, params, body}}
+  end
+
+  # def function(name, {params, body}) do
+  #   %Attribute{name: name, type: :function, value: {params, body}}
   # end
 
   def elem_ref(name, value) do

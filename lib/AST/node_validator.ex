@@ -426,7 +426,7 @@ defmodule Rez.AST.NodeValidator do
   end
 
   def validate_has_params?(count, chained_validator \\ nil) do
-    fn %{name: name, value: {params, _}} = attr, node, game ->
+    fn %{name: name, value: {_fn_style, params, _}} = attr, node, game ->
       case {count == Enum.count(params), is_nil(chained_validator)} do
         {true, true} ->
           :ok
@@ -442,7 +442,7 @@ defmodule Rez.AST.NodeValidator do
   end
 
   def validate_expects_params?(expected_params, chained_validator \\ nil) do
-    fn %{name: name, value: {params, _}} = attr, node, game ->
+    fn %{name: name, value: {_fn_style, params, _}} = attr, node, game ->
       case {expected_params == params, is_nil(chained_validator)} do
         {true, true} ->
           :ok

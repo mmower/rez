@@ -4,13 +4,14 @@
 <% alias Rez.AST.{Game, Patch, ValueEncoder} %>
 
 <%= for %Patch{} = patch <- Game.patch_list(@game) do %>
+  <% encoded_function = ValueEncoder.encode_function(Patch.impl(patch)) %>
   <%= case Patch.type(patch) do %>
     <% :function -> %>
-      <%= Patch.object(patch) %>.<%= Patch.function(patch) %> = <%= ValueEncoder.encode_std_function(Patch.impl(patch)) %>;
+      <%= Patch.object(patch) %>.<%= Patch.function(patch) %> = <%= encoded_function %>;
 
     <% :method -> %>
       Object.defineProperty(<%= Patch.object(patch) %>.prototype, "<%= Patch.method(patch) %>", {
-        value: <%= ValueEncoder.encode_std_function(Patch.impl(patch)) %>
+        value: <%= encoded_function %>
       });
   <% end %>
 <% end %>
