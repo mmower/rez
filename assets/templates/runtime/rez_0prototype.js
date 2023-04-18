@@ -30,6 +30,21 @@ const basic_object = {
    * Intialization
   */
 
+  pre_init() {
+    // Copy parent attributes
+    if(this.hasAttribute("$parents")) {
+      const parent_list = this.getAttribute("$parents");
+      parent_list.forEach((parent_id) => {
+        const parent = $(parent_id);
+        for(let attr of Object.keys(parent.attributes)) {
+          if(!this.hasAttribute(attr)) {
+            this.setAttribute(attr, parent.attributes[attr]);
+          }
+        }
+      });
+    }
+  },
+
   init() {
     if(!this.initialised) {
       console.log("Initialise " + this.id);

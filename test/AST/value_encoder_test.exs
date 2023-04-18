@@ -3,7 +3,7 @@ defmodule Rez.AST.ValueEncoderTest do
   doctest Rez.AST.ValueEncoder
 
   alias Rez.AST.Attribute
-  import Rez.AST.NodeHelper, only: [set_string_attr: 3, set_func_attr: 3]
+  import Rez.AST.NodeHelper, only: [set_string_attr: 3, set_arrow_func_attr: 3]
   import Rez.AST.ValueEncoder
 
   test "encodes string to JS" do
@@ -18,7 +18,9 @@ defmodule Rez.AST.ValueEncoderTest do
 
   test "encodes function to JS" do
     encoding =
-      encode_attribute(Attribute.function("on_start", {["game", "event"], "{return game;}"}))
+      encode_attribute(
+        Attribute.arrow_function("on_start", {["game", "event"], "{return game;}"})
+      )
 
     assert {"on_start", "(game, event) => {return game;}"} = encoding
   end
@@ -27,7 +29,7 @@ defmodule Rez.AST.ValueEncoderTest do
     game =
       %Rez.AST.Game{}
       |> set_string_attr("title", "Twisty Maze Adventure")
-      |> set_func_attr("on_start", {["game", "event"], "{return game;}"})
+      |> set_arrow_func_attr("on_start", {["game", "event"], "{return game;}"})
 
     encoding = encode_attributes(game.attributes)
 

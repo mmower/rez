@@ -554,7 +554,7 @@ end
   %% The SELECT task executes it's children in turn until one of them
   %% succeeds, then SELECT succeeds. If no child succeeeds then SELECT fails.
 
-  template: true
+  $template: true
   options: []
   min_children: 2
 
@@ -576,7 +576,7 @@ end
   %% it ticks the child, otherwise it moves on to the next child. If a child
   %% succeeds SELECT_P succeeds. If no child succeeds, SELECT_P fails.
 
-  template: true
+  $template: true
   options: [:p]
   min_children: 2
 
@@ -608,7 +608,7 @@ end
   %% then the SEQUENCE succeeds. If a child fails the SEQUENCE fails and does
   %% not execute any further children.
 
-  template: true
+  $template: true
   options: []
   min_children: 2
 
@@ -628,7 +628,7 @@ end
   %% succeeds on every repetition the LOOP succeeds. If the child ever fails
   %% the LOOP fails.
 
-  template: true
+  $template: true
   options: [:count]
   min_children: 1
   max_children: 1
@@ -653,7 +653,7 @@ end
   %% executed. If the child ever succeeds, LOOP_UNTIL succeeds. If the
   %% child doesn't succeed in the number of attempts then LOOP_UNTIL fails.
 
-  template: true
+  $template: true
   options: [:attempts]
   min_children: 1
   max_children: 1
@@ -677,7 +677,7 @@ end
   %% if the child succeeds or fails if the child fails. If it doesn't execute
   %% the child then MAYBE fails.
 
-  template: true
+  $template: true
   options: [:p]
   min_children: 1
   max_children: 1
@@ -700,7 +700,7 @@ end
   %% Having decided which child to execute EITHER succeeds or fails based
   %% on whether the selected child succeeds or fails.
 
-  template: true
+  $template: true
   options: [:p]
   min_children: 2
   max_children: 2
@@ -723,7 +723,7 @@ end
   %% executes it selects a child at random and executes it. If that child
   %% succeeds then RANDOM_CHOICE succeeds, otherwise it fails.
 
-  template: true
+  $template: true
   options: []
   min_children: 2
 
@@ -741,7 +741,7 @@ end
   %% fails. Without replacement means that no child can be selected twice
   %% until all children have been selected at least once.
 
-  template: true
+  $template: true
   options: []
   min_children: 2
 
@@ -763,7 +763,7 @@ end
   %% The ALWAYS task takes one child and executes it, ALWAYS succeeds
   %% regardless of whether the child succeeds.
 
-  template: true
+  $template: true
   options: []
   min_children: 1
   max_children: 1
@@ -779,7 +779,7 @@ end
   %% The NEVER task takes one child and executes it, NEVER fails regardless
   %% of whether the child fails.
 
-  template: true
+  $template: true
   options: []
   min_children: 1
   max_children: 1
@@ -795,7 +795,7 @@ end
   %% The INVERT task takes one child and executes it. If the child succeeds
   %% then INVERT will fail. If the child fails then INVERT will succeed.
 
-  template: true
+  $template: true
   options: []
   min_children: 1
   max_children: 1
@@ -815,7 +815,7 @@ end
 @task FAIL begin
   %% The FAIL task automatically fails.
 
-  template: true
+  $template: true
   options: []
   max_children: 0
 
@@ -827,7 +827,7 @@ end
 @task SUCCEED begin
   %% The SUCCEED task automatically succeeds.
 
-  template: true
+  $template: true
   options: []
   max_children: 0
 

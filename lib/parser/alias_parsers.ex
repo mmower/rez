@@ -159,7 +159,7 @@ defmodule Rez.Parser.AliasParsers do
             {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
             block =
-              create_block(target_module, alias_id, attributes, source_file, source_line, col)
+              create_block(target_module, alias_id, [], attributes, source_file, source_line, col)
 
             ctx_with_block_and_id_mapped(
               ctx,

@@ -4,13 +4,13 @@ defmodule Rez.AST.Generator do
   run-time procedural generators.
   """
   alias Rez.AST.Attribute
+
   defstruct status: :ok,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{
               customize: Attribute.arrow_function("customize", {["obj"], "obj"})
             }
-
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Generator do
@@ -41,7 +41,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
         )
       ),
       attribute_present?("source", attribute_has_type?(:elem_ref, validate_is_elem?())),
-      attribute_present?("copies", attribute_has_type?(:number, value_passes?(fn n -> n >= 0 end, "cannot specify negative copies!"))),
+      attribute_present?(
+        "copies",
+        attribute_has_type?(
+          :number,
+          value_passes?(fn n -> n >= 0 end, "cannot specify negative copies!")
+        )
+      ),
       attribute_if_present?("customize", attribute_has_type?(:function))
     ]
   end

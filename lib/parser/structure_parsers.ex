@@ -4,16 +4,16 @@ defmodule Rez.Parser.StructureParsers do
   for blocks and lists which have a different directive but share internal
   structure, e.g. a block with an id and attributes.
   """
-
   alias Ergo.Context
   import Ergo.{Combinators, Terminals, Meta}
 
   alias LogicalFile
 
-  alias Rez.AST.Node
+  alias Rez.AST.{Attribute, Node}
   import Rez.Parser.{UtilityParsers, AttributeParser, DelimitedParser}
   import Rez.Parser.ValueParsers, only: [keyword_value: 0]
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
+  import Rez.Parser.DefaultParser, only: [default: 2]
 
   import Rez.Utils, only: [attr_list_to_map: 1]
 
@@ -57,18 +57,18 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  # def create_block(block_struct, nil, attributes, source_file, source_line, col)
-  #     when is_map(attributes) and is_binary(source_file) do
-  #   IO.puts("create_block:nil")
-  #   Node.pre_process(
-  #     struct(
-  #       block_struct,
-  #       position: {source_file, source_line, col},
-  #       attributes: attributes))
-  # end
+  @doc """
+  `create_block` returns a struct instance filling in the meta attributes
+  related to parsing.
+  """
 
-  def create_block(block_struct, id, attributes, source_file, source_line, col)
-      when is_map(attributes) and is_binary(source_file) do
+  def create_block(block_struct, id, parent_objects, attributes, source_file, source_line, col)
+      when is_list(parent_objects) and is_map(attributes) and is_binary(source_file) do
+    parents = Attribute.list("$parents", parent_objects)
+
+    attributes =
+      Map.merge(attributes, %{"$parents" => parents}, fn _key, old, new -> old ++ new end)
+
     Node.pre_process(
       struct(
         block_struct,
@@ -143,7 +143,7 @@ defmodule Rez.Parser.StructureParsers do
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
         auto_id = id_fn.(attributes)
-        block = create_block(block_struct, auto_id, attributes, source_file, source_line, col)
+        block = create_block(block_struct, auto_id, [], attributes, source_file, source_line, col)
         ctx_with_block_and_id_mapped(ctx, block, auto_id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
@@ -156,6 +156,38 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
+  def parents(parent_ast) do
+    parent_ast
+    |> List.flatten()
+    |> Enum.map(fn elem -> {:keyword, elem} end)
+  end
+
+  def parent_objects() do
+    optional(
+      sequence(
+        [
+          ignore(left_angle_bracket()),
+          iows(),
+          elem_tag() |> atom(),
+          many(
+            sequence([
+              iows(),
+              ignore(comma()),
+              iows(),
+              elem_tag() |> atom()
+            ])
+          ),
+          iows(),
+          ignore(right_angle_bracket())
+        ],
+        ast: fn ast ->
+          {:parent_objects, parents(ast)}
+        end
+      )
+    )
+    |> default({:parent_objects, []})
+  end
+
   def block_with_id(label, block_struct) do
     sequence(
       [
@@ -163,6 +195,7 @@ defmodule Rez.Parser.StructureParsers do
         iws(),
         commit(),
         js_identifier("#{label}_id"),
+        parent_objects(),
         iws(),
         block_begin(label),
         attribute_list(),
@@ -173,12 +206,23 @@ defmodule Rez.Parser.StructureParsers do
       debug: true,
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
-                ast: [id, attr_list | []],
+                ast: [id, {:parent_objects, parent_objects}, attr_list | []],
                 data: %{source: source}
               } = ctx ->
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
-        block = create_block(block_struct, id, attributes, source_file, source_line, col)
+
+        block =
+          create_block(
+            block_struct,
+            id,
+            parent_objects,
+            attributes,
+            source_file,
+            source_line,
+            col
+          )
+
         ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
@@ -198,6 +242,7 @@ defmodule Rez.Parser.StructureParsers do
         iws(),
         commit(),
         js_identifier("#{label}_id"),
+        parent_objects(),
         optional(
           sequence(
             [
@@ -218,14 +263,16 @@ defmodule Rez.Parser.StructureParsers do
 
         {id, block} =
           case ast do
-            [id] ->
-              {id, create_block(block_struct, id, %{}, source_file, source_line, col)}
+            [id, {:parent_objects, parent_objects}] ->
+              {id,
+               create_block(block_struct, id, parent_objects, %{}, source_file, source_line, col)}
 
-            [id, attr_list] ->
+            [id, {:parent_objects, parent_objects}, attr_list] ->
               {id,
                create_block(
                  block_struct,
                  id,
+                 parent_objects,
                  attr_list_to_map(attr_list),
                  source_file,
                  source_line,
@@ -271,6 +318,7 @@ defmodule Rez.Parser.StructureParsers do
             create_block(
               block_struct,
               nil,
+              [],
               attr_list_to_map(attr_list),
               source_file,
               source_line,
@@ -299,6 +347,7 @@ defmodule Rez.Parser.StructureParsers do
         iws(),
         commit(),
         js_identifier("#{label}_id"),
+        parent_objects(),
         iws(),
         block_begin(label),
         attribute_and_child_list(child_parser),
@@ -309,7 +358,7 @@ defmodule Rez.Parser.StructureParsers do
       debug: true,
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
-                ast: [id, {attr_list, children} | []],
+                ast: [id, {:parent_objects, parent_objects}, {attr_list, children} | []],
                 data: %{source: source}
               } = ctx ->
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
@@ -320,6 +369,7 @@ defmodule Rez.Parser.StructureParsers do
             create_block(
               block_struct,
               id,
+              parent_objects,
               attr_list_to_map(attr_list),
               source_file,
               source_line,

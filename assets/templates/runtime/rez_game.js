@@ -293,6 +293,7 @@ let game_proto = {
     this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
     // Init every object, will also trigger on_init for any object that defines it
+    this.init_objects.forEach((obj) => {obj.pre_init()});
     this.init_objects.forEach((obj) => {obj.init()});
     this.init_objects = null;
 

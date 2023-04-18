@@ -1,16 +1,16 @@
 defmodule Rez.Parser.ValueParsers do
   alias Ergo.Context
-  alias Ergo.Parser
   import Ergo.Combinators
   import Ergo.Terminals
   import Ergo.Numeric
   import Ergo.Meta
+
+  alias Rez.Parser.ParserCache
+  import Rez.Parser.DefaultParser
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DelimitedParser
   import Rez.Utils
-
-  alias Rez.Parser.ParserCache
 
   # String
 
@@ -294,22 +294,6 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dice
-
-  def default(%Parser{} = parser, value) do
-    Parser.combinator(
-      :default,
-      "default->#{inspect(value)}",
-      fn %Context{} = ctx ->
-        case Parser.invoke(ctx, parser) do
-          %Context{status: :ok, ast: nil} = nil_ctx ->
-            %{nil_ctx | ast: value}
-
-          new_ctx ->
-            new_ctx
-        end
-      end
-    )
-  end
 
   def dice_value() do
     ParserCache.get_parser("dice", fn ->
