@@ -19,7 +19,6 @@ defmodule Rez.Parser.AliasParsers do
       iows: 0,
       at: 0,
       equals: 0,
-      hash: 0,
       elem_tag: 0,
       iliteral: 1,
       block_begin: 1,
