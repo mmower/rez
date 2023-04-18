@@ -3,10 +3,13 @@
   IFID: "051F7581-43EF-48A7-93C3-A84A70203917"
   initial_scene: #cards
 
-  @alias sword = item # begin
-    category: "equipment"
+  @item sword begin
+    $template: true
+    category: :equipment
     slot: #sword_slot
   end
+
+  @alias sword = item<sword>
 
   @actor player begin
     name: "The Adventurer"

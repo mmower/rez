@@ -10,7 +10,7 @@ defmodule Rez.Parser.Parser do
   alias Ergo.Telemetry
   import Ergo.Combinators
 
-  # import Rez.Parser.AliasParsers
+  import Rez.Parser.AliasParsers
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
 
@@ -116,7 +116,7 @@ defmodule Rez.Parser.Parser do
   def game_content() do
     choice(
       [
-        # alias_define(),
+        alias_define(),
         derive_define(),
         # Now the pre-defined blocks
         actor_block(),
@@ -142,7 +142,7 @@ defmodule Rez.Parser.Parser do
         task_block(),
         zone_block(),
         # Now user defined aliases
-        # alias_block()
+        alias_block()
       ],
       label: "game-content",
       debug: true

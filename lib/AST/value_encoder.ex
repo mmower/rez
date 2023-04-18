@@ -123,8 +123,7 @@ defmodule Rez.AST.ValueEncoder do
   def encode_btree({:node, behaviour_id, options, children}) when is_list(children) do
     child_nodes =
       children
-      |> Enum.map(&encode_btree/1)
-      |> Enum.join(", ")
+      |> Enum.map_join(", ", &encode_btree/1)
       |> wrap_with("[", "]")
 
     ~s"""

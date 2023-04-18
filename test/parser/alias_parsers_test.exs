@@ -1,6 +1,7 @@
 defmodule Rez.Parser.AliasParsesTest do
   use ExUnit.Case
   import Rez.Parser.AliasParsers
+  alias Rez.AST.NodeHelper
   alias Rez.AST.{Attribute, Object, Scene}
 
   def dummy_source(input, file \\ "test.rez", base_path \\ ".") do
@@ -11,112 +12,106 @@ defmodule Rez.Parser.AliasParsesTest do
 
   test "parse empty alias definition" do
     input = """
-    @alias standard_scene = scene # begin
-    end
+    @alias standard_scene = scene
     """
 
     source = dummy_source(input)
     ctx = Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
-    assert %{status: :ok, data: %{aliases: %{"standard_scene" => {"scene", %{}}}}} = ctx
-  end
-
-  test "parse alias definition with attributes" do
-    input = """
-    @alias standard_scene = scene # begin
-      standard: true
-      layout: \"\"\"
-      {{{content}}}
-      \"\"\"
-      asset: #colourful_background
-    end
-    """
-
-    scene_alias =
-      {"scene",
-       %{
-         "standard" => %Attribute{name: "standard", type: :boolean, value: true},
-         "layout" => %Attribute{name: "layout", type: :string, value: "{{{content}}}\n"},
-         "asset" => %Attribute{name: "asset", type: :elem_ref, value: "colourful_background"}
-       }}
-
-    source = dummy_source(input)
-    ctx = Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
-    assert %{status: :ok, data: %{aliases: %{"standard_scene" => ^scene_alias}}} = ctx
-  end
-
-  test "parse alias definition and use" do
-    input = """
-    @standard_scene first_scene begin
-      light_level: 0.1
-    end
-    """
-
-    aliases = %{
-      "standard_scene" =>
-        {"scene",
-         %{
-           "standard" => %Attribute{name: "standard", type: :boolean, value: true},
-           "layout" => %Attribute{name: "layout", type: :string, value: "{{{content}}}\n"},
-           "asset" => %Attribute{name: "asset", type: :elem_ref, value: "colourful_background"}
-         }}
-    }
-
-    source = dummy_source(input)
-    ctx = Ergo.parse(alias_block(), input, data: %{source: source, aliases: aliases, id_map: %{}})
 
     assert %{
              status: :ok,
-             ast: %Scene{
-               id: "first_scene",
-               attributes: %{
-                 "standard" => %Attribute{name: "standard", type: :boolean, value: true},
-                 "layout" => %Attribute{name: "layout", type: :string, value: "{{{content}}}\n"},
-                 "asset" => %Attribute{
-                   name: "asset",
-                   type: :elem_ref,
-                   value: "colourful_background"
-                 },
-                 "light_level" => %Attribute{name: "light_level", type: :number, value: 0.1}
-               }
-             }
+             data: %{aliases: %{"standard_scene" => {"scene", {:parent_objects, []}}}}
            } = ctx
   end
 
-  test "parse merges default & defined tags" do
+  test "parse alternate empty alias definition" do
     input = """
-    @class warlord begin
-      tags: \#{:combat_class}
+    @alias standard_scene = scene<>
+    """
+
+    source = dummy_source(input)
+    ctx = Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
+
+    assert %{
+             status: :ok,
+             data: %{aliases: %{"standard_scene" => {"scene", {:parent_objects, []}}}}
+           } = ctx
+  end
+
+  test "parse alias definition with parents" do
+    input = """
+    @alias standard_scene = scene<foo, bar>
+    """
+
+    source = dummy_source(input)
+
+    assert %{status: :ok, data: %{aliases: aliases}} =
+             Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
+
+    assert %{
+             "standard_scene" =>
+               {"scene", {:parent_objects, [{:keyword, :foo}, {:keyword, :bar}]}}
+           } = aliases
+  end
+
+  test "parse alias use" do
+    input = """
+    @ring magic_ring begin
+      magic: true
     end
     """
 
     source = dummy_source(input)
 
-    aliases = %{
-      "class" =>
-        {"object",
-         %{
-           "tags" => %Attribute{
-             name: "tags",
-             type: :set,
-             value: MapSet.new([{:keyword, "class"}])
-           }
-         }}
-    }
-
     assert %{status: :ok, ast: ast} =
              Ergo.parse(alias_block(), input,
-               data: %{source: source, aliases: aliases, id_map: %{}}
+               data: %{
+                 id_map: %{},
+                 source: source,
+                 aliases: %{"ring" => {"item", {:parent_objects, [{:keyword, :ring}]}}}
+               }
              )
 
-    assert %Object{
-             id: "warlord",
-             attributes: %{
-               "tags" => tags_attr
-             }
-           } = ast
-
-    assert %{name: "tags", type: :set, value: tags} = tags_attr
-    assert MapSet.member?(tags, {:keyword, "class"})
-    assert MapSet.member?(tags, {:keyword, "combat_class"})
+    assert %Rez.AST.Item{id: "magic_ring"} = ast
+    assert %Rez.AST.Attribute{value: true} = NodeHelper.get_attr(ast, "magic")
+    assert %Rez.AST.Attribute{value: [{:keyword, :ring}]} = NodeHelper.get_attr(ast, "$parents")
   end
+
+  # test "parse merges default & defined tags" do
+  #   input = """
+  #   @class warlord begin
+  #     tags: \#{:combat_class}
+  #   end
+  #   """
+
+  #   source = dummy_source(input)
+
+  #   aliases = %{
+  #     "class" =>
+  #       {"object",
+  #        %{
+  #          "tags" => %Attribute{
+  #            name: "tags",
+  #            type: :set,
+  #            value: MapSet.new([{:keyword, "class"}])
+  #          }
+  #        }}
+  #   }
+
+  #   assert %{status: :ok, ast: ast} =
+  #            Ergo.parse(alias_block(), input,
+  #              data: %{source: source, aliases: aliases, id_map: %{}}
+  #            )
+
+  #   assert %Object{
+  #            id: "warlord",
+  #            attributes: %{
+  #              "tags" => tags_attr
+  #            }
+  #          } = ast
+
+  #   assert %{name: "tags", type: :set, value: tags} = tags_attr
+  #   assert MapSet.member?(tags, {:keyword, "class"})
+  #   assert MapSet.member?(tags, {:keyword, "combat_class"})
+  # end
 end

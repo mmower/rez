@@ -7,7 +7,7 @@ defmodule Rez.Parser.ParentObjectTest do
     source = "<foo>"
 
     assert %{status: :ok, ast: ast} = Ergo.parse(parser, source)
-    assert {:base, [:foo]} = ast
+    assert {:parent_objects, [{:keyword, :foo}]} = ast
   end
 
   test "parses multiple parents" do
@@ -15,6 +15,8 @@ defmodule Rez.Parser.ParentObjectTest do
     source = "<foo, bar,baz,  qux >"
 
     assert %{status: :ok, ast: ast} = Ergo.parse(parser, source)
-    assert {:base, [:foo, :bar, :baz, :qux]} = ast
+
+    assert {:parent_objects,
+            [{:keyword, :foo}, {:keyword, :bar}, {:keyword, :baz}, {:keyword, :qux}]} = ast
   end
 end
