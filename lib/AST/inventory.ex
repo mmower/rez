@@ -21,6 +21,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     NodeHelper.get_attr_value(inventory, "js_ctor", "RezInventory")
   end
 
+  def default_attributes(_inventory), do: %{}
+
   def pre_process(inventory) do
     inventory
     |> NodeHelper.set_boolean_attr("apply_effects", false)

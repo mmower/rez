@@ -2,7 +2,6 @@ defmodule Rez.Parser.AliasParsesTest do
   use ExUnit.Case
   import Rez.Parser.AliasParsers
   alias Rez.AST.NodeHelper
-  alias Rez.AST.{Attribute, Object, Scene}
 
   def dummy_source(input, file \\ "test.rez", base_path \\ ".") do
     lines = String.split(input, ~r/\n/, trim: true)

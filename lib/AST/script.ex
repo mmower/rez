@@ -17,6 +17,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Script do
     raise "@script does not support a JS constructor!"
   end
 
+  def default_attributes(_script), do: %{}
+
   def pre_process(script), do: script
 
   def process(script), do: script

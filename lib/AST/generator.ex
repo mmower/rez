@@ -3,17 +3,14 @@ defmodule Rez.AST.Generator do
   `Rez.AST.Generator` contains the `Generator` struct that is used to represent
   run-time procedural generators.
   """
-  alias Rez.AST.Attribute
-
   defstruct status: :ok,
             position: {nil, 0, 0},
             id: nil,
-            attributes: %{
-              customize: Attribute.arrow_function("customize", {["obj"], "obj"})
-            }
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Generator do
+  alias Rez.AST.Attribute
   import Rez.AST.NodeValidator
 
   def node_type(_generator), do: "generator"
@@ -21,6 +18,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
   def js_ctor(_generator) do
     raise "@generator does not support a JS constructor!"
   end
+
+  def default_attributes(_generator),
+    do: %{
+      "customize" => Attribute.arrow_function("customize", {["obj"], "obj"})
+    }
 
   def pre_process(generator), do: generator
 

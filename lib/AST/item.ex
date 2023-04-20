@@ -85,6 +85,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
     NodeHelper.get_attr_value(item, "js_ctor", "RezItem")
   end
 
+  def default_attributes(_item), do: %{}
+
   def pre_process(item), do: item
 
   def process(item), do: Item.process(item)

@@ -51,6 +51,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
     NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
   end
 
+  def default_attributes(_scene), do: %{}
+
   def pre_process(scene), do: scene
 
   def process(scene), do: Scene.compile_layout(scene)

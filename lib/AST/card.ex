@@ -196,6 +196,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
     NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
   end
 
+  def default_attributes(_card), do: %{}
+
   def pre_process(card), do: card
 
   def process(%Card{} = card), do: Card.process(card)

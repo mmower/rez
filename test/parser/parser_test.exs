@@ -36,7 +36,9 @@ defmodule Rez.Parser.ParserTest do
     # Tests an item gets pulled in from the included file
     %{items: items} = game
     assert %Rez.AST.Item{attributes: attributes} = Map.get(items, "orcrist")
-    assert %Rez.AST.Attribute{name: "$parents", type: :list, value: [{:keyword, :sword}]} = Map.get(attributes, "$parents")
+
+    assert %Rez.AST.Attribute{name: "$parents", type: :list, value: [{:keyword, :sword}]} =
+             Map.get(attributes, "$parents")
   end
 
   test "parses script block" do

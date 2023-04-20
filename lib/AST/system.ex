@@ -27,6 +27,8 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
     NodeHelper.get_attr_value(system, "js_ctor", "RezSystem")
   end
 
+  def default_attributes(_system), do: %{}
+
   def pre_process(system), do: system
 
   def process(system), do: system

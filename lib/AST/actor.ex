@@ -20,6 +20,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
     NodeHelper.get_attr_value(actor, "js_ctor", "RezActor")
   end
 
+  def default_attributes(_actor), do: %{}
+
   def pre_process(actor), do: actor
 
   def process(actor), do: actor

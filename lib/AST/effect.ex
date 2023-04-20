@@ -31,6 +31,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
     NodeHelper.get_attr_value(effect, "js_ctor", "RezEffect")
   end
 
+  def default_attributes(_effect), do: %{}
+
   def pre_process(effect), do: effect
 
   def process(effect), do: effect

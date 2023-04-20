@@ -42,6 +42,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
     NodeHelper.get_attr_value(location, "js_ctor", "RezLocation")
   end
 
+  def default_attributes(_location), do: %{}
+
   def pre_process(location), do: location
 
   def process(location), do: Location.process(location)

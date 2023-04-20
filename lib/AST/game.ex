@@ -200,6 +200,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     NodeHelper.get_attr_value(game, "js_ctor", "RezGame")
   end
 
+  def default_attributes(_game), do: %{}
+
   def pre_process(game), do: game
 
   def process(%Game{} = game) do

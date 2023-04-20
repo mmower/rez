@@ -10,6 +10,12 @@ defprotocol Rez.AST.Node do
   def node_type(node)
 
   @doc """
+  `default_attribues/1` returns a `Map` of default attributes based on the
+  Node type.
+  """
+  def default_attributes(node)
+
+  @doc """
   The `pre_process/1` function is intended to be called after a Node structure
   has been created. It gives the node a chance to response to its own creation.
   """

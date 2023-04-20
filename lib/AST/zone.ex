@@ -34,6 +34,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
     NodeHelper.get_attr_value(zone, "js_ctor", "RezZone")
   end
 
+  def default_attributes(_zone), do: %{}
+
   def pre_process(zone), do: zone
 
   def process(zone), do: NodeHelper.process_collection(zone, :locations)

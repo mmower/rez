@@ -57,26 +57,36 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
+  def merge_attributes(default_attributes, attributes, parent_objects) do
+    merge_list = fn _key, old, new -> old ++ new end
+
+    default_attributes
+    |> Map.merge(attributes)
+    |> Map.merge(%{"$parents" => Attribute.list("$parents", parent_objects)}, merge_list)
+  end
+
   @doc """
   `create_block` returns a struct instance filling in the meta attributes
   related to parsing.
   """
-
   def create_block(block_struct, id, parent_objects, attributes, source_file, source_line, col)
       when is_list(parent_objects) and is_map(attributes) and is_binary(source_file) do
-    parents = Attribute.list("$parents", parent_objects)
-
-    attributes =
-      Map.merge(attributes, %{"$parents" => parents}, fn _key, old, new -> old ++ new end)
-
-    Node.pre_process(
+    node =
       struct(
         block_struct,
-        position: {source_file, source_line, col},
         id: id,
-        attributes: attributes
+        position: {source_file, source_line, col}
       )
-    )
+
+    Node.pre_process(%{
+      node
+      | attributes:
+          merge_attributes(
+            Node.default_attributes(node),
+            attributes,
+            parent_objects
+          )
+    })
   end
 
   # Does the twin jobs of setting the AST to point to the block and map the ID of

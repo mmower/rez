@@ -20,6 +20,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
     NodeHelper.get_attr_value(effect, "js_ctor", "RezEffect")
   end
 
+  def default_attributes(_faction), do: %{}
+
   def pre_process(faction), do: faction
 
   def process(faction), do: faction

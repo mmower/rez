@@ -98,6 +98,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     NodeHelper.get_attr_value(asset, "js_ctor", "RezAsset")
   end
 
+  def default_attributes(_asset), do: %{}
+
   def pre_process(asset) do
     %{asset | path_info: Asset.search(asset)}
   end

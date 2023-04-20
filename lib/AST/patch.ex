@@ -50,6 +50,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
     raise "@patch does not support a JS constructor!"
   end
 
+  def default_attributes(_patch), do: %{}
+
   def pre_process(patch), do: patch
 
   def process(patch), do: patch

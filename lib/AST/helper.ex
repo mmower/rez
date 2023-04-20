@@ -20,6 +20,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Helper do
     raise "@helper does not support JS constructor!"
   end
 
+  def default_attributes(_helper), do: %{}
+
   def pre_process(helper), do: helper
 
   def process(helper), do: helper

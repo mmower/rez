@@ -17,6 +17,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Style do
     raise "@style does not support a JS constructor!"
   end
 
+  def default_attributes(_style), do: %{}
+
   def pre_process(style), do: style
 
   def process(style), do: style
