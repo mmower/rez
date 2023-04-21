@@ -30,7 +30,20 @@ const basic_object = {
    * Intialization
   */
 
-  pre_init() {
+  init(level) {
+    const init_method = "init_" + level;
+    if(typeof(this[init_method]) == "function") {
+      this[init_method]();
+    }
+  },
+
+  init_all() {
+    for(let init_level of this.game.initLevels()) {
+      this.init(init_level);
+    }
+  },
+
+  init_0() {
     // Copy parent attributes
     if(this.hasAttribute("$parents")) {
       const parent_list = this.getAttribute("$parents");
@@ -45,7 +58,7 @@ const basic_object = {
     }
   },
 
-  init() {
+  init_1() {
     if(!this.initialised) {
       console.log("Initialise " + this.id);
       this.initDynamicAttributes();
@@ -85,7 +98,7 @@ const basic_object = {
     copy.setAttribute("$template", false);
     copy.runEvent("copy", {original: this});
     copy.setAttribute("copy_of", this.id);
-    copy.init();
+    copy.init_all();
     return copy;
   },
 

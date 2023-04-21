@@ -10,6 +10,10 @@ let game_proto = {
     return this.getGameObject(id);
   },
 
+  initLevels() {
+    return [0, 1];
+  },
+
   saveFileName(prefix) {
     const now = new Date();
     const formatter = (num) => {return String(num).padStart(2, "0");}
@@ -293,8 +297,9 @@ let game_proto = {
     this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
     // Init every object, will also trigger on_init for any object that defines it
-    this.init_objects.forEach((obj) => {obj.pre_init()});
-    this.init_objects.forEach((obj) => {obj.init()});
+    for(let init_level of this.initLevels()) {
+      this.init_objects.forEach((obj) => {obj.init(init_level)});
+    }
     this.init_objects = null;
 
     // this.container_id = container_id;

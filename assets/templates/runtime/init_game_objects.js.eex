@@ -207,6 +207,7 @@ game.addGameObject(
         let copy = source.copyWithAutoId();
         customize(copy);
         objects.push(copy);
+        game.addGameObject(copy);
       }
       list.setAttribute("values", objects);
     }

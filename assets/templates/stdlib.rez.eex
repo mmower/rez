@@ -33,7 +33,9 @@ end
     const copy = {};
     for(const property in this) {
       let value = this[property];
-      if(typeof(value) == "object") {
+      if(Array.isArray(value)) {
+        copy[property] = value.map((o) => {return o.copy()});
+      } else if(typeof(value) == "object") {
         copy[property] = value.copy();
       } else {
         copy[property] = value;
