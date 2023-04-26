@@ -24,7 +24,7 @@
     <style type="text/css">
       /* Custom game styles */
       <%= for style <- @game.styles do %>
-        <%= style.styles %>
+        <%= NodeHelper.get_attr_value(style, "$content") %>
       <% end %>
     </style>
   </head>
@@ -38,7 +38,7 @@
     <script type="text/javascript">
       // Custom game scripts
       <%= for script <- @game.scripts do %>
-        <%= script.code %>
+        <%= NodeHelper.get_attr_value(script, "$content") %>
       <% end %>
     </script>
   </body>

@@ -11,6 +11,7 @@ defmodule Rez.AST.Card do
   alias Rez.AST.TemplateHelper
 
   defstruct status: :ok,
+            game_element: true,
             id: nil,
             html: nil,
             template: nil,

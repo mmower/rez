@@ -14,6 +14,7 @@ defmodule Rez.AST.Location do
   In particular `Item`s and `Actor`s may have a current location.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{},

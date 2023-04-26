@@ -17,6 +17,7 @@ defmodule Rez.AST.Item do
   other.
   """
   defstruct status: :ok,
+            game_element: true,
             id: nil,
             position: {nil, 0, 0},
             attributes: %{},

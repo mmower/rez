@@ -6,6 +6,7 @@ defmodule Rez.AST.Inventory do
   control and reflect what it contains.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}

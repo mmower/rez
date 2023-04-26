@@ -16,6 +16,7 @@ defmodule Rez.AST.Slot do
   "skirt" `Slot`.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}

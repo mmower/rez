@@ -6,6 +6,7 @@ defmodule Rez.AST.Task do
   """
 
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}

@@ -16,6 +16,7 @@ defmodule Rez.AST.Scene do
   be included or scenery that can be used to embellish.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{},

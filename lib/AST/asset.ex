@@ -9,6 +9,7 @@ defmodule Rez.AST.Asset do
   """
 
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             path_info: [],

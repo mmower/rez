@@ -6,14 +6,19 @@
 
 window.Rez = window.Rez ?? {};
 
+// Patch JS objects
 <%= @patch_js_objects %>
 
+// JS stdlib
 <%= @js_stdlib %>
 
+// JS userlib
 <%= @js_userlib %>
 
+// Handlebars helpers
 <%= @register_handlebars_helpers %>
 
+// Initialise Game Objects
 <%= @init_game_objects %>
 
 window.$ = (id) => game.$(id);

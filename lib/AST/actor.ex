@@ -5,6 +5,7 @@ defmodule Rez.AST.Actor do
   An `Actor` is used to represent e.g. the player, or NPCs in the game.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}

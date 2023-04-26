@@ -31,10 +31,12 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
+  alias Rez.AST.Attribute
   alias Rez.AST.Node
   alias Rez.AST.NodeHelper
   alias Rez.AST.Game
   alias Rez.AST.NodeValidator.Validation
+  alias Rez.Utils.Search
 
   def validate_root(%Game{} = game) do
     validate(game, game)
@@ -106,13 +108,36 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
+  def find_attribute(game, node, attr_key) do
+    Search.search(
+      node,
+      fn %{attributes: attributes} = _node ->
+        case Map.get(attributes, attr_key) do
+          nil ->
+            :not_found
+
+          %Attribute{} = attr ->
+            {:found, attr}
+        end
+      end,
+      fn %{attributes: attributes} ->
+        attributes
+        |> Map.get("$parents", [])
+        |> Map.get(:value)
+        |> Enum.map(fn {:keyword, parent_id} ->
+          Map.get(game.by_id, to_string(parent_id))
+        end)
+      end
+    )
+  end
+
   # The first two attribute validations establish an attribute that is the
   # target of chained validators. Chained validators receive attr, node, game
   # as arguments.
 
   def attribute_present?(attr_key, chained_validator \\ nil) do
-    fn %{attributes: attributes} = node, game ->
-      case {Map.get(attributes, attr_key), is_nil(chained_validator)} do
+    fn node, game ->
+      case {find_attribute(game, node, attr_key), is_nil(chained_validator)} do
         {nil, _} ->
           {:error, "Missing required attribute: #{attr_key}"}
 
@@ -126,12 +151,12 @@ defmodule Rez.AST.NodeValidator do
   end
 
   def attribute_if_present?(attr_key, chained_validator) when not is_nil(chained_validator) do
-    fn %{attributes: attributes} = node, game ->
-      case Map.get(attributes, attr_key) do
+    fn node, game ->
+      case find_attribute(game, node, attr_key) do
         nil ->
           :ok
 
-        attr ->
+        %Attribute{} = attr ->
           chained_validator.(attr, node, game)
       end
     end
@@ -157,10 +182,10 @@ defmodule Rez.AST.NodeValidator do
 
   def attribute_one_of_present?(attr_keys, exclusive)
       when is_list(attr_keys) and is_boolean(exclusive) do
-    fn %{attributes: attributes}, _game ->
+    fn node, game ->
       count_present =
         attr_keys
-        |> Enum.map(&Map.has_key?(attributes, &1))
+        |> Enum.map(&find_attribute(game, node, &1))
         |> Enum.filter(&Function.identity/1)
         |> Enum.count()
 

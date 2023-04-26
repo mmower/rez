@@ -10,6 +10,7 @@ defmodule Rez.AST.Zone do
   alias Rez.AST.{Attribute, Location}
 
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{},

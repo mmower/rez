@@ -5,6 +5,7 @@ defmodule Rez.AST.Helper do
   """
 
   defstruct status: :ok,
+            game_element: false,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}

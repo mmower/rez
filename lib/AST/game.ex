@@ -18,13 +18,16 @@ defmodule Rez.AST.Game do
   import Rez.Utils
 
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: "game",
             line: 0,
             col: 0,
             id_map: %{},
             is_a: TypeHierarchy.new(),
+            init_order: [],
             attributes: %{},
+            by_id: %{},
             actors: %{},
             assets: %{},
             cards: %{},
@@ -80,10 +83,13 @@ defmodule Rez.AST.Game do
     %{game | is_a: TypeHierarchy.add(is_a, tag, parent)}
   end
 
-  defp add_dynamic_child(%Game{} = game, %{id: child_id} = child) do
+  defp add_dynamic_child(%Game{by_id: by_id} = game, %{id: child_id} = child) do
     content_key = struct_key(child)
     nodes = game |> Map.get(content_key) |> Map.put(child_id, child)
-    Map.put(game, content_key, nodes)
+
+    game
+    |> Map.put(content_key, nodes)
+    |> Map.put(:by_id, Map.put(by_id, child_id, child))
   end
 
   @doc """
@@ -189,8 +195,49 @@ defmodule Rez.AST.Game do
   end
 end
 
+defmodule Rez.AST.Game.InitOrder do
+  alias Rez.AST.NodeHelper
+
+  def initialization_order(objects) do
+    objects
+    |> build_dependency_graph()
+    |> topological_sort()
+  end
+
+  def build_dependency_graph(objs) do
+    objs
+    |> Enum.filter(fn obj -> Map.has_key?(obj, :id) end)
+    |> Enum.map(fn obj ->
+      parents =
+        obj
+        |> NodeHelper.get_attr_value("$parents", [])
+        |> Enum.map(fn {:keyword, k} -> to_string(k) end)
+
+      {obj.id, parents}
+    end)
+  end
+
+  def topological_sort(graph) do
+    sort(graph, [], [])
+  end
+
+  def sort([], sorted, _visited), do: {:ok, Enum.reverse(sorted)}
+
+  def sort(remaining, sorted, visited) do
+    case Enum.find(remaining, fn {_object, parents} -> Enum.all?(parents, &(&1 in sorted)) end) do
+      nil ->
+        {:error, :circular_dependency}
+
+      {object, parents} ->
+        remaining = List.delete(remaining, {object, parents})
+        sort(remaining, [object | sorted], [object | visited])
+    end
+  end
+end
+
 defimpl Rez.AST.Node, for: Rez.AST.Game do
   import Rez.AST.NodeValidator
+  import Rez.AST.Game.InitOrder
   alias Rez.Utils
   alias Rez.AST.{NodeHelper, Game, Item}
 
@@ -228,6 +275,20 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:scenes)
     |> NodeHelper.process_collection(:systems)
     |> NodeHelper.process_collection(:zones)
+    |> generate_init_order()
+  end
+
+  defp generate_init_order(%Game{} = game) do
+
+    elements = game |> children |> Enum.filter(fn obj -> Map.get(obj, :game_element) end)
+
+    case initialization_order(elements) do
+      {:ok, init_order} ->
+        %{game | init_order: init_order}
+
+      {:error, :circular_dependency} ->
+        %{game | status: {:error, "Cycle in parent relationship"}}
+    end
   end
 
   # This requires the Game's type hierarchy which we have no way of passing

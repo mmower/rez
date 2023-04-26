@@ -5,6 +5,7 @@
 <% alias Rez.AST.{Node, NodeHelper, Asset} %>
 
 const game = new <%= Node.js_ctor(@game) %>(
+  [<%= Enum.map_join(@game.init_order, ", ", &("\"#{&1}\"")) %>],
   Handlebars.template(<%= @game.template %>),
   <%= encode_attributes(@game.attributes) %>
 );
@@ -23,9 +24,6 @@ game.addGameObject(
 
 /* Encode game objects */
 <%= for {id, actor} <- @game.actors do %>
-/*
-  <%= inspect(actor.attributes) %>
-*/
 game.addGameObject(
   new <%= Node.js_ctor(actor) %>(
     "<%= id %>",
@@ -186,12 +184,14 @@ game.addGameObject(
 <% end %>
 
 <%= for {id, object} <- @game.objects do %>
+(function(game) {
   game.addGameObject(
     new <%= Node.js_ctor(object) %>(
       "<%= id %>",
       <%= encode_attributes(object.attributes) %>
     )
-  )
+  );
+})(game);
 <% end %>
 
 <%

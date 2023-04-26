@@ -6,8 +6,9 @@ defmodule Rez.AST.Style do
   page.
   """
   defstruct status: :ok,
+            game_element: false,
             position: {nil, 0, 0},
-            styles: nil
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Style do

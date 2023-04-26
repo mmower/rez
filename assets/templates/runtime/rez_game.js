@@ -159,6 +159,13 @@ let game_proto = {
     tags.forEach((tag) => this.unindexObjectForTag(obj, tag));
   },
 
+  /*
+  Adds an object representing a game element to the game data.
+
+  The static objects defined in the game files will appear in the games
+  init_order property. Dynamically generated objects should be init'd
+  separately.
+  */
   addGameObject(obj) {
     if(!obj.isGameObject()) {
       console.dir(obj);
@@ -168,13 +175,6 @@ let game_proto = {
     obj.game = this;
     this.game_objects.set(obj.id, obj);
     this.addToTagIndex(obj);
-
-    // If we are in the pre-init we collect objects to be inited once game
-    // setup is complete. We expect cloned objects to already have been
-    // init'd before they get added.
-    if(this.init_objects) {
-      this.init_objects.push(obj);
-    }
   },
 
   getGameObject(id, should_throw = true) {
@@ -298,9 +298,11 @@ let game_proto = {
 
     // Init every object, will also trigger on_init for any object that defines it
     for(let init_level of this.initLevels()) {
-      this.init_objects.forEach((obj) => {obj.init(init_level)});
+      this.init_order.forEach(function(obj_id) {
+        const obj = this.getGameObject(obj_id);
+        obj.init(init_level);
+      }, this);
     }
-    this.init_objects = null;
 
     // this.container_id = container_id;
     this.runEvent("start", {});
@@ -435,9 +437,10 @@ let game_proto = {
   }
 };
 
-function RezGame(template, attributes) {
+function RezGame(init_order, template, attributes) {
   this.id = "game";
   this.game_object_type = "game";
+  this.init_order = init_order;
   this.attributes = attributes;
   this.tag_index = {};
   this.scene_stack = [];
@@ -446,7 +449,6 @@ function RezGame(template, attributes) {
   this.flash = [];
   this.wmem = {game: this};
   this.game_objects = new Map();
-  this.init_objects = [this];
   this.properties_to_archive = ["scene_stack", "current_scene_id", "wmem", "tag_index", "renderer"];
   this.changed_attributes = [];
   this.$ = this.getGameObject;

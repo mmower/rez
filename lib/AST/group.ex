@@ -9,6 +9,7 @@ defmodule Rez.AST.Group do
   are tagged with the appropriate tag.
   """
   defstruct status: :ok,
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             assets: %{},

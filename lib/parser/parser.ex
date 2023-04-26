@@ -14,6 +14,8 @@ defmodule Rez.Parser.Parser do
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
 
+  import Rez.Utils, only: [random_str: 0]
+
   def actor_block() do
     block_with_id("actor", Rez.AST.Actor)
   end
@@ -80,7 +82,7 @@ defmodule Rez.Parser.Parser do
            %{type: :elem_ref, value: target} <- Map.get(attributes, "target") do
         "rel_" <> source <> "_" <> target
       else
-        nil -> "rel_" <> Rez.Utils.random_str()
+        nil -> "rel_" <> random_str()
       end
     end)
   end
@@ -90,7 +92,7 @@ defmodule Rez.Parser.Parser do
   end
 
   def script_block() do
-    delimited_block("script", Rez.AST.Script, :code)
+    delimited_block("script", fn -> "script_" <> random_str() end, Rez.AST.Script)
   end
 
   def slot_block() do
@@ -98,7 +100,7 @@ defmodule Rez.Parser.Parser do
   end
 
   def style_block() do
-    delimited_block("style", Rez.AST.Style, :styles)
+    delimited_block("style", fn -> "style_" <> random_str() end, Rez.AST.Style)
   end
 
   def system_block() do
@@ -150,7 +152,13 @@ defmodule Rez.Parser.Parser do
   end
 
   def game_block() do
-    block_with_children("game", Rez.AST.Game, game_content(), &Rez.AST.Game.add_child/2)
+    block_with_children(
+      "game",
+      fn _attrs -> "game" end,
+      Rez.AST.Game,
+      game_content(),
+      &Rez.AST.Game.add_child/2
+    )
   end
 
   def top_level() do

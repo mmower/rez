@@ -302,7 +302,11 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def block_with_children(label, block_struct, child_parser, add_fn) when is_function(add_fn) do
+  @doc """
+  At the moment @game is the only id-less block with children
+  """
+  def block_with_children(label, id_fn, block_struct, child_parser, add_fn)
+      when is_function(add_fn) do
     sequence(
       [
         iliteral("@#{label}"),
@@ -322,14 +326,17 @@ defmodule Rez.Parser.StructureParsers do
               } = ctx ->
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
+        attrs = attr_list_to_map(attr_list)
+        id = id_fn.(attrs)
+
         block =
           Enum.reduce(
             children,
             create_block(
               block_struct,
-              nil,
+              id,
               [],
-              attr_list_to_map(attr_list),
+              attrs,
               source_file,
               source_line,
               col
@@ -337,7 +344,7 @@ defmodule Rez.Parser.StructureParsers do
             add_fn
           )
 
-        ctx_with_block_and_id_mapped(ctx, block, label, label, source_file, source_line)
+        ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
       end,
       err: fn %Context{} = ctx ->
         Context.add_error(
@@ -416,7 +423,7 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def delimited_block(label, block_struct, content_key) do
+  def delimited_block(label, id_fn, block_struct) do
     sequence(
       [
         iliteral("@#{label}"),
@@ -428,13 +435,30 @@ defmodule Rez.Parser.StructureParsers do
                 ctx ->
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-        block =
-          struct(block_struct, [
-            {:position, {source_file, source_line, col}},
-            {content_key, text}
-          ])
+        id = id_fn.()
+        attr = Attribute.string("$content", text)
 
-        %{ctx | ast: block}
+        block =
+          create_block(
+            block_struct,
+            id,
+            [],
+            %{
+              "$content" => attr
+            },
+            source_file,
+            source_line,
+            col
+          )
+
+        ctx_with_block_and_id_mapped(
+          ctx,
+          block,
+          id,
+          label,
+          source_file,
+          source_line
+        )
       end
     )
   end

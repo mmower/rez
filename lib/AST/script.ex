@@ -6,8 +6,9 @@ defmodule Rez.AST.Script do
   JS output.
   """
   defstruct status: :ok,
+            game_element: false,
             position: {nil, 0, 0},
-            code: ""
+            attributes: %{}
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Script do

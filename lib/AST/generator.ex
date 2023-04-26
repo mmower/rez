@@ -4,6 +4,7 @@ defmodule Rez.AST.Generator do
   run-time procedural generators.
   """
   defstruct status: :ok,
+            game_element: true, # technically not, but it resovles to a RezList of the same id
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}
