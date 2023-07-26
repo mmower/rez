@@ -16,6 +16,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
     NodeHelper.get_attr_value(relationship, "js_ctor", "RezRelationship")
   end
 
+  def js_initializer(relationship) do
+    NodeHelper.js_initializer(relationship)
+  end
+
   def default_attributes(_relationship), do: %{}
 
   def pre_process(relationship), do: relationship

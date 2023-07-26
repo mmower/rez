@@ -21,36 +21,37 @@ const basic_object = {
 
   /*
    * Object ref lookup shortcut
-  */
+   */
   $(id) {
     return this.game.getGameObject(id);
   },
 
   /*
    * Intialization
-  */
+   */
 
   init(level) {
     const init_method = "init_" + level;
-    if(typeof(this[init_method]) == "function") {
+    if (typeof this[init_method] == "function") {
       this[init_method]();
     }
   },
 
   init_all() {
-    for(let init_level of this.game.initLevels()) {
+    for (let init_level of this.game.initLevels()) {
       this.init(init_level);
     }
   },
 
   init_0() {
     // Copy parent attributes
-    if(this.hasAttribute("$parents")) {
+    if (this.hasAttribute("$parents")) {
       const parent_list = this.getAttribute("$parents");
+      console.log("parents." + this.id + " => " + parent_list);
       parent_list.forEach((parent_id) => {
         const parent = $(parent_id);
-        for(let attr of Object.keys(parent.attributes)) {
-          if(!this.hasAttribute(attr)) {
+        for (let attr of Object.keys(parent.attributes)) {
+          if (!this.hasAttribute(attr)) {
             this.setAttribute(attr, parent.attributes[attr]);
           }
         }
@@ -59,44 +60,45 @@ const basic_object = {
   },
 
   init_1() {
-    if(!this.initialised) {
-      console.log("Initialise " + this.id);
-      this.initDynamicAttributes();
-      this.elementInitializer();
-      this.runEvent("init", {});
+    if (!this.initialised) {
+      if (!this.isTemplateObject()) {
+        // Templates don't initialise like regular objects
+        this.initDynamicAttributes();
+        this.elementInitializer();
+        this.runEvent("init", {});
+      }
       this.initialised = true;
     }
   },
 
   initDynamicAttributes() {
-    if(this.hasAttribute("$template") && this.getAttribute("$template") == true) {
+    if (this.getAttributeValue("$template", false)) {
       return;
     }
 
-    for(let attr_name of Object.keys(this.attributes)) {
+    for (let attr_name of Object.keys(this.attributes)) {
       const value = this.getAttribute(attr_name);
 
-      if(typeof(value) == "object" && value.hasOwnProperty("initializer")) {
+      if (typeof value == "object" && value.hasOwnProperty("initializer")) {
         const initializer = value["initializer"];
         this.setAttribute(attr_name, eval(initializer));
-      } else if(value.constructor == RezDie) {
+      } else if (value.constructor == RezDie) {
         this.setAttribute(attr_name, value.roll());
       }
     }
   },
 
-  elementInitializer() {
-  },
+  elementInitializer() {},
 
   /*
    * Template object copying
-  */
+   */
 
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
     copy.setAttribute("$template", false);
-    copy.runEvent("copy", {original: this});
+    copy.runEvent("copy", { original: this });
     copy.setAttribute("copy_of", this.id);
     copy.init_all();
     return copy;
@@ -111,9 +113,13 @@ const basic_object = {
     return this.copyAssigningId(copy_id);
   },
 
+  isTemplateObject() {
+    return this.getAttributeValue("$template", false);
+  },
+
   /*
    * Event Handling
-  */
+   */
 
   eventHandler(event_name) {
     return this.getAttribute("on_" + event_name);
@@ -121,14 +127,14 @@ const basic_object = {
 
   willHandleEvent(event_name) {
     const handler = this.eventHandler(event_name);
-    const does_handle_event = handler != null && typeof(handler) == "function";
+    const does_handle_event = handler != null && typeof handler == "function";
     return does_handle_event;
   },
 
   runEvent(event_name, event_info) {
     console.log("Run on_" + event_name + " handler on " + this.id);
     let handler = this.eventHandler(event_name);
-    if(handler != null && typeof(handler) == "function") {
+    if (handler != null && typeof handler == "function") {
       return handler(this, event_info);
     } else {
       return false;
@@ -137,7 +143,7 @@ const basic_object = {
 
   /*
    * Attribute query/get/set
-  */
+   */
 
   getIn(path) {
     const segments = path.split(".");
@@ -145,12 +151,12 @@ const basic_object = {
     const rest = segments.slice(1);
     const value = this.attributes[first];
 
-    if(null == value) {
+    if (null == value) {
       return null;
     } else {
       return rest.reduce((attr, segment) => {
         let next_value = attr[segment];
-        if(typeof(next_value) == "undefined") {
+        if (typeof next_value == "undefined") {
           return null;
         } else {
           return next_value;
@@ -170,15 +176,21 @@ const basic_object = {
 
   getAttributeValue(name, default_value) {
     const attr = this.getAttribute(name);
-    if(typeof(attr) == "undefined") {
-      if(typeof(default_value) == "undefined") {
-        throw "Attempt to get value of attribute |" + name + "| which is not defined on |#" + this.id + "|";
+    if (typeof attr == "undefined") {
+      if (typeof default_value == "undefined") {
+        throw (
+          "Attempt to get value of attribute |" +
+          name +
+          "| which is not defined on |#" +
+          this.id +
+          "|"
+        );
       } else {
         return default_value;
       }
-    } else if(typeof(attr) == "function") {
+    } else if (typeof attr == "function") {
       return attr(this);
-    } else if(attr.constructor == RezDie) {
+    } else if (attr.constructor == RezDie) {
       return attr.roll();
     } else {
       return attr;
@@ -203,7 +215,7 @@ const basic_object = {
   },
 
   setAttribute(name, value) {
-    if(typeof(value) == "undefined") {
+    if (typeof value == "undefined") {
       throw "Call to setAttribute with undefined value!";
     }
     this.attributes[name] = value;
@@ -212,7 +224,7 @@ const basic_object = {
 
   addTag(tag) {
     let tags = this.getAttribute("tags");
-    if(!tags) {
+    if (!tags) {
       tags = new Set([tag]);
     } else {
       tags.add(tag);
@@ -224,7 +236,7 @@ const basic_object = {
 
   removeTag(tag) {
     let tags = this.getAttribute("tags");
-    if(!tags) {
+    if (!tags) {
       tags = new Set();
     } else {
       tags.delete(tag);
@@ -248,7 +260,7 @@ const basic_object = {
   putIn(path, value) {
     const selectors = path.split(".");
     const first_selector = selectors[0];
-    if(selectors.length == 1) {
+    if (selectors.length == 1) {
       this.setAttribute(first_selector, value);
     } else {
       const lookup_selectors = selectors.slice(1, -1);
@@ -256,7 +268,7 @@ const basic_object = {
         return target[selector];
       }, this.getAttribute(first_selector));
 
-      if(typeof(target) == "undefined") {
+      if (typeof target == "undefined") {
         throw "Attempt to putIn invalid path: " + path + " on " + this.id;
       } else {
         const final_selector = selectors.slice(-1);
@@ -270,8 +282,8 @@ const basic_object = {
 
   incAttribute(name, amount = 1) {
     let value = this.getAttribute(name);
-    if(typeof(value) == "number") {
-      this.setAttribute(name, value+amount);
+    if (typeof value == "number") {
+      this.setAttribute(name, value + amount);
     } else {
       throw "Attempt to inc/dec non-numeric attribute: " + name;
     }
@@ -285,16 +297,32 @@ const basic_object = {
    * Effect Management
    */
   applyEffect(effect_id, item_id) {
-    console.log("Been asked to apply effect |"+effect_id+"| from item |"+item_id+"| to |"+this.id+"|");
+    console.log(
+      "Been asked to apply effect |" +
+        effect_id +
+        "| from item |" +
+        item_id +
+        "| to |" +
+        this.id +
+        "|"
+    );
   },
 
   removeEffect(effect_id, item_id) {
-    console.log("Been asked to remove effect |"+effect_id+"| from item |"+item_id+"| to |"+this.id+"|");
+    console.log(
+      "Been asked to remove effect |" +
+        effect_id +
+        "| from item |" +
+        item_id +
+        "| to |" +
+        this.id +
+        "|"
+    );
   },
 
   /*
    * Binding
-  */
+   */
 
   addBinding(name, object) {
     const bindings = this.getAttribute("bindings") || {};
@@ -304,41 +332,38 @@ const basic_object = {
 
   /*
    * Archiving
-  */
+   */
 
   needsArchiving() {
-    return this.changed_attributes.length > 0 || this.properties_to_archive.length > 0;
+    return (
+      this.changed_attributes.length > 0 ||
+      this.properties_to_archive.length > 0
+    );
   },
 
   archiveDataContainer() {
     return {
       id: this.id,
-      type: this.game_object_type
+      type: this.game_object_type,
     };
   },
 
   dataWithArchivedAttributes(data) {
-    const obj= this;
-    return this.changed_attributes.reduce(
-      function(data, key) {
-        data["attrs"] = data["attrs"] || {};
-        data["attrs"][key] = obj.getAttribute(key)
-        return data;
-      },
-      data
-    );
+    const obj = this;
+    return this.changed_attributes.reduce(function (data, key) {
+      data["attrs"] = data["attrs"] || {};
+      data["attrs"][key] = obj.getAttribute(key);
+      return data;
+    }, data);
   },
 
   dataWithArchivedProperties(data) {
     const obj = this;
-    return this.properties_to_archive.reduce(
-      function(data, key) {
-        data["props"] = data["props"] || {};
-        data["props"][key] = obj[key];
-        return data;
-      },
-      data
-    );
+    return this.properties_to_archive.reduce(function (data, key) {
+      data["props"] = data["props"] || {};
+      data["props"][key] = obj[key];
+      return data;
+    }, data);
   },
 
   toJSON() {
@@ -350,26 +375,30 @@ const basic_object = {
 
   loadData(data) {
     const attrs = data["attrs"];
-    if(typeof(attrs) == "object") {
-      for(const [k, v] of Object.entries(attrs)) {
+    if (typeof attrs == "object") {
+      for (const [k, v] of Object.entries(attrs)) {
         this.setAttribute(k, v);
       }
     }
 
     const props = data["props"];
-    if(typeof(props) == "object") {
-      for(const [k, v] of Object.entries(props)) {
+    if (typeof props == "object") {
+      for (const [k, v] of Object.entries(props)) {
         this[k] = v;
       }
     }
-  }
+  },
 };
 
-Object.defineProperty(Object.prototype, "isGameObject", {
-  value: function() {
-      return basic_object.isPrototypeOf(this);
-  }
-});
+window.isGameObject = function (v) {
+  return basic_object.isPrototypeOf(v);
+};
+
+// Object.defineProperty(Object.prototype, "isGameObject", {
+//   value: function() {
+//       return basic_object.isPrototypeOf(this);
+//   }
+// });
 
 window.Rez ??= {};
 window.Rez.basic_object = basic_object;

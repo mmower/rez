@@ -7,6 +7,7 @@ defmodule Rez.AST.NodeHelper do
   import Rez.Utils, only: [map_to_map: 2]
   alias Rez.AST.Attribute
   alias Rez.AST.Node
+  import Rez.AST.ValueEncoder, only: [encode_attributes: 1]
 
   def description(%{id: id, position: {file, line, col}} = node) when is_binary(file) do
     "#{Node.node_type(node)}/#{id} @ #{file}:#{line}:#{col}"
@@ -104,6 +105,8 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.delete(attributes, name)}
   end
 
+  def is_template?(node), do: get_attr_value(node, "$template", false)
+
   @doc """
   Returns the Node struct for a given tag name.
 
@@ -153,5 +156,14 @@ defmodule Rez.AST.NodeHelper do
       nil -> parent
       coll -> Map.put(parent, coll_key, map_to_map(coll, &Node.process/1))
     end
+  end
+
+  def js_initializer(node) do
+    """
+    new #{Node.js_ctor(node)}(
+      "#{node.id}",
+      #{encode_attributes(node.attributes)}
+    )
+    """
   end
 end

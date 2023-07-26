@@ -4,194 +4,30 @@
 <% import Rez.AST.ValueEncoder %>
 <% alias Rez.AST.{Node, NodeHelper, Asset} %>
 
-const game = new <%= Node.js_ctor(@game) %>(
-  [<%= Enum.map_join(@game.init_order, ", ", &("\"#{&1}\"")) %>],
-  Handlebars.template(<%= @game.template %>),
-  <%= encode_attributes(@game.attributes) %>
-);
+const game = <%= Node.js_initializer(@game) %>;
 
 basic_object.game = game;
 
-/* Encode tasks that will be referred to in behaviours attributes */
-<%= for {id, task} <- @game.tasks do %>
-game.addGameObject(
-  new <%= Node.js_ctor(task) %>(
-    "<%= id %>",
-    <%= encode_attributes(task.attributes) %>
-  )
-);
-<% end %>
-
 /* Encode game objects */
-<%= for {id, actor} <- @game.actors do %>
-game.addGameObject(
-  new <%= Node.js_ctor(actor) %>(
-    "<%= id %>",
-    <%= encode_attributes(actor.attributes) %>
-  )
-);
+<%= for collection <- Game.js_classes_to_init(),
+    {_id, obj} <- Map.get(@game, collection) do %>
+  // New JS Initializer
+  game.addGameObject(<%= Node.js_initializer(obj) %>);
 <% end %>
 
-<%= for {id, asset} <- @game.assets do %>
-game.addGameObject(
-  new <%= Node.js_ctor(asset) %>(
-    "<%= id %>",
-    "<%= Asset.asset_path(asset) %>",
-    <%= encode_attributes(asset.attributes) %>
-  )
-);
-<% end %>
+/* Build Map */
 
-<%= for {id, card} <- @game.cards do %>
-game.addGameObject(
-  new <%= Node.js_ctor(card) %>(
-    "<%= id %>",
-    Handlebars.template(<%= card.template %>),
-    <%= encode_attributes(card.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, effect} <- @game.effects do %>
-game.addGameObject(
-  new <%= Node.js_ctor(effect) %>(
-    "<%= id %>",
-    <%= encode_attributes(effect.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, faction} <- @game.factions do %>
-game.addGameObject(
-  new <%= Node.js_ctor(faction) %>(
-    "<%= id %>",
-    <%= encode_attributes(faction.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, group} <- @game.groups do %>
-game.addGameObject(
-  new <%= Node.js_ctor(group) %>(
-    "<%= id %>",
-    <%= encode_attributes(group.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, inventory} <- @game.inventories do %>
-game.addGameObject(
-  new <%= Node.js_ctor(inventory) %>(
-      "<%= id %>",
-      <%= encode_attributes(inventory.attributes) %>
-    )
-);
-<% end %>
-
-<%= for {id, item} <- @game.items do %>
-game.addGameObject(
-  new <%= Node.js_ctor(item) %>(
-    "<%= id %>",
-    <%= if is_nil(item.template) do %>
-      null
-    <% else %>
-      Handlebars.template(<%= item.template %>)
-    <% end %>,
-    <%= encode_attributes(item.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, list} <- @game.lists do %>
-game.addGameObject(
-  new <%= Node.js_ctor(list) %>(
-    "<%= id %>",
-    <%= encode_attributes(list.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, plot} <- @game.plots do %>
-game.addGameObject(
-  new <%= Node.js_ctor(plot) %>(
-    "<%= id %>",
-    <%= encode_attributes(plot.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, relationship} <- @game.relationships do %>
-game.addGameObject(
-  new <%= Node.js_ctor(relationship) %>(
-    "<%= id %>",
-    <%= encode_attributes(relationship.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, scene} <- @game.scenes do %>
-game.addGameObject(
-  new <%= Node.js_ctor(scene) %>(
-    "<%= id %>",
-    Handlebars.template(<%= scene.layout_template %>),
-    <%= encode_attributes(scene.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {slot_id, slot} <- @game.slots do %>
-game.addGameObject(
-  new <%= Node.js_ctor(slot) %>(
-    "<%= slot_id %>",
-    <%= encode_attributes(slot.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, system} <- @game.systems do %>
-game.addGameObject(
-  new <%= Node.js_ctor(system) %>(
-    "<%= id %>",
-    <%= encode_attributes(system.attributes) %>
-  )
-);
-<% end %>
-
-<%= for {id, zone} <- @game.zones do %>
+<%= for {_id, zone} <- @game.zones do %>
 (function() {
-  let zone = new <%= Node.js_ctor(zone) %>(
-    "<%= id %>",
-    <%= encode_attributes(zone.attributes) %>
-  )
+  let zone = Node.js_initializer(zone);
   game.addGameObject(zone);
 
-  <%= for {loc_id, location} <- zone.locations do %>
-    (function() {
-      let location = new <%= Node.js_ctor(location) %>(
-        "<%= loc_id %>",
-        <%= if is_nil(location.template) do %>
-          null
-        <% else %>
-          Handlebars.template(<%= location.template %>)
-        <% end %>,
-        <%= encode_attributes(location.attributes) %>
-      );
-      zone.addLocation(location);
-      game.addGameObject(location);
-    })();
+  <%= for {_id, location} <- zone.locations do %>
+    let location = <%= Node.js_initializer(location) %>
+    zone.addLocation(location);
+    game.addGameObject(location);
   <% end %>
 })();
-<% end %>
-
-<%= for {id, object} <- @game.objects do %>
-(function(game) {
-  game.addGameObject(
-    new <%= Node.js_ctor(object) %>(
-      "<%= id %>",
-      <%= encode_attributes(object.attributes) %>
-    )
-  );
-})(game);
 <% end %>
 
 <%

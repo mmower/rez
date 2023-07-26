@@ -27,6 +27,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
     NodeHelper.get_attr_value(group, "js_ctor", "RezGroup")
   end
 
+  def js_initializer(group) do
+    NodeHelper.js_initializer(group)
+  end
+
   def default_attributes(_group), do: %{}
 
   def pre_process(group), do: group

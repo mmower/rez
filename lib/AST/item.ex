@@ -46,6 +46,14 @@ defmodule Rez.AST.Item do
     )
   end
 
+  def js_template(%Item{template: nil}) do
+    "null"
+  end
+
+  def js_template(%Item{template: template}) do
+    "Handlebars.template(#{template})"
+  end
+
   def add_types_as_tags(%Item{} = item, %TypeHierarchy{} = is_a) do
     case NodeHelper.get_attr_value(item, "type") do
       nil ->
@@ -77,13 +85,23 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Item do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Game, Item}
+  alias Rez.AST.{NodeHelper, ValueEncoder, Game, Item}
   alias Rez.AST.Node
 
   def node_type(_item), do: "item"
 
   def js_ctor(item) do
     NodeHelper.get_attr_value(item, "js_ctor", "RezItem")
+  end
+
+  def js_initializer(item) do
+    """
+    new #{js_ctor(item)}(
+      "#{item.id}",
+      "#{Item.js_template(item)}",
+      #{ValueEncoder.encode_attributes(item.attributes)}
+    )
+    """
   end
 
   def default_attributes(_item), do: %{}

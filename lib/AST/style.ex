@@ -14,9 +14,9 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Style do
   def node_type(_style), do: "style"
 
-  def js_ctor(_style) do
-    raise "@style does not support a JS constructor!"
-  end
+  def js_ctor(_style), do: raise("@style does not support a JS constructor!")
+
+  def js_initializer(_obj), do: raise("@style does not support a JS initializer!")
 
   def default_attributes(_style), do: %{}
 

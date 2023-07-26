@@ -14,9 +14,9 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Script do
   def node_type(_script), do: "script"
 
-  def js_ctor(_script) do
-    raise "@script does not support a JS constructor!"
-  end
+  def js_ctor(_script), do: raise("@script does not support a JS constructor!")
+
+  def js_initializer(_obj), do: raise("@script does not support a JS initializer!")
 
   def default_attributes(_script), do: %{}
 

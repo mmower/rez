@@ -91,12 +91,29 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Asset do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Asset}
+  alias Rez.AST.{NodeHelper, Asset, ValueEncoder}
 
   def node_type(_asset), do: "asset"
 
   def js_ctor(asset) do
     NodeHelper.get_attr_value(asset, "js_ctor", "RezAsset")
+  end
+
+  def js_initializer(%Asset{} = asset) do
+    asset_path =
+      if NodeHelper.is_template?(asset) do
+        ""
+      else
+        Asset.asset_path(asset)
+      end
+
+    """
+    new #{js_ctor(asset)}(
+      "#{asset.id}",
+      "#{asset_path}",
+      #{ValueEncoder.encode_attributes(asset.attributes)}
+    )
+    """
   end
 
   def default_attributes(_asset), do: %{}

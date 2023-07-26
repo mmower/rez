@@ -4,7 +4,8 @@ defmodule Rez.AST.Generator do
   run-time procedural generators.
   """
   defstruct status: :ok,
-            game_element: true, # technically not, but it resovles to a RezList of the same id
+            # technically not, but it resovles to a RezList of the same id
+            game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}
@@ -16,9 +17,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
 
   def node_type(_generator), do: "generator"
 
-  def js_ctor(_generator) do
-    raise "@generator does not support a JS constructor!"
-  end
+  def js_ctor(_generator), do: raise("@generator does not support a JS constructor!")
+
+  def js_initializer(_obj), do: raise("@generator does not support a JS initializer!")
 
   def default_attributes(_generator),
     do: %{

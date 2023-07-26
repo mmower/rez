@@ -58,7 +58,7 @@ let game_proto = {
       if(key == "" || value == null) { // This is the game itself
         archived["game"] = true;
         return value;
-      } else if(value.isGameObject()) { // This is a game object
+      } else if(isGameObject(value)) { // This is a game object
         const goid = value.id; // GameObjectID
         console.log("<- is a game object: " + goid);
         if(archived[goid]) {
@@ -74,6 +74,19 @@ let game_proto = {
           archived[goid] = true;
           return value;
         }
+      } else if(isObject(value)) {
+        return value.obj_map((v) => {
+          if(isGameObject(v)) {
+            return {
+              json$safe: true,
+              type: "ref",
+              game_object_type: value.game_object_type,
+              game_object_id: value.id
+            };
+          } else {
+            return v;
+          }
+        });
       } else if(typeof(value) == "function") {
         return {
           json$safe: true,
@@ -167,7 +180,7 @@ let game_proto = {
   separately.
   */
   addGameObject(obj) {
-    if(!obj.isGameObject()) {
+    if(!isGameObject(obj)) {
       console.dir(obj);
       throw "Attempt to register non-game object!";
     }

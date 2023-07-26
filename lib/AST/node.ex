@@ -42,4 +42,10 @@ defprotocol Rez.AST.Node do
   type.
   """
   def js_ctor(node)
+
+  @doc """
+  `js_initializer/1` should return the Javascript code to initialize a node
+  of this type.
+  """
+  def js_initializer(node)
 end

@@ -16,8 +16,14 @@ defmodule Rez.Compiler.UpdateDeps do
 
   def asset_requires_update?(folder, file_name, stored_ctime) do
     file_path = Path.join(["assets", folder, file_name])
-    file_ctime = Utils.file_ctime!(file_path)
-    stored_ctime > file_ctime
+    case File.exists?(file_path) do
+      false ->
+        true
+
+      true ->
+        file_ctime = Utils.file_ctime!(file_path)
+        stored_ctime > file_ctime
+    end
   end
 
   def conditionally_write_asset(

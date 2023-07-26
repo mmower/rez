@@ -43,7 +43,11 @@ defmodule Rez.AST.NodeValidator do
   end
 
   def validate(node, game) do
-    validate(%Validation{game: game, node: node})
+    if NodeHelper.get_attr_value(node, "$template", false) == true do
+      %Validation{game: game, node: node}
+    else
+      validate(%Validation{game: game, node: node})
+    end
   end
 
   def validate(%Validation{} = validation) do

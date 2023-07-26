@@ -189,12 +189,22 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{Card, NodeHelper}
+  alias Rez.AST.{Card, NodeHelper, ValueEncoder}
 
   def node_type(_card), do: "card"
 
   def js_ctor(card) do
     NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
+  end
+
+  def js_initializer(card) do
+    """
+    new #{js_ctor(card)}(
+      "#{card.id}",
+      Handlebars.template(#{card.template}),
+      #{ValueEncoder.encode_attributes(card.attributes)}
+    )
+    """
   end
 
   def default_attributes(_card), do: %{}

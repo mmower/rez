@@ -43,6 +43,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
     NodeHelper.get_attr_value(slot, "js_ctor", "RezSlot")
   end
 
+  def js_initializer(slot) do
+    NodeHelper.js_initializer(slot)
+  end
+
   def default_attributes(_slot), do: %{}
 
   def pre_process(slot), do: slot

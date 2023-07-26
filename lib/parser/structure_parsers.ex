@@ -5,7 +5,9 @@ defmodule Rez.Parser.StructureParsers do
   structure, e.g. a block with an id and attributes.
   """
   alias Ergo.Context
-  import Ergo.{Combinators, Terminals, Meta}
+  import Ergo.Combinators
+  import Ergo.Terminals
+  import Ergo.Meta
 
   alias LogicalFile
 

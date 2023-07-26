@@ -138,6 +138,30 @@ defmodule Rez.AST.Game do
     end)
   end
 
+  # Due to their dependency locations & zones are init'd separately
+  @js_classes_to_init [
+    :tasks,
+    :actors,
+    :assets,
+    :cards,
+    :effects,
+    :factions,
+    :groups,
+    :inventories,
+    :items,
+    :lists,
+    :plots,
+    :relationships,
+    :scenes,
+    :slots,
+    :systems,
+    :objects
+  ]
+
+  def js_classes_to_init() do
+    @js_classes_to_init
+  end
+
   # def has_inventory_with_kind?(%Game{} = game, kind) do
   #   Enum.any?(game.inventories, fn {_id, inventory} ->
   #     NodeHelper.get_attr_value(inventory, "kind") == kind
@@ -168,7 +192,8 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      Asset.script_asset?(asset) && !Asset.js_runtime?(asset) && Asset.pre_runtime?(asset)
+      !NodeHelper.is_template?(asset) && Asset.script_asset?(asset) && !Asset.js_runtime?(asset) &&
+        Asset.pre_runtime?(asset)
     end)
   end
 
@@ -176,7 +201,8 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      Asset.script_asset?(asset) && !Asset.js_runtime?(asset) && !Asset.pre_runtime?(asset)
+      !NodeHelper.is_template?(asset) && Asset.script_asset?(asset) && !Asset.js_runtime?(asset) &&
+        !Asset.pre_runtime?(asset)
     end)
   end
 
@@ -184,13 +210,14 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      NodeHelper.get_attr_value(asset, "js_runtime", false)
+      !NodeHelper.is_template?(asset) && NodeHelper.get_attr_value(asset, "js_runtime", false)
     end)
   end
 
   def style_assets(%Game{assets: assets}) do
     assets
     |> Map.values()
+    |> Enum.filter(fn asset -> !NodeHelper.is_template?(asset) end)
     |> Enum.filter(&Asset.style_asset?/1)
   end
 end
@@ -239,12 +266,25 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
   import Rez.AST.NodeValidator
   import Rez.AST.Game.InitOrder
   alias Rez.Utils
-  alias Rez.AST.{NodeHelper, Game, Item}
+  alias Rez.AST.{NodeHelper, ValueEncoder, Game, Item}
 
   def node_type(_game), do: "game"
 
   def js_ctor(game) do
     NodeHelper.get_attr_value(game, "js_ctor", "RezGame")
+  end
+
+  def js_initializer(game) do
+    ctor = js_ctor(game)
+    init_obj_ids = Enum.map_join(game.init_order, ", ", &"\"#{&1}\"")
+
+    """
+    new #{ctor}(
+      [#{init_obj_ids}],
+      Handlebars.template(#{game.template}),
+      #{ValueEncoder.encode_attributes(game.attributes)}
+      );
+    """
   end
 
   def default_attributes(_game), do: %{}
@@ -279,7 +319,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
   end
 
   defp generate_init_order(%Game{} = game) do
-
     elements = game |> children |> Enum.filter(fn obj -> Map.get(obj, :game_element) end)
 
     case initialization_order(elements) do

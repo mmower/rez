@@ -34,6 +34,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
     NodeHelper.get_attr_value(plot, "js_ctor", "RezPlot")
   end
 
+  def js_initializer(plot) do
+    NodeHelper.js_initializer(plot)
+  end
+
   def default_attributes(_plot), do: %{}
 
   def pre_process(plot), do: plot

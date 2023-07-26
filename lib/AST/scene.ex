@@ -44,12 +44,22 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
   import Rez.AST.NodeValidator
   alias Rez.AST.Scene
-  alias Rez.AST.NodeHelper
+  alias Rez.AST.{NodeHelper, ValueEncoder}
 
   def node_type(_scene), do: "scene"
 
   def js_ctor(scene) do
     NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
+  end
+
+  def js_initializer(scene) do
+    """
+    new #{js_ctor(scene)}(
+      "#{scene.id}",
+      Handlebars.template(#{scene.layout_template}),
+      #{ValueEncoder.encode_attributes(scene.attributes)}
+    )
+    """
   end
 
   def default_attributes(_scene), do: %{}

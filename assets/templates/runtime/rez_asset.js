@@ -5,16 +5,14 @@
 let asset_proto = {
   __proto__: basic_object,
 
-  elementInitializer() {
-    this.type = this.assetType();
-  },
+  elementInitializer() {},
 
   tag() {
-    if(this.isImage()) {
+    if (this.isImage()) {
       return this.imageTag();
-    } else if(this.isAudio()) {
+    } else if (this.isAudio()) {
       return this.audioTag();
-    } else if(this.isVideo()) {
+    } else if (this.isVideo()) {
       return this.videoTag();
     } else {
       throw "No tag implementation for MIME type: " + this.type + "!";
@@ -23,7 +21,7 @@ let asset_proto = {
 
   assetType() {
     const mime_type = this.getAttributeValue("detected_mime_type");
-    if(typeof(mime_type) == "undefined") {
+    if (typeof mime_type == "undefined") {
       throw "No MIME information available for asset: " + this.id;
     }
     return mime_type.split("/")[0];
@@ -51,29 +49,37 @@ let asset_proto = {
   },
 
   getWidth(w) {
-    if(typeof(w) != "undefined") {
+    if (typeof w != "undefined") {
       return w;
     }
 
     const width = this.getAttribute("width");
-    if(typeof(width) != "undefined") {
+    if (typeof width != "undefined") {
       return width;
     }
 
-    throw "Asked for width of asset " + this.id + " which is not defined and no default was specified.";
+    throw (
+      "Asked for width of asset " +
+      this.id +
+      " which is not defined and no default was specified."
+    );
   },
 
   getHeight(h) {
-    if(typeof(h) != "undefined") {
+    if (typeof h != "undefined") {
       return h;
     }
 
     const height = this.getAttribute("height");
-    if(typeof(height) != "undefined") {
+    if (typeof height != "undefined") {
       return height;
     }
 
-    throw "Asked for height of asset " + this.id + " which is not defined and no default was specified.";
+    throw (
+      "Asked for height of asset " +
+      this.id +
+      " which is not defined and no default was specified."
+    );
   },
 
   imageElement(w, h) {
@@ -91,7 +97,7 @@ let asset_proto = {
   videoTag() {
     console.log("Video tags not implemented");
     return "";
-  }
+  },
 };
 
 function RezAsset(id, path, attributes) {
@@ -99,7 +105,9 @@ function RezAsset(id, path, attributes) {
   this.game_object_type = "asset";
   this.path = path;
   this.attributes = attributes;
-  this.type = this.assetType();
+  if (!this.isTemplateObject()) {
+    this.type = this.assetType();
+  }
   this.properties_to_archive = ["type"];
   this.changed_attributes = [];
 }

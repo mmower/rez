@@ -35,6 +35,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
     NodeHelper.get_attr_value(zone, "js_ctor", "RezZone")
   end
 
+  def js_initializer(zone) do
+    NodeHelper.js_initializer(zone)
+  end
+
   def default_attributes(_zone), do: %{}
 
   def pre_process(zone), do: zone

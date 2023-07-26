@@ -14,7 +14,10 @@ defmodule Rez.Compiler.CopyAssets do
         %Compilation{status: :ok, game: %Game{assets: assets}, options: %{output: true}} =
           compilation
       ) do
-    Enum.reduce(assets, compilation, fn {_id, asset}, acc ->
+    assets
+    |> Map.values()
+    |> Enum.reject(&NodeHelper.is_template?/1)
+    |> Enum.reduce(compilation, fn asset, acc ->
       copy_asset(acc, asset)
     end)
   end

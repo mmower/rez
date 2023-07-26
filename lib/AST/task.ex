@@ -22,6 +22,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
     NodeHelper.get_attr_value(task, "js_ctor", "RezTask")
   end
 
+  def js_initializer(task) do
+    NodeHelper.js_initializer(task)
+  end
+
   def default_attributes(_task), do: %{}
 
   def pre_process(task), do: task

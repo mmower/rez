@@ -26,6 +26,12 @@ end
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
 
+@script begin
+function isObject(obj) {
+  return obj !== null && typeof obj === "object" && Object.prototype.toString.call(obj) === "[object Object]";
+}
+end
+
 @patch OBJECT_COPY begin
   patch: "Object"
   method: "copy"
@@ -304,6 +310,14 @@ end
   method: "r2nh"
   impl: function() {
     return Math.round(this * 2) / 2;
+  }
+end
+
+@patch NUMBER_DIST_ROUND begin
+  patch: "Number"
+  method: "dist_round"
+  impl: function() {
+    return Math.dist_round(this);
   }
 end
 
@@ -622,6 +636,8 @@ end
         break;
       }
     }
+
+    return result;
   }
 end
 
@@ -638,7 +654,7 @@ end
   execute: (task, wmem) => {
     const count = task.option("count");
     let result = {success: false, wmem: wmem};
-    for(const i=0; i<count; i++) {
+    for(let i=0; i<count; i++) {
       result = child.execute(result.wmem);
       if(!result.success) {
         return result;
@@ -664,7 +680,7 @@ end
     let result = {success: false, wmem: wmem};
     for(let i=0; i<this.count(); i++) {
       result = this.firstChild().tick(result.db);
-      if(tick_succeeded(result)) {
+      if(result.success) {
         break;
       }
     }

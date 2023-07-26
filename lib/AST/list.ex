@@ -23,6 +23,10 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
     NodeHelper.get_attr_value(list, "js_ctor", "RezList")
   end
 
+  def js_initializer(list) do
+    NodeHelper.js_initializer(list)
+  end
+
   def default_attributes(_list), do: %{}
 
   def pre_process(list), do: list

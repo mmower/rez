@@ -12,13 +12,17 @@ defmodule Rez.AST.Actor do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Actor do
-  import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
+  import Rez.AST.NodeValidator
 
   def node_type(_actor), do: "actor"
 
   def js_ctor(actor) do
     NodeHelper.get_attr_value(actor, "js_ctor", "RezActor")
+  end
+
+  def js_initializer(actor) do
+    NodeHelper.js_initializer(actor)
   end
 
   def default_attributes(_actor), do: %{}

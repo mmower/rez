@@ -31,16 +31,34 @@ defmodule Rez.AST.Location do
       end
     )
   end
+
+  def js_template(%Location{template: nil}) do
+    "null"
+  end
+
+  def js_template(%Location{template: template}) do
+    "Handlebars.template(#{template})"
+  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Location do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Attribute, Game, Location}
+  alias Rez.AST.{NodeHelper, ValueEncoder, Attribute, Game, Location}
 
   def node_type(_location), do: "location"
 
   def js_ctor(location) do
     NodeHelper.get_attr_value(location, "js_ctor", "RezLocation")
+  end
+
+  def js_initializer(location) do
+    """
+    new #{js_ctor(location)}(
+      "#{location.id}",
+      #{Location.js_template(location)},
+      #{ValueEncoder.encode_attributes(location.attributes)}
+    )
+    """
   end
 
   def default_attributes(_location), do: %{}

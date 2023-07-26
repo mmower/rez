@@ -47,9 +47,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
 
   def node_type(_patch), do: "patch"
 
-  def js_ctor(_patch) do
-    raise "@patch does not support a JS constructor!"
-  end
+  def js_ctor(_patch), do: raise("@patch does not support a JS constructor!")
+
+  def js_initializer(_obj), do: raise("@patch does not support a JS initializer!")
 
   def default_attributes(_patch), do: %{}
 
