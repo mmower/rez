@@ -127,6 +127,9 @@ defmodule Rez.Utils do
     File.stat!(file_path).ctime
   end
 
+  def add_css_class(classes, ""), do: classes
+  def add_css_class(classes, new_class), do: "#{classes} #{new_class}"
+
   defmodule Search do
     @doc """
     Searches a node and it's tree of children.

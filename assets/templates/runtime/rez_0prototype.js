@@ -44,31 +44,41 @@ const basic_object = {
   },
 
   init_0() {
-    // Copy parent attributes
-    if (this.hasAttribute("$parents")) {
-      const parent_list = this.getAttribute("$parents");
-      console.log("parents." + this.id + " => " + parent_list);
-      parent_list.forEach((parent_id) => {
-        const parent = $(parent_id);
-        for (let attr of Object.keys(parent.attributes)) {
-          if (!this.hasAttribute(attr)) {
-            this.setAttribute(attr, parent.attributes[attr]);
-          }
-        }
-      });
-    }
+    this.initDynamicAttributes();
   },
 
   init_1() {
+    // Copy parent attributes
+    if (this.hasAttribute("$parents")) {
+      const parent_list = this.getAttribute("$parents");
+      if (parent_list.length > 0) {
+        console.log("parents." + this.id + " => " + parent_list);
+        parent_list.forEach((parent_id) => {
+          const parent = $(parent_id);
+          for (let attr of Object.keys(parent.attributes)) {
+            if (!this.hasAttribute(attr)) {
+              console.log(">Copy " + attr);
+              this.setAttribute(attr, parent.attributes[attr]);
+            }
+          }
+        });
+      }
+    }
+  },
+
+  init_2() {
     if (!this.initialised) {
       if (!this.isTemplateObject()) {
         // Templates don't initialise like regular objects
-        this.initDynamicAttributes();
         this.elementInitializer();
         this.runEvent("init", {});
       }
       this.initialised = true;
     }
+  },
+
+  init_3() {
+    this.initialised = true;
   },
 
   initDynamicAttributes() {

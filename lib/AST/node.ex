@@ -17,7 +17,7 @@ defprotocol Rez.AST.Node do
 
   @doc """
   The `pre_process/1` function is intended to be called after a Node structure
-  has been created. It gives the node a chance to response to its own creation.
+  has been created. It gives the node a chance to respond to its own creation.
   """
   def pre_process(node)
 

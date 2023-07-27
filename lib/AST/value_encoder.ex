@@ -45,7 +45,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:dynamic_initializer, i}) do
-    "{initializer: \"#{i}\"}"
+    "{initializer: #{Poison.encode!(i)}}"
   end
 
   def encode_value({:elem_ref, r}) do
@@ -77,6 +77,10 @@ defmodule Rez.AST.ValueEncoder do
 
   def encode_value({:table, t}) do
     encode_attributes(t)
+  end
+
+  def encode_value({:template, t}) do
+    "Handlebars.template(#{t})"
   end
 
   defp encode_list(l) do

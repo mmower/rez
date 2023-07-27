@@ -2,7 +2,7 @@
 %% Game created with Rez <%= Rez.version %>
 %% http://rez-lang.com/
 %% By Matt Mower <self@mattmower.com>
-%% Released 2022 under the GPLv3 license
+%% Released 2022, 2023 under the GPLv3 license
 %%
 
 @game begin

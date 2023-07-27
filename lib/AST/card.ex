@@ -7,14 +7,14 @@ defmodule Rez.AST.Card do
   """
   alias __MODULE__
   alias Rez.AST.NodeHelper
-  alias Earmark
   alias Rez.AST.TemplateHelper
+  alias Rez.Utils
+  alias Earmark
 
   defstruct status: :ok,
             game_element: true,
             id: nil,
             html: nil,
-            template: nil,
             attributes: %{},
             position: {nil, 0, 0}
 
@@ -135,30 +135,24 @@ defmodule Rez.AST.Card do
     |> convert_dynamic_links()
   end
 
-  def build_template(%Card{id: card_id} = card) do
-    TemplateHelper.make_template(
-      card,
-      "content",
-      :template,
-      fn html ->
-        ~s(<div data-card="#{card_id}" class="card">) <>
-          process_links(html) <>
-          "</div>"
-      end
-    )
-  end
-
   def build_template(%Card{id: card_id} = card, custom_css_class) do
-    TemplateHelper.make_template(
-      card,
-      "content",
-      :template,
-      fn html ->
-        ~s(<div data-card="#{card_id}" class="card #{custom_css_class}">) <>
-          process_links(html) <>
-          "</div>"
-      end
-    )
+    case NodeHelper.get_attr_value(card, "content") do
+      nil ->
+        card
+
+      _ ->
+        css_classes = Utils.add_css_class("card", custom_css_class)
+
+        TemplateHelper.make_template(
+          card,
+          "content",
+          fn html ->
+            ~s(<div data-card="#{card_id}" class="#{css_classes}">) <>
+              process_links(html) <>
+              "</div>"
+          end
+        )
+    end
   end
 
   @doc ~S"""
@@ -173,39 +167,35 @@ defmodule Rez.AST.Card do
       ...> } = card
   """
   def process(%Card{status: :ok} = card) do
-    case NodeHelper.get_attr_value(card, "css_class") do
-      nil ->
-        build_template(card)
-
-      class ->
-        build_template(card, class)
-    end
+    build_template(card, NodeHelper.get_attr_value(card, "css_class", ""))
   end
 
-  def process(%Card{} = card) do
-    card
-  end
+  def process(%Card{} = card), do: card
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{Card, NodeHelper, ValueEncoder}
+  alias Rez.AST.{Card, NodeHelper}
 
   def node_type(_card), do: "card"
+
+  defdelegate js_initializer(card), to: NodeHelper
 
   def js_ctor(card) do
     NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
   end
 
-  def js_initializer(card) do
-    """
-    new #{js_ctor(card)}(
-      "#{card.id}",
-      Handlebars.template(#{card.template}),
-      #{ValueEncoder.encode_attributes(card.attributes)}
-    )
-    """
-  end
+  # def js_initializer(card), do: NodeHelper.js_initializer(card)
+
+  # def js_initializer(%Card{template: template} = card) do
+  #   """
+  #   new #{js_ctor(card)}(
+  #     "#{card.id}",
+  #     Handlebars.template(#{template}),
+  #     #{ValueEncoder.encode_attributes(card.attributes)}
+  #   )
+  #   """
+  # end
 
   def default_attributes(_card), do: %{}
 

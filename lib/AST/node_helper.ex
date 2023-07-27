@@ -101,6 +101,11 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.number(name, value))}
   end
 
+  def set_template_attr(%{attributes: attributes} = node, name, value)
+      when is_binary(name) and is_binary(value) do
+    %{node | attributes: Map.put(attributes, name, Attribute.template(name, value))}
+  end
+
   def delete_attr(%{attributes: attributes} = node, name) when is_binary(name) do
     %{node | attributes: Map.delete(attributes, name)}
   end

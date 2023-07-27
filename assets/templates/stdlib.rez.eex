@@ -655,7 +655,7 @@ end
     const count = task.option("count");
     let result = {success: false, wmem: wmem};
     for(let i=0; i<count; i++) {
-      result = child.execute(result.wmem);
+      result = this.firstChild().tick(result.wmem);
       if(!result.success) {
         return result;
       }

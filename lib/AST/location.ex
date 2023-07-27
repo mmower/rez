@@ -1,6 +1,7 @@
 defmodule Rez.AST.Location do
   alias __MODULE__
-  alias Rez.AST.TemplateHelper
+  alias Rez.AST.{NodeHelper, TemplateHelper}
+  alias Rez.Utils
 
   @moduledoc """
   `Rez.AST.Location` defines the `Location` struct.
@@ -17,33 +18,31 @@ defmodule Rez.AST.Location do
             game_element: true,
             position: {nil, 0, 0},
             id: nil,
-            attributes: %{},
-            template: nil
+            attributes: %{}
 
-  # Locations support a handlebars template for their 'description' attribute
-  def process(%Location{id: loc_id} = loc) do
-    TemplateHelper.make_template(
-      loc,
-      "description",
-      :template,
-      fn html ->
-        ~s(<div id="loc_#{loc_id}" class="location">) <> html <> "</div>"
-      end
-    )
-  end
+  def process(%Location{id: id} = location) do
+    case NodeHelper.get_attr_value(location, "description") do
+      nil ->
+        location
 
-  def js_template(%Location{template: nil}) do
-    "null"
-  end
+      _ ->
+        custom_css_class = NodeHelper.get_attr_value(location, "css_class", "")
+        css_classes = Utils.add_css_class("location", custom_css_class)
 
-  def js_template(%Location{template: template}) do
-    "Handlebars.template(#{template})"
+        TemplateHelper.make_template(
+          location,
+          "description",
+          fn html ->
+            ~s(<div id="loc_#{id}" class="#{css_classes}">) <> html <> "</div>"
+          end
+        )
+    end
   end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Location do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, ValueEncoder, Attribute, Game, Location}
+  alias Rez.AST.{NodeHelper, Attribute, Game, Location}
 
   def node_type(_location), do: "location"
 
@@ -52,13 +51,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
   end
 
   def js_initializer(location) do
-    """
-    new #{js_ctor(location)}(
-      "#{location.id}",
-      #{Location.js_template(location)},
-      #{ValueEncoder.encode_attributes(location.attributes)}
-    )
-    """
+    NodeHelper.js_initializer(location)
   end
 
   def default_attributes(_location), do: %{}

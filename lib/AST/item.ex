@@ -1,6 +1,7 @@
 defmodule Rez.AST.Item do
   alias __MODULE__
   alias Rez.AST.{NodeHelper, TemplateHelper, TypeHierarchy}
+  alias Rez.Utils
 
   @moduledoc """
   `Rez.AST.Item` defines the `Item` struct.
@@ -20,8 +21,7 @@ defmodule Rez.AST.Item do
             game_element: true,
             id: nil,
             position: {nil, 0, 0},
-            attributes: %{},
-            template: nil
+            attributes: %{}
 
   # Items support a handlebars template for their 'description' attribute
   def process(%Item{} = item) do
@@ -36,22 +36,22 @@ defmodule Rez.AST.Item do
   end
 
   defp make_template(%Item{id: item_id} = item) do
-    TemplateHelper.make_template(
-      item,
-      "description",
-      :template,
-      fn html ->
-        ~s(<div id="item_#{item_id}" class="item">) <> html <> "</div>"
-      end
-    )
-  end
+    case NodeHelper.get_attr_value(item, "description") do
+      nil ->
+        item
 
-  def js_template(%Item{template: nil}) do
-    "null"
-  end
+      _ ->
+        custom_css_class = NodeHelper.get_attr_value(item, "css_class", "")
+        css_classes = Utils.add_css_class("item", custom_css_class)
 
-  def js_template(%Item{template: template}) do
-    "Handlebars.template(#{template})"
+        TemplateHelper.make_template(
+          item,
+          "description",
+          fn html ->
+            ~s(<div id="item_#{item_id}" class="#{css_classes}">) <> html <> "</div>"
+          end
+        )
+    end
   end
 
   def add_types_as_tags(%Item{} = item, %TypeHierarchy{} = is_a) do
@@ -85,7 +85,7 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Item do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, ValueEncoder, Game, Item}
+  alias Rez.AST.{NodeHelper, Game, Item}
   alias Rez.AST.Node
 
   def node_type(_item), do: "item"
@@ -95,13 +95,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
   end
 
   def js_initializer(item) do
-    """
-    new #{js_ctor(item)}(
-      "#{item.id}",
-      "#{Item.js_template(item)}",
-      #{ValueEncoder.encode_attributes(item.attributes)}
-    )
-    """
+    NodeHelper.js_initializer(item)
   end
 
   def default_attributes(_item), do: %{}

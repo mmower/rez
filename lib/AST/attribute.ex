@@ -65,6 +65,10 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :set, value: values}
   end
 
+  def template(name, value) do
+    %Attribute{name: name, type: :template, value: value}
+  end
+
   def is_elem_ref?(%Attribute{type: :elem_ref}), do: true
   def is_elem_ref?(%Attribute{}), do: false
 

@@ -3,14 +3,17 @@
 //-----------------------------------------------------------------------------
 
 let location_proto = {
-  __proto__: basic_object
+  __proto__: basic_object,
+
+  get template() {
+    return this.getAttribute("description_template");
+  },
 };
 
-function RezLocation(id, template, attributes) {
+function RezLocation(id, attributes) {
   this.id = id;
   this.game_object_type = "location";
   this.attributes = attributes;
-  this.template = template;
   this.properties_to_archive = [];
   this.changed_attributes = [];
 }

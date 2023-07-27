@@ -1,6 +1,7 @@
 defmodule Rez.AST.Scene do
   alias __MODULE__
-  alias Rez.AST.TemplateHelper
+  alias Rez.AST.{TemplateHelper, NodeHelper}
+  alias Rez.Utils
 
   @moduledoc """
   `Rez.AST.Scene defines the `Scene` struct.
@@ -20,31 +21,36 @@ defmodule Rez.AST.Scene do
             position: {nil, 0, 0},
             id: nil,
             attributes: %{},
-            message: "",
-            layout_template: nil
+            message: ""
 
-  def compile_layout(%{status: :ok, id: scene_id} = scene) do
-    TemplateHelper.make_template(
-      scene,
-      "layout",
-      :layout_template,
-      fn html ->
-        ~s(<div id="scene_#{scene_id}" class="scene">) <>
-          html <>
-          "</div>"
-      end
-    )
+  def process(%Scene{status: :ok, id: id} = scene) do
+    case NodeHelper.get_attr_value(scene, "layout") do
+      nil ->
+        scene
+
+      _ ->
+        custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
+        css_classes = Utils.add_css_class("scene", custom_css_class)
+
+        TemplateHelper.make_template(
+          scene,
+          "layout",
+          fn html ->
+            ~s(<div id="scene_#{id}" class="#{css_classes}">) <>
+              html <>
+              "</div>"
+          end
+        )
+    end
   end
 
-  def compile_layout(scene) do
-    scene
-  end
+  def process(%Scene{} = scene), do: scene
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
   import Rez.AST.NodeValidator
   alias Rez.AST.Scene
-  alias Rez.AST.{NodeHelper, ValueEncoder}
+  alias Rez.AST.NodeHelper
 
   def node_type(_scene), do: "scene"
 
@@ -53,20 +59,14 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
   end
 
   def js_initializer(scene) do
-    """
-    new #{js_ctor(scene)}(
-      "#{scene.id}",
-      Handlebars.template(#{scene.layout_template}),
-      #{ValueEncoder.encode_attributes(scene.attributes)}
-    )
-    """
+    NodeHelper.js_initializer(scene)
   end
 
   def default_attributes(_scene), do: %{}
 
   def pre_process(scene), do: scene
 
-  def process(scene), do: Scene.compile_layout(scene)
+  def process(scene), do: Scene.process(scene)
 
   def children(_scene), do: []
 

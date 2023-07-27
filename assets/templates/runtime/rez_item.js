@@ -5,14 +5,17 @@
 let item_proto = {
   __proto__: basic_object,
 
+  get template() {
+    return this.getAttribute("description_template");
+  },
+
   size() {
     return this.getAttributeValue("size");
-  }
+  },
 };
 
-function RezItem(id, template, attributes) {
+function RezItem(id, attributes) {
   this.id = id;
-  this.template = template;
   this.auto_id_idx = 0;
   this.game_object_type = "item";
   this.attributes = attributes;

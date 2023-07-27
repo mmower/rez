@@ -51,8 +51,7 @@ defmodule Rez.AST.Game do
             styles: [],
             systems: %{},
             tasks: %{},
-            zones: %{},
-            template: nil
+            zones: %{}
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: append_list(scripts, script)}
@@ -120,14 +119,22 @@ defmodule Rez.AST.Game do
   end
 
   def process_layout(%Game{} = game) do
-    TemplateHelper.make_template(
-      game,
-      "layout",
-      :template,
-      fn html ->
-        ~s(<div class="game">) <> html <> "</div>"
-      end
-    )
+    case NodeHelper.get_attr_value(game, "layout") do
+      nil ->
+        game
+
+      _ ->
+        custom_css_class = NodeHelper.get_attr_value(game, "css_class", "")
+        css_classes = add_css_class("game", custom_css_class)
+
+        TemplateHelper.make_template(
+          game,
+          "layout",
+          fn html ->
+            ~s(<div class="#{css_classes}">) <> html <> "</div>"
+          end
+        )
+    end
   end
 
   def slot_types(%Game{inventories: inventories}) do
@@ -281,7 +288,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     """
     new #{ctor}(
       [#{init_obj_ids}],
-      Handlebars.template(#{game.template}),
       #{ValueEncoder.encode_attributes(game.attributes)}
       );
     """

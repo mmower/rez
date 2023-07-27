@@ -6,18 +6,31 @@ let game_proto = {
   __proto__: basic_object,
   targetType: "game",
 
+  get template() {
+    return this.getAttribute("layout_template");
+  },
+
   $(id) {
     return this.getGameObject(id);
   },
 
   initLevels() {
-    return [0, 1];
+    return [0, 1, 2, 3];
   },
 
   saveFileName(prefix) {
     const now = new Date();
-    const formatter = (num) => {return String(num).padStart(2, "0");}
-    const date_parts = [now.getFullYear()-2000, now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds()];
+    const formatter = (num) => {
+      return String(num).padStart(2, "0");
+    };
+    const date_parts = [
+      now.getFullYear() - 2000,
+      now.getMonth(),
+      now.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+    ];
     const date_mapped = date_parts.map(formatter);
     const date_joined = date_mapped.join("");
     return prefix.toSnakeCase() + "_" + date_joined + ".json";
@@ -26,9 +39,9 @@ let game_proto = {
   dataWithArchivedObjects(data) {
     console.dir(this);
     console.log("Checking " + this.game_objects.size + " objects.");
-    this.game_objects.forEach(function(obj, id) {
+    this.game_objects.forEach(function (obj, id) {
       console.log(id + " -> " + obj.needsArchiving());
-      if(obj.needsArchiving()) {
+      if (obj.needsArchiving()) {
         data["objs"] = data["objs"] || {};
         data["objs"][obj.id] = obj;
       }
@@ -44,8 +57,8 @@ let game_proto = {
     data = this.dataWithArchivedObjects(data);
 
     return {
-      "rez_archive": this.getAttribute("archive_format"),
-      "data": data
+      rez_archive: this.getAttribute("archive_format"),
+      data: data,
     };
   },
 
@@ -53,46 +66,48 @@ let game_proto = {
     const archived = {};
 
     return JSON.stringify(this, function (key, value) {
-      console.log("archive: ["+key+"]");
+      console.log("archive: [" + key + "]");
 
-      if(key == "" || value == null) { // This is the game itself
+      if (key == "" || value == null) {
+        // This is the game itself
         archived["game"] = true;
         return value;
-      } else if(isGameObject(value)) { // This is a game object
+      } else if (isGameObject(value)) {
+        // This is a game object
         const goid = value.id; // GameObjectID
         console.log("<- is a game object: " + goid);
-        if(archived[goid]) {
+        if (archived[goid]) {
           console.log("<- is already archived");
           return {
             json$safe: true,
             type: "ref",
             game_object_type: value.game_object_type,
-            game_object_id: value.id
-          }
+            game_object_id: value.id,
+          };
         } else {
           console.log("<- archived");
           archived[goid] = true;
           return value;
         }
-      } else if(isObject(value)) {
+      } else if (isObject(value)) {
         return value.obj_map((v) => {
-          if(isGameObject(v)) {
+          if (isGameObject(v)) {
             return {
               json$safe: true,
               type: "ref",
               game_object_type: value.game_object_type,
-              game_object_id: value.id
+              game_object_id: value.id,
             };
           } else {
             return v;
           }
         });
-      } else if(typeof(value) == "function") {
+      } else if (typeof value == "function") {
         return {
           json$safe: true,
           type: "function",
-          value: value.toString()
-        }
+          value: value.toString(),
+        };
       } else {
         console.log("<- value:" + value);
         return value;
@@ -104,30 +119,41 @@ let game_proto = {
   save() {
     this.runEvent("save", {});
 
-    const file = new File([this.archive()], this.saveFileName(this.getAttribute("name")), {type: "application/json"});
+    const file = new File(
+      [this.archive()],
+      this.saveFileName(this.getAttribute("name")),
+      { type: "application/json" }
+    );
     const link = document.createElement("a");
     link.style.display = "none";
     link.href = URL.createObjectURL(file);
     link.download = file.name;
     document.body.appendChild(link);
     link.click();
-    setTimeout(() => {URL.revokeObjectURL(link.href);
-                      link.parentNode.removeChild(link);
-                     }, 0);
+    setTimeout(() => {
+      URL.revokeObjectURL(link.href);
+      link.parentNode.removeChild(link);
+    }, 0);
   },
 
   load(json) {
     const wrapper = JSON.parse(json);
 
     const archive_version = wrapper["rez_archive"];
-    if(typeof(archive_version) == "undefined") {
-      throw "JSON does not represent a Rez game archive!"
-    } else if(archive_version != this.getAttribute("archive_format")) {
-      throw "JSON is v" + archive_version + " which is not supported (v" + this.getAttribute("archive_format") + ")!";
+    if (typeof archive_version == "undefined") {
+      throw "JSON does not represent a Rez game archive!";
+    } else if (archive_version != this.getAttribute("archive_format")) {
+      throw (
+        "JSON is v" +
+        archive_version +
+        " which is not supported (v" +
+        this.getAttribute("archive_format") +
+        ")!"
+      );
     }
 
     const data = wrapper["data"];
-    if(typeof(data) == "undefined") {
+    if (typeof data == "undefined") {
       throw "JSON does not contain data archive!";
     }
 
@@ -135,8 +161,8 @@ let game_proto = {
     this.loadData(data);
 
     const objs = data["objs"];
-    if(typeof(objs) == "object") {
-      for(const [id, obj_data] of Object.entries(objs)) {
+    if (typeof objs == "object") {
+      for (const [id, obj_data] of Object.entries(objs)) {
         const obj = this.getGameObject(id);
         obj.loadData(obj_data);
       }
@@ -147,7 +173,7 @@ let game_proto = {
 
   indexObjectForTag(obj, tag) {
     let objects = this.tag_index[tag];
-    if(!objects) {
+    if (!objects) {
       objects = new Set([obj.id]);
       this.tag_index[tag] = objects;
     } else {
@@ -157,7 +183,7 @@ let game_proto = {
 
   unindexObjectForTag(obj, tag) {
     let objects = this.tag_index[tag];
-    if(objects) {
+    if (objects) {
       objects.delete(obj.id);
     }
   },
@@ -180,7 +206,7 @@ let game_proto = {
   separately.
   */
   addGameObject(obj) {
-    if(!isGameObject(obj)) {
+    if (!isGameObject(obj)) {
       console.dir(obj);
       throw "Attempt to register non-game object!";
     }
@@ -191,9 +217,9 @@ let game_proto = {
   },
 
   getGameObject(id, should_throw = true) {
-    if(!this.game_objects.has(id)) {
-      if(should_throw) {
-        throw "No such ID |"+id+"| found!";
+    if (!this.game_objects.has(id)) {
+      if (should_throw) {
+        throw "No such ID |" + id + "| found!";
       } else {
         return null;
       }
@@ -212,7 +238,7 @@ let game_proto = {
 
   getTaggedWith(tag) {
     const objects = this.tag_index[tag];
-    if(objects) {
+    if (objects) {
       return Array.from(objects);
     } else {
       return [];
@@ -224,7 +250,9 @@ let game_proto = {
   },
 
   getAll(target_type) {
-    return Array.from(this.game_objects.values()).filter((obj) => obj.game_object_type == target_type);
+    return Array.from(this.game_objects.values()).filter(
+      (obj) => obj.game_object_type == target_type
+    );
   },
 
   getCurrentScene() {
@@ -232,7 +260,7 @@ let game_proto = {
   },
 
   setCurrentScene(new_scene_id) {
-    if(new_scene_id == null) {
+    if (new_scene_id == null) {
       throw "new_scene_id cannot be null!";
     }
 
@@ -248,7 +276,7 @@ let game_proto = {
   },
 
   getTarget(target_id) {
-    if(target_id == this.id) {
+    if (target_id == this.id) {
       return this;
     } else {
       return this.getGameObject(target_id);
@@ -261,13 +289,15 @@ let game_proto = {
   },
 
   interludeWithScene(interlude_scene_id) {
-    if(interlude_scene_id == null) {
+    if (interlude_scene_id == null) {
       throw "interlude_scene_id cannot be null!";
-    } else if(this.getCurrentScene() == null) {
+    } else if (this.getCurrentScene() == null) {
       throw "cannot interlude without a current scene!";
     }
 
-    console.log("Interlude from " + this.current_scene_id + " to " + interlude_scene_id);
+    console.log(
+      "Interlude from " + this.current_scene_id + " to " + interlude_scene_id
+    );
 
     // Save the state of the current scene
     this.pushScene();
@@ -278,7 +308,7 @@ let game_proto = {
 
   resumePrevScene() {
     console.log("Resume from " + this.current_scene_id);
-    if(this.scene_stack.length < 1) {
+    if (this.scene_stack.length < 1) {
       throw "Cannot resume without a scene on the stack!";
     } else {
       // Let the interlude know we're done
@@ -310,8 +340,8 @@ let game_proto = {
     this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
     // Init every object, will also trigger on_init for any object that defines it
-    for(let init_level of this.initLevels()) {
-      this.init_order.forEach(function(obj_id) {
+    for (let init_level of this.initLevels()) {
+      this.init_order.forEach(function (obj_id) {
         const obj = this.getGameObject(obj_id);
         obj.init(init_level);
       }, this);
@@ -325,20 +355,23 @@ let game_proto = {
   },
 
   getEnabledSystems() {
-    return this.
-      getAll("system").
-        filter((system) => system.getAttribute("enabled") == true).
-        sort((sys1, sys2) => sys1.getAttributeValue("priority") > sys2.getAttributeValue("priority"));
+    return this.getAll("system")
+      .filter((system) => system.getAttribute("enabled") == true)
+      .sort(
+        (sys1, sys2) =>
+          sys1.getAttributeValue("priority") >
+          sys2.getAttributeValue("priority")
+      );
   },
 
   // Handle events coming from the browser
 
   handleBrowserEvent(evt) {
-    if(evt.type == "click") {
+    if (evt.type == "click") {
       return this.handleBrowserClickEvent(evt);
-    } else if(evt.type == "input") {
+    } else if (evt.type == "input") {
       return this.handleBrowserInputEvent(evt);
-    } else if(evt.type == "submit") {
+    } else if (evt.type == "submit") {
       return this.handleBrowserSubmitEvent(evt);
     } else {
       return false;
@@ -346,27 +379,27 @@ let game_proto = {
   },
 
   handleBrowserClickEvent(evt) {
-    if(!evt.target.dataset.event) {
+    if (!evt.target.dataset.event) {
       return false;
     }
 
     const event_name = evt.target.dataset.event;
-    if(event_name == 'card') {
+    if (event_name == "card") {
       return this.handleCardEvent(evt);
-    } else if(event_name == 'shift') {
+    } else if (event_name == "shift") {
       return this.handleShiftEvent(evt);
-    } else if(event_name == 'interlude') {
+    } else if (event_name == "interlude") {
       return this.handleInterludeEvent(evt);
-    } else if(event_name == 'resume') {
+    } else if (event_name == "resume") {
       return this.handleResumeEvent(evt);
     } else {
       return this.handleCustomEvent(event_name, evt);
-    };
+    }
   },
 
   handleCustomEvent(event_name, evt) {
     const handler = this.eventHandler(event_name);
-    if(handler && typeof(handler) == "function") {
+    if (handler && typeof handler == "function") {
       return handler(this, evt);
     } else {
       return this.getCurrentScene().handleCustomEvent(event_name, evt);
@@ -402,41 +435,45 @@ let game_proto = {
 
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
-    const card_div = evt.target.closest(".active_card > div.card, .active_block > div.card");
-    if(!card_div) {
+    const card_div = evt.target.closest(
+      ".active_card > div.card, .active_block > div.card"
+    );
+    if (!card_div) {
       throw "Cannot find div for input " + evt.target.id + "!";
     }
 
     const card_id = card_div.dataset.card;
-    if(!card_id) {
+    if (!card_id) {
       throw "Cannot get card id for input" + evt.target.id + "!";
     }
 
     const card = $(card_id);
-    return card.runEvent("input", {evt: evt});
+    return card.runEvent("input", { evt: evt });
   },
 
   handleBrowserSubmitEvent(evt) {
     console.log("Handle submit event");
 
     const form_name = evt.target.getAttribute("name");
-    if(!form_name) {
+    if (!form_name) {
       throw "Cannot get form name!";
     }
 
-    const card_div = evt.target.closest(".active_card > div.card, .active_block > div.card");
-    if(!card_div) {
+    const card_div = evt.target.closest(
+      ".active_card > div.card, .active_block > div.card"
+    );
+    if (!card_div) {
       throw "Cannot find div for form: " + form_name + "!";
     }
 
     const card_id = card_div.dataset.card;
     const card = $(card_id);
 
-    return card.runEvent(form_name, {form: evt.target});
+    return card.runEvent(form_name, { form: evt.target });
   },
 
   runTick() {
-    this.getEnabledSystems().forEach(function(system) {
+    this.getEnabledSystems().forEach(function (system) {
       system.runEvent("tick", this.wmem);
     });
   },
@@ -447,10 +484,10 @@ let game_proto = {
 
   clearFlashMessages() {
     this.flash = [];
-  }
+  },
 };
 
-function RezGame(init_order, template, attributes) {
+function RezGame(init_order, attributes) {
   this.id = "game";
   this.game_object_type = "game";
   this.init_order = init_order;
@@ -458,11 +495,16 @@ function RezGame(init_order, template, attributes) {
   this.tag_index = {};
   this.scene_stack = [];
   this.current_scene_id = null;
-  this.template = template;
   this.flash = [];
-  this.wmem = {game: this};
+  this.wmem = { game: this };
   this.game_objects = new Map();
-  this.properties_to_archive = ["scene_stack", "current_scene_id", "wmem", "tag_index", "renderer"];
+  this.properties_to_archive = [
+    "scene_stack",
+    "current_scene_id",
+    "wmem",
+    "tag_index",
+    "renderer",
+  ];
   this.changed_attributes = [];
   this.$ = this.getGameObject;
 }

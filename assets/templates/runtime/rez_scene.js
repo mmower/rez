@@ -6,6 +6,10 @@ let scene_proto = {
   __proto__: basic_object,
   targetType: "scene",
 
+  get template() {
+    return this.getAttribute("layout_template");
+  },
+
   getCurrentCard() {
     return this.game.$(this.current_card_id);
   },
@@ -19,20 +23,20 @@ let scene_proto = {
   },
 
   finishCurrentCard() {
-    if(this.current_card_id != null) {
+    if (this.current_card_id != null) {
       const card = this.getCurrentCard();
-      if(card) {
-        card.runEvent("finish", {scene: this.id});
-        this.runEvent("finish_card", {card: card.id});
+      if (card) {
+        card.runEvent("finish", { scene: this.id });
+        this.runEvent("finish_card", { card: card.id });
       }
     }
   },
 
   startNewCard() {
     const card = this.getCurrentCard();
-    if(card) {
-      this.runEvent("start_card", {card: card.id});
-      card.runEvent("start", {scene: this.id});
+    if (card) {
+      this.runEvent("start_card", { card: card.id });
+      card.runEvent("start", { scene: this.id });
 
       const block = new RezBlock(card);
       this.getLayout().addContent(block);
@@ -41,7 +45,7 @@ let scene_proto = {
 
   handleCustomEvent(event_name, evt) {
     const handler = this.eventHandler(event_name);
-    if(handler && typeof(handler) == "function") {
+    if (handler && typeof handler == "function") {
       return handler(this, evt);
     } else {
       return this.getCurrentCard().handleCustomEvent(event_name, evt);
@@ -52,7 +56,7 @@ let scene_proto = {
     console.log("Playing card: " + new_card_id);
 
     // Obviously if you try to set no card we should blow up
-    if(new_card_id == null) {
+    if (new_card_id == null) {
       throw "Cannot specify null card_id!";
     }
 
@@ -67,7 +71,7 @@ let scene_proto = {
 
   getCard(card_id) {
     const card = this.$(card_id);
-    if(card.game_object_type != "card") {
+    if (card.game_object_type != "card") {
       throw "Attempt to get id which does not correspond to a card";
     }
     return card;
@@ -75,7 +79,7 @@ let scene_proto = {
 
   createLayout() {
     const layout_mode = this.getAttributeValue("layout_mode");
-    if(layout_mode == "stack") {
+    if (layout_mode == "stack") {
       return new RezStackLayout(this);
     } else {
       return new RezSingleLayout(this);
@@ -108,15 +112,18 @@ let scene_proto = {
     this.init();
     this.runEvent("start", {});
     this.playCardWithId(this.getAttribute("initial_card"));
-  }
+  },
 };
 
-function RezScene(id, template, attributes) {
+function RezScene(id, attributes) {
   this.id = id;
   this.game_object_type = "scene";
-  this.template = template;
   this.attributes = attributes;
-  this.properties_to_archive = ["current_card_id", "current_render", "cards_played"];
+  this.properties_to_archive = [
+    "current_card_id",
+    "current_render",
+    "cards_played",
+  ];
   this.changed_attributes = [];
   this.reset();
 }
