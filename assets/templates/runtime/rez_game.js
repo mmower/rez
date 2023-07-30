@@ -271,6 +271,10 @@ let game_proto = {
     this.getCurrentScene().start();
   },
 
+  playCard(card_id) {
+    this.getCurrentScene().playCardWithId(card_id);
+  },
+
   setViewContent(content) {
     this.view.getLayout().addContent(content);
   },

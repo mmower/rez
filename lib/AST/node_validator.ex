@@ -126,7 +126,7 @@ defmodule Rez.AST.NodeValidator do
       end,
       fn %{attributes: attributes} ->
         attributes
-        |> Map.get("$parents", [])
+        |> Map.get("$parents", %{value: []})
         |> Map.get(:value)
         |> Enum.map(fn {:keyword, parent_id} ->
           Map.get(game.by_id, to_string(parent_id))
@@ -255,7 +255,7 @@ defmodule Rez.AST.NodeValidator do
   def attribute_is_keyword_set?(chained_validator \\ nil) do
     attribute_has_type?(
       :set,
-      attribute_not_empty_coll?(attribute_coll_of?(:keyword, chained_validator))
+      attribute_if_not_empty_coll?(attribute_coll_of?(:keyword, chained_validator))
     )
   end
 
@@ -287,6 +287,16 @@ defmodule Rez.AST.NodeValidator do
 
         {true, false} ->
           chained_validator.(attr, node, game)
+      end
+    end
+  end
+
+  def attribute_if_not_empty_coll?(chained_validator) do
+    fn %{value: coll} = attr, node, game ->
+      if Enum.empty?(coll) do
+        :ok
+      else
+        chained_validator.(attr, node, game)
       end
     end
   end

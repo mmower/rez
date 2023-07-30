@@ -52,12 +52,10 @@ const basic_object = {
     if (this.hasAttribute("$parents")) {
       const parent_list = this.getAttribute("$parents");
       if (parent_list.length > 0) {
-        console.log("parents." + this.id + " => " + parent_list);
         parent_list.forEach((parent_id) => {
           const parent = $(parent_id);
           for (let attr of Object.keys(parent.attributes)) {
             if (!this.hasAttribute(attr)) {
-              console.log(">Copy " + attr);
               this.setAttribute(attr, parent.attributes[attr]);
             }
           }

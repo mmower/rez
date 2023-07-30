@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "0.9.11"
+  @version "0.9.12"
 
   def project do
     case System.get_env("BUILD_MODE") do

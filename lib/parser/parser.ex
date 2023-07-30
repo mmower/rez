@@ -13,6 +13,7 @@ defmodule Rez.Parser.Parser do
   import Rez.Parser.AliasParsers
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
+  import Rez.Parser.RelationshipParsers
 
   import Rez.Utils, only: [random_str: 0]
 
@@ -76,17 +77,6 @@ defmodule Rez.Parser.Parser do
     block_with_id("plot", Rez.AST.Plot)
   end
 
-  def relationship_block() do
-    block("rel", Rez.AST.Relationship, fn attributes ->
-      with %{type: :elem_ref, value: source} <- Map.get(attributes, "source"),
-           %{type: :elem_ref, value: target} <- Map.get(attributes, "target") do
-        "rel_" <> source <> "_" <> target
-      else
-        nil -> "rel_" <> random_str()
-      end
-    end)
-  end
-
   def scene_block() do
     block_with_id("scene", Rez.AST.Scene)
   end
@@ -135,7 +125,7 @@ defmodule Rez.Parser.Parser do
         object_block(),
         patch_block(),
         plot_block(),
-        relationship_block(),
+        relationship_define(),
         scene_block(),
         script_block(),
         slot_block(),

@@ -43,6 +43,10 @@ defmodule Rez.AST.NodeHelper do
     Map.has_key?(attributes, name)
   end
 
+  def set_attr(%{attributes: attributes} = node, %Attribute{name: name} = attr) do
+    %{node | attributes: Map.put(attributes, name, attr)}
+  end
+
   def set_default_attr_value(%{attributes: _attributes} = node, name, value, setter)
       when is_binary(name) and is_function(setter) do
     case has_attr?(node, name) do

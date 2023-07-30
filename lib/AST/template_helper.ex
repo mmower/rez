@@ -13,11 +13,14 @@ defmodule Rez.AST.TemplateHelper do
     |> Enum.map_join("\n", &String.trim/1)
   end
 
-  def convert_markdown(source) do
-    source
+  def convert_markdown(markup) do
+    markup
     |> prepare_content()
     |> Earmark.as_html!(escape: false, smartypants: false)
   end
+
+  def convert_markup(markup, "html"), do: markup
+  def convert_markup(markup, "markdown"), do: convert_markdown(markup)
 
   def make_template(
         %{id: id} = node,
@@ -26,7 +29,14 @@ defmodule Rez.AST.TemplateHelper do
       )
       when is_binary(source_attr) and is_function(html_processor) do
     markup = NodeHelper.get_attr_value(node, source_attr, "")
-    html = convert_markdown(markup) |> html_processor.()
+    format = NodeHelper.get_attr_value(node, "format", "markdown")
+
+    html =
+      markup
+      |> prepare_content()
+      |> convert_markup(format)
+      |> html_processor.()
+
     if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.html", html)
 
     case Handlebars.compile(html, "#{id}/#{source_attr}") do

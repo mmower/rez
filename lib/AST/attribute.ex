@@ -21,6 +21,17 @@ defmodule Rez.AST.Attribute do
             type: nil,
             value: nil
 
+  def create(name, {:boolean, value}), do: boolean(name, value)
+  def create(name, {:number, value}), do: number(name, value)
+  def create(name, {:string, value}), do: string(name, value)
+  def create(name, {:function, {:std, params, body}}), do: std_function(name, {params, body})
+  def create(name, {:function, {:arrow, params, body}}), do: arrow_function(name, {params, body})
+  def create(name, {:elem_ref, value}), do: elem_ref(name, value)
+  def create(name, {:keyword, value}), do: keyword(name, value)
+  def create(name, {:list, values}), do: list(name, values)
+  def create(name, {:set, values}), do: set(name, values)
+  def create(name, {:template, value}), do: template(name, value)
+
   def boolean(name, value) do
     %Attribute{name: name, type: :boolean, value: value}
   end
@@ -40,10 +51,6 @@ defmodule Rez.AST.Attribute do
   def arrow_function(name, {params, body}) do
     %Attribute{name: name, type: :function, value: {:arrow, params, body}}
   end
-
-  # def function(name, {params, body}) do
-  #   %Attribute{name: name, type: :function, value: {params, body}}
-  # end
 
   def elem_ref(name, value) do
     %Attribute{name: name, type: :elem_ref, value: value}

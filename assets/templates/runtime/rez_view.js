@@ -17,12 +17,12 @@ let block_proto = {
   // {name, element_ref} or {name, func_result}
   getBindings() {
     return this.source.getAttributeValue("bindings", {}).obj_map((query) => {
-      if(typeof(query) == "string") {
+      if (typeof query == "string") {
         return this.instantiateIdBinding(query);
-      } else if(typeof(query) == "function") {
+      } else if (typeof query == "function") {
         return this.instantiateFunctionBinding(query);
       } else {
-        throw "Invalid binding type: " + typeof(query) + "!";
+        throw "Invalid binding type: " + typeof query + "!";
       }
     });
   },
@@ -45,16 +45,18 @@ let block_proto = {
   },
 
   bindBlocks(active) {
-    if(!this.bound_blocks) {
+    if (!this.bound_blocks) {
       const blocks = this.getBlocks();
-      this.bound_blocks = blocks.obj_map((block) => block.html("block", active));
+      this.bound_blocks = blocks.obj_map((block) =>
+        block.html("block", active)
+      );
     }
 
     return this.bound_blocks;
   },
 
   validate_block_type(t) {
-    if(!(t == "block" || t == "card")) {
+    if (!(t == "block" || t == "card")) {
       throw "Invalid card render type: |" + t + "|!";
     }
   },
@@ -67,7 +69,7 @@ let block_proto = {
     return this.getTemplate()({
       [block_type]: this.source,
       ...this.bindValues(),
-      ...this.bindBlocks(active)
+      ...this.bindBlocks(active),
     });
   },
 
@@ -78,8 +80,14 @@ let block_proto = {
 
   html(block_type, active) {
     this.validate_block_type(block_type);
-    return "<div class='" + this.getCSSClasses(block_type, active) + "'>" + this.renderBlock(block_type, active) + "</div>";
-  }
+    return (
+      "<div class='" +
+      this.getCSSClasses(block_type, active) +
+      "'>" +
+      this.renderBlock(block_type, active) +
+      "</div>"
+    );
+  },
 };
 
 function RezBlock(source) {
@@ -113,9 +121,9 @@ let layout_proto = {
     return template_fn({
       content: content,
       ...bound_values,
-      ...bound_blocks
+      ...bound_blocks,
     });
-  }
+  },
 };
 
 //-----------------------------------------------------------------------------
@@ -133,8 +141,8 @@ let single_layout_proto = {
 
   renderContents() {
     return this.content.html("card", true);
-  }
-}
+  },
+};
 
 function RezSingleLayout(source) {
   this.source = source;
@@ -160,11 +168,13 @@ let stack_layout_proto = {
 
   renderContents() {
     const last_index = this.contents.length - 1;
-    return this.contents.map((block, idx) => {
-      return block.html("card", idx == last_index);
-    }).join("");
-  }
-}
+    return this.contents
+      .map((block, idx) => {
+        return block.html("card", idx == last_index);
+      })
+      .join("");
+  },
+};
 
 function RezStackLayout(source) {
   this.source = source;
@@ -181,7 +191,7 @@ window.Rez.stack_layout = RezStackLayout;
 
 let transformer_proto = {
   getSelector() {
-    if(typeof(this.selector) == "undefined") {
+    if (typeof this.selector == "undefined") {
       throw "Undefined selector!";
     }
     return this.selector;
@@ -192,14 +202,14 @@ let transformer_proto = {
   },
 
   transformElements() {
-    this.getElements().forEach(function(elem) {
+    this.getElements().forEach(function (elem) {
       this.transformElement(elem);
     }, this);
   },
 
   transformElement(elem) {
     throw "Transformers must implement transformElement(e)!";
-  }
+  },
 };
 
 //-----------------------------------------------------------------------------
@@ -210,14 +220,14 @@ let event_transformer_proto = {
   __proto__: transformer_proto,
 
   getReceiver() {
-    if(typeof(this.receiver) == "undefined") {
+    if (typeof this.receiver == "undefined") {
       throw "Undefined receiver!";
     }
     return this.receiver;
   },
 
   getEventName() {
-    if(typeof(this.event) == "undefined") {
+    if (typeof this.event == "undefined") {
       throw "Undefined event!";
     }
     return this.event;
@@ -225,7 +235,7 @@ let event_transformer_proto = {
 
   addEventListener(elem, event) {
     const receiver = this.getReceiver();
-    elem.addEventListener(event, function(evt) {
+    elem.addEventListener(event, function (evt) {
       evt.preventDefault();
 
       // A handler can return an object with keys representing actions to
@@ -243,22 +253,20 @@ let event_transformer_proto = {
       // 1) We know that a handler has taken a correct action
       // 2) Potentially different handlers can interact
 
-
       const response = receiver.handleBrowserEvent(evt);
-      if(typeof(response) == "object") {
-
-        if(response.scene) {
+      if (typeof response == "object") {
+        if (response.scene) {
           receiver.setCurrentScene(response.scene);
         }
 
-        if(response.card) {
+        if (response.card) {
           receiver.playCard(response.card);
         }
 
-        if(response.flash) {
+        if (response.flash) {
           receiver.addFlashMessage(response.flash);
         }
-      } else if(typeof(response) == "undefined") {
+      } else if (typeof response == "undefined") {
         throw "Event handlers must return a value, preferably an exec-object!";
       }
     });
@@ -266,8 +274,8 @@ let event_transformer_proto = {
 
   transformElement(elem) {
     this.addEventListener(elem, this.getEventName());
-  }
-}
+  },
+};
 
 //-----------------------------------------------------------------------------
 // Link Transformers
@@ -278,7 +286,7 @@ let deactivate_link_transformer_proto = {
 
   transformElement(elem) {
     elem.classList.add("inactive");
-  }
+  },
 };
 
 function RezDeactivateLinkTransformer() {
@@ -294,7 +302,7 @@ let event_link_transformer_proto = {
     elem.classList.remove("inactive");
     elem.classList.add("active");
     this.addEventListener(elem, this.getEventName());
-  }
+  },
 };
 
 function RezEventLinkTransformer(receiver) {
@@ -310,7 +318,8 @@ RezEventLinkTransformer.prototype = event_link_transformer_proto;
 //-----------------------------------------------------------------------------
 
 function RezFormTransformer(receiver) {
-  this.selector = "div.active_card form[rez-live], div.active_block form[rez-live]";
+  this.selector =
+    "div.active_card form[rez-live], div.active_block form[rez-live]";
   this.event = "submit";
   this.receiver = receiver;
 }
@@ -322,7 +331,8 @@ RezFormTransformer.prototype = event_transformer_proto;
 //-----------------------------------------------------------------------------
 
 function RezInputTransformer(receiver) {
-  this.selector = "div.active_card input[rez-live], div.active_block input[rez-live]";
+  this.selector =
+    "div.active_card input[rez-live], div.active_block input[rez-live]";
   this.event = "input";
   this.receiver = receiver;
 }
@@ -361,7 +371,7 @@ let view_proto = {
       new RezDeactivateLinkTransformer(),
       new RezEventLinkTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
-      new RezInputTransformer(this.receiver)
+      new RezInputTransformer(this.receiver),
     ];
   },
 
@@ -372,13 +382,13 @@ let view_proto = {
   update() {
     this.render();
     this.transform();
-  }
+  },
 };
 
 function RezView(container_id, receiver, layout, transformers) {
   this.container = document.getElementById(container_id);
-  if(!this.container) {
-    throw "Cannot get container |"+container_id+"|";
+  if (!this.container) {
+    throw "Cannot get container |" + container_id + "|";
   }
 
   this.layout = layout;

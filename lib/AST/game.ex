@@ -65,6 +65,13 @@ defmodule Rez.AST.Game do
     %{game | patches: append_list(patches, patch)}
   end
 
+  def add_child(
+        {:relationship, source, target, affinity},
+        %Game{relationships: relationships} = game
+      ) do
+    %{game | relationships: Map.put(relationships, source, {target, affinity})}
+  end
+
   def add_child(%{} = child, %Game{} = game) do
     add_dynamic_child(game, child)
   end

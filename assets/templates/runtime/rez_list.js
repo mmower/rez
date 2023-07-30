@@ -11,15 +11,15 @@ let list_proto = {
 
   /*
    * Indexed access
-  */
+   */
 
-  at: function(idx) {
+  at: function (idx) {
     return this.values().at(idx);
   },
 
   /*
    *  Returns a random element of the list with replacement.
-  */
+   */
   randomElement() {
     return this.values().randomElement();
   },
@@ -31,10 +31,10 @@ let list_proto = {
   /*
    * Treat the list as a repeating cycle. Each cycle identified by an id
    * is separate.
-  */
+   */
   nextForCycle(cycle_id) {
     let cycle = this.cycles[cycle_id];
-    if(typeof(cycle) == "undefined") {
+    if (typeof cycle == "undefined") {
       cycle = 0;
     }
 
@@ -53,10 +53,10 @@ let list_proto = {
   /*
    * Returns a random element from among those left in the bag. If the bag
    * is empty, returns nil.
-  */
+   */
   randomRemaining(bag_id) {
     let bag = this.getBag(bag_id);
-    if(bag.length == 0) {
+    if (bag.length == 0) {
       return null;
     } else {
       return bag.randomElement();
@@ -65,7 +65,7 @@ let list_proto = {
 
   /*
    * Removes the specified value from those in the bag
-  */
+   */
   take_from(bag_id, value) {
     let bag = this.getBag(bag_id);
     bag = bag.filter((elem) => elem != value);
@@ -94,10 +94,10 @@ let list_proto = {
    * Returns a random element of the list without replacement, i.e. no item
    * will be returned twice in any given walk. At the end of a walk (i.e. all items
    * have been returned), a new walk is automatically begun.
-  */
+   */
   randomWalk(walk_id) {
     let walk = this.getWalk(walk_id);
-    if(walk.length == 0) {
+    if (walk.length == 0) {
       walk = this.resetWalk(walk_id);
     } else {
       const idx = walk.shift();
@@ -107,7 +107,7 @@ let list_proto = {
 
   getWalk(walk_id) {
     let walk = this.walks[walk_id];
-    if(typeof(walk) == "undefined") {
+    if (typeof walk == "undefined") {
       walk = this.resetWalk(walk_id);
     }
     return walk;
@@ -121,7 +121,7 @@ let list_proto = {
 
   values() {
     return this.attributes["values"];
-  }
+  },
 };
 
 function RezList(id, attributes) {
