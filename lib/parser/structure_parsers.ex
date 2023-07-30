@@ -200,6 +200,38 @@ defmodule Rez.Parser.StructureParsers do
     |> default({:parent_objects, []})
   end
 
+  def declare_define() do
+    sequence(
+      [
+        iliteral("@declare"),
+        iws(),
+        commit(),
+        js_identifier("declare")
+      ],
+      label: "declare",
+      ctx: fn %Context{
+                entry_points: [{line, col} | _],
+                ast: [id],
+                data: %{source: source}
+              } = ctx ->
+        {source_file, source_line} = LogicalFile.resolve_line(source, line)
+
+        block =
+          create_block(
+            Rez.AST.Object,
+            id,
+            [],
+            %{},
+            source_file,
+            source_line,
+            col
+          )
+
+        ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
+      end
+    )
+  end
+
   def block_with_id(label, block_struct) do
     sequence(
       [

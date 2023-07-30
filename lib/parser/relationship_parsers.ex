@@ -4,7 +4,6 @@ defmodule Rez.Parser.RelationshipParsers do
   alias Rez.AST.Relationship
 
   alias Ergo.Context
-  import Ergo.Terminals, only: [ws: 0]
 
   import Ergo.Combinators,
     only: [ignore: 1, sequence: 1, sequence: 2, choice: 2, many: 1, optional: 1]
@@ -74,7 +73,7 @@ defmodule Rez.Parser.RelationshipParsers do
         rel_affinity(),
         optional(
           sequence([
-            ws(),
+            iws(),
             tagset()
           ])
         )
@@ -88,7 +87,7 @@ defmodule Rez.Parser.RelationshipParsers do
 
         block =
           case ast do
-            [{:elem_ref, source_id}, {:elem_ref, target_id}, affinity, {:set, tags}] ->
+            [{:elem_ref, source_id}, {:elem_ref, target_id}, affinity, [{:set, tags}]] ->
               make_relationship(
                 source_file,
                 source_line,

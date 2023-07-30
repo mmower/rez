@@ -122,6 +122,7 @@ defmodule Rez.Parser.Parser do
         inventory_block(),
         item_block(),
         list_block(),
+        declare_define(),
         object_block(),
         patch_block(),
         plot_block(),

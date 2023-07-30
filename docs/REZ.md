@@ -14,7 +14,7 @@ Rez is a language for writing interactive fiction/RPG/simulation games using
 HTML and incorportating Javascript, CSS, and optionally graphics, audio, and
 movie files.
 
-Rez started as a __quick__ alternative to [Twine](https://twinery.org/) for an
+Rez started as a **quick** alternative to [Twine](https://twinery.org/) for an
 author who had become frustrated with using Twine.
 
 Twine describes itself as an "open source tool for telling interactive,
@@ -69,9 +69,9 @@ constitute the game.
 
 The following defaults are set by the framework:
 
-* Game styling uses the [Bulma](https://bulma.io/) CSS framework
-* Dynamic UI support comes from [Apline.js](https://alpinejs.dev/)
-* In game templates are rendered using [Handlebars.js](https://handlebarsjs.com/)
+- Game styling uses the [Bulma](https://bulma.io/) CSS framework
+- Dynamic UI support comes from [Apline.js](https://alpinejs.dev/)
+- In game templates are rendered using [Handlebars.js](https://handlebarsjs.com/)
 
 In a future version it will be possible to vary the CSS framework and JS library.
 
@@ -79,9 +79,9 @@ In a future version it will be possible to vary the CSS framework and JS library
 
 Rez depends upon NPM to deliver dependencies of the game:
 
-* Alpine.js
-* Bulma CSS
-* Handlebars
+- Alpine.js
+- Bulma CSS
+- Handlebars
 
 ## Source code format
 
@@ -338,9 +338,9 @@ In JavaScript, identifiers are case-sensitive and can contain Unicode letters,
 
 What is displayed on screen is determined by three things:
 
-* The layout provided by the game
-* The layout provided by the current scene
-* The content provided by the card, or stack of cards in the current scene
+- The layout provided by the game
+- The layout provided by the current scene
+- The content provided by the card, or stack of cards in the current scene
 
 ### <a name="rendering_content_elements">Content Elements</a>
 
@@ -522,8 +522,8 @@ equivalent JS object. Callback scripts that you write are converted into JS
 functions.
 
 The main game loop is implemented in terms of `RezGame`, `RezScene` and
-`RezCard`. The game has a concept of the __current_scene__ and the scene of the
-__current_card__. It is these the content (and, ultimately, markup) generated
+`RezCard`. The game has a concept of the **current_scene** and the scene of the
+**current_card**. It is these the content (and, ultimately, markup) generated
 by these objects that the player interacts with.
 
 Every object has an id which is assigned from its source element. Objects can
@@ -584,14 +584,14 @@ behaviour trees that are implemented as a native part of the language.
 
 For more on behaviour trees, see the following references:
 
- * [What is a behaviour tree?](https://opsive.com/support/documentation/behavior-designer/what-is-a-behavior-tree/)
- * [Designing AI agents behaviours with behaviour trees](https://towardsdatascience.com/designing-ai-agents-behaviors-with-behavior-trees-b28aa1c3cf8a)
+- [What is a behaviour tree?](https://opsive.com/support/documentation/behavior-designer/what-is-a-behavior-tree/)
+- [Designing AI agents behaviours with behaviour trees](https://towardsdatascience.com/designing-ai-agents-behaviors-with-behavior-trees-b28aa1c3cf8a)
 
 While it is certainly possible to write Javascript code to add intelligence to
 game objects, behaviour trees offer an alternative, more declarative, approach
 that focuses on the meaning over code.
 
-A behaviour tree is specified in terms of __tasks__ that can be of one of four
+A behaviour tree is specified in terms of **tasks** that can be of one of four
 types (composite, decorator, condition, and action) that get executed and
 either succeed or fail.
 
@@ -705,10 +705,10 @@ code.
 An attribute has a name and a value. The name follows the rules for legal
 Javascript identifiers:
 
-* cannot contain spaces
-* must begin with a letter, underscore (_), or dollar sign ($)
-* can only contain letters, numbers, underscores, or dollar signs
-* are case sensitive
+- cannot contain spaces
+- must begin with a letter, underscore (\_), or dollar sign ($)
+- can only contain letters, numbers, underscores, or dollar signs
+- are case sensitive
 
 This means that any attribute defined on any in-game object can be referenced
 naturally in user Javascript code.
@@ -746,7 +746,7 @@ interchangably to represent truthy values.
 
 Positive and negative integer and floating point numbers, e.g.
 
-  `12`, `-2.5`
+`12`, `-2.5`
 
 ### String
 
@@ -1009,35 +1009,36 @@ not.
 
 <a name="elements-catalog">The elements are:</a>
 
-* [`@actor`](#actor-element)
-* [`@asset`](#asset-element)
-* [`@task`](#task-element)
-* [`@card`](#card-element)
-* [`@effect`](#effect-element)
-* [`@faction`](#faction-element)
-* [`@game`](#game-element)
-* [`@generator`](#generator-element)
-* [`@group`](#group-element)
-* [`@inventory`](#inventory-element)
-* [`@item`](#item-element)
-* [`@list`](#list-element)
-* [`@location`](#location-element)
-* [`@object`](#object-element)
-* [`@plot`](#plot-element)
-* [`@rel`](#relationship-element)
-* [`@scene`](#scene-element)
-* [`@slot`](#slot-element)
-* [`@system`](#system-element)
-* [`@zone`](#zone-element)
+- [`@actor`](#actor-element)
+- [`@asset`](#asset-element)
+- [`@task`](#task-element)
+- [`@card`](#card-element)
+- [`@effect`](#effect-element)
+- [`@faction`](#faction-element)
+- [`@game`](#game-element)
+- [`@generator`](#generator-element)
+- [`@group`](#group-element)
+- [`@inventory`](#inventory-element)
+- [`@item`](#item-element)
+- [`@list`](#list-element)
+- [`@location`](#location-element)
+- [`@object`](#object-element)
+- [`@plot`](#plot-element)
+- [`@scene`](#scene-element)
+- [`@slot`](#slot-element)
+- [`@system`](#system-element)
+- [`@zone`](#zone-element)
 
 # Directives
 
 <a name="directives-catalog">The directives are:</a>
 
-* [`@alias`](#alias-directive)
-* [`@derive`](#derive-directive)
-* [`@script`](#script-directive)
-* [`@style`](#style-directive)
+- [`@alias`](#alias-directive)
+- [`@derive`](#derive-directive)
+- [`@declare`](#declare-directive)
+- [`@rel`](#relationship-directive)
+- [`@script`](#script-directive)
+- [`@style`](#style-directive)
 
 # Catalog
 
@@ -1054,7 +1055,7 @@ In our Maltese Parrot game hats are a big deal and a range of hat items will be
 needed but we don't want to repeat ourselves defining each one using `@item` so
 we can create an alias that specifies that a hat is an item and how hats are,
 generally, configured. Then our hat definition just needs to supply what's
-different about *that* hat.
+different about _that_ hat.
 
 Here's an example:
 
@@ -1179,10 +1180,11 @@ different amounts.
     end
 
 ### Required Attributes
+
 ### Optional Attributes
 
-* tags — set of keywords
-* container — element-id
+- tags — set of keywords
+- container — element-id
 
 ### Event Handlers
 
@@ -1258,11 +1260,11 @@ but randomised media.
 
 ### Required Attributes
 
-* file_name — string
+- file_name — string
 
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -1295,14 +1297,14 @@ render quickly.
 
 ### Required Attributes
 
-* content — string|heredoc
+- content — string|heredoc
 
 ### Optional Attributes
 
-* blocks — list of element-id
-* css_class — a string containing custom CSS classes to apply
-* bindings — map of label to element-id
-* tags — set of keywords
+- blocks — list of element-id
+- css_class — a string containing custom CSS classes to apply
+- bindings — map of label to element-id
+- tags — set of keywords
 
 #### blocks
 
@@ -1368,8 +1370,8 @@ hijack this mechanism using a script:
 
 Here we define an event handler which will respond to the link being clicked.
 By default Rez will automatically convert a link such as "Go forward" into the
-equivalent "go_forward" by downcasing and replacing whitespace with a single
-underscore(_).
+equivalent "go*forward" by downcasing and replacing whitespace with a single
+underscore(*).
 
 Rez also has support for more dynamic types of links:
 
@@ -1391,6 +1393,22 @@ disabled.
 However there is support for other kinds of actions and dynamic links. See the
 COOKBOOK for more information.
 
+## <a name="declare-directive">OID</a>
+
+A `@declare` directive is a shorthand for defining an `@object` element without
+attributes. Typically you use this for declaring an object to be the target of
+relationships but which does not, itself, need to be defined in terms of a set
+of attributes.
+
+### Example
+
+In this example we are specifying that the player hates the dark (affinity -5)
+but we don't need "the dark" to be more than a placeholder to be the target of
+the relationship
+
+    @declare the_dark
+    @rel #player #the_dark -5
+
 ## <a name="derive-directive">Derive</a>
 
 The `@derive` element is used to form keywords into hierarchies of types for
@@ -1399,10 +1417,10 @@ inventories.
 
 We setup a hierarchy as follows:
 
-  @derive :weapon :item
-  @derive :sword :weapon
-  @derive :mace :weapon
-  @derive :potion :item
+@derive :weapon :item
+@derive :sword :weapon
+@derive :mace :weapon
+@derive :potion :item
 
 The result is that an item with `type: :sword`, `type: :mace`, or
 `type: :potion` can be placed into a slot that `accepts: :item`. It's not
@@ -1444,9 +1462,10 @@ effects that, for example, wear off over time.
     end
 
 ### Required Attributes
+
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -1484,9 +1503,10 @@ of others. Define a faction using a `@faction` element.
     end
 
 ### Required Attributes
+
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -1516,13 +1536,13 @@ directives should be nested inside the top-level `@game`.
 
 ### Required Attributes
 
-* name — string
-* initial_scene — element-id
-* IFID — string
+- name — string
+- initial_scene — element-id
+- IFID — string
 
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -1746,12 +1766,14 @@ A group can be used to select an image at random, or cycle through the
 collection one-by-one.
 
 ### Example
+
 ### Required Attributes
 
-* assets — list of element-id
-* tags — set of keywords
+- assets — list of element-id
+- tags — set of keywords
 
 ### Optional Attributes
+
 ### Event Handlers
 
 #### on_init: `(group, event = {}) => {...}`
@@ -1788,11 +1810,11 @@ added to their slots. For example "spell" could represent a spell book, while
 
 ### Required Attributes
 
-* slots — set of element-id
+- slots — set of element-id
 
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -1874,21 +1896,21 @@ In this case an `Item` with `type: :hat` will automatically be tagged as
 
 ### Required attributes
 
-* type — keyword — `:hat`
-* name: string
-* description: string
+- type — keyword — `:hat`
+- name: string
+- description: string
 
 ### Optional attributes
 
-* description — string|heredoc — `"Description"`
-* size — number — defaults to 1
-* usable — boolean
-* uses — number — assumed >= 0
-* container — element-id
-* on_equip: script
-* can_equip: script
-* on_use: script
-* can_use: script
+- description — string|heredoc — `"Description"`
+- size — number — defaults to 1
+- usable — boolean
+- uses — number — assumed >= 0
+- container — element-id
+- on_equip: script
+- can_equip: script
+- on_use: script
+- can_use: script
 
 ### Event Handlers
 
@@ -1908,8 +1930,11 @@ to worry about using locations.
 Locations are defined using the `@location` tag.
 
 ### Example
+
 ### Required Attributes
+
 ### Optional Attributes
+
 ### Event Handlers
 
 #### on_init: `(location, event = {}) => {...}`
@@ -1945,27 +1970,28 @@ without replacement.
 
 #### randomElement()
 
-  `list.randomElement()`
+`list.randomElement()`
 
-  Return a random element of the list.
+Return a random element of the list.
 
 #### nextForCycle()
 
-  `list.nextForCycle(key)`
+`list.nextForCycle(key)`
 
-  Cycles through the list element by element. Each cycle is identified by a key.
+Cycles through the list element by element. Each cycle is identified by a key.
 
 #### randomUnique()
 
-  `list.randomUnique(key)`
+`list.randomUnique(key)`
 
-  Returns a random element of the list without repeating elements. Each random
-  walk is idenfied by a key.
+Returns a random element of the list without repeating elements. Each random
+walk is idenfied by a key.
 
 ### Required Attributes
+
 ### Optional Attributes
 
-* tags — set of keywords
+- tags — set of keywords
 
 ### Event Handlers
 
@@ -2065,13 +2091,14 @@ Extra care should be taken here that they are well-formed.
 ## <a name="plot-element">Plot</a>
 
 ### Example
+
 ### Required Attributes
 
-* priority
+- priority
 
 ### Optional Attributes
 
-* tags — set of keyword
+- tags — set of keyword
 
 ### Event Handlers
 
@@ -2080,34 +2107,30 @@ Extra care should be taken here that they are well-formed.
 This script will be called during game initialization and before the game has
 started.
 
-## <a name="relationship-element">Relationship</a>
+## <a name="relationship-directive">Relationship</a>
 
-A `@rel` (short for relationship) element describes the relationship between
-two in-game elements (typically actors and factions but you could imagine
-reasons why it could be items or locations).
+The `@rel` directive describes the relationship between two game objects.
 
-A relationship has a source (the thing that has the relationship), target
-(the object of the relationship), and affinity (that describes the nature of
-the relationship).
+A relationship is unidirectional being from a source to a target. Use a second
+`@rel` to describe the relationship in the other direction.
 
-Affinities range from -5.0 to +5.0 where 0.0 is considered to be
-a neutral relationship. The meaning of -5.0 is assumed to be "source hates the
-target" and +5.0 to be "source loves the target" but it is up to the game to
-definte its own meanings for the value.
+A relationship has an affinity which is expected to be a numeric value, either
+directly or via a function or dynamic attribute.
 
-Of course relationships can be extended with other game-specific attributes and
-tags can be used to enhance a relationship, for example you could apply tags
-like "partner", "husband", "lover", or "rival" to specify a relationship more
-completely.
+A relationship may, optionally, specify a set of tags to add flavour.
+
+It is typical to specify a relationship between two actors but can also be
+from an actor to a faction or a faction to a faction, or anything to anything.
+
+For example you could specify a relationship between a faction and a map zone.
 
 To keep the number of relationships manageable it may be preferable to setup
 relationships between [Factions](#faction-element) rather than specific actors
 as demonstrated in the examples below. However you can setup relationships in
 any combination you like.
 
-**Note:** the `@rel` element does not allow the author to specify an id. All
-relationships have an automatically generated id based on the source & target
-attributes. It is specified as:
+**Note:** when using a `@rel` directive an id for the relationship is auto-
+generated. It is specified as:
 
     rel_<source id>_<target id>
     rel_player_gutman
@@ -2119,39 +2142,36 @@ hand for doing this lookup manually.
 
 In these examples we are using faction-to-faction relationships.
 
-    @rel begin
-      source: #player_faction
-      target: #gutman_faction
-      affinity: -2.0
-    end
+    @rel #player_faction #gutman_faction -2
+    @rel #gutman_faction #player_faction 0
+    @rel #player_faction #wannalee_faction +2
+    @rel #wannalee_faction #player_faction +4
 
-    @rel begin
-      source: #gutman_faction
-      target: #player_faction
-      affinity: 0
-    end
+But we can use `@rel` to define all kinds of relationships
 
-    @rel begin
-      source: #player_faction
-      target: #wannalee_faction
-      affinity: +2.5
-    end
+    %% the Gutman faction loves the Falcon
+    @oid falcon
+    @rel #gutman_faction #falcton 5
 
-    @rel begin
-      source: #wannalee_faction
-      target: #player_faction
-      affinity: +4.0
-    end
+    %% the player hates brocolli
+    @oid brocolli
+    @rel #player #brocolli -5
+
+When we want to further specify a relationship we can use tags
+
+    @rel #player #miss_wannalee 5 #{:lover :suspicious}
+
+Relationships are a very flxible
 
 ### Required Attributes
 
-* `source` — element ref of the element that holds the relationship
-* `target` - element ref of the element on which the relationship is held
-* `affinity` - number ranging from -5.0 to +5.0 indicating the strength of the relationship
+- `source` — element ref of the element that holds the relationship
+- `target` - element ref of the element on which the relationship is held
+- `affinity` - number ranging from -5.0 to +5.0 indicating the strength of the relationship
 
 ### Optional Attributes
 
-* `tags` — set of tags
+- `tags` — set of tags
 
 ### Event Handlers
 
@@ -2175,9 +2195,9 @@ and will be passed the prior & new affinity values.
 
 ### API
 
-* `getAffinity()`
-* `setAffinity(new_affinity)`
-* `alterAffinity(change)`
+- `getAffinity()`
+- `setAffinity(new_affinity)`
+- `alterAffinity(change)`
 
 ## <a name="scene-element">Scene</a>
 
@@ -2233,16 +2253,16 @@ inserted into the layout using `{{{card_id_1}}}`, `{{card_id_2}}`, etc.
 
 ### Required Attributes
 
-* title — string
-* initial_card — element-id
-* layout_mode — keyword — one of `:single` or `:stack`
-* layout — string|heredoc
+- title — string
+- initial_card — element-id
+- layout_mode — keyword — one of `:single` or `:stack`
+- layout — string|heredoc
 
 ### Optional Attributes
 
-* tags — set of keyword
-* blocks — list of element-id
-* bindings — table of binding-name: element-id pairs
+- tags — set of keyword
+- blocks — list of element-id
+- bindings — table of binding-name: element-id pairs
 
 ## Event Handlers
 
@@ -2338,13 +2358,13 @@ might have slots for different levels of spell.
 
 ### Required Attributes
 
-* `name` — string
-* `accepts` — keyword
+- `name` — string
+- `accepts` — keyword
 
 ### Optional Attributes
 
-* `tags` — set of keyword — tags applied to the slot
-* `capacity` — number — the sum of the size of items that fit in the slot
+- `tags` — set of keyword — tags applied to the slot
+- `capacity` — number — the sum of the size of items that fit in the slot
 
 ### Event Handlers
 
@@ -2405,14 +2425,15 @@ the generated HTML template.
 
 ### Required Attributes
 
-* styles — string
+- styles — string
 
 ### Optional Attributes
+
 ### Event Handlers
 
 ## <a name="system-element">System</a>
 
-The `@system` element describes an in-game author defined __system__ that can
+The `@system` element describes an in-game author defined **system** that can
 query and update the game state on every game tick (that is, whenever the
 `runTick` method is called a the `RezGame` instance).
 
@@ -2449,8 +2470,8 @@ query and update the game state on every game tick (that is, whenever the
 
 ### Required Attributes
 
-* `enabled` — if false, this system will not be run
-* `priority` — systems are run in priority order
+- `enabled` — if false, this system will not be run
+- `priority` — systems are run in priority order
 
 ### Optional Attributes
 
@@ -2469,9 +2490,9 @@ every time the `RezGame` method `runTick` is called.
 ## <a name="task-element">Task</a>
 
 Tasks are elements that describe components of a behaviour tree. Author defined
-tasks are usually __conditions__ (that test the state of the game) and
-__actions__ (that change the state of the game). The built in tasks provided in
-the stdlib are __composites__ (that work on groups of tasks) and __decorators__
+tasks are usually **conditions** (that test the state of the game) and
+**actions** (that change the state of the game). The built in tasks provided in
+the stdlib are **composites** (that work on groups of tasks) and **decorators**
 (that modify the meaning of other tasks)
 
 Note that, by convention, we use UPPER CASE ids for task elements.
@@ -2508,12 +2529,12 @@ an action only gets performed if in the correct location.
 
 ### Required Attributes
 
-* options
+- options
 
 A list of keywords describing the options that this behaviour uses. If there
 are no options use the empty list `[]`
 
-* execute
+- execute
 
 A script attribute that is expected to take two parameters `task` (a reference
 to the task itself) and `wmem` which is a reference to a map of "working memory"
@@ -2524,9 +2545,9 @@ The return value must either be `{success: true, wmem: wmem}` or
 
 ### Optional Attributes
 
-* min_children
-* max_children
-* check_*
+- min_children
+- max_children
+- check\_\*
 
 ## <a name="zone-element">Zone</a>
 
@@ -2582,7 +2603,9 @@ zones just create a single zone and define all your locations in it.
     end
 
 ### Required Attributes
+
 ### Optional Attributes
+
 ### Event Handlers
 
 #### on_init: `(zone, event = {}) => {...}`
@@ -2592,20 +2615,20 @@ started.
 
 # <a name="task_catalog">Task Catalog</a>
 
-* <a href="#task_sequence">`SEQUENCE`</a>
-* <a href="#task_select">`SELECT`</a>
-* <a href="#task_selectp">`SELECT_P`</a>
-* <a href="#task_loop">`LOOP`</a>
-* <a href="#task_loop_until">`LOOP_UNTIL`</a>
-* <a href="#task_maybe">`MAYBE`</a>
-* <a href="#task_either">`EITHER`</a>
-* <a href="#task_random_choice">`RANDOM_CHOICE`</a>
-* <a href="#task_random_each">`RANDOM_EACH`</a>
-* <a href="#task_invert">`INVERT`</a>
-* <a href="#task_always">`ALWAYS`</a>
-* <a href="#task_never">`NEVER`</a>
-* <a href="#task_succeed">`SUCCEED`</a>
-* <a href="#task_fail">`FAIL`</a>
+- <a href="#task_sequence">`SEQUENCE`</a>
+- <a href="#task_select">`SELECT`</a>
+- <a href="#task_selectp">`SELECT_P`</a>
+- <a href="#task_loop">`LOOP`</a>
+- <a href="#task_loop_until">`LOOP_UNTIL`</a>
+- <a href="#task_maybe">`MAYBE`</a>
+- <a href="#task_either">`EITHER`</a>
+- <a href="#task_random_choice">`RANDOM_CHOICE`</a>
+- <a href="#task_random_each">`RANDOM_EACH`</a>
+- <a href="#task_invert">`INVERT`</a>
+- <a href="#task_always">`ALWAYS`</a>
+- <a href="#task_never">`NEVER`</a>
+- <a href="#task_succeed">`SUCCEED`</a>
+- <a href="#task_fail">`FAIL`</a>
 
 ## <a name="task_sequence">`SEQUENCE`</a>
 
@@ -2628,7 +2651,7 @@ all the children fail then `SELECT_P` will fail.
 
 ### Options
 
-* `p` — (1-100) — of any given child getting executed
+- `p` — (1-100) — of any given child getting executed
 
 ## <a name="task_loop">`LOOP`</a>
 
@@ -2638,7 +2661,7 @@ succeeds each time then `LOOP` succeeds.
 
 ### Options
 
-* `count` — positive integer — number of times to execute the child
+- `count` — positive integer — number of times to execute the child
 
 ## <a name="task_loop_until">`LOOP_UNTIL`</a>
 
@@ -2648,7 +2671,7 @@ times specified by the option `attempts`. If the child succeeds then
 
 ### Options
 
-* `attempts` — positive integer — number of attempts to execute the child
+- `attempts` — positive integer — number of attempts to execute the child
 
 ## <a name="task_maybe">`MAYBE`</a>
 
@@ -2659,7 +2682,7 @@ succeeds or fails. If the `p` test fails then `MAYBE` fails.
 
 ### Options
 
-* `p` — (1-100) — of the child being executed
+- `p` — (1-100) — of the child being executed
 
 ## <a name="task_either">`EITHER`</a>
 
@@ -2671,7 +2694,7 @@ succeeds or fails.
 
 ### Options
 
-* `p` — (1-100) — of the first child getting executed
+- `p` — (1-100) — of the first child getting executed
 
 ## <a name="task_random_choice">`RANDOM_CHOICE`</a>
 
@@ -2716,28 +2739,28 @@ The `FAIL` task takes no children and when executed it always fails.
 
 # API Reference
 
-* <a href="#object_prototype">Object.prototype</a>
-* <a href="#array_prototype">Array.prototype</a>
-* <a href="#string_prototype">String.prototype</a>
-* <a href="#set_prototype">Set.prototype</a>
-* <a href="#rez_object">`basic_object`</a>
-* <a href="#rez_actor">`RezActor`</a>
-* <a href="#rez_asset">`RezAsset`</a>
-* <a href="#rez_card">`RezCard`</a>
-* <a href="#rez_decision">`RezDecision`</a>
-* <a href="#rez_die">`RezDie`</a>
-* <a href="#rez_dynamic_link">`RezDynamicLink`</a>
-* <a href="#rez_effect">`RezEffect`</a>
-* <a href="#rez_faction">`RezFaction`</a>
-* <a href="#rez_game">`RezGame`</a>
-* <a href="#rez_inventory">`RezInventory`</a>
-* <a href="#rez_item">`RezItem`</a>
-* <a href="#rez_list">`RezList`</a>
-* <a href="#rez_plot">`RezPlot`</a>
-* <a href="#rez_scene">`RezScene`</a>
-* <a href="#rez_slot">`RezSlot`</a>
-* <a href="#rez_system">`RezSystem`</a>
-* <a href="#rez_zone">`RezZone`</a>
+- <a href="#object_prototype">Object.prototype</a>
+- <a href="#array_prototype">Array.prototype</a>
+- <a href="#string_prototype">String.prototype</a>
+- <a href="#set_prototype">Set.prototype</a>
+- <a href="#rez_object">`basic_object`</a>
+- <a href="#rez_actor">`RezActor`</a>
+- <a href="#rez_asset">`RezAsset`</a>
+- <a href="#rez_card">`RezCard`</a>
+- <a href="#rez_decision">`RezDecision`</a>
+- <a href="#rez_die">`RezDie`</a>
+- <a href="#rez_dynamic_link">`RezDynamicLink`</a>
+- <a href="#rez_effect">`RezEffect`</a>
+- <a href="#rez_faction">`RezFaction`</a>
+- <a href="#rez_game">`RezGame`</a>
+- <a href="#rez_inventory">`RezInventory`</a>
+- <a href="#rez_item">`RezItem`</a>
+- <a href="#rez_list">`RezList`</a>
+- <a href="#rez_plot">`RezPlot`</a>
+- <a href="#rez_scene">`RezScene`</a>
+- <a href="#rez_slot">`RezSlot`</a>
+- <a href="#rez_system">`RezSystem`</a>
+- <a href="#rez_zone">`RezZone`</a>
 
 ## <a name="object_prototype">`Object.prototype`</a>
 
@@ -2804,7 +2827,7 @@ Automatically generates an id and then calls `copyAssigningId(obj_id)` with it.
 ### `willHandleEvent(event_name)`
 
 Determine whether this object has a handle for the given event. Handlers are
-named "on_<event_name>".
+named "on\_<event_name>".
 
 ### `runEvent(event_name, evt_info)`
 
@@ -3099,9 +3122,9 @@ Returns a random value based on a complete die roll.
 
 ## <a name="rez_dynamic_link">RezDynamicLink</a>
 
-* `allow(response, target_id)`
-* `deny(text, as_link)`
-* `hide()`
+- `allow(response, target_id)`
+- `deny(text, as_link)`
+- `hide()`
 
 ## <a name="rez_effect">RezEffect</a>
 
@@ -3115,36 +3138,36 @@ Returns a random value based on a complete die roll.
 
 `RezGame` is the runtime counterpart of the authoring element `@game`.
 
-* `save()`
-* `load(json)`
-* `addGameObject(obj)`
-* `getGameObject(id)`
-* `getAll(target_type)`
-* `getCurrentScene()`
-* `setCurrentScene(new_scene_id)`
-* `getTarget(target_id)`
-* `container()`
-* `interludeWithScene(interlude_scene_id)`
-* `resumePrevScene()`
+- `save()`
+- `load(json)`
+- `addGameObject(obj)`
+- `getGameObject(id)`
+- `getAll(target_type)`
+- `getCurrentScene()`
+- `setCurrentScene(new_scene_id)`
+- `getTarget(target_id)`
+- `container()`
+- `interludeWithScene(interlude_scene_id)`
+- `resumePrevScene()`
 
 ## <a name="rez_inventory">RezInventory</a>
 
 `RezInventory` is the runtime counterpart of the authoring element `@inventory`.
 
-* `slots()`
-* `slotIsOccupied(slot_id)`
-* `getContentsForSlot(slot_id)`
-* `appendContentToSlot(slot_id, item_id)`
-* `setContentsForSlot(slot_id, contents)`
-* `countItemsInSlot(slot_id)`
-* `isOwned()`
-* `ownerId()`
-* `owner()`
-* `itemFitsInSlot(slot_id, item_id)`
-* `slotAcceptsItem(slot_id, item_id)`
-* `canAddItemForSlot(slot_id, item_id)`
-* `addItemToSlot(slot_id, item_id)`
-* `removeItemFromSlot(slot_id, item_id)`
+- `slots()`
+- `slotIsOccupied(slot_id)`
+- `getContentsForSlot(slot_id)`
+- `appendContentToSlot(slot_id, item_id)`
+- `setContentsForSlot(slot_id, contents)`
+- `countItemsInSlot(slot_id)`
+- `isOwned()`
+- `ownerId()`
+- `owner()`
+- `itemFitsInSlot(slot_id, item_id)`
+- `slotAcceptsItem(slot_id, item_id)`
+- `canAddItemForSlot(slot_id, item_id)`
+- `addItemToSlot(slot_id, item_id)`
+- `removeItemFromSlot(slot_id, item_id)`
 
 ## <a name="rez_item">RezItem</a>
 
@@ -3152,7 +3175,7 @@ Returns a random value based on a complete die roll.
 
 ### API
 
-* `size()`
+- `size()`
 
 ## <a name="rez_list">RezList</a>
 
@@ -3160,11 +3183,11 @@ Returns a random value based on a complete die roll.
 
 ### API
 
-* `nextForCycle(cycle_id)`
-* `randomElement()`
-* `randomWalk(walk_id)`
-* `resetWalk(walk_id)`
-* `values()`
+- `nextForCycle(cycle_id)`
+- `randomElement()`
+- `randomWalk(walk_id)`
+- `resetWalk(walk_id)`
+- `values()`
 
 ## <a name="rez_plot">RezPlot</a>
 
@@ -3172,9 +3195,9 @@ Returns a random value based on a complete die roll.
 
 ### API
 
-* `isActive()`
-* `isComplete()`
-* `tick()`
+- `isActive()`
+- `isComplete()`
+- `tick()`
 
 ## <a name="rez_scene">RezScene</a>
 
@@ -3184,10 +3207,10 @@ main responsibility is to manage one or more `RezCard` objects representing
 
 ### API
 
-* `getCurrentCard()`
-* `getInitialCard()`
-* `playCardWithId(<card_id>)`
-* `reset()`
+- `getCurrentCard()`
+- `getInitialCard()`
+- `playCardWithId(<card_id>)`
+- `reset()`
 
 ## <a name="rez_slot">RezSlot</a>
 
@@ -3195,7 +3218,7 @@ main responsibility is to manage one or more `RezCard` objects representing
 
 ### API
 
-* `capacity()`
+- `capacity()`
 
 ## <a name="rez_system">RezSystem</a>
 
@@ -3207,5 +3230,5 @@ main responsibility is to manage one or more `RezCard` objects representing
 
 ### API
 
-* `addLocation(location)`
-* `getLocation(location_id)`
+- `addLocation(location)`
+- `getLocation(location_id)`
