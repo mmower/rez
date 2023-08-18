@@ -36,6 +36,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def minus(), do: ParserCache.get_parser("minus", fn -> char(?-) end)
 
+  def bar(), do: ParserCache.get_parser("bar", fn -> char(?|) end)
+
   def at(), do: char(?@)
 
   def open_brace(), do: char(?{)

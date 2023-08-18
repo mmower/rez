@@ -50,6 +50,13 @@ defmodule Rez.Compiler.CreateRuntime do
 
   EEx.function_from_file(
     :def,
+    :register_expression_filters,
+    Path.expand("assets/templates/runtime/register_expression_filters.js.eex"),
+    [:assigns]
+  )
+
+  EEx.function_from_file(
+    :def,
     :render_runtime,
     Path.expand("assets/templates/runtime.js.eex"),
     [
@@ -86,6 +93,7 @@ defmodule Rez.Compiler.CreateRuntime do
         js_userlib: js_userlib,
         patch_js_objects: patch_js_objects(game: game),
         init_game_objects: init_game_objects(game: game),
+        register_expression_filters: register_expression_filters(game: game),
         register_handlebars_helpers: register_handlebars_helpers(game: game)
       )
 

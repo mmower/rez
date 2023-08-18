@@ -33,6 +33,7 @@ defmodule Rez.AST.Game do
             cards: %{},
             effects: %{},
             factions: %{},
+            filters: %{},
             forms: %{},
             generators: %{},
             groups: %{},

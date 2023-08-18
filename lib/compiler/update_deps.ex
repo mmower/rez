@@ -14,8 +14,13 @@ defmodule Rez.Compiler.UpdateDeps do
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
   @bulma_css_time Utils.file_ctime!("node_modules/bulma/css/bulma.min.css")
 
+  @external_resource "node_modules/pluralize/pluralize.js"
+  @pluralize_js File.read!("node_modules/pluralize/pluralize.js")
+  @pluralize_js_time Utils.file_ctime!("node_modules/pluralize/pluralize.js")
+
   def asset_requires_update?(folder, file_name, stored_ctime) do
     file_path = Path.join(["assets", folder, file_name])
+
     case File.exists?(file_path) do
       false ->
         true
@@ -46,6 +51,7 @@ defmodule Rez.Compiler.UpdateDeps do
     |> conditionally_write_asset("js", "alpinejs.min.js", @alpine_js, @alpine_js_time)
     |> conditionally_write_asset("js", "handlebars.min.js", @handlebars_js, @handlebars_js_time)
     |> conditionally_write_asset("css", "bulma.min.css", @bulma_css, @bulma_css_time)
+    |> conditionally_write_asset("js", "pluralize.js", @pluralize_js, @pluralize_js_time)
   end
 
   def run_phase(compilation) do

@@ -185,18 +185,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
     NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
   end
 
-  # def js_initializer(card), do: NodeHelper.js_initializer(card)
-
-  # def js_initializer(%Card{template: template} = card) do
-  #   """
-  #   new #{js_ctor(card)}(
-  #     "#{card.id}",
-  #     Handlebars.template(#{template}),
-  #     #{ValueEncoder.encode_attributes(card.attributes)}
-  #   )
-  #   """
-  # end
-
   def default_attributes(_card), do: %{}
 
   def pre_process(card), do: card

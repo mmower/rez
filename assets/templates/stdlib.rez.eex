@@ -22,6 +22,12 @@ end
   file_name: "bulma.min.css"
 end
 
+@asset _PLURALIZE_JS begin
+  file_name: "pluralize.js"
+  defer: false
+  pre_runtime: true
+end
+
 %% ----------------------------------------------------------------------------
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
@@ -363,6 +369,57 @@ end
     const v2 = Number.rnd_between(lo, hi);
     return Math.dist_round((v1+v2)/2);
   }
+end
+
+%% ----------------------------------------------------------------------------
+%% Template Filters
+%% ----------------------------------------------------------------------------
+
+@filter STRING_FILTER begin
+  name: "string"
+  impl: (v) => {return ""+s;}
+end
+
+@filter APPEND_FILTER begin
+  name: "append"
+  impl: (v, p) => {return v + p;}
+end
+
+@filter CAMELIZE_FILTER begin
+  name: "camelize"
+  impl: (v) => {return v.replace(/[_.-](\w|$)/g, function (_, x) {
+		return x.toUpperCase();
+	});}
+end
+
+@filter CAPITALIZE_FILTER begin
+  name: "capitalize"
+  impl: (v) => {return v.replace(/(^|\s)\S/g, l => l.toUpperCase());}
+end
+
+@filter DOWNCASE_FILTER begin
+  name: "downcase"
+  impl: (v) => {return v.toLowerCase();}
+end
+
+@filter PREPEND_FILTER begin
+  name: "prepend"
+  impl: (v, p) => {return p + v;}
+end
+
+@filter UPCASE_FILTER begin
+  name: "upcase"
+  impl: (v) => {return v.toUpperCase();}
+end
+
+@filter PLURALIZE_FILTER begin
+  name: "pluralize"
+  impl: (v) => {return pluralize(v);}
+end
+
+@filter SPLIT_FILTER begin
+  name: "split"
+  impl: (v, p) => {return v.split(p);}
 end
 
 %% ----------------------------------------------------------------------------

@@ -26,6 +26,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.MakeDistPath,
     Rez.Compiler.MakeAssetPath,
     Rez.Compiler.MakeCachePath,
+    Rez.Compiler.UpdateDeps,
     Rez.Compiler.StartHandlebars,
     Rez.Compiler.CopyStdlib,
     Rez.Compiler.ReadSource,
@@ -36,7 +37,6 @@ defmodule Rez.Compiler do
     # Everything in the Game needs to be ready at this point
     Rez.Compiler.CreateRuntime,
     Rez.Compiler.WriteGameFile,
-    Rez.Compiler.UpdateDeps,
     Rez.Compiler.CopyAssets,
     Rez.Compiler.Reports
   ]

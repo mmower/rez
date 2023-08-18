@@ -15,6 +15,9 @@ window.Rez = window.Rez ?? {};
 // JS userlib
 <%= @js_userlib %>
 
+// Expression Filters
+<%= @register_expression_filters %>
+
 // Handlebars helpers
 <%= @register_handlebars_helpers %>
 

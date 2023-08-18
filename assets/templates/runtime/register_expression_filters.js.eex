@@ -1,0 +1,14 @@
+//-----------------------------------------------------------------------------
+// Register expression filters
+//-----------------------------------------------------------------------------
+
+<% import Rez.AST.NodeHelper %>
+<% import Rez.AST.ValueEncoder %>
+
+Rez.template_expression_filters = {};
+
+<%= for {_id, filter} <- @game.filters do %>
+  <% name = get_attr_value(filter, "name") %>
+  <% impl = get_attr_value(filter, "impl") %>
+  Rez.template_expression_filters.<%= name %> = <%= encode_function(impl) %>;
+<% end %>
