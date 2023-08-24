@@ -18,41 +18,83 @@ defmodule Rez.Compiler.TemplateCompiler do
   alias Rez.Compiler.TemplateCompiler.Filters
   alias Rez.Compiler.TemplateCompiler.Values
 
+  def js_create_fn(expr), do: ~s|function(bindings, filters) {return #{expr};}|
+
   def compile({:template, chunks}) do
-    "function(bindings, filters) {return #{compile_chunks(chunks)}.reduce((text, f) => text + f(bindings, filters), \"\");}"
+    compiled_chunks = compile_chunks(chunks)
+    reducer = ~s|function(text, f) {return text + f(bindings, filters)}|
+    js_create_fn(~s|#{compiled_chunks}.reduce(#{reducer}, "")|)
   end
 
   def compile_chunks(chunks) when is_list(chunks) do
     "[" <> Enum.map_join(chunks, ",", &compile_chunk/1) <> "]"
   end
 
+  @doc """
+    Compiles a string chunk into a function that returns the string. We use a
+    Javascript template literal here because it allows for multi-line strings.
+    Template literals also use the ${…} interpolation syntax but that is not
+    a problem as Rez template expressions are in other chunks.
+  """
   def compile_chunk(s) when is_binary(s) do
-    "(bindings, filters) => \"#{s}\""
+    js_create_fn(~s|`#{s}`|)
   end
 
   def compile_chunk({:interpolate, {:expression, expr, filters}}) when is_list(filters) do
-    "(bindings, filters) => {return " <>
-      Filters.js_apply_filters_to_value("bindings", filters, Values.js_exp("bindings", expr)) <>
-      ";}"
+    applied_filters =
+      Filters.js_apply_filters_to_value("bindings", filters, Values.js_exp("bindings", expr))
+
+    js_create_fn(applied_filters)
+  end
+
+  def compile_chunk({:conditional, expr, content}) do
+    js_create_fn(~s|(#{expr}) ? `#{content}` : ``|)
   end
 
   defmodule Values do
+    def js_make_fn(bindings_map_name, expr),
+      do: ~s|function(#{bindings_map_name}) {return #{expr};}|
+
+    def js_apply_fn(bindings_map_name, expr) do
+      f = js_make_fn(bindings_map_name, expr)
+      ~s|(#{f})(#{bindings_map_name})|
+    end
+
     def js_exp(bindings_map_name, {:string, s}),
-      do: "(function(_) {return \"#{s}\";})(#{bindings_map_name})"
+      do: js_apply_fn(bindings_map_name, ~s|"#{s}"|)
 
     def js_exp(bindings_map_name, {:number, n}),
-      do: "(function(_) {return #{n};})(#{bindings_map_name})"
+      do: js_apply_fn(bindings_map_name, to_string(n))
 
     def js_exp(bindings_map_name, {:bool, b}),
-      do: "(function(_){return #{b};})(#{bindings_map_name})"
+      do: js_apply_fn(bindings_map_name, to_string(b))
 
-    def js_exp(bindings_map_name, {:lookup, binding_name, attribute_name}),
+    def js_exp(bindings_map_name, {:list, l}) do
+      list = Enum.map_join(l, ",", fn val -> js_exp(bindings_map_name, val) end)
+      js_apply_fn(bindings_map_name, "[#{list}]")
+    end
+
+    def js_exp(bindings_map_name, {:binding, binding_name}),
+      do: js_apply_fn(bindings_map_name, "#{bindings_map_name}.#{binding_name}")
+
+    def js_exp(bindings_map_name, {:attribute, binding_name, attribute_name}),
       do:
-        "(function(#{bindings_map_name}) {return #{bindings_map_name}.#{binding_name}.getAttributeValue(\"#{attribute_name}\");})(#{bindings_map_name})"
+        js_apply_fn(
+          bindings_map_name,
+          ~s|#{bindings_map_name}.#{binding_name}.getAttribute("#{attribute_name}")|
+        )
   end
 
   defmodule Filters do
     alias Rez.Compiler.TemplateCompiler.Values
+
+    def js_function([], body) do
+      "function() {#{body}}"
+    end
+
+    def js_function(args, body) do
+      "function(#{Enum.join(args, ", ")}) {#{body}}"
+    end
 
     def js_params(_bindings_map_name, []), do: ""
 
@@ -61,17 +103,19 @@ defmodule Rez.Compiler.TemplateCompiler do
     end
 
     def js_apply_filter(bindings_map_name, {filter, []}) do
-      "(#{bindings_map_name}, value) => filters.#{filter}(value)"
+      js_function([bindings_map_name, "value"], "return filters.#{filter}(value);")
     end
 
     def js_apply_filter(bindings_map_name, {filter, params}) do
-      "(#{bindings_map_name}, value) => filters.#{filter}(value,#{js_params(bindings_map_name, params)})"
+      filter_params = js_params(bindings_map_name, params)
+      filter_call = "filters.#{filter}(value, #{filter_params})"
+      js_function([bindings_map_name, "value"], "return #{filter_call};")
     end
 
     def js_filter_list(bindings_map_name, filters) do
-      "[" <>
-        Enum.map_join(filters, ",", fn filter -> js_apply_filter(bindings_map_name, filter) end) <>
-        "]"
+      filter_application = fn filter -> js_apply_filter(bindings_map_name, filter) end
+      filter_list = Enum.map_join(filters, ",", filter_application)
+      "[#{filter_list}]"
     end
 
     @doc """
@@ -81,7 +125,9 @@ defmodule Rez.Compiler.TemplateCompiler do
     """
     def js_apply_filters_to_value(bindings_map_name, filters, initial_value)
         when is_list(filters) do
-      "#{js_filter_list(bindings_map_name, filters)}.reduce((v, f) => {return f(#{bindings_map_name}, v)}, #{initial_value})"
+      filter_list = js_filter_list(bindings_map_name, filters)
+      filter_call = "function(value, filter) {return filter(#{bindings_map_name}, value);}"
+      "#{filter_list}.reduce(#{filter_call}, #{initial_value})"
     end
   end
 end

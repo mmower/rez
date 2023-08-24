@@ -5,6 +5,7 @@ with HTML
 
 By Matt Mower <self@mattmower.com>
 
+Version 0.10 - 23 Aug 2023
 Version 0.9 — 13 Nov 2022
 Version 0.8 — 24 Oct 2022
 
@@ -23,10 +24,11 @@ for those with almost no development experience to get started and create a
 choice-based game.
 
 Rez, by contrast, is designed for making games whose complexity is not well
-suited to Twine and for authors who are comfortable writing small amounts of
-Javascript. Rez's complexity sits somewhere between Twine and an authoring
-system like [Inform](https://ganelson.github.io/inform-website/) or
-[TADS](https://www.tads.org/).
+suited to Twine and for authors who are at least comfortable writing small
+amounts of Javascript functions.
+
+Rez's complexity sits somewhere between Twine and an authoring system like
+[Inform](https://ganelson.github.io/inform-website/) or [TADS](https://www.tads.org/).
 
 Rez has a standard library including support for creating NPCs, item &
 inventory management, scenes, and maps and a behaviour tree system to introduce
@@ -71,7 +73,6 @@ The following defaults are set by the framework:
 
 - Game styling uses the [Bulma](https://bulma.io/) CSS framework
 - Dynamic UI support comes from [Apline.js](https://alpinejs.dev/)
-- In game templates are rendered using [Handlebars.js](https://handlebarsjs.com/)
 
 In a future version it will be possible to vary the CSS framework and JS library.
 
@@ -81,7 +82,7 @@ Rez depends upon NPM to deliver dependencies of the game:
 
 - Alpine.js
 - Bulma CSS
-- Handlebars
+- Pluralize.js
 
 ## Source code format
 
@@ -121,54 +122,96 @@ dependency. For example this code will hang the compiler.
 
 ## What is an element?
 
-A game element looks like this:
+Here is an example of a game element defining some kind of magical item:
 
     @item magic_ring begin
       is_a: :ring
       magic: true
       material: gold
-      inscription: "Please return to Mordor"
+      owners: 5
+      belongs_to: #sauron
+      inscription: "Please return to Mordor",
+      wear: (actor) => {
+        if(actor.id == "sauron") {
+          actor.game.sauron_victory = true;
+        } else {
+          actor.makeInvisible();
+        }
+      }
     end
 
-The parts are the element type, all element types are specified as an `@` sign
-followed by the type of the element, so `@item` for items, `@actor` for actors
-and so on.
+It uses the `@item` element. All elements start with `@`. Rez knows about items
+and has built in support for item containers. This item has 6 attributes that
+show off some of the types attributes can take.
 
-Most of the elements you will be working with also have an ID such as
-`magic_ring` in the example above. This allows you to refer to that unique
-item elsewhere. A few elements have an implicit id (for example `@game` has
-an implicit id of `game`) and some don't have a meaningful id (for example
-`@script` elements).
+Items, like most elements, have a unique name (an ID) that is used to refer to
+them elsewhere in the game. In this case the item has the ID `magic_ring`.
+Similarly the `belongs_to` attribute specifies a relationship with another
+element (an `@actor` perhaps) with the ID of `#sauron`.
 
-Following the id is a block delimited by `begin` ... `end` that contains the
-attributes specifying the, in this case, item. In our example we have 4
-such attributes: `is_a`, `magic`, `material`, and `inscription`.
+Elements are specified using attributes that appear between `{` and `}`.
+
+The `inscription` attribute uses a string value. String values are good for
+things you're going to want to display to the user.
+
+The `magic` attribute is a boolean, or condition, which can be either `true` or
+`false`. This would be useful, for example, if we wanted to apply a different
+style to magical and non-magical items.
+
+The `owners` attribute is a number good for calcuating things and comparing to
+decide things.
+
+The `is_a` attribute uses a keyword value. Keywords are good for connecting
+things together but don't worry too much about them note.
+
+Lastly, the `wear` attribute is a script attribute. We've simplified this
+example but it demonstrates how it uses the actor passed to the script to
+determine what happens.
+
+Do note that you do not append a ";" or "," to the end of an attribute.
 
 Mostly writing a game in Rez is specifying the various elements that make up
-the games content and behaviour.
+the content of the game and writing small Javascript functions to specify their
+behaviours.
 
 ## Game Design Model
 
-We distinguish between two environments: _authortime_ where we'e working with
-.rez source files & elements like `@card` and `@item`, and _runtime_ where we
-are in the browser & dealing with Javascript objects like `RezCard` and
-`RezItem`.
+We distinguish between two environments: _authortime_ where we'e in an editor
+working with .rez source files & elements like `@game`, `@card` and `@item`,
+and _runtime_ where the game is running in the browser and we are working with
+Javascript objects like `RezGame`, `RezCard`, and `RezItem`.
 
 Most of the authortime elements have a corresponding runtime partner object. So
 a `@card` defines a set of attributes and those attributes will be available
-at runtime as the attributes of the associated `RezCard` object.
+at runtime as the attributes of the associated `RezCard` object. There are also
+runtime objects that do not have an author time counterpart such as
+`RezDynamicLink`.
 
-A key concept is that of _scenes_ and _cards_ as these are integral to how the
-game presents an interface to the user. Scenes organise and present Cards that,
-in turn, display content in the browser.
+[Advanced note] For Javascript pro's, when we talk about a "RezCard object" we
+mean an object using the `RezCard` object as a prototype.
 
-A scene is a grouping of one or more cards within a scene-specific layout. A
-scene can either present the content of a single card so that the content
-changes each time a new card is added to the scene, or the content of many
-cards with each new card adding more content within the scene layout.
+A key authoring concept is that of _cards_ and _scenes_. Cards are the primary
+way that we display game content to the player. Here is an example:
 
-Every game must have at least one scene and one card although meaningful games
-are likely to have many of both.
+    @card first_card begin
+      content: """
+      Your name is ${player.name}, through a bourbon haze you remember that
+      at least.
+      """
+    end
+
+The `content` attribute is special as it defines what the card shows when it is
+rendered for the player. In this case you can see that contains a "template
+expression" for putting the players name in. We'll get to template expressions
+later.
+
+A scene has a layout which is content that wraps around card content. And have
+events that respond to cards changing. Scenes are good for structuring the game
+and grouping related cards together.
+
+If your game is straight forward enough you can mostly ignore scenes (although
+the game requires that you have at least one, that is automatically generated
+for you) and just use cards. If your game grows you can add scenes later.
 
 The simplest possible game would look something like this:
 
@@ -186,7 +229,7 @@ The simplest possible game would look something like this:
         layout_mode: :single
 
         layout: """
-        {{{content}}}
+        ${content}
         """
       end
 
@@ -214,15 +257,14 @@ The simplest possible game would look something like this:
     end
 
 Here we see that the `@game` wraps a `@scene` and three `@card`s. The scene has
-an incredibly basic layout that just consists of `{{{content}}}`. The
-`{{{...}}}` is a Handlebars macro and `content` is the scene content. In this
-case the content of the current card (since `layout_mode` is `single`).
+an incredibly basic layout that just consists of `${content}`. This is a
+"template expression" that brings in the contents of the `content` binding. In
+this case that binding is automatically set to the contents of the current
+card.
 
-[Handlebars](https://handlebarsjs.com/) is a Javascript template library that
-Rez uses under the hood to render dynamic content. The `layout` and `content`
-attributes of scenes and cards respectively are compiled into Handlebars
-templates and you can make use of all the features of Handlebars in those
-templates.
+[Note: Template expressions are new to v0.10.0. Previously we used the
+Handlebars template system but this has been completely replaced with template
+expressions, described later.]
 
 The initial scene of the game is set through the `inital_scene` attribute. When
 the game starts it picks that scene and renders it. In turn the `play_game`
@@ -230,9 +272,14 @@ scene, like every scene, must have an `initial_card` attribute that identifies
 the content it should display to the user first. In this case the `@card` with
 ID `did_you_win`.
 
+Additionally there are two layout modes for scenes: `:single` and `:multi`. A
+scene with the `:single` layout mode presents the content from a single card at
+a time. Scenes using the `:multi` layout mode can display the contents of
+mutlipe cards.
+
 The contents for a `@card` is set by the `content` attribute which is written
-in the Markdown format and uses some convenient syntax shorthands. In this case
-the simple link formats as from Twine. `[[yes]]` converts to a link that plays
+in the Markdown format with some sugar for common things you want to do. Rez
+borrows its link format from Twine. `[[yes]]` converts to a link that plays
 the card `@yes` to the scene, while `[[Play again|did_you_win]]` converts into
 a link to the `did_you_win` card.
 
@@ -242,12 +289,13 @@ respectively.
 
 ## Elements & directives in more detail
 
-As mentioned above Rez games are written in terms of a elements and directives
-that are specified using the `@` character. For example: `@game`, `@item`,
-`@inventory`, and `@alias`.
+Rez games are written in terms of a elements and directives that are specified
+using the `@` character. For example: `@game`, `@item`, `@inventory`, and
+`@alias`.
 
-Directives such as `@alias` and `@derive` affect elements but don't define
-them. The `@alias` directive allows you to create a new name for an element.
+Elements define game objects while directives affect, but don't define, them.
+
+The `@alias` directive allows you to create a new name for an element.
 For example you could create an alias for `@item` such as `@ring` for when
 you want to define rings. It makes no difference to the game but can be
 slightly easier to read & write.
@@ -338,9 +386,9 @@ In JavaScript, identifiers are case-sensitive and can contain Unicode letters,
 
 What is displayed on screen is determined by three things:
 
-- The layout provided by the game
-- The layout provided by the current scene
-- The content provided by the card, or stack of cards in the current scene
+- The layout provided by the game, which wraps
+- The layout provided by the current scene, which wraps
+- The content provided by the scenes current card (or cards)
 
 ### <a name="rendering_content_elements">Content Elements</a>
 
@@ -349,16 +397,14 @@ presented to the player. In the case of the `@game` and `@scene` this is their
 `layout` attribute, in the case of `@card` it is the `content` attribute.
 
 What appears on screen is the current card (or stack of cards) content wrapped
-in the scene and then game layouts.
+in the scene & game layouts.
 
 This makes it easy to have an overall layout with different layouts for
 different scenes (although scenes may also share layouts) wrapping the card
 content itself.
 
-Content can be written as Markdown or plain HTML and is passed to the
-[Handlebars](https://handlebarsjs.com/) compiler and turned into a rendering
-function. This also means that all the facilities of Handlebars templates are
-available when creating dynamic content.
+Content can be written as Markdown or plain HTML and can contain special syntax
+such as `[[]]` links and template expressions.
 
 A game is all about the actions you take. In Rez these will usually be
 represented by links that load new cards or scenes, or trigger events that you
@@ -374,9 +420,8 @@ The game uses a template:
     </div>
 
 So the `layout:` attribute of the `@game` is injected into the master game
-`<div>`. The `layout:` attribute is expected to include `{{scene}}` somewhere
-as this is what brings in the current `@scene` content. If `{{scene}}` is not
-included the layout will be empty.
+`<div>`. The `layout:` attribute is expected to include `${content}` somewhere
+as this is what brings in the current `@scene` content.
 
 Scenes use a template:
 
@@ -384,8 +429,8 @@ Scenes use a template:
       ...layout...
     </div>
 
-The `layout:` attribute of the `@scene` is expected to include `{{content}}` as
-this is what brings in the `@scene` content which can be the output of one or
+The `layout:` attribute of the `@scene` is expected to include `${content}`
+somewhere to bring in the scene content. Which can be the output of one or
 more cards depending on the scene's layout mode.
 
 Cards use a template:
@@ -401,7 +446,7 @@ The `render_id` is a unique value to disambiguate each rendered thing. This
 means that if a card is rendered twice, while the `card_id` will be the same,
 the `render_id` will disambiguate them.
 
-The rendererd `content:` attribute of the `@card` is injected into this HTML
+The rendererd `content` attribute of the `@card` is injected into this HTML
 div. The `card_type` will be one of `block`, `card_active`, or `card_passive`
 depending on whether the content is coming from the scene's current card, an
 old card (in a scene with stack layout), or a block.
@@ -445,12 +490,12 @@ creating conditionally enabled links (e.g. only works after dark, or only with
 a specific item) or hiding links (only visible while wearing special glasses
 etc…)
 
-    [[>Link text|scene_id]]
+    [[Link text|>scene_id]]
 
 This presents a link labelled "Link text" that, when clicked, ends the current
 scene and loads a new scene with id `scene_id`.
 
-    [[!Link text|scene_id]]
+    [[Link text|!scene_id]]
 
 This presents a link labelled "Link text" that, when clicked, interrupts the
 current scene and loads a new scene, with id `scene_id`, as an interlude. This
@@ -466,17 +511,23 @@ interlude and resumes the previous scene where it left off.
 
 ### <a name="rendering_including_assets">Including assets</a>
 
-Rez includes a Handlebars helper `r_asset` for including asset content. The
-helper will generate an appropriate tag for the assert. So, for example:
+Rez includes two filters for including asset content `asset_tag` and
+`asset_path`.
 
-    {{r_asset "image_01"}}
+The `asset_tag` filter generates a content appropriate tag for the asset (based
+on its MIME type) so
+
+    ${"image_01" | asset_tag}
 
 Would generate an appropriate `<img />` tag to include the asset with id
 `image_01`. At present only image assets are fully supported however sound and
 movie assets will be implemented in a future version.
 
-To access the raw path to the asset file get the corresponding `RezAsset`
-object and access its `path` attribute.
+To access the raw path to the asset file use the `asset_path` filter, e.g.
+
+    ${"image_01" | asset_path}
+
+Will insert the asset path (relative to the dist folder) as a string.
 
 ### <a name="rendering_cs_and_js">CS & JS</a>
 
@@ -508,6 +559,65 @@ attibutes and are written as follows:
 
 The content of `@script` and `@style` tags will automatically be included into
 the relevant parts of the generated game files.
+
+## Template Expressions
+
+Template expressions are a way to include dynamic content within the cards used
+to present your game to the player. At the simplest level they provide for
+dynamically inserting attribute values into card content. But they can do more.
+
+[Advanced Note: Prior to v0.10.0 Rez used the Handlebars.js template system and
+required the Handlebars compiler to be available. Template expressions
+completely replace Handlebars. If you wrote any Handlerbars `@helper` macros in
+a previous version of Rez you will need to convert them into template expression
+`@filter`s. In most cases this is quite a literal process.]
+
+Template expressions are loosely based on the [Liquid](https://shopify.github.io/liquid/)
+template system but are not Liquid and you should refer to this documentation
+not the Liquid docs.
+
+There are two kinds of template expressions: substitions and decisions.
+
+### Substitutions
+
+A substitution is where we replace a token like `${player.name}` with the value
+from a game object. For example:
+
+    content: "Your name is ${player.name}. It's a good name."
+
+Inserts the value of the `name` attribute of the `player` binding into the
+output. If `name` is "matt" this will render:
+
+    Your name is matt. It's a good name.
+
+We can also transform the value using filters, for example we can use the
+`capitalize` filter:
+
+    content: "Your name is ${player.name | capitalize}. It's a good name."
+
+will render as:
+
+    Your name is Matt. It's a good name.
+
+See filters for a list of the inbuilt filters and the `@filter` element for how
+to define your own filters.
+
+### Decisions
+
+We can use template expressions to conditionally include certain content, for
+example:
+
+    $if{player.backgrounds | includes: "cop"} {%
+      [He knows you were a cop and is willing to look the other way|snag_evidence]
+    %}
+
+The `$if{expr} {% … %}` tests the expression which is expected to be a boolean
+and can use various filters to arrive at a `true`|`false` value. If the
+expression evaluates to `true` the content inside the `{%` and `%}` markers
+is evaluated and rendered. Otherwise nothing happens.
+
+Where the content of the template includes other template expressions or
+conditional expressions they will be evaluated also.
 
 ## API Model
 
@@ -1036,6 +1146,7 @@ not.
 - [`@alias`](#alias-directive)
 - [`@derive`](#derive-directive)
 - [`@declare`](#declare-directive)
+- [`@filter`](#filter-directive)
 - [`@rel`](#relationship-directive)
 - [`@script`](#script-directive)
 - [`@style`](#style-directive)
@@ -1514,6 +1625,36 @@ of others. Define a faction using a `@faction` element.
 
 This script will be called during game initialization and before the game has
 started.
+
+## <a name="filter-directive">Filter</a>
+
+A `@filter` directive defines a filter function that can be used in a
+subsitution Template Expression. A filter has a name which is how you refer
+to it in a template expression, e.g. `capitalize` and an impl function that
+takes a variable number of parameters (but at least one).
+
+Let's say we wanted to be able to output a numeric attribute replacing any
+value over 4 with "a suffusion of yellow". Here's how we'd do it:
+
+### Example
+
+    @filter SUFFUSION_OF_YELLOW_FILTER begin
+      name: "soyf"
+      impl: (n) => {
+        if(n < 4) {
+          return ""+n;
+        } else {
+          return "a suffusion of yellow";
+        }
+      }
+    end
+
+    and the expression would be
+
+    ${number_value | soyf}
+
+As of v0.10.0 the Rez stdlib defines a number of filters and you can see how
+they are implemented by reading `stdlib.rez`. See also the [filter catalog](#filter-catalog).
 
 ## <a name="game-element">Game</a>
 
@@ -2612,6 +2753,39 @@ zones just create a single zone and define all your locations in it.
 
 This script will be called during game initialization and before the game has
 started.
+
+# <a name="filter_catalog">Filter Catalog</a>
+
+- <a href="#filter_append">`append`</a>
+- <a href="#filter_asset_tag">`asset_tag`</a>
+- <a href="#filter_asset_path">`asset_path`</a>
+- <a href="#filter_bsel">`bsel`</a>
+- <a href="#filter_camelize">`camelize`</a>
+- <a href="#filter_capitalize">`capitalize`</a>
+- <a href="#filter_contains">`contains`</a>
+- <a href="#filter_dec">`dec`</a>
+- <a href="#filter_decision">`decision`</a>
+- <a href="#filter_downcase">`downcase`</a>
+- <a href="#filter_ends_with">`ends_with`</a>
+- <a href="#filter_event">`event`</a>
+- <a href="#filter_gt">`gt`</a>
+- <a href="#filter_gte">`gte`</a>
+- <a href="#filter_eq">`eq`</a>
+- <a href="#filter_inc">`inc`</a>
+- <a href="#filter_lt">`lt`</a>
+- <a href="#filter_lte">`lte`</a>
+- <a href="#filter_ne">`ne`</a>
+- <a href="#filter_pluralize">`pluralize`</a>
+- <a href="#filter_prepend">`prepend`</a>
+- <a href="#filter_scene_change">`scene_change`</a>
+- <a href="#filter_scene_interlude">`scene_interlude`</a>
+- <a href="#filter_scene_resume">`scene_resume`</a>
+- <a href="#filter_sel">`sel`</a>
+- <a href="#filter_starts_with">`starts_with`</a>
+- <a href="#filter_split">`split`</a>
+- <a href="#filter_string">`string`</a>
+- <a href="#filter_trim">`trim`</a>
+- <a href="#filter_upcase">`upcase`</a>
 
 # <a name="task_catalog">Task Catalog</a>
 

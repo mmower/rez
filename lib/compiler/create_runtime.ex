@@ -18,15 +18,6 @@ defmodule Rez.Compiler.CreateRuntime do
   for file <- @js_stdlib_files, do: @external_resource(file)
   @js_stdlib Enum.map_join(@js_stdlib_files, "\n", &File.read!/1)
 
-  # @js_stdlib Path.wildcard("assets/templates/runtime/rez_*.js")
-  # |> Enum.sort()
-  # |> Enum.map(fn file ->
-  #   path = Path.expand(file)
-  #   @external_resource path
-  #   File.read!(path)
-  # end)
-  # |> Enum.join("\n")
-
   EEx.function_from_file(
     :def,
     :init_game_objects,
@@ -38,13 +29,6 @@ defmodule Rez.Compiler.CreateRuntime do
     :def,
     :patch_js_objects,
     Path.expand("assets/templates/runtime/patch_js_objects.js.eex"),
-    [:assigns]
-  )
-
-  EEx.function_from_file(
-    :def,
-    :register_handlebars_helpers,
-    Path.expand("assets/templates/runtime/register_handlebars_helpers.js.eex"),
     [:assigns]
   )
 
@@ -93,8 +77,7 @@ defmodule Rez.Compiler.CreateRuntime do
         js_userlib: js_userlib,
         patch_js_objects: patch_js_objects(game: game),
         init_game_objects: init_game_objects(game: game),
-        register_expression_filters: register_expression_filters(game: game),
-        register_handlebars_helpers: register_handlebars_helpers(game: game)
+        register_expression_filters: register_expression_filters(game: game)
       )
 
     output_path = Path.join(dist_path, "assets/runtime.js")

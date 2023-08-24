@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "0.9.14"
+  @version "0.10.0"
 
   def project do
     case System.get_env("BUILD_MODE") do
@@ -60,7 +60,8 @@ defmodule Rez.MixProject do
       {:burrito, github: "burrito-elixir/burrito", branch: "digit/epmd-shim"},
       {:mime, "~> 2.0"},
       {:rename, "~> 0.1.0"},
-      {:poison, "~> 5.0"}
+      {:poison, "~> 5.0"},
+      {:dialyxir, "~> 1.3", runtime: false}
     ]
   end
 

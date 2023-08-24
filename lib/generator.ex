@@ -11,9 +11,6 @@ defmodule Rez.Generator do
   @external_resource "node_modules/alpinejs/dist/cdn.min.js"
   @alpine_js File.read!("node_modules/alpinejs/dist/cdn.min.js")
 
-  @external_resource "node_modules/handlebars/dist/handlebars.min.js"
-  @handlebars_js File.read!("node_modules/handlebars/dist/handlebars.min.js")
-
   @external_resource "node_modules/bulma/css/bulma.min.css"
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
 
@@ -94,7 +91,6 @@ defmodule Rez.Generator do
     js_path = Path.join(assets_path, "js")
     File.mkdir_p!(js_path)
     File.write!(Path.join(js_path, "alpinejs.min.js"), @alpine_js)
-    File.write!(Path.join(js_path, "handlebars.min.js"), @handlebars_js)
 
     css_path = Path.join(assets_path, "css")
     File.mkdir_p!(css_path)

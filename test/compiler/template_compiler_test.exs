@@ -5,44 +5,55 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   alias Rez.Parser.TemplateParser, as: P
   alias Rez.Parser.TemplateExpressionParser, as: TEP
 
-  @tag :skip
+  # @tag :skip
   test "compiles string chunk to string function" do
-    assert "(bindings, filters) => \"The rain in Spain falls mainly on the plain.\"" =
+    assert "function(bindings, filters) {return `The rain in Spain falls mainly on the plain.`;}" =
              C.compile_chunk("The rain in Spain falls mainly on the plain.")
   end
 
-  @tag :skip
+  # @tag :skip
   test "compile interpolate chunk to interpolate function" do
     {:ok, chunk} = TEP.parse("player.name")
 
-    assert "(bindings, filters) => {const binding = bindings[\"player\"];const attr_val = binding.getAttributeValue(\"name\");return [].reduce((v, f) => f(v), attr_val);}" =
+    assert "function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.getAttribute(\"name\");})(bindings));}" =
              C.compile_chunk({:interpolate, chunk})
   end
 
-  @tag :skip
+  # @tag :skip
   def strip_extraneous_whitespace(s) when is_binary(s) do
     r1 = Regex.replace(~r/\t\n/, s, "")
     Regex.replace(~r/\s+/, r1, " ")
   end
 
-  @tag :skip
+  # @tag :skip
+  test "compile conditional chunk into render function" do
+    chunk = {:conditional, "player.health < 50", "<div>wounded!</div>"}
+
+    assert "function(bindings, filters) {return (player.health < 50) ? `<div>wounded!</div>` : ``;}" =
+             C.compile_chunk(chunk)
+  end
+
+  # @tag :skip
   test "compile chunks into template functions" do
     template = """
     This is text containing an interpolation ${player.name} of the players name.
     """
 
-    assert "function(bindings, filters) {return [(bindings, filters) => \"This is text containing an interpolation \",(bindings, filters) => {const binding = bindings[\"player\"];const attr_val = binding.getAttributeValue(\"name\");return [].reduce((v, f) => f(v), attr_val);},(bindings, filters) => \" of the players name.\n\"].reduce((text, f) => text + f(bindings, filters), \"\")}" =
+    assert "function(bindings, filters) {return [function(bindings, filters) {return `This is text containing an interpolation `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.getAttribute(\"name\");})(bindings));},function(bindings, filters) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}" =
              template |> P.parse() |> C.compile()
   end
 
   # @tag :skip
   test "compiler" do
-    assert "" = "${person.age}" |> P.parse() |> C.compile()
+    assert "function(bindings, filters) {return [function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.person.getAttribute(\"age\");})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}" =
+             "${person.age}" |> P.parse() |> C.compile()
   end
 
-  @tag :skip
+  # @tag :skip
   test "compile interpolate chunk using a value" do
     template = P.parse("${\"year\" | pluralize: player.age}")
-    assert "" = C.compile(template)
+
+    assert "function(bindings, filters) {return [function(bindings, filters) {return [function(bindings, value) {return filters.pluralize(value, (function(bindings) {return bindings.player.getAttribute(\"age\");})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return \"year\";})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}" =
+             C.compile(template)
   end
 end

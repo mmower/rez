@@ -1,4 +1,5 @@
 defmodule Rez.Parser.ValueParsers do
+  alias Rez.Parser.TemplateParser
   alias Ergo.Context
   import Ergo.Combinators
   import Ergo.Terminals
@@ -86,12 +87,20 @@ defmodule Rez.Parser.ValueParsers do
     )
   end
 
-  def convert_heredoc_to_string(chars) do
+  def convert_doc_fragments_to_string(chars) do
     chars
     |> List.to_string()
     |> trim_leading_carriage_return()
     |> trim_tailing_carriage_return()
     |> trim_leading_space()
+  end
+
+  def template_value() do
+    ParserCache.get_parser("tempate", fn ->
+      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("~T~"), literal("~T~"))
+      |> transform(&convert_doc_fragments_to_string/1)
+      |> transform(fn template_source -> {:template, TemplateParser.parse(template_source)} end)
+    end)
   end
 
   def heredoc_value() do
@@ -106,7 +115,7 @@ defmodule Rez.Parser.ValueParsers do
               not_lookahead(here_boundary_parser),
               any()
             ]),
-            ast: fn chars -> convert_heredoc_to_string(chars) end
+            ast: fn chars -> convert_doc_fragments_to_string(chars) end
           ),
           ignore(here_boundary_parser)
         ],
@@ -433,6 +442,7 @@ defmodule Rez.Parser.ValueParsers do
           dice_value(),
           number_value(),
           bool_value(),
+          template_value(),
           heredoc_value(),
           string_value(),
           elem_ref_value(),

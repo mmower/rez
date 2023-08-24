@@ -12,12 +12,6 @@
   pre_runtime: true
 end
 
-@asset _HANDLEBARS_JS begin
-  file_name: "handlebars.min.js"
-  defer: false
-  pre_runtime: true
-end
-
 @asset _BULMA_CSS begin
   file_name: "bulma.min.css"
 end
@@ -375,103 +369,189 @@ end
 %% Template Filters
 %% ----------------------------------------------------------------------------
 
-@filter STRING_FILTER begin
+@filter COMPARE_EQ begin
+  %% v -> v -> bool
+
+  name: "eq"
+  impl: (v1, v2) => {return v1 === v2;}
+end
+
+@filter COMPARE_NE begin
+  %% v -> v -> bool
+
+  name: "ne"
+  impl: (v1, v2) => {return !(v1 === v2);}
+end
+
+@filter COMPARE_GT begin
+  %% n -> n -> bool
+
+  name: "gt"
+  impl: (n1, n2) => {return n1 > n2;}
+end
+
+@filter COMPARE_GTE begin
+  %% n -> n -> bool
+
+  name: "gte"
+  impl: (n1, n2) => {return n1 >= n2;}
+end
+
+@filter COMPARE_LT begin
+  %% n -> n -> bool
+
+  name: "lt"
+  impl: (n1, n2) => {return n1 < n2;}
+end
+
+@filter COMPARE_LTE begin
+  %% n -> n -> bool
+
+  name: "lte"
+  impl: (n1, n2) => {return n1 <= n2;}
+end
+
+@filter BSEL begin
+  %% bool -> array -> any
+
+  name: "bsel"
+  impl: (sel, options) => {return options[sel ? 0 : 1];}
+end
+
+@filter SEL begin
+  %% n -> array -> any
+
+  name: "sel"
+  impl: (idx, options) => {return options[idx];}
+end
+
+@filter INC begin
+  %% n -> n
+
+  name: "inc"
+  impl: (n) => {return n+1;}
+end
+
+@filter DEC begin
+  %% n -> n
+
+  name: "dec"
+  impl: (n) => {return n-1;}
+end
+
+@filter STRING_MAKE_FILTER begin
+  %% any -> String
+
   name: "string"
   impl: (v) => {return ""+s;}
 end
 
-@filter APPEND_FILTER begin
+@filter STRING_APPEND_FILTER begin
+  %% String -> String
+
   name: "append"
   impl: (v, p) => {return v + p;}
 end
 
-@filter CAMELIZE_FILTER begin
+@filter STRING_CAMELIZE_FILTER begin
+  %% String -> String
+
   name: "camelize"
   impl: (v) => {return v.replace(/[_.-](\w|$)/g, function (_, x) {
 		return x.toUpperCase();
 	});}
 end
 
-@filter CAPITALIZE_FILTER begin
+@filter STRING_TRIM_FILTER begin
+  %% String -> String
+  %% ${"  Foo  " | trim} => foo
+
+  name: "trim"
+  impl: (s) => {return s.trim();}
+end
+
+@filter STRING_CAPITALIZE_FILTER begin
+  %% String -> String
   name: "capitalize"
   impl: (v) => {return v.replace(/(^|\s)\S/g, l => l.toUpperCase());}
 end
 
-@filter DOWNCASE_FILTER begin
+@filter STRING_DOWNCASE_FILTER begin
+  %% String -> String
+
   name: "downcase"
   impl: (v) => {return v.toLowerCase();}
 end
 
-@filter PREPEND_FILTER begin
+@filter STRING_PREPEND_FILTER begin
+  %% String -> String
+
   name: "prepend"
   impl: (v, p) => {return p + v;}
 end
 
-@filter UPCASE_FILTER begin
+@filter STRING_UPCASE_FILTER begin
+  %% String -> String
+
   name: "upcase"
   impl: (v) => {return v.toUpperCase();}
 end
 
-@filter PLURALIZE_FILTER begin
+@filter STRING_PLURALIZE_FILTER begin
+  %% String -> String
+
   name: "pluralize"
   impl: (v) => {return pluralize(v);}
 end
 
-@filter SPLIT_FILTER begin
+@filter STRING_SPLIT_FILTER begin
+  %% String -> Array
+
   name: "split"
   impl: (v, p) => {return v.split(p);}
 end
 
-%% ----------------------------------------------------------------------------
-%% Handlebars Helpers
-%% ----------------------------------------------------------------------------
+@filter STRING_STARTS_WITH_FILTER begin
+  %% String -> Bool
 
-@helper ATTR_HELPER begin
-  %% The $attr helper is a shortcut for outputting the value of an attribute of a
-  %% game object. Used as {{attr object "attr_name"}} it returns the attribute
-  %% value and is often used with the binding: attribute.
-
-  name: "attr"
-  args: ["obj" "name"]
-  handler: (obj, name) => {
-    if(typeof(obj) == "undefined" || obj == null) {
-      console.log("In $ object not found");
-      return "";
-    } else {
-      const value = obj.getAttribute(name);
-      if(typeof(value) == "undefined" || value == null) {
-        throw "No attribute " + name + " of object " + obj.id + " could be found!";
-      } else {
-        return new Handlebars.SafeString(value);
-      }
-    }
-  }
+  name: "starts_with"
+  impl: (s, search) => {return s.startsWith(search);}
 end
 
-@helper EVENT_HELPER begin
-  %% The {{event}} handler returns an <a> tag that, when the player clicks on it,
-  %% sends the specified event to the enclosing card.
+@filter STRING_ENDS_WITH_FILTER begin
+  %% String -> Bool
+
+  name: "ends_with"
+  impl: (s, search) => {return s.endsWith(search);}
+end
+
+@filter STRING_CONTAINS_FILTER begin
+  %% String -> Bool
+
+  name: "contains"
+  impl: (s, search) => {return s.includes(search);}
+end
+
+@filter EVENT_LINK_FILTER begin
+  %% String -> Link
+
+  %% ${<Title> | event: <event-id>}
+  %% ${"Go here" | event: "fudge"}
 
   name: "event"
-  args: ["title" "event_name"]
-  handler: (title, event_name) => {
-    return new Handlebars.SafeString("<a href='javascript:void(0);' class='event' data-event='" + event_name + "'>" + title + "</a>");
+  impl: (event, title) => {
+    return "<a href='javascript:void(0);' class='event' data-event='" + event + "'>" + title + "</a>";
   }
 end
 
-@helper LINK_HELPER begin
-  %% The $link handler runs the dynamic link code for the specified card &
-  %% action and either returns a link for taking that action, a deactivated
-  %% link if the action is visible but not available, or an empty string if
-  %% the action shouldn't be visible to the player.
+@filter DECISION_FILTER begin
+  %% ${card | decision: <action>}
+  %% ${card | decision: "can_attack"}
 
-  name: "link"
-  args: ["card" "action"]
-  handler: (card, action) => {
-    let action_handler = card.attributes[action];
-    if(action_handler == null) {
-      throw "No action handler for '" + action + "' on card '" + card.id + "'!";
-    } else if(typeof(action_handler) != "function") {
+  name: "decision"
+  impl: (card, action) => {
+    handler = card.getAttribute(action);
+    if(typeof(handler) != "function") {
       throw "Attribute '" + action + "' of card '" + card.id + "' is not a handler function!";
     } else {
       let link = new RezDynamicLink(card);
@@ -479,9 +559,8 @@ end
       if(!link.choosen) {
         throw new Error("Choice must call one of hide/deny/allow");
       }
-
       if(link.display) {
-        return new Handlebars.SafeString(link.markup);
+        return link.markup;
       } else {
         return "";
       }
@@ -489,77 +568,66 @@ end
   }
 end
 
-@helper SCENE_SHIFT_HELPER begin
-  %% The $shift helper transitions from one scene to another as part of the
-  %% narrative.
+@filter SCENE_CHANGE_FILTER begin
+  %% ${card | scene_change: <scene_id>, <title>}
+  %% ${card | scene_change: "new_scene_id", "Action leading to a new scene"}
 
-  name: "shift"
-  args: ["card" "scene_id" "title"]
-  handler: (card, scene_id, title) => {
-    const new_scene = card.$(scene_id);
-    if(new_scene.game_object_type != "scene") {
-      throw "Attempt to shift to scene with id '" + scene_id + "'. Is of type '" + new_scene.game_object_type + "'";
-    } else {
-      return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='shift' data-target='" + scene_id + "'>" + title + "</a>")
-    }
+  name: "scene_change"
+  impl: (card, scene_id, title) => {
+    return "<a href='javascript:void(0);' data-event='shift' data-target='" + scene_id + "'>" + title + "</a>";
   }
 end
 
-@helper SCENE_INTERLUDE_HELPER begin
-  %% The $interlude helper starts a new scene having prepared the way for the
-  %% original scene to be rejoined at the end of the new scene.
+@filter SCENE_INTERLUDE_FILTER begin
+  %% ${card | scene_interlude: <scene_id>, <title>}
+  %% ${card | scene_interlude: "new_scene_id", "Action leading to a scene interrupt"}
 
-  name: "interlude"
-  args: ["card" "scene_id" "title"]
-  handler: (card, scene_id, title) => {
-    const new_scene = card.$(scene_id);
-    if(new_scene.game_object_type != "scene") {
-      throw "Attempt to interlude to scene with id '" + scene_id + "'. Is of type '" + new_scene.game_object_type + "'";
-    } else {
-      return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='interlude' data-target='" + scene_id + "'>" + title + "</a>")
-    }
+  name: "scene_interlude"
+  impl: (card, scene_id, title) => {
+    return "<a href='javascript:void(0);' data-event='interlude' data-target='" + scene_id + "'>" + title + "</a>";
   }
 end
 
-@helper SCENE_RESUME_HELPER begin
-  %% The $resume helper returns an <a> tag that when clicked ends a scene
-  %% interlude and resumes the previous scene at the point it was before the
-  %% interlude began.
+@filter SCENE_RESUME_FILTER begin
+  %% ${card | scene_resume: <title>}
+  %% ${card | scene_resume "Back to game"}
 
-  name: "resume"
-  args: ["title"]
-  handler: (title) => {
-    return new Handlebars.SafeString("<a href='javascript:void(0);' data-event='resume'>" + title + "</a>");
+  name: "scene_resume"
+  impl: (title) => {
+    return "<a href='javascript:void(0);' data-event='resume'>" + title + "</a>";
   }
 end
 
-@helper ASSET_TAG_HELPER begin
-  %% The $atag helper returns a tag that embeds the file (be it image, movie,
-  %% or audio) referenced by the asset.
+@filter ASSET_TAG_FILTER begin
+  %% ${asset_id | asset_tag}
 
-  name: "atag"
-  args: ["asset_id"]
-  handler: (asset_id) => {
+  name: "asset_tag"
+  impl: (asset_id) => {
     const asset = $(asset_id);
     if(asset == null) {
       throw "Attempt to retrieve asset with id '" + asset_id + "' not found!";
     } else if(asset.game_object_type != "asset") {
       throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
     } else {
-      return new Handlebars.SafeString(asset.tag());
+      return asset.tag();
     }
   }
 end
 
-@helper ASSET_PATH_HELPER begin
-  %% The $apath helper returns the relative path from the HTML to the asset
-  %% file of a given asset.
+@filter ASSET_PATH_FILTER begin
+  %% ${asset_id | asset_path}
+  %% ${"image_01" | asset_path}
 
-  name: "apath"
-  args: ["asset_id"]
-  handler: (asset_id) => {
+  name: "asset_path"
+  impl: (asset_id) => {
     const asset = $(asset_id);
-    return new Handlebars.SafeString(asset.path);
+    if(asset == null) {
+      throw "Attempt to retrieve asset with id '" + asset_id + "' not found!";
+    } else if(asset.game_object_type != "asset") {
+      throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
+    } else {
+      return asset.path;
+    }
   }
 end
 
@@ -570,7 +638,7 @@ end
 @scene default_load_game begin
     initial_card: #default_load_game_form
     layout: """
-    {{{content}}}
+    ${content}
     """
     layout_mode: :single
   end

@@ -37,7 +37,6 @@ defmodule Rez.AST.Game do
             forms: %{},
             generators: %{},
             groups: %{},
-            helpers: %{},
             inventories: %{},
             locations: %{},
             items: %{},
@@ -315,9 +314,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:cards)
     |> NodeHelper.process_collection(:effects)
     |> NodeHelper.process_collection(:factions)
+    |> NodeHelper.process_collection(:filters)
     |> NodeHelper.process_collection(:generators)
     |> NodeHelper.process_collection(:groups)
-    |> NodeHelper.process_collection(:helpers)
     |> NodeHelper.process_collection(:inventories)
     |> NodeHelper.process_collection(:slots)
     |> NodeHelper.process_collection(:items)
@@ -358,9 +357,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.cards))
     |> Utils.append_list(Map.values(game.effects))
     |> Utils.append_list(Map.values(game.factions))
+    |> Utils.append_list(Map.values(game.filters))
     |> Utils.append_list(Map.values(game.generators))
     |> Utils.append_list(Map.values(game.groups))
-    |> Utils.append_list(Map.values(game.helpers))
     |> Utils.append_list(Map.values(game.inventories))
     # We put slot before item since there is a dependency on accepts:
     |> Utils.append_list(Map.values(game.slots))
@@ -377,7 +376,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(game.styles)
   end
 
-  @content_expr ~r/\{\{[\{]?content[\}]?\}\}/
+  @content_expr ~r/\$\{content\}/
 
   def validators(_game) do
     [
@@ -403,7 +402,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
           :string,
           validate_value_matches?(
             @content_expr,
-            "Expects layout attribute to include {{content}} or {{{content}}} expression!"
+            "Game layout attribute is expected to include a ${content} expression!"
           )
         )
       ),

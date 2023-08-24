@@ -6,10 +6,6 @@ defmodule Rez.Compiler.UpdateDeps do
   @alpine_js File.read!("node_modules/alpinejs/dist/cdn.min.js")
   @alpine_js_time Utils.file_ctime!("node_modules/alpinejs/dist/cdn.min.js")
 
-  @external_resource "node_modules/handlebars/dist/handlebars.min.js"
-  @handlebars_js File.read!("node_modules/handlebars/dist/handlebars.min.js")
-  @handlebars_js_time Utils.file_ctime!("node_modules/handlebars/dist/handlebars.min.js")
-
   @external_resource "node_modules/bulma/css/bulma.min.css"
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
   @bulma_css_time Utils.file_ctime!("node_modules/bulma/css/bulma.min.css")
@@ -49,7 +45,6 @@ defmodule Rez.Compiler.UpdateDeps do
   def run_phase(%Compilation{status: :ok} = compilation) do
     compilation
     |> conditionally_write_asset("js", "alpinejs.min.js", @alpine_js, @alpine_js_time)
-    |> conditionally_write_asset("js", "handlebars.min.js", @handlebars_js, @handlebars_js_time)
     |> conditionally_write_asset("css", "bulma.min.css", @bulma_css, @bulma_css_time)
     |> conditionally_write_asset("js", "pluralize.js", @pluralize_js, @pluralize_js_time)
   end

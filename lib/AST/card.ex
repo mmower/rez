@@ -64,12 +64,13 @@ defmodule Rez.AST.Card do
   @scene_shift_syntax ~r/\[\[([^|]*)\|\>\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
 
   @doc """
-  Convert a link in the form `[[Title|><scene-id>]]` into a scene shift
-  Handlebars helper call.
+  Convert a link in the form `[[Title|><scene-id>]]` into a scene change
+  template expression.
   """
   def convert_scene_shift_links(text) do
     Regex.replace(@scene_shift_syntax, text, fn _, title, scene_id ->
-      "{{shift card '#{String.trim(scene_id)}' '#{String.trim(title)}'}}"
+      title = String.trim(title)
+      "${card | scene_change: \"#{scene_id}\", \"#{title}\"}"
     end)
   end
 
@@ -77,50 +78,53 @@ defmodule Rez.AST.Card do
 
   @doc """
   Convert a link in the form `[[Title|!<scene-id>]]` into a scene interlude
-  Handlebars helper call.
+  template expression.
   """
   def convert_scene_interlude_links(text) do
     Regex.replace(@scene_interlude_syntax, text, fn _, title, scene_id ->
-      "{{interlude card '#{scene_id}' '#{title}'}}"
+      title = String.trim(title)
+
+      "${card | scene_interlude: \"#{scene_id}\", \"#{title}\"}"
     end)
   end
 
   @scene_resume_syntax ~r/\[\[([^|]+)\|\s*!!\]\]/
 
   @doc """
-  Converts a form `[[Link Text|!!]] into an invocation of the `r_resume` Handlebars helpers.
+  Converts a form `[[Link Text|!!]] into a scene resume template expression.
   """
   def convert_resume_links(text) do
     Regex.replace(@scene_resume_syntax, text, fn _, title ->
-      "{{resume '#{title}'}}"
+      title = String.trim(title)
+      "${card | scene_resume: \"#{title}\"}"
     end)
   end
 
   # Events are [[Title|*event_name]]
   # E.g. [[Save Game|*save]]
-  # This will generate a link that will dispatch 'on_save' to the card
   @event_syntax ~r/\[\[([^|]+)\|\*\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
 
+  @doc """
+  Convert a link in the form `[[Title|*<event_name>]]` e.g.
+  `[[Load Game|load_game]]` into an event generator template expression,
+  e.g. ${"load_game" | event: "Load Game"}
+  """
   def convert_event_links(text) do
     Regex.replace(@event_syntax, text, fn _, title, event_name ->
-      "{{event '#{String.trim(title)}' '#{String.trim(event_name)}'}}"
+      event_name = String.trim(event_name)
+      title = String.trim(title)
+      "${\"#{event_name}\" | event: \"#{title}\"}"
     end)
   end
 
   @doc """
-  Converts a link in the form [[*id]] into a dynamic link using a Handlebars custom
-  helper function "dlink" that is part of the runtime. It is assumed that card will
-  be available in the helper context. The 'action' is the name of a function attribute
-  in the card that will control the dynamic link.
-
-  See: Card.render() which always passes the current card into the bindings under
-  the key 'card' which is referenced in the {{{dlink}}}
-
-  Note that {{{}}} vs {{}} prevents escaping the returned HTML.
+  Convert a link in the form [[*<attribute-name>]] into a dynamic link
+  template expression using the `dynamic_link` filter to trigger a dynamic
+  link that can generate a link, a disabled link, or nothing at all.
   """
   def convert_dynamic_links(text) do
     Regex.replace(~r/\[\[\*([\w\s]+)\]\]/, text, fn _, action ->
-      "{{link card '#{action}'}}"
+      "${card | link: \"#{action}\"}"
     end)
   end
 
@@ -158,8 +162,6 @@ defmodule Rez.AST.Card do
   @doc ~S"""
   ## Examples
       iex> alias Rez.AST.{NodeHelper, Card}
-      iex> Rez.Debug.start_link(0)
-      iex> Rez.Handlebars.start_link("cache")
       iex> card = %Card{id: "test"} |> NodeHelper.set_string_attr("content", "This is **bold** text") |> Card.process()
       iex> assert %{
       ...>  status: :ok,

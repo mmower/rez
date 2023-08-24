@@ -15,7 +15,6 @@ defmodule Rez.Compiler.Compilation do
             path: nil,
             dist_path: nil,
             cache_path: nil,
-            handlebars_cmd: nil,
             game: nil,
             progress: [],
             errors: []

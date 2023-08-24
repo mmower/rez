@@ -27,7 +27,6 @@ defmodule Rez.Compiler do
     Rez.Compiler.MakeAssetPath,
     Rez.Compiler.MakeCachePath,
     Rez.Compiler.UpdateDeps,
-    Rez.Compiler.StartHandlebars,
     Rez.Compiler.CopyStdlib,
     Rez.Compiler.ReadSource,
     Rez.Compiler.ParseSource,

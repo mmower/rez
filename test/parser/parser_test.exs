@@ -53,9 +53,9 @@ defmodule Rez.Parser.ParserTest do
 
     assert :ok = status
 
-    assert %Rez.AST.Script{
-             code: "// Javascript code goes here"
-           } = ast
+    content = NodeHelper.get_string_attribute(ast, "$content") |> String.trim()
+
+    assert ^content = "// Javascript code goes here"
   end
 
   test "parses style block" do
@@ -70,9 +70,9 @@ defmodule Rez.Parser.ParserTest do
 
     assert :ok = status
 
-    assert %Rez.AST.Style{
-             styles: "# CSS styles go here"
-           } = ast
+    content = NodeHelper.get_string_attribute(ast, "$content") |> String.trim()
+
+    assert ^content = "# CSS styles go here"
   end
 
   test "parses actor block" do

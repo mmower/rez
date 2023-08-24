@@ -70,7 +70,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def children(_scene), do: []
 
-  @content_expr ~r/\{\{[\{]?content[\}]?\}\}/
+  @content_expr ~r/\$\{content\}/
 
   def validators(_scene) do
     [
@@ -84,7 +84,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
           :string,
           validate_value_matches?(
             @content_expr,
-            "Expects layout attribute to include {{content}} or {{{content}}} expression!"
+            "Scene layout attribute is expected to include a ${content} expression!"
           )
         )
       ),

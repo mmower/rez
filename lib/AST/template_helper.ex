@@ -1,11 +1,14 @@
 defmodule Rez.AST.TemplateHelper do
   @moduledoc """
-  Tools to convert attributes representing templates into Handlebars pre-compiled
-  template functions.
+  Tools to convert attributes representing templates into Rez pre-compiled
+  template expression functions.
   """
   alias Rez.AST.NodeHelper
-  alias Rez.{Debug, Handlebars}
+  alias Rez.Debug
   import Rez.Utils
+
+  alias Rez.Compiler.TemplateCompiler
+  alias Rez.Parser.TemplateParser
 
   def prepare_content(markup) when is_binary(markup) do
     markup
@@ -39,12 +42,21 @@ defmodule Rez.AST.TemplateHelper do
 
     if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.html", html)
 
-    case Handlebars.compile(html, "#{id}/#{source_attr}") do
-      {:ok, template} ->
-        NodeHelper.set_template_attr(node, "#{source_attr}_template", template)
+    template = TemplateParser.parse(html)
+    if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.t1", inspect(template))
 
-      {:error, message} ->
-        NodeHelper.add_error(node, message)
-    end
+    compiled_template = TemplateCompiler.compile(template)
+    if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.t2", compiled_template)
+
+    template =
+      html
+      |> TemplateParser.parse()
+      |> TemplateCompiler.compile()
+
+    NodeHelper.set_template_attr(
+      node,
+      "#{source_attr}_template",
+      template
+    )
   end
 end

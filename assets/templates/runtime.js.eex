@@ -18,9 +18,6 @@ window.Rez = window.Rez ?? {};
 // Expression Filters
 <%= @register_expression_filters %>
 
-// Handlebars helpers
-<%= @register_handlebars_helpers %>
-
 // Initialise Game Objects
 <%= @init_game_objects %>
 

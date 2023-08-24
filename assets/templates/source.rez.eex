@@ -18,9 +18,9 @@
   initial_scene: #scene_one
   on_init: (game, event) => {console.log("Beginning the game");}
 
-  layout: """
-  {{{content}}}
-  """
+  layout: ~T~
+  ${content}
+  ~T~
 
   %(stdlib.rez)
 

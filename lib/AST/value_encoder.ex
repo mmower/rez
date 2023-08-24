@@ -80,7 +80,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:template, t}) do
-    "Handlebars.template(#{t})"
+    t
   end
 
   defp encode_list(l) do
@@ -93,11 +93,6 @@ defmodule Rez.AST.ValueEncoder do
     arg_list = Enum.join(args, ", ")
     "function(#{arg_list}) #{body}"
   end
-
-  # def encode_std_function({args, body}) do
-  #   arg_list = Enum.join(args, ", ")
-  #   "function(#{arg_list}) #{body}"
-  # end
 
   def encode_function({:arrow, args, body}) do
     arg_list = Enum.join(args, ", ")

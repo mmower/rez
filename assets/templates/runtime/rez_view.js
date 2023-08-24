@@ -66,11 +66,13 @@ let block_proto = {
   },
 
   renderBlock(block_type, active) {
-    return this.getTemplate()({
+    const bindings = {
       [block_type]: this.source,
       ...this.bindValues(),
       ...this.bindBlocks(active),
-    });
+    };
+
+    return this.getTemplate()(bindings, Rez.template_expression_filters);
   },
 
   getCSSClasses(block_type, active) {

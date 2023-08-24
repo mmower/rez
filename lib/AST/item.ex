@@ -23,7 +23,6 @@ defmodule Rez.AST.Item do
             position: {nil, 0, 0},
             attributes: %{}
 
-  # Items support a handlebars template for their 'description' attribute
   def process(%Item{} = item) do
     item
     |> set_defaults()

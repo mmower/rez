@@ -8,10 +8,6 @@ defmodule Rez.Compiler.NodeCheck do
   alias Rez.Compiler.Compilation
 
   def run_phase(%Compilation{status: :ok, game: game} = compilation) do
-    # We know we're possibly creating temporary files during node processing
-    # e.g. to interact with Handlebars, so ensure they are cleaned up when we
-    # exit
-
     case Enum.reject(Game.all_nodes(game), &(&1.status == :ok)) do
       [] ->
         compilation
