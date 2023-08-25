@@ -10,7 +10,7 @@ defmodule Rez.Compiler.ReadSource do
 
   @macros [
     LogicalFile.Macros.Include.invocation(expr: ~r/^\s*%\((?<file>.*)\)/),
-    LogicalFile.Macros.LineComment.invocation(expr: ~r/^\s*%%/)
+    Rez.Compiler.CommentMacro.invocation([])
   ]
 
   @doc """
