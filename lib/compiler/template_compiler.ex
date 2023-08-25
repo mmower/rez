@@ -81,7 +81,7 @@ defmodule Rez.Compiler.TemplateCompiler do
       do:
         js_apply_fn(
           bindings_map_name,
-          ~s|#{bindings_map_name}.#{binding_name}.getAttribute("#{attribute_name}")|
+          ~s|#{bindings_map_name}.#{binding_name}.#{attribute_name}|
         )
   end
 
