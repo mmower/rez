@@ -87,9 +87,14 @@ defmodule Rez.Parser.ValueParsers do
     )
   end
 
-  def convert_doc_fragments_to_string(chars) do
+  def convert_doc_fragments_to_string(chars) when is_list(chars) do
     chars
     |> List.to_string()
+    |> convert_doc_fragments_to_string()
+  end
+
+  def convert_doc_fragments_to_string(s) when is_binary(s) do
+    s
     |> trim_leading_carriage_return()
     |> trim_tailing_carriage_return()
     |> trim_leading_space()
@@ -97,9 +102,9 @@ defmodule Rez.Parser.ValueParsers do
 
   def template_value() do
     ParserCache.get_parser("tempate", fn ->
-      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("~T~"), literal("~T~"))
+      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("```"), literal("```"))
       |> transform(&convert_doc_fragments_to_string/1)
-      |> transform(fn template_source -> {:template, TemplateParser.parse(template_source)} end)
+      |> transform(fn template_source -> TemplateParser.parse(template_source) end)
     end)
   end
 

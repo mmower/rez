@@ -6,6 +6,7 @@ defmodule Rez.Parser.ParserTest do
   alias Ergo.{Context, Telemetry}
   alias LogicalFile
 
+  alias Rez.AST.NodeHelper
   import Rez.Parser.Parser
   import Rez.Compiler.ReadSource
 
@@ -49,11 +50,11 @@ defmodule Rez.Parser.ParserTest do
     """
 
     %Context{status: status, ast: ast} =
-      Ergo.parse(script_block(), input, data: %{source: dummy_source(input)})
+      Ergo.parse(script_block(), input, data: %{id_map: %{}, source: dummy_source(input)})
 
     assert :ok = status
 
-    content = NodeHelper.get_string_attribute(ast, "$content") |> String.trim()
+    content = NodeHelper.get_attr_value(ast, "$content") |> String.trim()
 
     assert ^content = "// Javascript code goes here"
   end
@@ -66,11 +67,11 @@ defmodule Rez.Parser.ParserTest do
     """
 
     %Context{status: status, ast: ast} =
-      Ergo.parse(style_block(), input, data: %{source: dummy_source(input)})
+      Ergo.parse(style_block(), input, data: %{id_map: %{}, source: dummy_source(input)})
 
     assert :ok = status
 
-    content = NodeHelper.get_string_attribute(ast, "$content") |> String.trim()
+    content = NodeHelper.get_attr_value(ast, "$content") |> String.trim()
 
     assert ^content = "# CSS styles go here"
   end
@@ -290,5 +291,19 @@ defmodule Rez.Parser.ParserTest do
                }
              }
            } = context.ast
+  end
+
+  test "parses template" do
+    source = ~s|```The players name is ${player.name}```|
+
+    assert %{
+             status: :ok,
+             ast:
+               {:template,
+                [
+                  "The players name is ",
+                  {:interpolate, {:expression, {:attribute, "player", "name"}, []}}
+                ]}
+           } = Ergo.parse(Rez.Parser.ValueParsers.value(), source)
   end
 end
