@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "0.10.3"
+  @version "0.10.4"
 
   def project do
     case System.get_env("BUILD_MODE") do
@@ -61,7 +61,8 @@ defmodule Rez.MixProject do
       {:mime, "~> 2.0"},
       {:rename, "~> 0.1.0"},
       {:poison, "~> 5.0"},
-      {:dialyxir, "~> 1.3", runtime: false}
+      {:dialyxir, "~> 1.3", runtime: false},
+      {:apex, "~>1.2.1"}
     ]
   end
 

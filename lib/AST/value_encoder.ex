@@ -11,7 +11,7 @@ defmodule Rez.AST.ValueEncoder do
   def encode_attributes(attributes) when is_map(attributes) do
     attributes
     |> Map.values()
-    |> Enum.reject(&internal_attribute/1)
+    |> Enum.reject(&internal_attribute?/1)
     |> Enum.map(&encode_attribute/1)
     |> Enum.into(%{})
     |> to_js_code()
@@ -33,7 +33,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:string, s}) do
-    "\"" <> encode_dquotes_and_newlines(s) <> "\""
+    ~s|"#{encode_dquotes_and_newlines(s)}"|
   end
 
   def encode_value({:dstring, s}) do
@@ -41,7 +41,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:keyword, k}) do
-    "\"#{k}\""
+    ~s|"#{k}"|
   end
 
   def encode_value({:dynamic_initializer, i}) do
@@ -49,7 +49,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:elem_ref, r}) do
-    "\"#{r}\""
+    ~s|"#{r}"|
   end
 
   def encode_value({:function, f}) do
@@ -79,7 +79,7 @@ defmodule Rez.AST.ValueEncoder do
     encode_attributes(t)
   end
 
-  def encode_value({:template, t}) do
+  def encode_value({:compiled_template, t}) do
     t
   end
 
@@ -153,7 +153,7 @@ defmodule Rez.AST.ValueEncoder do
 
   # Predicate for filtering attributes that should not be exposed to the JS
   # runtime.
-  defp internal_attribute(%{name: name}) do
+  defp internal_attribute?(%{name: name}) do
     String.starts_with?(name, "_")
   end
 

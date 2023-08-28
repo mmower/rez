@@ -112,7 +112,7 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  def find_attribute(game, node, attr_key) do
+  def find_attribute(game, node, attr_key) when not is_nil(node) and is_binary(attr_key) do
     Search.search(
       node,
       fn %{attributes: attributes} = _node ->
@@ -126,7 +126,7 @@ defmodule Rez.AST.NodeValidator do
       end,
       fn %{attributes: attributes} ->
         attributes
-        |> Map.get("$parents", %{value: []})
+        |> Map.get("$parents", Attribute.list("$parents", []))
         |> Map.get(:value)
         |> Enum.map(fn {:keyword, parent_id} ->
           Map.get(game.by_id, to_string(parent_id))

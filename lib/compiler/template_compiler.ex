@@ -20,10 +20,10 @@ defmodule Rez.Compiler.TemplateCompiler do
 
   def js_create_fn(expr), do: ~s|function(bindings, filters) {return #{expr};}|
 
-  def compile({:template, chunks}) do
+  def compile({:source_template, chunks}) do
     compiled_chunks = compile_chunks(chunks)
     reducer = ~s|function(text, f) {return text + f(bindings, filters)}|
-    js_create_fn(~s|#{compiled_chunks}.reduce(#{reducer}, "")|)
+    {:compiled_template, js_create_fn(~s|#{compiled_chunks}.reduce(#{reducer}, "")|)}
   end
 
   def compile_chunks(chunks) when is_list(chunks) do

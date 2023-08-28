@@ -1,12 +1,15 @@
 defmodule Rez.Parser.ValueParsers do
-  alias Rez.Parser.TemplateParser
+  alias Rez.Compiler.TemplateCompiler
   alias Ergo.Context
+
   import Ergo.Combinators
   import Ergo.Terminals
   import Ergo.Numeric
   import Ergo.Meta
 
   alias Rez.Parser.ParserCache
+  alias Rez.Parser.TemplateParser
+
   import Rez.Parser.DefaultParser
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
@@ -100,11 +103,17 @@ defmodule Rez.Parser.ValueParsers do
     |> trim_leading_space()
   end
 
+  @doc ~S"""
+  template_value() parses ```template source``` into a {:compiled_template, <function source>}
+  """
   def template_value() do
+    template_delimiter = literal("```")
+
     ParserCache.get_parser("tempate", fn ->
-      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("```"), literal("```"))
+      Rez.Parser.DelimitedParser.text_delimited_by_parsers(template_delimiter, template_delimiter)
       |> transform(&convert_doc_fragments_to_string/1)
       |> transform(fn template_source -> TemplateParser.parse(template_source) end)
+      |> transform(fn template -> TemplateCompiler.compile(template) end)
     end)
   end
 

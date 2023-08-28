@@ -38,35 +38,37 @@ defmodule Rez.Parser.UtilityParsers do
 
   def bar(), do: ParserCache.get_parser("bar", fn -> char(?|) end)
 
-  def at(), do: char(?@)
+  def at(), do: ParserCache.get_parser("at", fn -> char(?@) end)
 
-  def open_brace(), do: char(?{)
+  def open_brace(), do: ParserCache.get_parser("open_brace", fn -> char(?{) end)
 
-  def close_brace(), do: char(?})
+  def close_brace(), do: ParserCache.get_parser("close_brace", fn -> char(?}) end)
 
-  def open_paren(), do: char(?()
+  def open_paren(), do: ParserCache.get_parser("open_paren", fn -> char(?() end)
 
-  def close_paren(), do: char(?))
+  def close_paren(), do: ParserCache.get_parser("close_paren", fn -> char(?)) end)
 
-  def open_bracket(), do: char(?[)
+  def open_bracket(), do: ParserCache.get_parser("open_bracket", fn -> char(?[) end)
 
-  def close_bracket(), do: char(?])
+  def close_bracket(), do: ParserCache.get_parser("close_bracket", fn -> char(?]) end)
 
-  def left_angle_bracket(), do: char(?<)
+  def left_angle_bracket(), do: ParserCache.get_parser("left_angle_bracket", fn -> char(?<) end)
 
-  def right_angle_bracket(), do: char(?>)
+  def right_angle_bracket(), do: ParserCache.get_parser("right_angle_bracket", fn -> char(?>) end)
 
-  def amp(), do: char(?&)
+  def amp(), do: ParserCache.get_parser("ampersand", fn -> char(?&) end)
 
-  def caret(), do: char(?^)
+  def caret(), do: ParserCache.get_parser("caret", fn -> char(?^) end)
 
-  def forward_slash(), do: char(?/)
+  def forward_slash(), do: ParserCache.get_parser("forward_slash", fn -> char(?/) end)
 
-  def arrow(), do: literal("=>")
+  def arrow(), do: ParserCache.get_parser("arrow", fn -> literal("=>") end)
 
-  def block_begin(_block_type), do: ignore(literal("begin"))
+  def block_begin(_block_type),
+    do: ParserCache.get_parser("block_begin", fn -> ignore(literal("begin")) end)
 
-  def block_end(_block_type), do: ignore(literal("end"))
+  def block_end(_block_type),
+    do: ParserCache.get_parser("block_end", fn -> ignore(literal("end")) end)
 
   def elem_start_char(),
     do: ParserCache.get_parser("elem_start_char", fn -> char([?a..?z, ?A..?Z]) end)

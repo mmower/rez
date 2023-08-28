@@ -124,7 +124,7 @@ defmodule Rez.Parser.TemplateParser do
         helper(),
         string()
       ]),
-      ast: fn ast -> {:template, ast} end
+      ast: fn ast -> {:source_template, ast} end
     )
   end
 

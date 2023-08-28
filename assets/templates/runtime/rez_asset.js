@@ -100,10 +100,9 @@ let asset_proto = {
   },
 };
 
-function RezAsset(id, path, attributes) {
+function RezAsset(id, attributes) {
   this.id = id;
   this.game_object_type = "asset";
-  this.path = path;
   this.attributes = attributes;
   if (!this.isTemplateObject()) {
     this.type = this.assetType();

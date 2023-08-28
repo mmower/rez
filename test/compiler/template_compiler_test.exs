@@ -39,13 +39,15 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     This is text containing an interpolation ${player.name} of the players name.
     """
 
-    assert ~s|function(bindings, filters) {return [function(bindings, filters) {return `This is text containing an interpolation `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));},function(bindings, filters) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}| =
+    assert {:compiled_template,
+            ~s|function(bindings, filters) {return [function(bindings, filters) {return `This is text containing an interpolation `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));},function(bindings, filters) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
              template |> P.parse() |> C.compile()
   end
 
   # @tag :skip
   test "compiler" do
-    assert ~s|function(bindings, filters) {return [function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.person.age;})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}| =
+    assert {:compiled_template,
+            ~s|function(bindings, filters) {return [function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.person.age;})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
              "${person.age}" |> P.parse() |> C.compile()
   end
 
@@ -53,7 +55,8 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   test "compile interpolate chunk using a value" do
     template = P.parse("${\"year\" | pluralize: player.age}")
 
-    assert ~s|function(bindings, filters) {return [function(bindings, filters) {return [function(bindings, value) {return filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return "year";})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}| =
+    assert {:compiled_template,
+            ~s|function(bindings, filters) {return [function(bindings, filters) {return [function(bindings, value) {return filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return "year";})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
              C.compile(template)
   end
 end

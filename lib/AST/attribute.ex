@@ -30,7 +30,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:keyword, value}), do: keyword(name, value)
   def create(name, {:list, values}), do: list(name, values)
   def create(name, {:set, values}), do: set(name, values)
-  def create(name, {:template, value}), do: template(name, value)
+  def create(name, {:compiled_template, value}), do: compiled_template(name, value)
 
   def boolean(name, value) do
     %Attribute{name: name, type: :boolean, value: value}
@@ -60,7 +60,7 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :keyword, value: value}
   end
 
-  def list(name, values) do
+  def list(name, values) when is_list(values) do
     %Attribute{name: name, type: :list, value: values}
   end
 
@@ -72,8 +72,8 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :set, value: values}
   end
 
-  def template(name, value) do
-    %Attribute{name: name, type: :template, value: value}
+  def compiled_template(name, value) when is_binary(value) do
+    %Attribute{name: name, type: :compiled_template, value: value}
   end
 
   def is_elem_ref?(%Attribute{type: :elem_ref}), do: true

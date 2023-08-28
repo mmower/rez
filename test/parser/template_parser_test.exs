@@ -8,14 +8,14 @@ defmodule Rez.Parser.TemplateParserTest do
   # @tag :skip
   test "parses \\" do
     template = "\\"
-    assert {:template, ["\\"]} = TP.parse(template)
+    assert {:source_template, ["\\"]} = TP.parse(template)
   end
 
   # @tag :skip
   test "parses \\$" do
     template = "\\$"
 
-    assert {:template, ["$"]} = TP.parse(template)
+    assert {:source_template, ["$"]} = TP.parse(template)
   end
 
   # @tag :skip
@@ -24,7 +24,7 @@ defmodule Rez.Parser.TemplateParserTest do
     Here is a string, it has no interpolation.
     """
 
-    assert {:template, [^template]} = TP.parse(template)
+    assert {:source_template, [^template]} = TP.parse(template)
   end
 
   # @tag :skip
@@ -33,7 +33,7 @@ defmodule Rez.Parser.TemplateParserTest do
     Here is a string containing ${player.name} as an interpolation.
     """
 
-    assert {:template,
+    assert {:source_template,
             [
               "Here is a string containing ",
               {:interpolate, {:expression, {:attribute, "player", "name"}, []}},
@@ -47,7 +47,7 @@ defmodule Rez.Parser.TemplateParserTest do
     Here is a string without an \\${test} interpolation.
     """
 
-    assert {:template, ["Here is a string without an ", "$", "{test} interpolation.\n"]} =
+    assert {:source_template, ["Here is a string without an ", "$", "{test} interpolation.\n"]} =
              TP.parse(template)
   end
 
@@ -57,7 +57,7 @@ defmodule Rez.Parser.TemplateParserTest do
     Interpolate both ${player.name} and ${player.age]} for completeness.
     """
 
-    assert {:template,
+    assert {:source_template,
             [
               "Interpolate both ",
               {:interpolate, {:expression, {:attribute, "player", "name"}, []}},
@@ -84,7 +84,7 @@ defmodule Rez.Parser.TemplateParserTest do
     </div>
     """
 
-    assert {:template,
+    assert {:source_template,
             [
               "<div data-card=\"block_header\" class=\"card\"><div class=\"columns box\">\n  <div class=\"column\">  <h1 class=\"title\">The Rain in Spain falls mainly on the plain!</h1>  </div></div>\n</div>\n"
             ]} = TP.parse(template)
@@ -108,7 +108,7 @@ defmodule Rez.Parser.TemplateParserTest do
     %}</div>
     """
 
-    assert {:template,
+    assert {:source_template,
             [
               "<div>",
               {:conditional, "player.health < 50", "\n  <div>Wounded</div>\n"},

@@ -40,7 +40,7 @@ defmodule Rez.Compiler.CopyAssets do
     else
       file_name = Asset.file_name(asset)
       destination_path = Path.join([dist_path, Config.asset_path_name(), file_name])
-      asset_path = NodeHelper.get_attr_value(asset, "_path")
+      asset_path = NodeHelper.get_attr_value(asset, "$path")
 
       compilation
       |> check_asset_exists(asset_path)

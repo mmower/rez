@@ -299,11 +299,8 @@ defmodule Rez.Parser.ParserTest do
     assert %{
              status: :ok,
              ast:
-               {:template,
-                [
-                  "The players name is ",
-                  {:interpolate, {:expression, {:attribute, "player", "name"}, []}}
-                ]}
+               {:compiled_template,
+                "function(bindings, filters) {return [function(bindings, filters) {return `The players name is `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}"}
            } = Ergo.parse(Rez.Parser.ValueParsers.value(), source)
   end
 end

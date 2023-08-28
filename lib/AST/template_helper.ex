@@ -53,7 +53,7 @@ defmodule Rez.AST.TemplateHelper do
       |> TemplateParser.parse()
       |> TemplateCompiler.compile()
 
-    NodeHelper.set_template_attr(
+    NodeHelper.set_compiled_template_attr(
       node,
       "#{source_attr}_template",
       template

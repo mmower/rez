@@ -70,7 +70,7 @@ defmodule Rez.AST.Asset do
   file.
   """
   def file_path(%Asset{} = asset) do
-    NodeHelper.get_attr_value(asset, "_path")
+    NodeHelper.get_attr_value(asset, "$path")
   end
 
   def file_name(%Asset{} = asset) do
@@ -91,7 +91,10 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Asset do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Asset, ValueEncoder}
+  alias Rez.AST.Asset
+  alias Rez.AST.NodeHelper
+
+  defdelegate js_initializer(asset), to: NodeHelper
 
   def node_type(_asset), do: "asset"
 
@@ -99,32 +102,20 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     NodeHelper.get_attr_value(asset, "js_ctor", "RezAsset")
   end
 
-  def js_initializer(%Asset{} = asset) do
-    asset_path =
-      if NodeHelper.is_template?(asset) do
-        ""
-      else
-        Asset.asset_path(asset)
-      end
-
-    """
-    new #{js_ctor(asset)}(
-      "#{asset.id}",
-      "#{asset_path}",
-      #{ValueEncoder.encode_attributes(asset.attributes)}
-    )
-    """
-  end
-
   def default_attributes(_asset), do: %{}
 
   def pre_process(asset) do
-    %{asset | path_info: Asset.search(asset)}
+    # Template assets should not define a path or be searched for
+    if !NodeHelper.get_attr_value(asset, "$template", false) do
+      %{asset | path_info: Asset.search(asset)}
+    else
+      asset
+    end
   end
 
   def process(%Asset{path_info: [path]} = asset) do
     asset
-    |> NodeHelper.set_string_attr("_path", path)
+    |> NodeHelper.set_string_attr("$path", path)
     |> NodeHelper.set_string_attr("detected_mime_type", MIME.from_path(path))
   end
 

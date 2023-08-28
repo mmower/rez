@@ -65,7 +65,7 @@ defmodule Rez.Compiler.CreateRuntime do
       |> Game.js_runtime_assets()
       |> Enum.map(fn %Asset{} = asset ->
         asset
-        |> NodeHelper.get_attr_value("_path")
+        |> NodeHelper.get_attr_value("$path")
         |> File.read!()
       end)
       |> Enum.join("\n\n")

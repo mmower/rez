@@ -1,4 +1,5 @@
 %{
+  "apex": {:hex, :apex, "1.2.1", "297f5dac23fa2a32648b890a0838fce2772114010e0b9ec975cae6021cc5a092", [:mix], [], "hexpm", "379e2515fa5da7a5ac91ecceba782169d1a734e7e09e5f473e4e85576728b65f"},
   "bunt": {:hex, :bunt, "0.2.1", "e2d4792f7bc0ced7583ab54922808919518d0e57ee162901a16a1b6664ef3b14", [:mix], [], "hexpm", "a330bfb4245239787b15005e66ae6845c9cd524a288f0d141c148b02603777a5"},
   "burrito": {:git, "https://github.com/burrito-elixir/burrito.git", "1610620ecb8bf5861b92982e72b731eb91c2ec90", [branch: "digit/epmd-shim"]},
   "castore": {:hex, :castore, "0.1.18", "deb5b9ab02400561b6f5708f3e7660fc35ca2d51bfc6a940d2f513f89c2975fc", [:mix], [], "hexpm", "61bbaf6452b782ef80b33cdb45701afbcf0a918a45ebe7e73f1130d661e66a06"},

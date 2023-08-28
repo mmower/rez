@@ -72,10 +72,6 @@ defmodule Rez.AST.Game do
     %{game | relationships: Map.put(relationships, source, {target, affinity})}
   end
 
-  def add_child(%{} = child, %Game{} = game) do
-    add_dynamic_child(game, child)
-  end
-
   #
   # We use a Map->MapSet here because a keyword might be derived from more than
   # one parent keyword, e.g.
@@ -87,6 +83,10 @@ defmodule Rez.AST.Game do
   def add_child({:derive, tag, parent}, %Game{is_a: is_a} = game)
       when is_binary(tag) and is_binary(parent) do
     %{game | is_a: TypeHierarchy.add(is_a, tag, parent)}
+  end
+
+  def add_child(%{} = child, %Game{} = game) do
+    add_dynamic_child(game, child)
   end
 
   defp add_dynamic_child(%Game{by_id: by_id} = game, %{id: child_id} = child) do
@@ -175,12 +175,6 @@ defmodule Rez.AST.Game do
   def js_classes_to_init() do
     @js_classes_to_init
   end
-
-  # def has_inventory_with_kind?(%Game{} = game, kind) do
-  #   Enum.any?(game.inventories, fn {_id, inventory} ->
-  #     NodeHelper.get_attr_value(inventory, "kind") == kind
-  #   end)
-  # end
 
   # Search the is_a tree for a connection between "tag" and "parent"
   def is_a(_, tag, tag), do: true
