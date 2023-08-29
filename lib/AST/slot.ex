@@ -37,14 +37,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
   alias Rez.AST.Slot
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(slot), to: NodeHelper
+
   def node_type(_slot), do: "slot"
 
   def js_ctor(slot) do
     NodeHelper.get_attr_value(slot, "js_ctor", "RezSlot")
-  end
-
-  def js_initializer(slot) do
-    NodeHelper.js_initializer(slot)
   end
 
   def default_attributes(_slot), do: %{}

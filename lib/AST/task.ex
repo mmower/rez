@@ -16,14 +16,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(task), to: NodeHelper
+
   def node_type(_task), do: "task"
 
   def js_ctor(task) do
     NodeHelper.get_attr_value(task, "js_ctor", "RezTask")
-  end
-
-  def js_initializer(task) do
-    NodeHelper.js_initializer(task)
   end
 
   def default_attributes(_task), do: %{}

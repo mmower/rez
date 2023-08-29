@@ -87,14 +87,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
   alias Rez.AST.{NodeHelper, Game, Item}
   alias Rez.AST.Node
 
+  defdelegate js_initializer(item), to: NodeHelper
+
   def node_type(_item), do: "item"
 
   def js_ctor(item) do
     NodeHelper.get_attr_value(item, "js_ctor", "RezItem")
-  end
-
-  def js_initializer(item) do
-    NodeHelper.js_initializer(item)
   end
 
   def default_attributes(_item), do: %{}

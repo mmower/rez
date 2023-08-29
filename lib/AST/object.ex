@@ -15,14 +15,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(object), to: NodeHelper
+
   def node_type(_object), do: "object"
 
   def js_ctor(object) do
     NodeHelper.get_attr_value(object, "js_ctor", "RezObject")
-  end
-
-  def js_initializer(object) do
-    NodeHelper.js_initializer(object)
   end
 
   def default_attributes(_object), do: %{}

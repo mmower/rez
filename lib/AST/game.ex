@@ -228,9 +228,30 @@ defmodule Rez.AST.Game do
     |> Enum.filter(fn asset -> !NodeHelper.is_template?(asset) end)
     |> Enum.filter(&Asset.style_asset?/1)
   end
+
+  defp generate_init_order(%Game{} = game) do
+    game
+    |> Node.children()
+    |> Enum.filter(fn obj -> Map.get(obj, :game_element) end)
+    |> InitOrder.initialization_order()
+  end
+
+  def set_init_order(%Game{} = game) do
+    case generate_init_order(game) do
+      {:ok, init_order} ->
+        NodeHelper.set_list_attr(
+          game,
+          "$init_order",
+          Enum.map(init_order, &{:string, &1})
+        )
+
+      {:error, message} ->
+        %{game | status: {:error, "Cannot generate initialization order (#{message})!"}}
+    end
+  end
 end
 
-defmodule Rez.AST.Game.InitOrder do
+defmodule InitOrder do
   alias Rez.AST.NodeHelper
 
   def initialization_order(objects) do
@@ -272,26 +293,15 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do
   import Rez.AST.NodeValidator
-  import Rez.AST.Game.InitOrder
   alias Rez.Utils
-  alias Rez.AST.{NodeHelper, ValueEncoder, Game, Item}
+  alias Rez.AST.{NodeHelper, Game, Item}
+
+  defdelegate js_initializer(game), to: NodeHelper
 
   def node_type(_game), do: "game"
 
   def js_ctor(game) do
     NodeHelper.get_attr_value(game, "js_ctor", "RezGame")
-  end
-
-  def js_initializer(game) do
-    ctor = js_ctor(game)
-    init_obj_ids = Enum.map_join(game.init_order, ", ", &"\"#{&1}\"")
-
-    """
-    new #{ctor}(
-      [#{init_obj_ids}],
-      #{ValueEncoder.encode_attributes(game.attributes)}
-      );
-    """
   end
 
   def default_attributes(_game), do: %{}
@@ -322,19 +332,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:scenes)
     |> NodeHelper.process_collection(:systems)
     |> NodeHelper.process_collection(:zones)
-    |> generate_init_order()
-  end
-
-  defp generate_init_order(%Game{} = game) do
-    elements = game |> children |> Enum.filter(fn obj -> Map.get(obj, :game_element) end)
-
-    case initialization_order(elements) do
-      {:ok, init_order} ->
-        %{game | init_order: init_order}
-
-      {:error, :circular_dependency} ->
-        %{game | status: {:error, "Cycle in parent relationship"}}
-    end
+    |> Game.set_init_order()
   end
 
   # This requires the Game's type hierarchy which we have no way of passing

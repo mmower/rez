@@ -28,14 +28,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(plot), to: NodeHelper
+
   def node_type(_plot), do: "plot"
 
   def js_ctor(plot) do
     NodeHelper.get_attr_value(plot, "js_ctor", "RezPlot")
-  end
-
-  def js_initializer(plot) do
-    NodeHelper.js_initializer(plot)
   end
 
   def default_attributes(_plot), do: %{}

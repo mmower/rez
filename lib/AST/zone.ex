@@ -29,14 +29,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
   import Rez.AST.NodeValidator
   alias Rez.AST.{NodeHelper, Zone}
 
+  defdelegate js_initializer(zone), to: NodeHelper
+
   def node_type(_zone), do: "zone"
 
   def js_ctor(zone) do
     NodeHelper.get_attr_value(zone, "js_ctor", "RezZone")
-  end
-
-  def js_initializer(zone) do
-    NodeHelper.js_initializer(zone)
   end
 
   def default_attributes(_zone), do: %{}

@@ -202,7 +202,7 @@ let game_proto = {
   Adds an object representing a game element to the game data.
 
   The static objects defined in the game files will appear in the games
-  init_order property. Dynamically generated objects should be init'd
+  $init_order attribute. Dynamically generated objects should be init'd
   separately.
   */
   addGameObject(obj) {
@@ -341,11 +341,12 @@ let game_proto = {
 
   start(container_id) {
     console.log("> Game.start");
-    this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
     // Init every object, will also trigger on_init for any object that defines it
     for (let init_level of this.initLevels()) {
-      this.init_order.forEach(function (obj_id) {
+      console.log("init/" + init_level);
+
+      this.$init_order.forEach(function (obj_id) {
         const obj = this.getGameObject(obj_id);
         obj.init(init_level);
       }, this);
@@ -353,6 +354,8 @@ let game_proto = {
 
     // this.container_id = container_id;
     this.runEvent("start", {});
+
+    this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
     const initial_scene_id = this.getAttributeValue("initial_scene");
     this.setCurrentScene(initial_scene_id);
@@ -491,10 +494,9 @@ let game_proto = {
   },
 };
 
-function RezGame(init_order, attributes) {
-  this.id = "game";
+function RezGame(id, attributes) {
+  this.id = id;
   this.game_object_type = "game";
-  this.init_order = init_order;
   this.attributes = attributes;
   this.tag_index = {};
   this.scene_stack = [];

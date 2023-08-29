@@ -15,14 +15,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(faction), to: NodeHelper
+
   def node_type(_faction), do: "faction"
 
-  def js_ctor(effect) do
-    NodeHelper.get_attr_value(effect, "js_ctor", "RezEffect")
-  end
-
-  def js_initializer(faction) do
-    NodeHelper.js_initializer(faction)
+  def js_ctor(faction) do
+    NodeHelper.get_attr_value(faction, "js_ctor", "RezEffect")
   end
 
   def default_attributes(_faction), do: %{}

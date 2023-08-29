@@ -21,14 +21,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
   alias Rez.AST.Group
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(group), to: NodeHelper
+
   def node_type(_group), do: "group"
 
   def js_ctor(group) do
     NodeHelper.get_attr_value(group, "js_ctor", "RezGroup")
-  end
-
-  def js_initializer(group) do
-    NodeHelper.js_initializer(group)
   end
 
   def default_attributes(_group), do: %{}

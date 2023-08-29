@@ -52,14 +52,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
   alias Rez.AST.Scene
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(scene), to: NodeHelper
+
   def node_type(_scene), do: "scene"
 
   def js_ctor(scene) do
     NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
-  end
-
-  def js_initializer(scene) do
-    NodeHelper.js_initializer(scene)
   end
 
   def default_attributes(_scene), do: %{}

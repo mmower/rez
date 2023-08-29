@@ -22,14 +22,12 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(system), to: NodeHelper
+
   def node_type(_system), do: "system"
 
   def js_ctor(system) do
     NodeHelper.get_attr_value(system, "js_ctor", "RezSystem")
-  end
-
-  def js_initializer(system) do
-    NodeHelper.js_initializer(system)
   end
 
   def default_attributes(_system), do: %{}

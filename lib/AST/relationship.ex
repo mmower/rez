@@ -24,14 +24,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(relationship), to: NodeHelper
+
   def node_type(_relationship), do: "relationship"
 
   def js_ctor(relationship) do
     NodeHelper.get_attr_value(relationship, "js_ctor", "RezRelationship")
-  end
-
-  def js_initializer(relationship) do
-    NodeHelper.js_initializer(relationship)
   end
 
   def default_attributes(_relationship), do: %{}

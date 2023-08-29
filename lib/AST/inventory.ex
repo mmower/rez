@@ -16,14 +16,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
 
+  defdelegate js_initializer(inventory), to: NodeHelper
+
   def node_type(_inventory), do: "inventory"
 
   def js_ctor(inventory) do
     NodeHelper.get_attr_value(inventory, "js_ctor", "RezInventory")
-  end
-
-  def js_initializer(inventory) do
-    NodeHelper.js_initializer(inventory)
   end
 
   def default_attributes(_inventory), do: %{}
