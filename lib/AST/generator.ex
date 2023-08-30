@@ -28,7 +28,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
 
   def pre_process(generator), do: generator
 
-  def process(generator), do: generator
+  def process(generator, _node_map), do: generator
 
   def children(_generator), do: []
 

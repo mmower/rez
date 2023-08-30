@@ -121,27 +121,28 @@ defmodule Rez.AST.Game do
     |> set_default_title()
   end
 
-  def process_item(%Game{} = game, key) do
-    Map.put(game, key, Map.get(game, key) |> Node.process())
-  end
+  # def process_item(%Game{} = game, key) do
+  #   IO.puts("process_item(#{key})")
+  #   processed_obj = Map.get(game, key) |> Node.process(game.by_id)
+  #   Map.put(game, key, processed_obj)
+  # end
 
-  def process_layout(%Game{} = game) do
-    case NodeHelper.get_attr_value(game, "layout") do
-      nil ->
-        game
-
-      _ ->
-        custom_css_class = NodeHelper.get_attr_value(game, "css_class", "")
-        css_classes = add_css_class("game", custom_css_class)
-
-        TemplateHelper.make_template(
-          game,
-          "layout",
-          fn html ->
-            ~s(<div class="#{css_classes}">) <> html <> "</div>"
-          end
-        )
-    end
+  def build_template(%Game{} = game) do
+    NodeHelper.set_compiled_template_attr(
+      game,
+      "$layout_template",
+      TemplateHelper.compile_template(
+        "game",
+        NodeHelper.get_attr_value(game, "layout"),
+        NodeHelper.get_attr_value(game, "layout_format", "markdown"),
+        fn html ->
+          html = TemplateHelper.process_links(html)
+          custom_css_class = NodeHelper.get_attr_value(game, "css_class", "")
+          css_classes = add_css_class("game", custom_css_class)
+          ~s|<div id="game" class="#{css_classes}">#{html}</div>|
+        end
+      )
+    )
   end
 
   def slot_types(%Game{inventories: inventories}) do
@@ -266,7 +267,7 @@ defmodule InitOrder do
     |> Enum.map(fn obj ->
       parents =
         obj
-        |> NodeHelper.get_attr_value("$parents", [])
+        |> NodeHelper.get_attr_value("_parents", [])
         |> Enum.map(fn {:keyword, k} -> to_string(k) end)
 
       {obj.id, parents}
@@ -308,30 +309,30 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   def pre_process(game), do: game
 
-  def process(%Game{} = game) do
+  def process(%Game{} = game, node_map) do
     game
     |> Game.set_defaults()
-    |> Game.process_layout()
-    |> NodeHelper.process_collection(:actors)
-    |> NodeHelper.process_collection(:assets)
-    |> NodeHelper.process_collection(:tasks)
-    |> NodeHelper.process_collection(:cards)
-    |> NodeHelper.process_collection(:effects)
-    |> NodeHelper.process_collection(:factions)
-    |> NodeHelper.process_collection(:filters)
-    |> NodeHelper.process_collection(:generators)
-    |> NodeHelper.process_collection(:groups)
-    |> NodeHelper.process_collection(:inventories)
-    |> NodeHelper.process_collection(:slots)
-    |> NodeHelper.process_collection(:items)
+    |> Game.build_template()
+    |> NodeHelper.process_collection(:actors, node_map)
+    |> NodeHelper.process_collection(:assets, node_map)
+    |> NodeHelper.process_collection(:tasks, node_map)
+    |> NodeHelper.process_collection(:cards, node_map)
+    |> NodeHelper.process_collection(:effects, node_map)
+    |> NodeHelper.process_collection(:factions, node_map)
+    |> NodeHelper.process_collection(:filters, node_map)
+    |> NodeHelper.process_collection(:generators, node_map)
+    |> NodeHelper.process_collection(:groups, node_map)
+    |> NodeHelper.process_collection(:inventories, node_map)
+    |> NodeHelper.process_collection(:slots, node_map)
+    |> NodeHelper.process_collection(:items, node_map)
     |> process_item_types()
-    |> NodeHelper.process_collection(:lists)
-    |> NodeHelper.process_collection(:objects)
-    |> NodeHelper.process_collection(:plots)
-    |> NodeHelper.process_collection(:relationships)
-    |> NodeHelper.process_collection(:scenes)
-    |> NodeHelper.process_collection(:systems)
-    |> NodeHelper.process_collection(:zones)
+    |> NodeHelper.process_collection(:lists, node_map)
+    |> NodeHelper.process_collection(:objects, node_map)
+    |> NodeHelper.process_collection(:plots, node_map)
+    |> NodeHelper.process_collection(:relationships, node_map)
+    |> NodeHelper.process_collection(:scenes, node_map)
+    |> NodeHelper.process_collection(:systems, node_map)
+    |> NodeHelper.process_collection(:zones, node_map)
     |> Game.set_init_order()
   end
 

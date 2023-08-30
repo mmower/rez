@@ -126,7 +126,7 @@ defmodule Rez.AST.NodeValidator do
       end,
       fn %{attributes: attributes} ->
         attributes
-        |> Map.get("$parents", Attribute.list("$parents", []))
+        |> Map.get("_parents", Attribute.list("_parents", []))
         |> Map.get(:value)
         |> Enum.map(fn {:keyword, parent_id} ->
           Map.get(game.by_id, to_string(parent_id))

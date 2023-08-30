@@ -6,8 +6,8 @@ let card_proto = {
   __proto__: basic_object,
   targetType: "card",
 
-  get template() {
-    return this.getAttribute("content_template");
+  get viewTemplate() {
+    return this.$content_template;
   },
 
   handleCustomEvent(event_name, evt) {

@@ -41,7 +41,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
 
   def pre_process(zone), do: zone
 
-  def process(zone), do: NodeHelper.process_collection(zone, :locations)
+  def process(zone, node_map) do
+    zone
+    |> NodeHelper.copy_attributes(node_map)
+    |> NodeHelper.process_collection(:locations, node_map)
+  end
 
   def children(%Zone{locations: locations}), do: Map.values(locations)
 

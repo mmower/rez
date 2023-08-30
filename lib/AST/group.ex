@@ -33,7 +33,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   def pre_process(group), do: group
 
-  def process(%Group{} = group), do: group
+  def process(%Group{} = group, node_map) do
+    NodeHelper.copy_attributes(group, node_map)
+  end
 
   def children(_group), do: []
 

@@ -61,8 +61,8 @@ let block_proto = {
     }
   },
 
-  getTemplate() {
-    return this.source.template;
+  getViewTemplate() {
+    return this.source.viewTemplate;
   },
 
   renderBlock(block_type, active) {
@@ -72,7 +72,7 @@ let block_proto = {
       ...this.bindBlocks(active),
     };
 
-    return this.getTemplate()(bindings, Rez.template_expression_filters);
+    return this.getViewTemplate()(bindings, Rez.template_expression_filters);
   },
 
   getCSSClasses(block_type, active) {
@@ -117,7 +117,7 @@ let layout_proto = {
 
   html() {
     const content = this.renderContents();
-    const template_fn = this.getTemplate();
+    const template_fn = this.getViewTemplate();
     const bound_values = this.bindValues();
     const bound_blocks = this.bindBlocks(true);
     return template_fn({

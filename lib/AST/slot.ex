@@ -21,12 +21,7 @@ defmodule Rez.AST.Slot do
             id: nil,
             attributes: %{}
 
-  def process(%Slot{} = slot) do
-    slot
-    |> set_defaults()
-  end
-
-  defp set_defaults(%Slot{} = slot) do
+  def set_defaults(%Slot{} = slot) do
     slot
     |> NodeHelper.set_default_attr_value("capacity", 1, &NodeHelper.set_number_attr/3)
   end
@@ -49,8 +44,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
 
   def pre_process(slot), do: slot
 
-  def process(slot) do
-    Slot.process(slot)
+  def process(slot, node_map) do
+    slot
+    |> Slot.set_defaults()
+    |> NodeHelper.copy_attributes(node_map)
   end
 
   def children(_slot), do: []

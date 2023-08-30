@@ -20,24 +20,29 @@ defmodule Rez.AST.Location do
             id: nil,
             attributes: %{}
 
-  def process(%Location{id: id} = location) do
-    case NodeHelper.get_attr_value(location, "description") do
-      nil ->
-        location
-
-      _ ->
-        custom_css_class = NodeHelper.get_attr_value(location, "css_class", "")
-        css_classes = Utils.add_css_class("location", custom_css_class)
-
-        TemplateHelper.make_template(
-          location,
-          "description",
-          fn html ->
-            ~s(<div id="loc_#{id}" class="#{css_classes}">) <> html <> "</div>"
-          end
-        )
-    end
+  def build_template(%Location{id: loc_id} = location) do
+    NodeHelper.set_compiled_template_attr(
+      location,
+      "$content_template",
+      TemplateHelper.compile_template(
+        loc_id,
+        NodeHelper.get_attr_value(location, "description", ""),
+        NodeHelper.get_attr_value(location, "format", "markdown"),
+        fn html ->
+          html = TemplateHelper.process_links(html)
+          custom_css_class = NodeHelper.get_attr_value(location, "css_class", "")
+          css_classes = Utils.add_css_class("location", custom_css_class)
+          ~s|<div id="loc_#{loc_id}" class="#{css_classes}">#{html}</div>|
+        end
+      )
+    )
   end
+
+  def process(%Location{status: :ok} = location) do
+    build_template(location)
+  end
+
+  def process(location), do: location
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Location do
@@ -56,7 +61,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
 
   def pre_process(location), do: location
 
-  def process(location), do: Location.process(location)
+  def process(location, node_map) do
+    location
+    |> NodeHelper.copy_attributes(node_map)
+    |> Location.process(location)
+  end
 
   def children(_location), do: []
 

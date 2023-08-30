@@ -164,10 +164,52 @@ defmodule Rez.AST.NodeHelper do
   with the collection under `coll_key` having been passed through
   `Node.process` themselves.
   """
-  def process_collection(parent, coll_key) do
+
+  def process_collection(parent, coll_key, node_map) do
     case Map.get(parent, coll_key) do
-      nil -> parent
-      coll -> Map.put(parent, coll_key, map_to_map(coll, &Node.process/1))
+      nil ->
+        parent
+
+      coll ->
+        Map.put(
+          parent,
+          coll_key,
+          map_to_map(coll, fn child_node ->
+            Node.process(child_node, node_map)
+          end)
+        )
+    end
+  end
+
+  @doc """
+  `copy_attributes/2` looks at each parent defined for the node and where the
+  node doesn't define an attribute that is defined in the parent, copies it
+  into the child.
+  """
+  def copy_attributes(node, node_map) do
+    # IO.puts("copy_attributes(#{node.id})")
+
+    case get_attr_value(node, "_parents", []) do
+      [] ->
+        node
+
+      parents ->
+        Enum.reduce(parents, node, fn {:keyword, parent_id}, node ->
+          case Map.get(node_map, to_string(parent_id)) do
+            nil ->
+              IO.puts("Cannot find claimed parent #{parent_id} of #{node.id}!")
+              node
+
+            parent ->
+              Enum.reduce(parent.attributes, node, fn {_, attribute}, node ->
+                if has_attr?(node, attribute.name) do
+                  node
+                else
+                  set_attr(node, attribute)
+                end
+              end)
+          end
+        end)
     end
   end
 

@@ -26,7 +26,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Filter do
 
   def pre_process(filter), do: filter
 
-  def process(filter), do: filter
+  def process(filter, _node_map), do: filter
 
   def children(_filter), do: []
 

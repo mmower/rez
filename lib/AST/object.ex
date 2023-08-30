@@ -27,7 +27,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
 
   def pre_process(object), do: object
 
-  def process(object), do: object
+  def process(object, node_map) do
+    NodeHelper.copy_attributes(object, node_map)
+  end
 
   def children(_object), do: []
 

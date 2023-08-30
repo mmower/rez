@@ -23,34 +23,27 @@ defmodule Rez.AST.Item do
             position: {nil, 0, 0},
             attributes: %{}
 
-  def process(%Item{} = item) do
-    item
-    |> set_defaults()
-    |> make_template()
-  end
-
-  defp set_defaults(%Item{} = item) do
+  def set_defaults(%Item{} = item) do
     item
     |> NodeHelper.set_default_attr_value("size", 1, &NodeHelper.set_number_attr/3)
   end
 
-  defp make_template(%Item{id: item_id} = item) do
-    case NodeHelper.get_attr_value(item, "description") do
-      nil ->
-        item
-
-      _ ->
-        custom_css_class = NodeHelper.get_attr_value(item, "css_class", "")
-        css_classes = Utils.add_css_class("item", custom_css_class)
-
-        TemplateHelper.make_template(
-          item,
-          "description",
-          fn html ->
-            ~s(<div id="item_#{item_id}" class="#{css_classes}">) <> html <> "</div>"
-          end
-        )
-    end
+  def build_template(%Item{id: item_id} = item) do
+    NodeHelper.set_compiled_template_attr(
+      item,
+      "$content_template",
+      TemplateHelper.compile_template(
+        item_id,
+        NodeHelper.get_attr_value(item, "description", ""),
+        NodeHelper.get_attr_value(item, "format", "markdown"),
+        fn html ->
+          html = TemplateHelper.process_links(html)
+          custom_css_class = NodeHelper.get_attr_value(item, "css_class", "")
+          css_classes = Utils.add_css_class("item", custom_css_class)
+          ~s|<div id="item_#{item_id}" class="#{css_classes}">#{html}</div>|
+        end
+      )
+    )
   end
 
   def add_types_as_tags(%Item{} = item, %TypeHierarchy{} = is_a) do
@@ -84,7 +77,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Item do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Game, Item}
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.Game
+  alias Rez.AST.Item
   alias Rez.AST.Node
 
   defdelegate js_initializer(item), to: NodeHelper
@@ -99,7 +94,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
 
   def pre_process(item), do: item
 
-  def process(item), do: Item.process(item)
+  def process(item, node_map) do
+    item
+    |> NodeHelper.copy_attributes(node_map)
+    |> Item.set_defaults()
+    |> Item.build_template()
+  end
 
   def children(_item), do: []
 

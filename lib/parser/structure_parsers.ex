@@ -64,7 +64,7 @@ defmodule Rez.Parser.StructureParsers do
 
     default_attributes
     |> Map.merge(attributes)
-    |> Map.merge(%{"$parents" => Attribute.list("$parents", parent_objects)}, merge_list)
+    |> Map.merge(%{"_parents" => Attribute.list("_parents", parent_objects)}, merge_list)
   end
 
   @doc """

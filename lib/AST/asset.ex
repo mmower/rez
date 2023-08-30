@@ -113,13 +113,14 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     end
   end
 
-  def process(%Asset{path_info: [path]} = asset) do
+  def process(%Asset{path_info: [path]} = asset, node_map) do
     asset
     |> NodeHelper.set_string_attr("$path", path)
     |> NodeHelper.set_string_attr("detected_mime_type", MIME.from_path(path))
+    |> NodeHelper.copy_attributes(node_map)
   end
 
-  def process(%Asset{} = asset), do: asset
+  def process(%Asset{} = asset, _node_map), do: asset
 
   def children(_asset), do: []
 

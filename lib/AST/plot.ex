@@ -40,7 +40,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
 
   def pre_process(plot), do: plot
 
-  def process(plot), do: plot
+  def process(plot, node_map) do
+    NodeHelper.copy_attributes(plot, node_map)
+  end
 
   def children(_plot), do: []
 

@@ -38,7 +38,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
 
   def pre_process(effect), do: effect
 
-  def process(effect), do: effect
+  def process(effect, node_map) do
+    NodeHelper.copy_attributes(effect, node_map)
+  end
 
   def children(_effect), do: []
 

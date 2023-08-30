@@ -55,7 +55,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
 
   def pre_process(patch), do: patch
 
-  def process(patch), do: patch
+  def process(patch, _node_map), do: patch
 
   def children(_patch), do: []
 

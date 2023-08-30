@@ -36,7 +36,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
 
   def pre_process(relationship), do: relationship
 
-  def process(relationship), do: relationship
+  def process(relationship, node_map) do
+    NodeHelper.copy_attributes(relationship, node_map)
+  end
 
   def children(_relationship), do: []
 

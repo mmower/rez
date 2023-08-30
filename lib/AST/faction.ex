@@ -27,7 +27,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
 
   def pre_process(faction), do: faction
 
-  def process(faction), do: faction
+  def process(faction, node_map) do
+    NodeHelper.copy_attributes(faction, node_map)
+  end
 
   def children(_faction), do: []
 

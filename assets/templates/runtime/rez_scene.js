@@ -6,8 +6,8 @@ let scene_proto = {
   __proto__: basic_object,
   targetType: "scene",
 
-  get template() {
-    return this.getAttribute("layout_template");
+  get viewTemplate() {
+    return this.$layout_template;
   },
 
   getCurrentCard() {
@@ -15,7 +15,7 @@ let scene_proto = {
   },
 
   getInitialCard() {
-    return this.game.$(this.getAttributeValue("initial_card"));
+    return this.game.$(this.initial_card);
   },
 
   finish() {
@@ -39,7 +39,7 @@ let scene_proto = {
       card.runEvent("start", { scene: this.id });
 
       const block = new RezBlock(card);
-      this.getLayout().addContent(block);
+      this.getViewLayout().addContent(block);
     }
   },
 
@@ -77,18 +77,17 @@ let scene_proto = {
     return card;
   },
 
-  createLayout() {
-    const layout_mode = this.getAttributeValue("layout_mode");
-    if (layout_mode == "stack") {
+  createViewLayout() {
+    if (this.layout_mode == "stack") {
       return new RezStackLayout(this);
     } else {
       return new RezSingleLayout(this);
     }
   },
 
-  getLayout() {
-    this.layout = this.layout ?? this.createLayout();
-    return this.layout;
+  getViewLayout() {
+    this.$viewLayout = this.$viewLayout ?? this.createViewLayout();
+    return this.$viewLayout;
   },
 
   reset() {

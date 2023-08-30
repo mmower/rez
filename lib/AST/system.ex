@@ -34,7 +34,9 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
 
   def pre_process(system), do: system
 
-  def process(system), do: system
+  def process(system, node_map) do
+    NodeHelper.copy_attributes(system, node_map)
+  end
 
   def children(_system), do: []
 

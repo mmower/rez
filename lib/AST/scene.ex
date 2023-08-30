@@ -23,28 +23,25 @@ defmodule Rez.AST.Scene do
             attributes: %{},
             message: ""
 
-  def process(%Scene{status: :ok, id: id} = scene) do
-    case NodeHelper.get_attr_value(scene, "layout") do
-      nil ->
-        scene
-
-      _ ->
-        custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
-        css_classes = Utils.add_css_class("scene", custom_css_class)
-
-        TemplateHelper.make_template(
-          scene,
-          "layout",
-          fn html ->
-            ~s(<div id="scene_#{id}" class="#{css_classes}">) <>
-              html <>
-              "</div>"
-          end
-        )
-    end
+  def build_template(%Scene{id: scene_id} = scene) do
+    NodeHelper.set_compiled_template_attr(
+      scene,
+      "$layout_template",
+      TemplateHelper.compile_template(
+        scene_id,
+        NodeHelper.get_attr_value(scene, "layout", ""),
+        NodeHelper.get_attr_value(scene, "format", "markdown"),
+        fn html ->
+          # IO.puts("#{scene_id}:a #{String.length(html)}")
+          html = TemplateHelper.process_links(html)
+          # IO.puts("#{scene_id}:b #{String.length(html)}")
+          custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
+          css_classes = Utils.add_css_class("scene", custom_css_class)
+          ~s|<div id="scene_#{scene_id}" class="#{css_classes}">#{html}</div>|
+        end
+      )
+    )
   end
-
-  def process(%Scene{} = scene), do: scene
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
@@ -64,7 +61,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def pre_process(scene), do: scene
 
-  def process(scene), do: Scene.process(scene)
+  def process(scene, node_map) do
+    scene
+    |> NodeHelper.copy_attributes(node_map)
+    |> Scene.build_template()
+  end
 
   def children(_scene), do: []
 

@@ -3,12 +3,134 @@ defmodule Rez.AST.TemplateHelper do
   Tools to convert attributes representing templates into Rez pre-compiled
   template expression functions.
   """
-  alias Rez.AST.NodeHelper
   alias Rez.Debug
   import Rez.Utils
 
   alias Rez.Compiler.TemplateCompiler
   alias Rez.Parser.TemplateParser
+
+  defmodule Transforms do
+    @doc """
+    Convert a link in the form [[*<attribute-name>]] into a dynamic link
+    template expression using the `dynamic_link` filter to trigger a dynamic
+    link that can generate a link, a disabled link, or nothing at all.
+    """
+    def convert_dynamic_links(text) do
+      Regex.replace(~r/\[\[\*([\w\s]+)\]\]/, text, fn _, action ->
+        "${card | link: \"#{action}\"}"
+      end)
+    end
+
+    @doc ~S"""
+    Converts a string like "First Card" into a card id "first_card"
+
+    ## Examples
+        iex> import Rez.AST.Card
+        iex> assert "first_card" = convert_target_name_to_id("First Card")
+    """
+    def convert_target_name_to_id(target_name) do
+      target_name
+      |> String.downcase()
+      |> String.replace(~r/\s+/, "_")
+    end
+
+    @doc """
+    Convert a card link in the form "[[First Card]]" into a link which
+    calls the card event handler.
+
+    ## Examples
+        iex> import Rez.AST.Card
+        iex> assert "<a href='javascript:void(0)' data-event='card' data-target='first_card'>First Card</a>" = convert_target_name_links("[[First Card]]")
+    """
+    def convert_target_name_links(text) do
+      Regex.replace(~r/\[\[([\w\s]+)\]\]/U, text, fn _, target_descriptor ->
+        target_id = convert_target_name_to_id(target_descriptor)
+
+        "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_descriptor}</a>"
+      end)
+    end
+
+    @doc """
+    Convert a target link in the form `[[Title|card_id]]` into a link which
+    loads the relevant card or scene.
+
+    ## Examples
+        iex> import Rez.AST.Card
+        iex> assert "<a href='javascript:void(0)' data-event='card' data-target='new_scene_id'>New Scene</a>" = convert_target_id_links("[[New Scene|new_scene_id]]")
+    """
+    def convert_target_id_links(text) do
+      Regex.replace(~r/\[\[([\w\s]+)\|([\w\s]+)\]\]/U, text, fn _, target_text, target_id ->
+        "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_text}</a>"
+      end)
+    end
+
+    @scene_shift_syntax ~r/\[\[([^|]*)\|\>\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
+
+    @doc """
+    Convert a link in the form `[[Title|><scene-id>]]` into a scene change
+    template expression.
+    """
+    def convert_scene_shift_links(text) do
+      Regex.replace(@scene_shift_syntax, text, fn _, title, scene_id ->
+        title = String.trim(title)
+        "${card | scene_change: \"#{scene_id}\", \"#{title}\"}"
+      end)
+    end
+
+    @scene_interlude_syntax ~r/\[\[([^|]*)\|!\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
+
+    @doc """
+    Convert a link in the form `[[Title|!<scene-id>]]` into a scene interlude
+    template expression.
+    """
+    def convert_scene_interlude_links(text) do
+      Regex.replace(@scene_interlude_syntax, text, fn _, title, scene_id ->
+        title = String.trim(title)
+
+        "${card | scene_interlude: \"#{scene_id}\", \"#{title}\"}"
+      end)
+    end
+
+    @scene_resume_syntax ~r/\[\[([^|]+)\|\s*!!\]\]/
+
+    @doc """
+    Converts a form `[[Link Text|!!]] into a scene resume template expression.
+    """
+    def convert_resume_links(text) do
+      Regex.replace(@scene_resume_syntax, text, fn _, title ->
+        title = String.trim(title)
+        "${card | scene_resume: \"#{title}\"}"
+      end)
+    end
+
+    # Events are [[Title|*event_name]]
+    # E.g. [[Save Game|*save]]
+    @event_syntax ~r/\[\[([^|]+)\|\*\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
+
+    @doc """
+    Convert a link in the form `[[Title|*<event_name>]]` e.g.
+    `[[Load Game|load_game]]` into an event generator template expression,
+    e.g. ${"load_game" | event: "Load Game"}
+    """
+    def convert_event_links(text) do
+      Regex.replace(@event_syntax, text, fn _, title, event_name ->
+        event_name = String.trim(event_name)
+        title = String.trim(title)
+        "${\"#{event_name}\" | event: \"#{title}\"}"
+      end)
+    end
+  end
+
+  def process_links(original_html) do
+    original_html
+    |> Transforms.convert_scene_shift_links()
+    |> Transforms.convert_scene_interlude_links()
+    |> Transforms.convert_resume_links()
+    |> Transforms.convert_target_name_links()
+    |> Transforms.convert_target_id_links()
+    |> Transforms.convert_event_links()
+    |> Transforms.convert_dynamic_links()
+  end
 
   def prepare_content(markup) when is_binary(markup) do
     markup
@@ -25,38 +147,30 @@ defmodule Rez.AST.TemplateHelper do
   def convert_markup(markup, "html"), do: markup
   def convert_markup(markup, "markdown"), do: convert_markdown(markup)
 
-  def make_template(
-        %{id: id} = node,
-        source_attr,
-        html_processor \\ &Function.identity/1
-      )
-      when is_binary(source_attr) and is_function(html_processor) do
-    markup = NodeHelper.get_attr_value(node, source_attr, "")
-    format = NodeHelper.get_attr_value(node, "format", "markdown")
+  def prepare_html(markup, format, html_processor)
+      when is_binary(markup) and is_function(html_processor) do
+    markup
+    |> prepare_content()
+    |> convert_markup(format)
+    |> html_processor.()
+  end
 
+  def compile_template(id, template_source, format, html_processor \\ &Function.identity/1) do
     html =
-      markup
-      |> prepare_content()
-      |> convert_markup(format)
-      |> html_processor.()
+      prepare_html(
+        template_source,
+        format,
+        html_processor
+      )
+
+    # IO.puts(
+    #   "Compile template/#{id} size=#{String.length(template_source)} size=#{String.length(html)}"
+    # )
 
     if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.html", html)
 
-    template = TemplateParser.parse(html)
-    if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.t1", inspect(template))
-
-    compiled_template = TemplateCompiler.compile(template)
-    if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.t2", compiled_template)
-
-    template =
-      html
-      |> TemplateParser.parse()
-      |> TemplateCompiler.compile()
-
-    NodeHelper.set_compiled_template_attr(
-      node,
-      "#{source_attr}_template",
-      template
-    )
+    html
+    |> TemplateParser.parse()
+    |> TemplateCompiler.compile()
   end
 end

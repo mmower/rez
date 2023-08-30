@@ -31,7 +31,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     |> NodeHelper.set_boolean_attr("apply_effects", false)
   end
 
-  def process(inventory), do: NodeHelper.process_collection(inventory, :slots)
+  def process(inventory, node_map) do
+    inventory
+    |> NodeHelper.copy_attributes(node_map)
+    |> NodeHelper.process_collection(:slots, node_map)
+  end
 
   def children(_inventory), do: []
 

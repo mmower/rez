@@ -48,23 +48,6 @@ const basic_object = {
   },
 
   init_1() {
-    // Copy parent attributes
-    if (this.hasAttribute("$parents")) {
-      const parent_list = this.getAttribute("$parents");
-      if (parent_list.length > 0) {
-        parent_list.forEach((parent_id) => {
-          const parent = $(parent_id);
-          for (let attr of Object.keys(parent.attributes)) {
-            if (!this.hasAttribute(attr)) {
-              this.setAttribute(attr, parent.attributes[attr]);
-            }
-          }
-        });
-      }
-    }
-  },
-
-  init_2() {
     if (!this.initialised) {
       if (!this.isTemplateObject()) {
         // Templates don't initialise like regular objects
@@ -75,7 +58,7 @@ const basic_object = {
     }
   },
 
-  init_3() {
+  init_2() {
     this.initialised = true;
   },
 

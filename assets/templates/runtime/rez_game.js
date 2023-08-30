@@ -6,8 +6,8 @@ let game_proto = {
   __proto__: basic_object,
   targetType: "game",
 
-  get template() {
-    return this.getAttribute("layout_template");
+  get viewTemplate() {
+    return this.$layout_template;
   },
 
   $(id) {
@@ -15,7 +15,7 @@ let game_proto = {
   },
 
   initLevels() {
-    return [0, 1, 2, 3];
+    return [0, 1, 2];
   },
 
   saveFileName(prefix) {
@@ -57,7 +57,7 @@ let game_proto = {
     data = this.dataWithArchivedObjects(data);
 
     return {
-      rez_archive: this.getAttribute("archive_format"),
+      rez_archive: this.archive_format,
       data: data,
     };
   },
@@ -266,7 +266,7 @@ let game_proto = {
 
     this.current_scene_id = new_scene_id;
     const scene = this.getCurrentScene();
-    this.setViewContent(scene.getLayout());
+    this.setViewContent(scene.getViewLayout());
     this.clearFlashMessages();
     this.getCurrentScene().start();
   },
