@@ -1,5 +1,4 @@
 defmodule Rez.Parser.ValueParsers do
-  alias Rez.Compiler.TemplateCompiler
   alias Ergo.Context
 
   import Ergo.Combinators
@@ -7,14 +6,14 @@ defmodule Rez.Parser.ValueParsers do
   import Ergo.Numeric
   import Ergo.Meta
 
+  import Rez.Utils
+
   alias Rez.Parser.ParserCache
-  alias Rez.Parser.TemplateParser
 
   import Rez.Parser.DefaultParser
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DelimitedParser
-  import Rez.Utils
 
   # String
 
@@ -104,7 +103,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   @doc ~S"""
-  template_value() parses ```template source``` into a {:compiled_template, <function source>}
+  template_value() parses ```template source``` into a {:source_template, "<function source>"}
   """
   def template_value() do
     template_delimiter = literal("```")
@@ -112,8 +111,7 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("tempate", fn ->
       Rez.Parser.DelimitedParser.text_delimited_by_parsers(template_delimiter, template_delimiter)
       |> transform(&convert_doc_fragments_to_string/1)
-      |> transform(fn template_source -> TemplateParser.parse(template_source) end)
-      |> transform(fn template -> TemplateCompiler.compile(template) end)
+      |> transform(fn template_source -> {:source_template, template_source} end)
     end)
   end
 
@@ -192,7 +190,7 @@ defmodule Rez.Parser.ValueParsers do
   # Element Ref
 
   def elem_ref_value() do
-    ParserCache.get_parser("elem_ref", fn ->
+    ParserCache.get_parser("value_ref", fn ->
       set_start_parser = literal("#\{")
 
       sequence(
@@ -204,9 +202,40 @@ defmodule Rez.Parser.ValueParsers do
           commit(),
           js_identifier()
         ],
-        label: "elem_ref-value",
+        label: "elem-ref-value",
         debug: true,
-        ast: fn [expr] -> {:elem_ref, expr} end
+        ast: fn [elem_id] -> {:elem_ref, elem_id} end
+      )
+    end)
+  end
+
+  # Attr Ref
+  def attr_ref_value() do
+    ParserCache.get_parser("attr_ref", fn ->
+      sequence(
+        [
+          ignore(amp()),
+          js_identifier(),
+          ignore(dot()),
+          js_identifier()
+        ],
+        ast: fn [elem_id, attr_name] ->
+          {:attr_ref, {elem_id, attr_name}}
+        end
+      )
+    end)
+  end
+
+  # Dynamic Value
+
+  def dynamic_value() do
+    ParserCache.get_parser("dynamic_value", fn ->
+      sequence(
+        [
+          ignore(caret()),
+          text_delimited_by_parsers(open_brace(), close_brace())
+        ],
+        ast: fn [f] -> {:dynamic_value, f} end
       )
     end)
   end
@@ -220,7 +249,7 @@ defmodule Rez.Parser.ValueParsers do
           ignore(amp()),
           text_delimited_by_parsers(open_brace(), close_brace())
         ],
-        ast: fn ast -> {:dynamic_initializer, List.first(ast)} end
+        ast: fn [f] -> {:dynamic_initializer, f} end
       )
     end)
   end
@@ -463,6 +492,8 @@ defmodule Rez.Parser.ValueParsers do
           keyword_value(),
           function_value(),
           dynamic_initializer_value(),
+          dynamic_value(),
+          attr_ref_value(),
           file_value()
         ],
         label: "value",

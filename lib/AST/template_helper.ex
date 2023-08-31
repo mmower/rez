@@ -6,6 +6,9 @@ defmodule Rez.AST.TemplateHelper do
   alias Rez.Debug
   import Rez.Utils
 
+  alias Rez.AST.Attribute
+  alias Rez.AST.NodeHelper
+
   alias Rez.Compiler.TemplateCompiler
   alias Rez.Parser.TemplateParser
 
@@ -152,6 +155,7 @@ defmodule Rez.AST.TemplateHelper do
     markup
     |> prepare_content()
     |> convert_markup(format)
+    |> process_links()
     |> html_processor.()
   end
 
@@ -163,14 +167,31 @@ defmodule Rez.AST.TemplateHelper do
         html_processor
       )
 
-    # IO.puts(
-    #   "Compile template/#{id} size=#{String.length(template_source)} size=#{String.length(html)}"
-    # )
-
     if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.html", html)
 
     html
     |> TemplateParser.parse()
     |> TemplateCompiler.compile()
+  end
+
+  def compile_template_attribute(
+        {_, %Attribute{name: name, type: :source_template, value: template_source}},
+        node
+      ) do
+    format = NodeHelper.get_attr_value(node, "#{name}_format", "markdown")
+
+    NodeHelper.set_compiled_template_attr(
+      node,
+      name,
+      compile_template(node.id, template_source, format)
+    )
+  end
+
+  def compile_template_attribute(_attribute, node) do
+    node
+  end
+
+  def compile_template_attributes(node) do
+    Enum.reduce(node.attributes, node, &compile_template_attribute/2)
   end
 end

@@ -1,7 +1,11 @@
 defmodule Rez.AST.Item do
   alias __MODULE__
-  alias Rez.AST.{NodeHelper, TemplateHelper, TypeHierarchy}
+
   alias Rez.Utils
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+  alias Rez.AST.TypeHierarchy
 
   @moduledoc """
   `Rez.AST.Item` defines the `Item` struct.
@@ -77,10 +81,13 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Item do
   import Rez.AST.NodeValidator
-  alias Rez.AST.NodeHelper
+
   alias Rez.AST.Game
   alias Rez.AST.Item
   alias Rez.AST.Node
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(item), to: NodeHelper
 
@@ -99,6 +106,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
     |> NodeHelper.copy_attributes(node_map)
     |> Item.set_defaults()
     |> Item.build_template()
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_item), do: []

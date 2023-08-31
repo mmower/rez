@@ -27,7 +27,11 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Zone do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Zone}
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Zone
 
   defdelegate js_initializer(zone), to: NodeHelper
 
@@ -44,6 +48,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
   def process(zone, node_map) do
     zone
     |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
     |> NodeHelper.process_collection(:locations, node_map)
   end
 

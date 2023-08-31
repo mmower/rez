@@ -637,19 +637,19 @@ end
 
 @scene default_load_game begin
     initial_card: #default_load_game_form
-    layout: """
+    layout: ```
     ${content}
-    """
+    ```
     layout_mode: :single
   end
 
 @card default_load_game_form begin
-  content: """
+  content: ```
   <form name="load_form">
     <input type="file" name="data"/>
     <input type="submit"/>
   </form>
-  """
+  ```
 
   on_load_form: (card, data) => {
     console.log("In the load form handler!");

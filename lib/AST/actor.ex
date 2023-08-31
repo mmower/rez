@@ -12,6 +12,7 @@ defmodule Rez.AST.Actor do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Actor do
+  alias Rez.AST.TemplateHelper
   alias Rez.AST.NodeHelper
   import Rez.AST.NodeValidator
 
@@ -28,7 +29,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
   def pre_process(actor), do: actor
 
   def process(actor, node_map) do
-    NodeHelper.copy_attributes(actor, node_map)
+    actor
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_actor), do: []

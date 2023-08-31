@@ -44,12 +44,20 @@ defmodule Rez.AST.ValueEncoder do
     ~s|"#{k}"|
   end
 
+  def encode_value({:dynamic_value, f}) do
+    "{dynamic_value: #{Poison.encode!(f)}}"
+  end
+
   def encode_value({:dynamic_initializer, i}) do
     "{initializer: #{Poison.encode!(i)}}"
   end
 
   def encode_value({:elem_ref, r}) do
     ~s|"#{r}"|
+  end
+
+  def encode_value({:attr_ref, {elem_id, attr_name}}) do
+    ~s|{attr_ref: {elem_id: "#{elem_id}", attr_name: "#{attr_name}"}}|
   end
 
   def encode_value({:function, f}) do

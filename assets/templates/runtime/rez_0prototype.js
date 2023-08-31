@@ -44,7 +44,9 @@ const basic_object = {
   },
 
   init_0() {
+    this.initDynamicValues();
     this.initDynamicAttributes();
+    this.initReferenceAttributes();
   },
 
   init_1() {
@@ -60,6 +62,42 @@ const basic_object = {
 
   init_2() {
     this.initialised = true;
+  },
+
+  initReferenceAttributes() {
+    for (let attr_name of Object.keys(this.attributes)) {
+      const value = this.getAttribute(attr_name);
+      if (typeof value == "object" && value.hasOwnProperty("attr_ref")) {
+        console.log("Init ref " + attr_name);
+        console.dir(value);
+        delete this[attr_name];
+        const ref = value["attr_ref"];
+
+        Object.defineProperty(this, attr_name, {
+          get: function () {
+            return $(ref.elem_id).getAttributeValue(ref.attr_name);
+          },
+        });
+      }
+    }
+  },
+
+  initDynamicValues() {
+    for (let attr_name of Object.keys(this.attributes)) {
+      const value = this.getAttribute(attr_name);
+      if (typeof value == "object" && value.hasOwnProperty("dynamic_value")) {
+        delete this[attr_name];
+
+        const val_gen = value["dynamic_value"];
+        const src = `(${this.id}) => {return ${val_gen};}`;
+        const f = eval(src);
+        Object.defineProperty(this, attr_name, {
+          get: function () {
+            return f(this);
+          },
+        });
+      }
+    }
   },
 
   initDynamicAttributes() {
@@ -82,9 +120,8 @@ const basic_object = {
   elementInitializer() {},
 
   /*
-   * Template object copying
+   * Copies an object assigning it an ID
    */
-
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
@@ -95,9 +132,9 @@ const basic_object = {
     return copy;
   },
 
-  // Need to check if there is a problem with copying copies
-  // and ID auto-assignment. Shouldn't be, we should get
-  // <id>_1_1, <id>_1_1_1 and so on but should be tested.
+  /*
+   * Copies an object with an auto-generated ID
+   */
   copyWithAutoId() {
     this.auto_id_idx += 1;
     const copy_id = this.id + "_" + this.auto_id_idx;

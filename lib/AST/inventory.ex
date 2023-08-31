@@ -14,7 +14,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   import Rez.AST.NodeValidator
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(inventory), to: NodeHelper
 
@@ -34,6 +36,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   def process(inventory, node_map) do
     inventory
     |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
     |> NodeHelper.process_collection(:slots, node_map)
   end
 

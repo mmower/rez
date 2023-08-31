@@ -1,6 +1,8 @@
 defmodule Rez.AST.Scene do
   alias __MODULE__
-  alias Rez.AST.{TemplateHelper, NodeHelper}
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
   alias Rez.Utils
 
   @moduledoc """
@@ -23,31 +25,43 @@ defmodule Rez.AST.Scene do
             attributes: %{},
             message: ""
 
-  def build_template(%Scene{id: scene_id} = scene) do
+  defp compile_template(%{id: id} = scene) do
     NodeHelper.set_compiled_template_attr(
       scene,
       "$layout_template",
       TemplateHelper.compile_template(
-        scene_id,
-        NodeHelper.get_attr_value(scene, "layout", ""),
-        NodeHelper.get_attr_value(scene, "format", "markdown"),
-        fn html ->
-          # IO.puts("#{scene_id}:a #{String.length(html)}")
-          html = TemplateHelper.process_links(html)
-          # IO.puts("#{scene_id}:b #{String.length(html)}")
+        id,
+        NodeHelper.get_attr_value(scene, "layout"),
+        NodeHelper.get_attr_value(scene, "layout_format", "markdown"),
+        fn content ->
           custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
           css_classes = Utils.add_css_class("scene", custom_css_class)
-          ~s|<div id="scene_#{scene_id}" class="#{css_classes}">#{html}</div>|
+          ~s|<div id="scene_#{id}" class="#{css_classes}">#{content}</div>|
         end
       )
     )
+  end
+
+  defp remove_source_template(scene) do
+    scene
+    |> NodeHelper.delete_attr("layout")
+    |> NodeHelper.delete_attr("layout_format")
+  end
+
+  def build_template(%Scene{status: :ok} = scene) do
+    scene
+    |> compile_template()
+    |> remove_source_template()
   end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
   import Rez.AST.NodeValidator
-  alias Rez.AST.Scene
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Scene
 
   defdelegate js_initializer(scene), to: NodeHelper
 
@@ -65,11 +79,12 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
     scene
     |> NodeHelper.copy_attributes(node_map)
     |> Scene.build_template()
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_scene), do: []
 
-  @content_expr ~r/\$\{content\}/
+  @content_expr ~s|${content}|
 
   def validators(_scene) do
     [
@@ -80,8 +95,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
       attribute_present?(
         "layout",
         attribute_has_type?(
-          :string,
-          validate_value_matches?(
+          :source_template,
+          validate_value_contains?(
             @content_expr,
             "Scene layout attribute is expected to include a ${content} expression!"
           )

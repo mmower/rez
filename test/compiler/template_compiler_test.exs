@@ -59,4 +59,13 @@ defmodule Rez.Compiler.TemplateCompilerTest do
             ~s|function(bindings, filters) {return [function(bindings, filters) {return [function(bindings, value) {return filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return "year";})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
              C.compile(template)
   end
+
+  test "filter content" do
+    expr = ~s|(function(bindings) {return bindings.content;})(bindings)|
+
+    template = P.parse("The rain in span falls mainly on the ${content} plain")
+    {:compiled_template, ct} = C.compile(template)
+
+    assert String.contains?(ct, expr)
+  end
 end

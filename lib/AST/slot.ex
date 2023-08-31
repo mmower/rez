@@ -29,8 +29,11 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Slot do
   import Rez.AST.NodeValidator
-  alias Rez.AST.Slot
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Slot
 
   defdelegate js_initializer(slot), to: NodeHelper
 
@@ -48,6 +51,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
     slot
     |> Slot.set_defaults()
     |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_slot), do: []

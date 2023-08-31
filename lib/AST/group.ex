@@ -18,8 +18,11 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Group do
   import Rez.AST.NodeValidator
+
   alias Rez.AST.Group
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(group), to: NodeHelper
 
@@ -34,7 +37,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
   def pre_process(group), do: group
 
   def process(%Group{} = group, node_map) do
-    NodeHelper.copy_attributes(group, node_map)
+    group
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_group), do: []

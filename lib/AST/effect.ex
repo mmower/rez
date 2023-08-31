@@ -25,6 +25,7 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Effect do
   import Rez.AST.NodeValidator
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(effect), to: NodeHelper
 
@@ -39,7 +40,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
   def pre_process(effect), do: effect
 
   def process(effect, node_map) do
-    NodeHelper.copy_attributes(effect, node_map)
+    effect
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_effect), do: []

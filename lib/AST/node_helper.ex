@@ -187,8 +187,6 @@ defmodule Rez.AST.NodeHelper do
   into the child.
   """
   def copy_attributes(node, node_map) do
-    # IO.puts("copy_attributes(#{node.id})")
-
     case get_attr_value(node, "_parents", []) do
       [] ->
         node
@@ -230,7 +228,8 @@ defmodule Rez.AST.NodeHelper do
           },
           set: function(v) {
             obj.setAttribute(attr, v);
-          }
+          },
+          configurable: true
         });
       }
 

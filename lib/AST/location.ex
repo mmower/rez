@@ -37,17 +37,17 @@ defmodule Rez.AST.Location do
       )
     )
   end
-
-  def process(%Location{status: :ok} = location) do
-    build_template(location)
-  end
-
-  def process(location), do: location
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Location do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{NodeHelper, Attribute, Game, Location}
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Attribute
+  alias Rez.AST.Game
+  alias Rez.AST.Location
 
   defdelegate js_initializer(location), to: NodeHelper
 
@@ -64,7 +64,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
   def process(location, node_map) do
     location
     |> NodeHelper.copy_attributes(node_map)
-    |> Location.process(location)
+    |> Location.build_template()
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_location), do: []

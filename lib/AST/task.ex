@@ -14,7 +14,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Task do
   import Rez.AST.NodeValidator
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(task), to: NodeHelper
 
@@ -29,7 +31,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
   def pre_process(task), do: task
 
   def process(task, node_map) do
-    NodeHelper.copy_attributes(task, node_map)
+    task
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_task), do: []

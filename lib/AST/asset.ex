@@ -93,6 +93,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
   import Rez.AST.NodeValidator
   alias Rez.AST.Asset
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(asset), to: NodeHelper
 
@@ -118,6 +119,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     |> NodeHelper.set_string_attr("$path", path)
     |> NodeHelper.set_string_attr("detected_mime_type", MIME.from_path(path))
     |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def process(%Asset{} = asset, _node_map), do: asset

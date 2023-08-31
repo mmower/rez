@@ -18,9 +18,9 @@
   initial_scene: #scene_one
   on_init: (game, event) => {console.log("Beginning the game");}
 
-  layout: ~T~
+  layout: ```
   ${content}
-  ~T~
+  ```
 
   %(stdlib.rez)
 
@@ -48,10 +48,11 @@
   end
 
   @item water_bottle begin
+    status: "full"
     type: :bottle
-    description: """
-    A water bottle
-    """
+    description: ```
+    A ${this.status} water bottle
+    ```
   end
 
   @slot sword_slot begin
@@ -74,25 +75,25 @@
   @scene scene_one begin
     title: "A Maze of Twisty Cards"
     blocks: []
-    layout: """
-    {{{content}}}
-    """
+    layout: ```
+    ${content}
+    ```
     initial_card: #twisty_passage
     on_start: (game, evt) => {return game;}
   end
 
   @scene battle_with_the_troll begin
-    layout: """
-    {{{content}}}
-    """
+    layout: ```
+    ${content}
+    ```
     title: "The Troll Battle"
     initial_card: #troll_attacks
   end
 
   @card troll_attacks begin
-    content: """
+    content: ```
     A huge troll attacks you. [[Run Away|scene_one]]
-    """
+    ```
   end
 
   @list names begin
@@ -116,16 +117,16 @@
         choice.deny("No bottle for you!");
       }
     }
-    content: """
+    content: ```
     You are in a maze of [[another twisty passage]], all alike.
     There is a bottle of water here. [[*pick_up_bottle]]
-    """
+    ```
   end
 
   @card another_twisty_passage begin
-    content: """
+    content: ```
     You can only go back to the first [[twisty passage]] from here.
-    """
+    ```
   end
 
   @asset img1 begin

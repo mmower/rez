@@ -346,6 +346,8 @@ let game_proto = {
     for (let init_level of this.initLevels()) {
       console.log("init/" + init_level);
 
+      this.init(init_level);
+
       this.$init_order.forEach(function (obj_id) {
         const obj = this.getGameObject(obj_id);
         obj.init(init_level);

@@ -121,12 +121,6 @@ defmodule Rez.AST.Game do
     |> set_default_title()
   end
 
-  # def process_item(%Game{} = game, key) do
-  #   IO.puts("process_item(#{key})")
-  #   processed_obj = Map.get(game, key) |> Node.process(game.by_id)
-  #   Map.put(game, key, processed_obj)
-  # end
-
   def build_template(%Game{} = game) do
     NodeHelper.set_compiled_template_attr(
       game,
@@ -294,8 +288,14 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do
   import Rez.AST.NodeValidator
+
   alias Rez.Utils
-  alias Rez.AST.{NodeHelper, Game, Item}
+
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Game
+  alias Rez.AST.Item
 
   defdelegate js_initializer(game), to: NodeHelper
 
@@ -313,6 +313,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     game
     |> Game.set_defaults()
     |> Game.build_template()
+    |> TemplateHelper.compile_template_attributes()
     |> NodeHelper.process_collection(:actors, node_map)
     |> NodeHelper.process_collection(:assets, node_map)
     |> NodeHelper.process_collection(:tasks, node_map)
@@ -369,7 +370,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(game.styles)
   end
 
-  @content_expr ~r/\$\{content\}/
+  @content_expr ~s|${content}|
 
   def validators(_game) do
     [
@@ -392,8 +393,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
       attribute_present?(
         "layout",
         attribute_has_type?(
-          :string,
-          validate_value_matches?(
+          :source_template,
+          validate_value_contains?(
             @content_expr,
             "Game layout attribute is expected to include a ${content} expression!"
           )

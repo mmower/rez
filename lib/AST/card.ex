@@ -54,7 +54,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
   import Rez.AST.NodeValidator
-  alias Rez.AST.{Card, NodeHelper}
+  alias Rez.AST.Card
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   def node_type(_card), do: "card"
 
@@ -72,6 +74,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
     card
     |> NodeHelper.copy_attributes(node_map)
     |> Card.build_template()
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def process(card), do: card
@@ -90,7 +93,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
       ),
       attribute_present?(
         "content",
-        attribute_has_type?(:string)
+        attribute_has_type?(:source_template)
       ),
       attribute_if_present?(
         "location",

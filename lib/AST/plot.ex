@@ -26,7 +26,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Plot do
   import Rez.AST.NodeValidator
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(plot), to: NodeHelper
 
@@ -41,7 +43,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
   def pre_process(plot), do: plot
 
   def process(plot, node_map) do
-    NodeHelper.copy_attributes(plot, node_map)
+    plot
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_plot), do: []

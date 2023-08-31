@@ -22,7 +22,9 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Relationship do
   import Rez.AST.NodeValidator
+
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(relationship), to: NodeHelper
 
@@ -37,7 +39,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
   def pre_process(relationship), do: relationship
 
   def process(relationship, node_map) do
-    NodeHelper.copy_attributes(relationship, node_map)
+    relationship
+    |> NodeHelper.copy_attributes(node_map)
+    |> TemplateHelper.compile_template_attributes()
   end
 
   def children(_relationship), do: []
