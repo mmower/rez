@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "0.10.8"
+  @version "0.10.9"
 
   def project do
     case System.get_env("BUILD_MODE") do
@@ -33,12 +33,12 @@ defmodule Rez.MixProject do
       "burrito" ->
         [
           mod: {Rez, []},
-          extra_applications: [:logger, :eex, :crypto, :iex]
+          extra_applications: [:logger, :eex, :crypto, :iex, :tools]
         ]
 
       _ ->
         [
-          extra_applications: [:logger, :eex, :crypto, :iex]
+          extra_applications: [:logger, :eex, :crypto, :iex, :tools]
         ]
     end
   end

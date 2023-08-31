@@ -74,4 +74,31 @@ defmodule Rez.Compiler do
 
     status
   end
+
+  def profile(args, options) do
+    IO.puts("Profiling run")
+
+    # Ignore the file reading times
+    compilation = %Compilation{source_path: List.first(args), options: options}
+    compilation = run_phase(Rez.Compiler.ReadSource, compilation)
+
+    # Warm it up
+    IO.puts("Warm up")
+    run_phase(Rez.Compiler.ParseSource, compilation)
+
+    # Now profile it
+    IO.puts("Profiling")
+    :fprof.trace(:start)
+    compilation = run_phase(Rez.Compiler.ParseSource, compilation)
+    :fprof.trace(:stop)
+    :fprof.profile()
+
+    IO.puts("Writing analysis")
+    :fprof.analyse(dest: 'fprof_analysis.txt')
+
+    data = :file.consult("fprof_analysis.txt")
+    File.write!("fprof_analysis.ans", Apex.Format.format(data))
+
+    Map.get(compilation, :status)
+  end
 end

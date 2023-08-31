@@ -94,6 +94,14 @@ defmodule Rez do
             :error -> quit.(1)
           end
 
+        "profile" ->
+          quit = quit_fn(:quit)
+
+          case Rez.Compiler.profile(args, options) do
+            :ok -> quit.(0)
+            :error -> quit.(1)
+          end
+
         unknown ->
           IO.puts("Error: command '#{unknown}' not recognised.")
           quit.(1)

@@ -194,13 +194,4 @@ defmodule Rez.Parser.Parser do
         {:error, reasons, line, col, input}
     end
   end
-
-  # def profile_run() do
-  #   source = Source.Reader.read_source("test/support", "test_script.rez", [
-  #     Source.Macros.Include.include_macro(~r/^\s*%\((?<file>.*)\)/),
-  #     Source.Macros.LineComment.line_comment_macro(~r/^%%/)
-  #   ])
-  #   {:ok, game} = Rez.Parser.Parser.parse(source)
-  #   IO.puts("Game has #{inspect(Map.keys(game))} entries")
-  # end
 end
