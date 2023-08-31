@@ -4,6 +4,7 @@ defmodule Rez.Parser.Parser do
   AST node if parsing is successful.
   """
 
+  alias Rez.Debug
   alias LogicalFile
 
   alias Ergo.Context
@@ -175,6 +176,10 @@ defmodule Rez.Parser.Parser do
            data: %{source: source, aliases: %{}, id_map: %{}}
          ) do
       %Context{status: :ok, ast: ast, data: %{id_map: id_map}} ->
+        if(Debug.dbg_do?(:debug)) do
+          File.write!("ast.ans", Apex.Format.format(ast))
+        end
+
         {:ok, ast, id_map}
 
       %Context{status: {code, reasons}, id: id, line: line, col: col, input: input}

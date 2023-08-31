@@ -11,7 +11,10 @@ defmodule Rez.Parser.StructureParsers do
 
   alias LogicalFile
 
-  alias Rez.AST.{Attribute, Node}
+  alias Rez.AST.Attribute
+  alias Rez.AST.Node
+  alias Rez.AST.NodeHelper
+
   import Rez.Parser.{UtilityParsers, AttributeParser, DelimitedParser}
   import Rez.Parser.ValueParsers, only: [keyword_value: 0]
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
@@ -80,7 +83,7 @@ defmodule Rez.Parser.StructureParsers do
         position: {source_file, source_line, col}
       )
 
-    Node.pre_process(%{
+    NodeHelper.pre_process(%{
       node
       | attributes:
           merge_attributes(

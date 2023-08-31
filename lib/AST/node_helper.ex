@@ -160,6 +160,15 @@ defmodule Rez.AST.NodeHelper do
   end
 
   @doc """
+  This is called from the compiler before other processing happens, we delegate
+  to the nodes themselves for node-specific pre-processing steps.
+  """
+  def pre_process(node) do
+    node
+    |> Node.pre_process()
+  end
+
+  @doc """
   Given a Node with a collection of Nodes under `coll_key` return a new Node
   with the collection under `coll_key` having been passed through
   `Node.process` themselves.
