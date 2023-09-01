@@ -4,8 +4,9 @@ A language, compiler, and runtime system for creating interaction fiction games 
 
 By Matt Mower &lt;self@mattmower.com&gt;
 
-* Version 0.9 — 13 Nov 2022
-* Version 0.8 — 24 Oct 2022
+- Version 0.10 — 25 Aug 2023
+- Version 0.9 — 13 Nov 2022
+- Version 0.8 — 24 Oct 2022
 
 ## Intro
 
@@ -68,45 +69,45 @@ Installation on macOS depends on [Homebrew](https://brew.sh/) and [ASDF](https:/
 
 ### Windows
 
-  1. **Install Elixir and Erlang.**
+1.  **Install Elixir and Erlang.**
 
-     Download the Elixir web installer from https://elixir-lang.org/install.html#windows and install v1.14.2 or newer (the installer will give you a choice of versions during install). Installing Elixir will also install the appropriate version of Erlang by default. If you have a prior install of Erlang, you may need to check that it's compatible with latest Elixir.
-    
-     Verify your install in Powershell with
-    
-         > elixir -v
-         Erlang/OTP 25 [erts-13.0.4] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit:ns]
-         Elixir 1.14.2 (compiled with Erlang/OTP 25)
-   
-  2. **Install Node.**
+    Download the Elixir web installer from https://elixir-lang.org/install.html#windows and install v1.14.2 or newer (the installer will give you a choice of versions during install). Installing Elixir will also install the appropriate version of Erlang by default. If you have a prior install of Erlang, you may need to check that it's compatible with latest Elixir.
 
-     Install [NodeJS 19](https://nodejs.org/).  A optional version manager like [NVM for Windows](https://github.com/coreybutler/nvm-windows) can make this easier.
-     
-  3. **Clone the repo.**
-  
-         > git clone git@github.com:mmower/rez.git
-         > cd rez
-      
-  4. **Install dependencies.**
-  
-         > npm install
-         > mix deps.get
-      
-  5. **Build the rez compiler binary.**
-  
-     From Powershell:
-     
-         > $env:BUILD_MODE = 'escript'; $env:MIX_ENV = 'prod'; mix escript.build
-     
-     Verify your build:
-     
-         > .\rez --version
+    Verify your install in Powershell with
 
-  6. **Put rez in your path.**
+        > elixir -v
+        Erlang/OTP 25 [erts-13.0.4] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit:ns]
+        Elixir 1.14.2 (compiled with Erlang/OTP 25)
 
-     Edit your environment variables and add the repo to your PATH. Now you should be able to run `rez` from any directory in your shell, undecorated. Check that you can print the version from the root directory:
+2.  **Install Node.**
 
-         > cd \; rez version
+    Install [NodeJS 19](https://nodejs.org/). A optional version manager like [NVM for Windows](https://github.com/coreybutler/nvm-windows) can make this easier.
+
+3.  **Clone the repo.**
+
+    > git clone git@github.com:mmower/rez.git
+    > cd rez
+
+4.  **Install dependencies.**
+
+    > npm install
+    > mix deps.get
+
+5.  **Build the rez compiler binary.**
+
+    From Powershell:
+
+        > $env:BUILD_MODE = 'escript'; $env:MIX_ENV = 'prod'; mix escript.build
+
+    Verify your build:
+
+        > .\rez --version
+
+6.  **Put rez in your path.**
+
+    Edit your environment variables and add the repo to your PATH. Now you should be able to run `rez` from any directory in your shell, undecorated. Check that you can print the version from the root directory:
+
+        > cd \; rez version
 
 ### Other OS
 
@@ -135,3 +136,25 @@ This will build the complete game in the `dist` folder including all assets refe
 The resulting files can be archived for distribution either hosted on a server or potentially turned into an Eletron application.
 
 Note that, at present, no attempt is made to minimise or optimise the resulting JS or CSS assets.
+
+## Acknowledgements
+
+### Front end libraries
+
+- [Tracery](https://github.com/galaxykate/tracery) used courtesy of [Galaxy Kate](http://www.galaxykate.com/) under the [Apache 2.0 license](https://github.com/galaxykate/tracery/blob/master/LICENSE.MD).
+- [Alpinejs](https://alpinejs.dev/) used courtesy of [Caleb Porzio](https://calebporzio.com/) under the [MIT license](https://github.com/alpinejs/alpine/blob/main/LICENSE.md)
+- [Bulma CSS](https://bulma.io/) used courtesy of [Jeremy Thomas](https://jgthms.com/) under the [MIT license](https://github.com/jgthms/bulma/blob/master/LICENSE)
+- [Pluralize](https://github.com/plurals/pluralize) used courtesy of [Blake Embrey](http://blakeembrey.me/) under the [MIT license](https://github.com/plurals/pluralize/blob/master/LICENSE)
+
+### Backend dependencies
+
+- [Earmark](https://github.com/pragdave/earmark) used courtesy of [Dave Thomas](https://pragdave.me/) under the [Apache 2.0 license](https://github.com/pragdave/earmark/blob/master/LICENSE)
+- [Credo](https://github.com/rrrene/credo) used courtesy of [René Föhring](https://rrrene.org/) under the [MIT license](https://github.com/rrrene/credo/blob/master/LICENSE)
+- [elixir-uuid](https://github.com/zyro/elixir-uuid) used courtesy of [Andrei Mihu](http://andreimihu.com/) under the [Apache 2.0 license](https://github.com/zyro/elixir-uuid/blob/master/LICENSE)
+- [Temp](https://github.com/danhper/elixir-temp) used courtesy of [Daniel Perez](https://daniel.perez.sh/) under the [MIT license](https://github.com/danhper/elixir-temp/blob/master/LICENSE)
+- [ExImageInfo](https://github.com/Group4Layers/ex_image_info) used courtesy of [Raúl](https://github.com/rNoz) under the [MIT license](https://github.com/Group4Layers/ex_image_info/blob/master/LICENSE.md)
+- [Inflectorex](https://github.com/girishramnani/inflector) used courtesy of [Girish Ramnani](https://github.com/girishramnani) under the [MIT license](https://github.com/girishramnani/inflector/blob/master/LICENSE)
+- [Burrito](https://github.com/burrito-elixir/burrito) used courtesy of [Digit](https://puppy.surf/) under the [MIT license](https://github.com/burrito-elixir/burrito/blob/main/LICENSE)
+- [MIME](https://github.com/elixir-plug/mime) used courtesy of [José Valim](https://dashbit.co/) under the [Apache 2.0 license](https://github.com/elixir-plug/mime/blob/master/LICENSE)
+- [Poison](https://github.com/devinus/poison) used courtesy of [Devin Alexander Torres](https://devinus.io/) under the [BSD0 license](https://github.com/devinus/poison/blob/master/LICENSE)
+- [Apex](https://github.com/bjro/apex) used courtesy of [Björn Rochel](https://bjro.github.io/) under the [MIT license](https://github.com/bjro/apex#license)

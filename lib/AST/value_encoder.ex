@@ -52,6 +52,10 @@ defmodule Rez.AST.ValueEncoder do
     "{initializer: #{Poison.encode!(i)}}"
   end
 
+  def encode_value({:tracery_grammar, g}) do
+    ~s|{tracery_grammar: #{Poison.encode!(g)}}|
+  end
+
   def encode_value({:elem_ref, r}) do
     ~s|"#{r}"|
   end

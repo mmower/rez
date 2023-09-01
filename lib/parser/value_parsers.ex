@@ -106,12 +106,18 @@ defmodule Rez.Parser.ValueParsers do
   template_value() parses ```template source``` into a {:source_template, "<function source>"}
   """
   def template_value() do
-    template_delimiter = literal("```")
-
     ParserCache.get_parser("tempate", fn ->
-      Rez.Parser.DelimitedParser.text_delimited_by_parsers(template_delimiter, template_delimiter)
+      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("```"), literal("```"))
       |> transform(&convert_doc_fragments_to_string/1)
       |> transform(fn template_source -> {:source_template, template_source} end)
+    end)
+  end
+
+  def tracery_grammar_value() do
+    ParserCache.get_parser("tracery_grammar", fn ->
+      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("G``"), literal("```"))
+      |> transform(&convert_doc_fragments_to_string/1)
+      |> transform(fn grammar -> {:tracery_grammar, grammar} end)
     end)
   end
 
@@ -486,6 +492,7 @@ defmodule Rez.Parser.ValueParsers do
           number_value(),
           bool_value(),
           template_value(),
+          tracery_grammar_value(),
           heredoc_value(),
           string_value(),
           elem_ref_value(),

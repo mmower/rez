@@ -44,9 +44,7 @@ const basic_object = {
   },
 
   init_0() {
-    this.initDynamicValues();
-    this.initDynamicAttributes();
-    this.initReferenceAttributes();
+    this.initDynamicProperties();
   },
 
   init_1() {
@@ -64,57 +62,71 @@ const basic_object = {
     this.initialised = true;
   },
 
-  initReferenceAttributes() {
-    for (let attr_name of Object.keys(this.attributes)) {
-      const value = this.getAttribute(attr_name);
-      if (typeof value == "object" && value.hasOwnProperty("attr_ref")) {
-        console.log("Init ref " + attr_name);
-        console.dir(value);
-        delete this[attr_name];
-        const ref = value["attr_ref"];
-
-        Object.defineProperty(this, attr_name, {
-          get: function () {
-            return $(ref.elem_id).getAttributeValue(ref.attr_name);
-          },
-        });
-      }
-    }
-  },
-
-  initDynamicValues() {
-    for (let attr_name of Object.keys(this.attributes)) {
-      const value = this.getAttribute(attr_name);
-      if (typeof value == "object" && value.hasOwnProperty("dynamic_value")) {
-        delete this[attr_name];
-
-        const val_gen = value["dynamic_value"];
-        const src = `(${this.id}) => {return ${val_gen};}`;
-        const f = eval(src);
-        Object.defineProperty(this, attr_name, {
-          get: function () {
-            return f(this);
-          },
-        });
-      }
-    }
-  },
-
-  initDynamicAttributes() {
+  initDynamicProperties() {
     if (this.getAttributeValue("$template", false)) {
       return;
     }
 
     for (let attr_name of Object.keys(this.attributes)) {
       const value = this.getAttribute(attr_name);
-
-      if (typeof value == "object" && value.hasOwnProperty("initializer")) {
-        const initializer = value["initializer"];
-        this.setAttribute(attr_name, eval(initializer));
-      } else if (value.constructor == RezDie) {
-        this.setAttribute(attr_name, value.roll());
+      if (typeof value == "object") {
+        if (value.hasOwnProperty("initializer")) {
+          this.createDynamicallyInitializedAttribute(attr_name, value);
+        } else if (value.hasOwnProperty("attr_ref")) {
+          this.createReferenceAttribute(attr_name, value);
+        } else if (value.hasOwnProperty("dynamic_value")) {
+          this.createDynamicValueAttribute(attr_name, value);
+        } else if (value.hasOwnProperty("tracery_grammar")) {
+          this.createTraceryGrammarAttribute(attr_name, value);
+        }
       }
     }
+  },
+
+  createDynamicallyInitializedAttribute(attr_name, value) {
+    if (value.constructor == RezDie) {
+      this.setAttribute(attr_name, value.roll());
+    } else {
+      const initializer = value["initializer"];
+      this.setAttribute(attr_name, eval(initializer));
+    }
+  },
+
+  createReferenceAttribute(attr_name, value) {
+    delete this[attr_name];
+    const ref = value["attr_ref"];
+
+    Object.defineProperty(this, attr_name, {
+      get: function () {
+        return $(ref.elem_id).getAttributeValue(ref.attr_name);
+      },
+    });
+  },
+
+  createDynamicValueAttribute(attr_name, value) {
+    delete this[attr_name];
+
+    const val_gen = value["dynamic_value"];
+    const src = `(${this.id}) => {return ${val_gen};}`;
+    const f = eval(src);
+    Object.defineProperty(this, attr_name, {
+      get: function () {
+        return f(this);
+      },
+    });
+  },
+
+  createTraceryGrammarAttribute(attr_name, value) {
+    delete this[attr_name];
+
+    const grammar = tracery.createGrammar(JSON.parse(value.tracery_grammar));
+    grammar.addModifiers(tracery.baseEngModifiers);
+
+    Object.defineProperty(this, attr_name, {
+      get: function () {
+        return grammar.flatten("#origin#");
+      },
+    });
   },
 
   elementInitializer() {},

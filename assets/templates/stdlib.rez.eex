@@ -22,6 +22,12 @@ end
   pre_runtime: true
 end
 
+@asset _TRACERY_JS begin
+  file_name: "tracery.js"
+  defer: false
+  pre_runtime: true
+end
+
 %% ----------------------------------------------------------------------------
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
