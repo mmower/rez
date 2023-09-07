@@ -42,7 +42,7 @@ defmodule Rez.AST.Card do
       iex> card = %Card{id: "test"} |> NodeHelper.set_string_attr("content", "This is **bold** text") |> Card.process()
       iex> assert %{
       ...>  status: :ok,
-      ...>  template: "{\"compiler\":[8,\">= 4.3.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    return \"<div data-card=\\\"test\\\" class=\\\"card\\\"><p>\\nThis is <strong>bold</strong> text</p>\\n</div>\";\n},\"useData\":true}\n"
+      ...>  attributes: %{"$content_template" => %Rez.AST.Attribute{name: "$content_template", type: :compiled_template, value: "function(bindings, filters) {return [function(bindings, filters) {return `<div id=\"card_test\" data-card=\"test\" class=\"card\"><p>\nThis is <strong>bold</strong> text</p>\n</div>`;}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}"}, "content" => %Rez.AST.Attribute{name: "content", type: :string, value: "This is **bold** text"}}
       ...> } = card
   """
   def process(%Card{status: :ok} = card) do

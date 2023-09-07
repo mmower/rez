@@ -73,7 +73,7 @@ defmodule Rez.Parser.AliasParsesTest do
 
     assert %Rez.AST.Item{id: "magic_ring"} = ast
     assert %Rez.AST.Attribute{value: true} = NodeHelper.get_attr(ast, "magic")
-    assert %Rez.AST.Attribute{value: [{:keyword, :ring}]} = NodeHelper.get_attr(ast, "$parents")
+    assert %Rez.AST.Attribute{value: [{:keyword, :ring}]} = NodeHelper.get_attr(ast, "_parents")
   end
 
   # test "parse merges default & defined tags" do

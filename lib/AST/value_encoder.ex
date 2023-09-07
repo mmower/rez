@@ -91,6 +91,11 @@ defmodule Rez.AST.ValueEncoder do
     encode_attributes(t)
   end
 
+  @doc """
+  The template `t` is a function(bindings, filters) that returns the content
+  of the template. A challenge is that the 'this' binding is undefined for
+  some reason (it's not even 'Window') and so we cannot supply a context.
+  """
   def encode_value({:compiled_template, t}) do
     t
   end

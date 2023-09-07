@@ -5,6 +5,7 @@ with HTML
 
 By Matt Mower <self@mattmower.com>
 
+Version 0.11 - 01 Sep 2023
 Version 0.10 - 23 Aug 2023
 Version 0.9 — 13 Nov 2022
 Version 0.8 — 24 Oct 2022
@@ -16,19 +17,20 @@ HTML and incorportating Javascript, CSS, and optionally graphics, audio, and
 movie files.
 
 Rez started as a **quick** alternative to [Twine](https://twinery.org/) for an
-author who had become frustrated with using Twine.
+author who had become frustrated with Twine.
 
 Twine describes itself as an "open source tool for telling interactive,
-nonlinear stories," and this is where it shines. It makes it relatively easy
-for those with almost no development experience to get started and create a
-choice-based game.
+nonlinear stories." It makes it relatively easy for those with almost no
+development experience to get started and create a choice-based game.
 
 Rez, by contrast, is designed for making games whose complexity is not well
-suited to Twine and for authors who are at least comfortable writing small
-amounts of Javascript functions.
+suited to Twine and where a move to a parser based alternative such as
+[Inform](https://ganelson.github.io/inform-website/) or [TADS](https://www.tads.org/)
+is not desirable.
 
-Rez's complexity sits somewhere between Twine and an authoring system like
-[Inform](https://ganelson.github.io/inform-website/) or [TADS](https://www.tads.org/).
+Rez's complexity sits somewhere between advanced Twine and Inform/TADS. It has
+a relatively simple, declarative, syntax but requires the author to be
+comfortable writing small Javascript functions to implement complex behaviours.
 
 Rez has a standard library including support for creating NPCs, item &
 inventory management, scenes, and maps and a behaviour tree system to introduce
@@ -40,10 +42,12 @@ game while offering a simple & usable framework for those just getting started.
 
 # Outline of a Rez Game
 
-Rez games are compiled into HTML & Javascript sources (plus associated assets
-like images, movies and sounds) and written in `.rez` source files that are
-composed of elements and directives that describe the various aspects of the
-game.
+A Rez game is written in the form of `.rez` source files and are compiled into
+HTML & a Javascript application, plus any associated assets like images, movies,
+and sounds.
+
+A Rez source file contains elements and directives that describe the various
+components of a game and how it connects together.
 
 At the top level is the `@game` element that contains the game metadata and all
 the other elements that make up the game.
@@ -54,8 +58,8 @@ The command
 
     rez new --author-name="Name" --author-email="email" --game-title="Title" --game-homepage="URL" <name>
 
-Will create a new folder <name> containing a default structure and source files
-ready to be customised.
+Will create a new folder <name> containing a default structure and an example
+`.rez` source file ready for you to customise.
 
 ## Compiling your game
 
@@ -64,8 +68,12 @@ The command
     rez compile src/<game_name>.rez
 
 Will compile the sources into a game in the `dist` folder. It creates an
-`index.html` as well as all of the javascript & other asset files that
+`index.html` as well as all of the Javascript & other asset files that
 constitute the game.
+
+To distribute your game you distribute the contents of the `dist` folder, e.g.
+zipping them up into a file although you could also wrap them in an [Electron](https://www.electronjs.org/)
+app for example.
 
 ## Defaults
 
@@ -560,7 +568,7 @@ attibutes and are written as follows:
 The content of `@script` and `@style` tags will automatically be included into
 the relevant parts of the generated game files.
 
-## Template Expressions
+## <a name="template_expressions">Template Expressions<a>
 
 Template expressions are a way to include dynamic content within the cards used
 to present your game to the player. At the simplest level they provide for
@@ -583,7 +591,7 @@ There are two kinds of template expressions: substitions and decisions.
 A substitution is where we replace a token like `${player.name}` with the value
 from a game object. For example:
 
-    content: "Your name is ${player.name}. It's a good name."
+    content: ```Your name is ${player.name}. It's a good name.```
 
 Inserts the value of the `name` attribute of the `player` binding into the
 output. If `name` is "matt" this will render:
@@ -593,31 +601,39 @@ output. If `name` is "matt" this will render:
 We can also transform the value using filters, for example we can use the
 `capitalize` filter:
 
-    content: "Your name is ${player.name | capitalize}. It's a good name."
+    content: ```Your name is ${player.name | capitalize}. It's a good name.```
 
 will render as:
 
     Your name is Matt. It's a good name.
 
-See filters for a list of the inbuilt filters and the `@filter` element for how
-to define your own filters.
+You can have as many filters as you like, for example:
+
+    content: ```It's ${npc.name | pluralize | capitalize} ball.```
+
+will render as:
+
+    It's Matts ball.
+
+See filters for a list of the inbuilt filters and the `@filter` directive for
+how to define your own filters.
 
 ### Decisions
 
 We can use template expressions to conditionally include certain content, for
 example:
 
-    $if{player.backgrounds | includes: "cop"} {%
+    $if{player.backgrounds.includes?("cop")} {%
       [He knows you were a cop and is willing to look the other way|snag_evidence]
     %}
 
-The `$if{expr} {% … %}` tests the expression which is expected to be a boolean
-and can use various filters to arrive at a `true`|`false` value. If the
-expression evaluates to `true` the content inside the `{%` and `%}` markers
-is evaluated and rendered. Otherwise nothing happens.
+The `$if{expr} {% … %}` tests the expression which is expected to evaluate to
+a boolean. If the expression evaluates to `true` the content inside the
+`{%` and `%}` markers is evaluated and rendered. Otherwise no content is
+rendered.
 
 Where the content of the template includes other template expressions or
-conditional expressions they will be evaluated also.
+conditional expressions they will be evaluated in turn.
 
 ## API Model
 
@@ -807,13 +823,16 @@ implemented in the future if it turns out to be useful.
 
 # Attributes
 
-A Rez element is defined in terms of attributes. Some attributes are expected
-(and perhaps required) by the game (e.g. the `content` attribute of `@card`)
-while some you will define yourself and use in your event handlers and glue
-code.
+Rez elements and directives are mostly defined by their **attributes**. These
+are named values of different types. Someties attributes are required, sometimes
+they are optional. Some you will define yourself, some are expected by the
+runtime.
 
-An attribute has a name and a value. The name follows the rules for legal
-Javascript identifiers:
+For example the `@card` element requires a `content` attribute that defines
+what is shown when the card is presented to the user. You cannot define a
+`@card` without defining its `content`.
+
+Attribute names follows the rule for Javascript identifiers:
 
 - cannot contain spaces
 - must begin with a letter, underscore (\_), or dollar sign ($)
@@ -821,31 +840,38 @@ Javascript identifiers:
 - are case sensitive
 
 This means that any attribute defined on any in-game object can be referenced
-naturally in user Javascript code.
+naturally in Javascript code.
 
 Note that attributes with a leading underscore are considered to be "internal"
-to the Rez compiler and will not appear in the generated code.
+to the Rez compiler. These attributes will not be available in JS objects at
+runtime.
 
 Attributes are written:
 
     name: value
 
-There should be no space between the end of the attribute name and the `:` and
-at least one whitespace between the `:` and the value.
+There should be no space between the attribute name and the `:` and at least
+one space between the `:` and the value. There is no terminating `;` as you
+may be used to in other languages.
 
 **Legal**
 
-    title: "The Maltese "
+    title: "The Maltese Parrot"
 
 **Not-legal**
 
-    title : #foo
-    title :#foo
-    title:#foo
+    title : "The Maltese Parrot"
+    title :"The Maltese Parrot"
+    title:"The Maltese Parrot"
 
 ## Attribute Types
 
-The following types are supported:
+Attributes come into two flavours. Attributes that of a specific type and with
+a defined value (what we call 'static' attributes) and dynamically defined
+attributes. Dynamic attributes resolve to a static attribute when they get
+referenced.
+
+The following static types are supported:
 
 ### Boolean
 
@@ -858,6 +884,8 @@ Positive and negative integer and floating point numbers, e.g.
 
 `12`, `-2.5`
 
+There are no specific `integer` or `float` types.
+
 ### String
 
 Text delimited by `"` useful for short strings such as descriptions. However,
@@ -865,7 +893,15 @@ for passages of text it can be easier to use a Heredoc String
 
 ### Heredoc Strings
 
-Text delimited by `"""`. These can span over multiple lines.
+Text delimited by `"""`. These can span over multiple lines and make it easier
+to include the `"` character itself. Otherwise they are interchangable with
+strings.
+
+### Templates
+
+Text delimited by `\`\`\``. These can span over multiple lines and can contain
+[template expressions](#template_expressions) that will be interpolated into
+the text at runtime.
 
 ### Attribute reference
 

@@ -6,22 +6,19 @@ let plot_proto = {
   __proto__: basic_object,
 
   isActive() {
-    return this.getAttribute("tick") > 0;
+    return this.stage > 0;
   },
 
   isComplete() {
-    return this.getAttribute("tick") == this.getAttribute("ticks");
+    return this.stage === this.stages;
   },
 
-  tick() {
-    let curr_tick = this.getAttribute("tick");
-    const max_ticks = this.getAttribute("ticks");
-    if(curr_tick < max_ticks) {
-      curr_tick += 1;
-      this.setAttribute("tick", curr_tick);
-      this.runEvent("tick", {});
+  advance() {
+    if (this.cur_stage < this.stages) {
+      this.cur_stage += 1;
+      this.runEvent("advance", {});
     }
-  }
+  },
 };
 
 function RezPlot(id, attributes) {

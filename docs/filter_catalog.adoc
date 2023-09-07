@@ -1,0 +1,246 @@
+= Filter Catalog
+:toc:
+:toclevels: 1
+
+Filters are used in template expressions to transform the expression before it gets rendered.
+
+== append
+
+`String`: `String` => `String`
+
+Appends a string to what precedes it which is assumed to be a string already.
+
+=== Example
+....
+${"Sam" | append: " lives here."} => "Sam lives here"
+....
+
+== asset_tag
+
+`String` => `String`
+
+=== Example
+....
+${"asset_1" | asset_tag}
+....
+
+== asset_path
+
+`String` => `String`
+
+=== Example
+....
+${"asset_1" | asset_path}
+....
+
+== bsel
+
+`Boolean`: `List` => `Any`
+
+=== Example
+
+== camelize
+
+`String` => `String`
+
+Convert a string to Camel Case.
+
+=== Example
+....
+${"sam spade" | camelize} => "samSpade"
+....
+
+== capitalize
+
+`String` => `String`
+
+Make sure the first character of the string is upper case.
+
+=== Example
+....
+${"matt" | capitalize} => "Matt"
+....
+
+== contains
+
+`String`: `String` => `Boolean`
+
+=== Example
+....
+${"Sam Spade" | contains: "Spade"} => true
+....
+
+== dec
+
+`Number` => `Number`
+
+=== Example
+....
+${9 | inc} => 10
+....
+
+== decision
+
+=== Example
+....
+....
+
+== downcase
+
+`String` => `String`
+
+=== Example
+....
+${"Sam Spade"} => "sam spade"
+....
+
+== ends_with
+
+`String`: `String` => `String`
+
+=== Example
+....
+${"Sam Spade" | ends_with: "Spade"} => true
+....
+
+== event
+
+=== Example
+....
+....
+
+== gt
+
+`Number`: `Number` => `Boolean`
+
+=== Example
+....
+${9 | gt: 10} => false
+${10 | gt: 9} => true
+....
+
+== gte
+
+`Number`: `Number` => `Boolean`
+
+=== Example
+....
+${9 | gte: 10} => false
+${10 | gte: 10} => true
+....
+
+== eq
+
+`Number`: `Number` => `Boolean`
+
+=== Example
+....
+....
+
+== inc
+
+`Number` -> `Number`
+
+=== Example
+....
+....
+
+== lt
+
+`Number` -> `Boolean`
+
+=== Example
+....
+....
+
+== lte
+
+`Number` -> `Boolean`
+
+=== Example
+....
+....
+
+== ne
+
+`Number` -> `Boolean`
+
+=== Example
+....
+....
+
+== pluralize
+
+`String` -> `String`
+
+=== Example
+....
+....
+
+== prepend
+
+`String` -> `String`
+
+=== Example
+....
+....
+
+== scene_change
+
+=== Example
+....
+....
+
+== scene_interlude
+
+=== Example
+....
+....
+
+== scene_resume
+
+=== Example
+....
+....
+
+== sel
+
+=== Example
+....
+....
+
+== starts_with
+
+`String` -> `Boolean`
+
+=== Example
+....
+....
+
+== split
+
+=== Example
+....
+....
+
+== string
+
+`Anything` -> `String`
+
+=== Example
+....
+....
+
+== trim
+
+=== Example
+....
+....
+
+== upcase
+
+`String` -> `String`
+
+=== Example
+....
+....

@@ -11,7 +11,6 @@ basic_object.game = game;
 /* Encode game objects */
 <%= for collection <- Game.js_classes_to_init(),
     {_id, obj} <- Map.get(@game, collection) do %>
-  // New JS Initializer
   game.addGameObject(<%= Node.js_initializer(obj) %>);
 <% end %>
 

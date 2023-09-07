@@ -195,8 +195,7 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      !NodeHelper.is_template?(asset) && Asset.script_asset?(asset) && !Asset.js_runtime?(asset) &&
-        Asset.pre_runtime?(asset)
+      Asset.is_compile_time_script?(asset) && Asset.pre_runtime?(asset)
     end)
   end
 
@@ -204,8 +203,7 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      !NodeHelper.is_template?(asset) && Asset.script_asset?(asset) && !Asset.js_runtime?(asset) &&
-        !Asset.pre_runtime?(asset)
+      Asset.is_compile_time_script?(asset) && !Asset.pre_runtime?(asset)
     end)
   end
 

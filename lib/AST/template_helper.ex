@@ -144,7 +144,14 @@ defmodule Rez.AST.TemplateHelper do
   def convert_markdown(markup) do
     markup
     |> prepare_content()
-    |> Earmark.as_html!(escape: false, smartypants: false)
+    |> Earmark.as_html(escape: false, smartypants: false)
+    |> case do
+      {:ok, html_doc, _messages} ->
+        html_doc
+
+      {:error, html_doc, _messages} ->
+        html_doc
+    end
   end
 
   def convert_markup(markup, "html"), do: markup

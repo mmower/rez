@@ -18,12 +18,14 @@ defmodule Rez.Compiler.TemplateCompiler do
   alias Rez.Compiler.TemplateCompiler.Filters
   alias Rez.Compiler.TemplateCompiler.Values
 
-  def js_create_fn(expr), do: ~s|function(bindings, filters) {return #{expr};}|
+  def js_create_fn(expr, ret),
+    do: ~s|function(bindings, filters) {#{if ret, do: "return"} #{expr};}|
 
   def compile({:source_template, chunks}) do
     compiled_chunks = compile_chunks(chunks)
     reducer = ~s|function(text, f) {return text + f(bindings, filters)}|
-    {:compiled_template, js_create_fn(~s|#{compiled_chunks}.reduce(#{reducer}, "")|)}
+    body = ~s|#{compiled_chunks}.reduce(#{reducer}, "")|
+    {:compiled_template, js_create_fn(body, true)}
   end
 
   def compile_chunks(chunks) when is_list(chunks) do
@@ -37,18 +39,28 @@ defmodule Rez.Compiler.TemplateCompiler do
     a problem as Rez template expressions are in other chunks.
   """
   def compile_chunk(s) when is_binary(s) do
-    js_create_fn(~s|`#{s}`|)
+    js_create_fn(~s|`#{s}`|, true)
   end
 
   def compile_chunk({:interpolate, {:expression, expr, filters}}) when is_list(filters) do
     applied_filters =
       Filters.js_apply_filters_to_value("bindings", filters, Values.js_exp("bindings", expr))
 
-    js_create_fn(applied_filters)
+    js_create_fn(applied_filters, true)
   end
 
   def compile_chunk({:conditional, expr, content}) do
-    js_create_fn(~s|(#{expr}) ? `#{content}` : ``|)
+    {:compiled_template, sub_template} = compile(content)
+
+    body = ~s|
+    if(evaluateExpression("#{expr}", bindings)) {
+      const sub_template = #{sub_template};
+      return sub_template(bindings, filters);
+    } else {
+      return "";
+    }|
+
+    js_create_fn(body, false)
   end
 
   defmodule Values do

@@ -1,0 +1,349 @@
+= Rez: a tool for creating HTML-based interactive fiction games
+:toc:
+
+== Introduction
+
+Rez is a language for writing interactive fiction/RPG/simulation games using HTML and incorportating Javascript, CSS, and optionally graphics, audio, and movie files.
+
+Rez started as a **quick** alternative to https://twinery.org/[Twine] for an author who had become frustrated with Twine.
+
+Twine describes itself as an "open source tool for telling interactive, nonlinear stories." It makes it relatively easy for those with almost no development experience to get started and create a choice-based game.
+
+Rez, by contrast, is designed for making games whose complexity is not well suited to Twine and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable.
+
+Rez's complexity sits somewhere between advanced Twine and Inform/TADS. It has a relatively simple, declarative, syntax but requires the author to be comfortable writing small Javascript functions to implement complex behaviours.
+
+Rez has a standard library including support for creating NPCs, item & inventory management, scenes, and maps and a behaviour tree system to introduce AI behaivour. Rez also features a simple, yet powerful, layout & templating system.
+
+Rez is designed to be flexible enough to create a really complex and ambitious game while offering a simple & usable framework for those just getting started.
+
+=== Outline of a Rez Game
+
+A Rez game is written in the form of one or more `.rez` source files that get compiled into an HTML index page & a Javascript application, plus any associated assets like images, movies, and sounds.
+
+A Rez source file contains elements and directives that describe the various components of a game and how it connects together.
+
+At the top level is the `@game` element that contains the game metadata and all
+the other elements that make up the game.
+
+=== Creating a new game
+
+The command:
+....
+rez new --author-name="Name" --author-email="email" --game-title="Title" --game-homepage="URL" <name>
+....
+
+For example specifying `<name>` as "mygame" will create a `mygame` folder containing a number of subfolders. In the `src` subfolder will be `mygame.rez` that will contain some example source.
+
+=== Compiling your game
+
+The command:
+....
+rez compile src/<game_name>.rez
+....
+
+Compiles the sources into a game in the `dist` sub-folder. It creates an `index.html` as well as copying all of the Javascript & other asset files that constitute the game.
+
+=== Distributing your game
+
+To distribute your game you distribute the contents of the `dist` folder. For example by compressing it into a `.zip` file or wrapping it in an https://www.electronjs.org/[Electron] app.
+
+=== Frameworks
+
+Rez includes two default frameworks:
+
+* https://bulma.io/[Bulma CSS] for stylesheet support
+* https://alpinejs.dev/[Apline.js] for dynamic UI support
+
+The files for these will automatically be copied into your `dist` folder when you compile the game.
+
+=== Source code format
+
+Rez games are written in plain UTF-8 files with a `.rez` extension.
+
+The `%` character is special in Rez and indicates a macro of which the most common is `%%` for comments.
+
+=== Comment macro
+
+Rez comments begin with `%%` and continue to the end of the line.
+
+....
+%% this line will be ignored
+....
+
+=== Include macro
+
+Once source file may include another by using the include macro `%(…)`, for
+example:
+
+....
+%(act_one.rez)
+....
+
+An included file may include other files but beware of creating a cyclic dependency. For example this code will hang the compiler:
+
+....
+file1.rez
+---------
+%(file2.rez)
+
+file2.rez
+---------
+%(file1.rez)
+....
+
+== The Rez Language
+
+Rez is a declarative language for writing a game in terms of a set of elements representating the game contents.
+
+In Rez elements are things like items, actors, scenes, locations, assets and so forth. During compilation Rez draws these elements together and converts them into Javascript objects that represent the game when running in the browser.
+
+Elements are generally described using a set of named attributes. For example an `item`` might have a `description` attribute that can be displayed to the player when they examine the item.
+
+Rez uses Javascript functions to supply dynamic behaviour. For the most part you can ignore this but, as your game becomes more complex and you want to incorporate dynamic behaviours, you may need to familiarize yourself with writing small Javascript functions.
+
+Here is an example of a Rez element that includes a dynamic attribute:
+....
+@item magic_ring begin
+  is_a: :ring
+  magic: true
+  material: gold
+  owners: 5
+  belongs_to: #sauron
+  inscription: "Please return to Mordor",
+  on_wear: (actor) => {
+    if(actor.id == "sauron") {
+      actor.game.sauron_victory = true;
+    } else {
+      actor.makeInvisible();
+    }
+   }
+end
+....
+
+There's a lot going on here but we'll unpack it piece by piece.
+
+=== Introduction to Elements
+
+In the first place is the element itself:
+....
+@item magic_ring begin
+  ....attributes....
+end
+....
+
+With the exception of xref:element_catalog#Relationship[@rel], element declarations follow a common pattern:
+
+* element specifier with `@` prefix, e.g. `@item`
+* a unique ID of the element, e.g. `magic_ring`
+* `begin` statement
+* attributes
+* `end` statement
+
+Elements are used to describe in-game concepts. The xref:element_catalog.adoc[Element Catalog] describes each element in detail.
+
+The `id` of an element must be unique and follow the rules for Javascript identifiers. In JavaScript, identifiers are case-sensitive and can contain Unicode letters, `$`, `_`, and digits (`0`-`9`), but may not start with a digit.
+
+=== Introduction to Attributes
+
+The element declares itself to be an item but what about the attributes? These describe the item (or any element) and how it behaves. In our example there are 7 attributes that demonstrate many of the built-in types:
+
+....
+is_a: :ring
+magic: true
+material: gold
+owners: 5
+belongs_to: #sauron
+inscription: "Please return to Mordor",
+wear: (actor) => {
+  if(actor.id == "sauron") {
+    actor.game.sauron_victory = true;
+  } else {
+    actor.makeInvisible();
+  }
+}
+....
+
+There are seven attributes defined here:
+
+[cols="1,2"]
+|===
+|`is_a`
+|a keyword, a symbol often used when there are a few legal values
+
+|`magic`
+|a boolean
+
+|`material`
+|another keyword
+
+|`owners`
+|a number
+
+|`belongs_to`
+|a reference to another element
+
+|`inscription`
+|a string
+
+|`wear`
+|an event script in Javascript arrow function format
+|===
+
+The pattern for any attribute is `<name>: <value>`. The space after the colon is required and note that there is no `,` or `;` at the end as you may be familiar with from other programming languages.
+
+Rez defines a number of attribute types, some simple and some more complicated requiring some Javascript knowledge:
+
+[cols="1,2,2"]
+|===
+|Boolean
+|a truth value that you can test to create conditional behaviour
+|`true`\|`false`
+
+|Number
+|a number value, Rez doesn't have separate types for integers and decimals
+|`5`\|`-1`\|`0.5`
+
+|String
+|a text value
+|`"it's a plaster bust of a parrot"`
+
+|Keyword
+|a symbol representing one of a set of values
+|`:single`\|`:multiple`, `:red`\|`:green`\|`:blue`
+
+|Element Reference
+|an identifier referring to the unique id of an element
+|`#sauron`, `#gandalf`, `#the_ring`
+
+|Heredoc String
+|a text value that can span across multiple lines
+|`"""it's a plaster bust of a parrot"""`
+
+|Template
+|a text value that can span multiple lines and content template expressions that are dynamically interpolated at runtime
+|`+```The ${animal.adjective} ${animal.color} ${animal.species} jumped over the ${other_animal.adjective} ${other_animal.species}```+`
+
+|List
+|a sequence of other values, that can be of any Rez attribute type, inside `[]`. Note that Rez lists do not use a `,` to separate values.
+|`+[1 2 3]+`, `+["red", "green", "blue"]+`
+
+|Set
+|an unordered collection of unique values of any Rez attribute type. Note that rez Sets do not use a `,` to separate values.
+|`+#{:red :green :blue}+`
+
+|Table
+|a collection of name: value pairs where the values can be of any Rez attribute type. Note that Rez tables do not use a `,` to separate name: value pairs.
+|`+{color: :red size: :large print: "Danger"}+`
+
+|Tracery Grammar
+|a text value whose contents should be a https://github.com/galaxykate/tracery[Tracery] grammar
+|`+G``{origin: ...}```+`
+
+|Script
+|a Javascript function, typically an event handler and typically written using the arrow function format
+|`(game, event) => {<JS code>}`
+
+|Dice
+|a dice roll, re-evaluated each time it is referenced
+|`2d6+1`
+
+|File
+|a string value that is imported from a file
+|`+<<<FILE_NAME>>>+`
+
+|Attribute Alias
+|References an attribute in another element
+|`&sauron.location`
+
+|Dynamic Initializer
+|A Javascript expression that is evaluated when the game starts
+|`&{Math.rand_int(1,10)}`
+
+|Dynamic Value
+|A Javascript expression that is evaluated each time the attribute is referenced
+|`^{this.uses * this.item_value * 25}`
+|===
+
+== What's in a Game?
+
+The simplest possible Rez game would look something like this:
+
+....
+@game begin
+  name: "Test Game"
+  IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
+  archive_format: 1
+  initial_scene: #play_game
+  layout_mode: :single
+  layout: ```
+  ${content}
+  ```
+
+  @scene play_game begin
+    initial_card: #did_you_win
+    layout_mode: :single
+    played: 0
+    won: 0
+    win_p: 0
+    layout: ```
+    $if{this.played > 0} {%
+      <p>You've won ${this.win_p}% of your games.</p>
+    %}
+    ${content}
+    ```
+    win: () => {
+      this.played += 1;
+      this.won += 1;
+      this.win_p = this.won * 100 / this.played;
+    }
+    lost: () => {
+      this.played += 1;
+      this.win_p = this.won * 100 / this.played;
+    }
+  end
+
+  @card did_you_win begin
+    content: ```
+    Did you win? [[yes|yes_i_won]] | [[no|no_i_lost]]
+    ```
+  end
+
+  @card yes_i_won begin
+    content: ```
+    Congratulations!
+
+    [[Play again|did_you_win]]
+    ```
+    on_render: () => {
+      this.scene.won();
+    }
+  end
+
+  @card no_i_lost begin
+    content: ```
+    Better luck next time!
+
+    [[Play again|did_you_win]]
+    ```
+    on_render: () => {
+      this.scene.lost()
+    }
+  end
+end
+....
+
+This is a terrible game but it illuminates some of the basic principles of how you create a game using Rez.
+
+We're using 3 elements: xref:element_catalog#game[`@game`], xref:element_catalog#scene[`@scene`], and xref:element_catalog#card[`@card`].
+
+The game wraps everything up and defines the initial scene of the game but the real work is going on in the scene and the cards that are played into it.
+
+Every game has to have at least one scene, but a scene can be very simple as you can see. In the scene `layout` the `${content}` template expression will include the content from the current card (or cards). In more complex games different scenes allow you to present a different interface to the player. You could have a "map" scene that presents a graphical map, for example.
+
+Cards are the basic unit of content in a Rez game. They serve a similar purpose to passages in a Twine game. The `content` attribute is the template that is rendered to be displayed when the card is played into the scene. In this example we're also using the cards `on_render` callback to keep the scene up to date with whether the player is winning or losing.
+
+== In the Browser
+
+We need to distinguish between two environments: _author_time_ where we're in an editor working in a `.rez`` source files with elements and attributes and _runtime_ where the compiled game is running in the browser and we are working with
+Javascript objects like `RezGame`, `RezCard`, and `RezItem`.

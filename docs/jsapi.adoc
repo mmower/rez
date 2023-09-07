@@ -1,0 +1,172 @@
+= JavaScript API
+:toc:
+:toclevels: 1
+
+This document describes Rez's Javascript API including the objects which are the counterparts of the Rez elements. In general there is a 1:1 mapping from a game element to a Javascript object, e.g. `@card` maps to `RezCard`.
+
+Most of the `RezXXX` objects have <<basic_object, basic_object>> as a prototype so its important to familiarize yourself with that API.
+
+== basic_object
+
+The `basic_object` prototype provides a base layer of functionality to all game objects including operating the attribute, event, and storage models.
+
+=== $(id)
+
+Lookup another object via its `#id`.
+
+=== init(level)
+
+Call the appropriate init function given the level, e.g. `init(0)` invokes the `init_0` method. The framework ensures these functions are called, for all statically defined objects, when the game starts. However if you start creating them dynamically they will need to be initialized.
+
+=== init_all()
+
+Calls all init methods in turn.
+
+=== init_0()
+
+Initialize dynamic properties.
+
+=== init_1()
+
+Call `elementInitializer()` and send the object the `init` event.
+
+=== init_2()
+
+Sets the object as being initialized.
+
+=== initDynamicProperties()
+
+Iterate through the objects attributes looking for dynamic attributes and then call the appropriate method to create properties to access it.
+
+=== createDynamicallyInitializedAttribute(attr_name, value)
+=== createReferenceAttribute(attr_name, value)
+=== createDynamicValueAttribute(attr_name, value)
+=== createTraceryGrammarAttribute(attr_name, value)
+
+=== elementInitializer()
+
+This method is intended to be overriden in objects using `basic_object` as a prototype and is an opportunity to do specific initialization for that type of object.
+
+=== copyAssigningId(id)
+
+
+
+=== copyWithAutoId()
+
+=== isTemplateObject()
+
+=== eventHandler(event_name)
+
+=== willHandleEvent(event_name)
+
+=== runEvent(event_name, event_info)
+
+=== getIn(path)
+
+=== hasAttribute(name)
+
+=== getAttribute(name)
+
+=== getAttributeValue(name, default_value)
+
+=== $av(name, default_value)
+
+=== getObjectViaAttribute(name, default_value)
+
+=== setObjectViaAttribute(name, object)
+
+=== attributeHasChanged(attr_name)
+
+=== setAttribute(name, value)
+
+=== addTag(tag)
+
+=== removeTag(tag)
+
+=== setTags(new_tags)
+
+=== putIn(path, value)
+
+=== incAttribute(name, amount = 1)
+
+=== decAttribute(name, amount = 1)
+
+=== applyEffect(effect_id, item_id)
+
+=== removeEffect(effect_id, item_id)
+
+=== addBinding(name, object)
+
+=== needsArchiving()
+
+=== archiveDataContainer()
+
+=== dataWithArchivedAttributes(data)
+
+=== dataWithArchivedProperties(data)
+
+=== toJSON()
+
+=== loadData(data)
+
+== RezActor
+
+== RezAsset
+
+== RezBlock
+
+== RezCard
+
+== RezDeactivateLinkTransformer
+
+== RezDecision
+
+== RezDie
+
+== RezDynamicLink
+
+== RezEffect
+
+== RezEventLinkTransformer
+
+== RezFaction
+
+== RezFormTransformer
+
+== RezGame
+
+== RezGroup
+
+== RezInputTransformer
+
+== RezInventory
+
+== RezItem
+
+== RezList
+
+== RezLocation
+
+== RezObject
+
+== RezPlot
+
+== RezRelationship
+
+== RezScene
+
+== RezSingleLayout
+
+== RezSlot
+
+== RezStackLayout
+
+== RezSystem
+
+== RezTask
+
+== RezTemplate
+
+== RezView
+
+== RezZone

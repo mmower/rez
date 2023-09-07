@@ -27,12 +27,12 @@ defmodule Rez.AST.Asset do
     end
   end
 
-  def exists?(%Asset{} = asset) do
-    File.exists?(file_path(asset))
+  def is_real_asset?(%Asset{} = asset) do
+    file_path(asset) != nil
   end
 
   def script_asset?(%Asset{} = asset) do
-    ext(asset) == ".js"
+    is_real_asset?(asset) && ext(asset) == ".js"
   end
 
   def pre_runtime?(%Asset{} = asset) do
@@ -43,8 +43,19 @@ defmodule Rez.AST.Asset do
     NodeHelper.get_attr_value(asset, "js_runtime", false)
   end
 
+  def is_compile_time_script?(%Asset{} = asset) do
+    is_real_asset?(asset) &&
+      !NodeHelper.is_template?(asset) &&
+      script_asset?(asset) &&
+      !js_runtime?(asset)
+  end
+
   def style_asset?(%Asset{} = asset) do
-    ext(asset) == ".css"
+    is_real_asset?(asset) && ext(asset) == ".css"
+  end
+
+  def exists?(%Asset{} = asset) do
+    File.exists?(file_path(asset))
   end
 
   def ext(%Asset{} = asset) do

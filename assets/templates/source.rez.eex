@@ -33,18 +33,33 @@
     race: :troll
   end
 
-  @derive :sword :item
+  @derive :weapon :item
+  @derive :edged_weapon :weapon
+  @derive :sword :edged_weapon
   @derive :belt :item
   @derive :bottle :item
 
-  @alias sword = item # begin
+  @item sword_template begin
+    $template: true
     type: :sword
+    magic: false
   end
+
+  @alias sword = item<sword_template>
 
   @sword elvish_sword begin
     description: """
     A sword that glows with a pale light
     """
+    origin: :elvish
+    magic: true
+  end
+
+  @sword fine_iron_sword begin
+    description: """
+    A fine iron sword with a wicked sharp blade
+    """
+    origin: :human
   end
 
   @item water_bottle begin
@@ -78,6 +93,7 @@
     layout: ```
     ${content}
     ```
+    layout_mode: :single
     initial_card: #twisty_passage
     on_start: (game, evt) => {return game;}
   end
@@ -86,6 +102,7 @@
     layout: ```
     ${content}
     ```
+    layout_mode: :single
     title: "The Troll Battle"
     initial_card: #troll_attacks
   end

@@ -194,6 +194,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Element Ref
+  # &elem_id
 
   def elem_ref_value() do
     ParserCache.get_parser("value_ref", fn ->
@@ -216,6 +217,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Attr Ref
+  # &elem_id.attr_name
   def attr_ref_value() do
     ParserCache.get_parser("attr_ref", fn ->
       sequence(
@@ -233,7 +235,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dynamic Value
-
+  # ^{...}
   def dynamic_value() do
     ParserCache.get_parser("dynamic_value", fn ->
       sequence(
@@ -247,7 +249,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dynamic Initializer
-
+  # &{...}
   def dynamic_initializer_value() do
     ParserCache.get_parser("dynamic_initializer", fn ->
       sequence(
@@ -261,7 +263,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Function
-
+  # function(...) {...}
   def traditional_function_value() do
     ParserCache.get_parser("t_function", fn ->
       sequence(
@@ -303,6 +305,8 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
+  # Arrow function
+  # (...) => {...}
   def arrow_function_value() do
     ParserCache.get_parser("a_function", fn ->
       sequence(
@@ -352,7 +356,8 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dice
-
+  # ndX+-m
+  # 2d+6, 3d8-2, d10+1
   def dice_value() do
     ParserCache.get_parser("dice", fn ->
       sequence(

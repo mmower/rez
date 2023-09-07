@@ -82,9 +82,11 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Item do
   import Rez.AST.NodeValidator
 
+  alias Rez.AST.Node
+  alias Rez.AST.Attribute
+
   alias Rez.AST.Game
   alias Rez.AST.Item
-  alias Rez.AST.Node
 
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
@@ -123,7 +125,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
       ),
       attribute_if_present?(
         "description",
-        attribute_has_type?(:string)
+        attribute_has_type?([:string, :source_template])
       ),
       attribute_present?(
         "type",
@@ -182,11 +184,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
         )
       ),
       node_passes?(fn node, %Game{slots: slots} = game ->
-        case NodeHelper.get_attr_value(item, "type") do
+        case find_attribute(game, item, "type") do
           nil ->
             {:error, "No 'type' attribute available for #{Node.node_type(node)}/#{node.id}"}
 
-          type ->
+          %Attribute{value: type} ->
             accepted_types =
               slots
               |> Enum.map(fn {_slot_id, slot} -> NodeHelper.get_attr_value(slot, "accepts") end)

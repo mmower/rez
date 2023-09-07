@@ -38,8 +38,8 @@ defmodule Rez.Parser.ParserTest do
     %{items: items} = game
     assert %Rez.AST.Item{attributes: attributes} = Map.get(items, "orcrist")
 
-    assert %Rez.AST.Attribute{name: "$parents", type: :list, value: [{:keyword, :sword}]} =
-             Map.get(attributes, "$parents")
+    assert %Rez.AST.Attribute{name: "_parents", type: :list, value: [{:keyword, :sword}]} =
+             Map.get(attributes, "_parents")
   end
 
   test "parses script block" do
@@ -298,9 +298,7 @@ defmodule Rez.Parser.ParserTest do
 
     assert %{
              status: :ok,
-             ast:
-               {:compiled_template,
-                "function(bindings, filters) {return [function(bindings, filters) {return `The players name is `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}"}
+             ast: {:source_template, "The players name is ${player.name}"}
            } = Ergo.parse(Rez.Parser.ValueParsers.value(), source)
   end
 end

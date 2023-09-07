@@ -17,6 +17,7 @@ defmodule Rez.Parser.TemplateParser do
 
   import Rez.Parser.UtilityParsers, only: [iows: 0]
 
+  alias Rez.Parser.TemplateParser
   alias Rez.Parser.DelimitedParser, as: DP
   alias Rez.Parser.TemplateExpressionParser, as: TEP
   alias Rez.Parser.ParserCache, as: PC
@@ -45,7 +46,7 @@ defmodule Rez.Parser.TemplateParser do
         )
       ],
       ast: fn [[expr], content] ->
-        {:conditional, expr, content}
+        {:conditional, expr, TemplateParser.parse(content)}
       end
     )
   end

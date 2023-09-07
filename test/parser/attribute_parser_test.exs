@@ -20,7 +20,8 @@ defmodule Rez.Parser.AttributeParserTest do
     only: [
       heredoc_value: 0,
       string_value: 0,
-      dice_value: 0
+      dice_value: 0,
+      value: 0
     ]
 
   import Rez.Parser.UtilityParsers, only: [iows: 0]
@@ -164,5 +165,13 @@ defmodule Rez.Parser.AttributeParserTest do
   test "parse dice" do
     input = "d6"
     assert %Context{status: :ok, ast: {:roll, {1, 6, 0, 1}}} = Ergo.parse(dice_value(), input)
+  end
+
+  test "parses attribute and elem refs" do
+    input = ~s|#foo|
+    assert %Context{status: :ok, ast: {:elem_ref, "foo"}} = Ergo.parse(value(), input)
+
+    input = ~s|&foo.bar|
+    assert %Context{status: :ok, ast: {:attr_ref, {"foo", "bar"}}} = Ergo.parse(value(), input)
   end
 end

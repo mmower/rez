@@ -112,26 +112,37 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  def find_attribute(game, node, attr_key) when not is_nil(node) and is_binary(attr_key) do
+  def find_attribute_in_node(attr_key) do
+    fn %{attributes: attributes} = _node ->
+      case Map.get(attributes, attr_key) do
+        nil ->
+          :not_found
+
+        %Attribute{} = attr ->
+          {:found, attr}
+      end
+    end
+  end
+
+  def get_parents_of_node(node_map) do
+    fn %{attributes: attributes} = _node ->
+      default_no_parents = Attribute.list("_parents", [])
+
+      attributes
+      |> Map.get("_parents", default_no_parents)
+      |> Map.get(:value)
+      |> Enum.map(fn {:keyword, parent_id} ->
+        Map.get(node_map, to_string(parent_id))
+      end)
+    end
+  end
+
+  def find_attribute(%Game{by_id: node_map}, node, attr_key)
+      when not is_nil(node) and is_binary(attr_key) do
     Search.search(
       node,
-      fn %{attributes: attributes} = _node ->
-        case Map.get(attributes, attr_key) do
-          nil ->
-            :not_found
-
-          %Attribute{} = attr ->
-            {:found, attr}
-        end
-      end,
-      fn %{attributes: attributes} ->
-        attributes
-        |> Map.get("_parents", Attribute.list("_parents", []))
-        |> Map.get(:value)
-        |> Enum.map(fn {:keyword, parent_id} ->
-          Map.get(game.by_id, to_string(parent_id))
-        end)
-      end
+      find_attribute_in_node(attr_key),
+      get_parents_of_node(node_map)
     )
   end
 
@@ -259,7 +270,9 @@ defmodule Rez.AST.NodeValidator do
     )
   end
 
-  def attribute_has_type?(expected_type, chained_validator \\ nil) when is_atom(expected_type) do
+  def attribute_has_type?(query, chained_validator \\ nil)
+
+  def attribute_has_type?(expected_type, chained_validator) when is_atom(expected_type) do
     fn %{name: name, type: type} = attr, node, game ->
       case {type, is_nil(chained_validator)} do
         {^expected_type, true} ->
@@ -271,6 +284,23 @@ defmodule Rez.AST.NodeValidator do
         {unexpected_type, _} ->
           {:error,
            "Attribute '#{name}' expected to have type #{to_string(expected_type)}, was #{to_string(unexpected_type)}"}
+      end
+    end
+  end
+
+  def attribute_has_type?(expected_types, chained_validator)
+      when is_list(expected_types) do
+    fn %{name: name, type: type} = attr, node, game ->
+      case({Enum.member?(expected_types, type), is_nil(chained_validator)}) do
+        {true, true} ->
+          :ok
+
+        {true, false} ->
+          chained_validator.(attr, node, game)
+
+        {false, _} ->
+          {:error,
+           "Attribute '#{name}' is expected to be one of #{inspect(expected_types)} but was #{to_string(type)}"}
       end
     end
   end

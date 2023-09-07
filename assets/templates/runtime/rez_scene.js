@@ -35,6 +35,8 @@ let scene_proto = {
   startNewCard() {
     const card = this.getCurrentCard();
     if (card) {
+      card.scene = this;
+
       this.runEvent("start_card", { card: card.id });
       card.runEvent("start", { scene: this.id });
 
@@ -53,8 +55,6 @@ let scene_proto = {
   },
 
   playCardWithId(new_card_id) {
-    console.log("Playing card: " + new_card_id);
-
     // Obviously if you try to set no card we should blow up
     if (new_card_id == null) {
       throw "Cannot specify null card_id!";

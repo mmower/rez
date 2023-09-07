@@ -1,0 +1,1656 @@
+= Rez: Elements & Directives Catalog
+:toc:
+:toclevels: 1
+
+Rez includes many elements that you will combine to create your game, starting
+with the `@game` element that wraps the whole thing.
+
+All elements in a Rez source file are prefixed by `@`.
+
+A few Rez elements like `@game` and `@zone` contain other elements but most do
+not.
+
+== Elements
+
+Elements describe in-game concepts.
+
+* <<Actor>>
+* <<Asset>>
+* <<Card>>
+* <<Effect>>
+* <<Faction>>
+* <<Game>>
+* <<Group>>
+* <<Inventory>>
+* <<Item>>
+* <<List>>
+* <<Location>>
+* <<Object>>
+* <<Plot>>
+* <<Relationship>>
+* <<Scene>>
+* <<Slot>>
+* <<System>>
+* <<Zone>>
+
+== Directives
+
+Directives modify in-game concepts.
+
+* <<Alias (Directive), Alias>>
+* <<Derive (Directive), Derive>>
+* <<Declare (Directive), Declare>>
+* <<Filter (Directive), Filter>>
+* <<Generator (Directive), Generator>>
+* <<Script (Directive), Script>>
+* <<Style (Directive), Style>>
+* <<Task (Directive), Task>>
+
+== Alias (Directive)
+
+The `@alias` directive allows the author to refer to a particular kind of element using a convenient and meaningful name. It is usually used in conjunction with parent specifiers. For example it might be more meaningful to define `@sword` and `@shield` as aliases for particular kinds of `@item`.
+
+=== Example
+
+In our Maltese Parrot game hats are a big deal and a range of hat items will be needed but we don't want to repeat ourselves defining each one using `@item` so we can create an alias that specifies that a hat is an item and how hats are, generally, configured. Then our hat definition just needs to supply what's different about _that_ hat.
+
+Here's an example:
+
+....
+@item hat begin
+  type: :hat
+  wearable: true
+  usable: false
+  bogie_would_approve: false
+end
+
+@alias hat = item<hat>
+
+@hat wool_fedora begin
+  material: :wool
+  colour: :black
+  description: "A Messer black wool fedora hat"
+  bogie_would_approve: true
+end
+
+@hat brown_derby begin
+  material: :felt
+  colour: :brown
+  description: "Battered brown derby"
+end
+....
+
+In this example we have made an alias, `@hat` for `@item` specifying a parent id `hat`. Using `@hat` creates new `@item`s that specify the `hat` item as their parent. Equalivent to:
+
+....
+@item wool_fedora<hat> begin
+  ...
+end
+....
+
+Note that an alias can specify multiple parents.
+
+== Actor
+
+An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element.
+
+If your game is simple enough you may not need actors and they are an optional concept. However if you want to keep track of attributes, behaviours, and relationships between actors the actor element helps you do this.
+
+=== Example
+
+In this example of our game the player can decide which of the antagonists they wish to play as. Each has different abilities and trust other characters different amounts.
+
+....
+@actor sam_spade begin
+  name: "Sam Spade"
+  stats: {
+    gunplay: 6
+    fisticuffs: 7
+    drinking: 8
+    flirting: 6
+    sluething: 9
+    chat: 6
+  }
+  trusts: {
+    miss_wonderly: 5
+    joel_cairo: 4
+    kaspar_gutman: 2
+  }
+  container: #sams_stuff
+end
+
+@actor joel_cairo begin
+  name: "Joel Cairo"
+  stats: {
+    gunplay: 3
+    fisticuffs: 3
+    drinking: 5
+    flirting: 9
+    sleuthing: 6
+    chat: 8
+  }
+  trusts: {
+    miss_wonderly: 3
+    kaspar_gutman: 5
+    sam_spade: 3
+  }
+  container: #joels_stuff
+end
+
+@actor miss_wonderly begin
+  name: "Ruth Wonderly"
+  stats: {
+    gunplay: 4
+    fisticuffs: 2
+    drinking: 5
+    flirting: 10
+    sleuthing: 4
+    chat: 9
+  }
+  trusts: {
+    sam_spade: 6
+    joel_cairo: 4
+    kaspar_gutman: 5
+  }
+  container: #ruths_stuff
+end
+
+@actor kaspar_gutman begin
+  name: "Kaspar Gutman"
+  stats: {
+    gunplay: 1,
+    fisticuffs: 3,
+    drinking: 9,
+    flirting: 2,
+    sleuthing: 7,
+    chat: 9
+  }
+  trusts: {
+    sam_space: 6
+    joel_cairo: 6
+    miss_wonderly: 2
+  }
+  container: #kaspar_stuff
+end
+....
+
+=== Required Attributes
+
+=== Optional Attributes
+
+* tags [Set]:
+* container [Element Ref]: id of the inventory representing this actors stuff
+
+=== Event Handlers
+
+==== on_accept_item
+
+....
+on_accept_item(actor, event) => {...}
+....
+
+The `event` argument is a map in the form:
+
+....
+{
+  decision: <decision_obj>,
+  inventory_id: <id>,
+  slot_id: <id>,
+  item_id: <id>
+}
+....
+
+This is a script that can be called to check whether an item can be placed into an inventory slot of a container that they are owner of (See also: inventory#owner)
+
+....
+on_accept_item: (actor, event) => {
+  event.decision.no(actor.name + " doesn't want to be burdened by worldly
+  goods.");
+}
+....
+
+==== on_init
+
+....
+on_init: (actor, event = {}) => {...}
+....
+
+This script will be called during game initialization and before the game has
+started.
+
+==== on_enter
+
+....
+on_enter: (actor, event) => {...}
+....
+
+The `event` argument is a map
+
+....
+{
+  location_id: <id>
+}
+....
+
+This callback will be received when the actor is moved to a new location and is
+passed the id of the location to which the actor has moved.
+
+==== on_leave
+
+....
+on_leave: (actor, event) => {...}
+....
+
+The `event` argument is a map
+
+....
+{
+  location_id: <id>
+}
+....
+
+This callback will be received when the actor has left a location and is passed the id of the location which has been vacated.
+
+==== on_turn
+
+....
+on_turn: (actor, event = {}) => {...}
+....
+
+If the game turn mechanism is being used this callback will be received on each game turn. This is intended for simple cases and if you need to coordinate behaviours across multiple elements it may be better to use a system instead.
+
+== Asset
+
+An `@asset` element refers to a file on disk, typically an image, audio, or video file, that will be presented in game.
+
+Rez automatically copies asset files into the game distribution folder when the game is compiled and manages pathing so that assets can be referred to in game without worrying about filenames and paths.
+
+Assets can be collected into groups (using <<Group, `@group`>>) dynamically choose from among related assets.
+
+=== Example
+
+....
+@asset hat_01 begin
+  file_name: "hat_01.png"
+  tags: #{:hat}
+end
+....
+
+This defines an asset that will be copied into the game when built and which can be referred to in-game by it's id.
+
+Rez will ensure that all assets are available during compilation.
+
+Assets are the key to using asset groups that can be used for showing different but randomised media.
+
+=== Required Attributes
+
+* file_name [String]: name of the asset file in the assets folder
+
+=== Optional Attributes
+
+* tags [Set]: keywords
+
+=== Event Handlers
+
+==== on_init
+
+....
+on_init: (asset, event = {}) => {...}
+....
+
+This script will be called during game initialization and before the game has started.
+
+== Card
+
+Cards are the basic unit of content in a Rez game.
+
+They serve a similar role to the passage in Twine. A card defines content that is added to the current scene when the card is played.
+
+The `content` attribute is key as it defines the template that is rendered each time the card is played.
+
+Internally the `content` attribute of the card is converted into a template expression which is a kind of Javascript function so that it renders quickly.
+
+=== Example
+
+....
+@card intro_part_1 begin
+  content: ```
+  You are in a mazy of twisty passages all alike.
+  [[Go forward|intro_part_2]]
+  ```
+end
+
+@card intro_part_2 begin
+  content: ```
+  You get the idea!
+  [[Go backward|intro_part_1]]
+  ```
+end
+....
+
+=== Required Attributes
+
+* content [Template]:
+
+=== Optional Attributes
+
+* blocks [List]: list of element-ids
+* css_class [String]: a string containing custom CSS classes to apply
+* bindings [Table]: map of label to element-id
+* tags [Set]: set of keywords
+
+==== blocks
+
+If specified, the `blocks` attribute should contain a list of ids of cards that are going to be included in the output content of this card. At render time all blocks are pre-rendered and passed into the rendering context.
+
+....
+@card test_card begin
+  blocks: [#other_card]
+
+  content: ```
+  This is what is in #other_card ${other_card}
+  ```
+end
+....
+
+==== bindings
+
+If specified this should be a map of keys to game object ids. When the card is rendered all bindings will be resolved and made available to the rendering context. You can then use the `$` macro to render attributes of the bound objects.
+
+....
+@card test_card begin
+  bindings: {player: #player}
+
+  content: ```
+  The player's name is ${player.name}
+  ```
+end
+....
+
+=== Event Handlers
+
+==== on_init
+
+....
+on_init: (card, event = {}) => {...}
+....
+
+This script will be called during game initialization and before the game has started.
+
+==== on_enter
+
+....
+on_enter: (card, event = {}) => {...}
+....
+
+==== on_render
+
+....
+on_render: (card, event = {}) => {...}
+....
+
+==== on_ready
+
+....
+on_ready: (card, event = {}) => {...}
+....
+
+==== on_leave
+
+....
+on_leave: (card, event = {}) => {...}
+....
+
+=== Notes
+
+Card content is written in Markdown and converted to HTML. It's somewhat similar to a Twine passage and some of the basic syntax, e.g. `[[Go forward|intro_part_2]]` translate across to Rez.
+
+However there are a number of additional syntaxes. For example it's possible to hijack this mechanism using a script:
+
+....
+@card intro_part_1 begin
+  content: ```
+  You are in a mazy of twisty passages all alike.
+  [[Go forward]]
+  ```
+  on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2");}
+end
+....
+
+Here we define an event handler which will respond to the link being clicked. By default Rez will automatically convert a link such as "Go forward" into the equivalent "go_forward" by downcasing and replacing whitespace with a single `_` character.
+
+Rez also has support for more dynamic types of links:
+
+....
+@card intro_part_1 begin
+  content: ```
+  You are in a mazy of twist passages all alike.
+  [[Go forward|go_forward]]
+  ```
+  go_forward: (game, evt) => {evt.choice.show("Go forward);}
+  on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2")}
+end
+....
+
+When a card link is written in this format, Rez will look inside the card for an attribute with the same name and a function value. It will call the function which can determine whether the link should be shown or hidden and, if it is shown whether it should be enabled or disabled. whether it is enabled or disabled.
+
+However there is support for other kinds of actions and dynamic links. See the xref:cookbook.adoc[COOKBOOK] for more information.
+
+== Declare (Directive)
+
+A `@declare` directive is a shorthand for defining an `@object` element without
+attributes. Typically you use this for declaring an object to be the target of
+relationships but which does not, itself, need to be defined in terms of a set
+of attributes.
+
+=== Example
+
+In this example we are specifying that the player hates the dark (affinity -5)
+but we don't need "the dark" to be more than a placeholder to be the target of
+the relationship
+
+....
+@declare the_dark
+@rel #player #the_dark -5
+....
+
+== Derive (Directive)
+
+The `@derive` directive is used to form keywords into hierarchies of types for items, effects, and so on.
+
+Let's take an example of where this might be useful: inventories.
+
+We setup a hierarchy as follows:
+
+....
+@derive :weapon :item
+@derive :sword :weapon
+@derive :mace :weapon
+@derive :potion :item
+....
+
+The result is that an item with `type: :sword`, `type: :mace`, or `type: :potion` can be placed into a slot that `accepts: :item`. It's not required to list all the different types of items that are legal in that slot. Equally our sword can be placed into a slot that `accepts: :sword` but an item `type: :mace` cannot, nor can an item `type: :potion`.
+
+An item hierarchy can be as simple of complex as you need. At run-time all of the item type information is converted into tags. For example an item with `type: :sword` would have tags as if we had written `tags: #{:sword :weapon :item}`.
+
+== Effect
+
+Effects are modifiers to aspects of the game that can be applied and removed dynamically as the game progresses.
+
+For example an item, when worn, might convey a bonus to the actor wearing it. In this case the effect, attached to the item, is applied when the item is worn and removed when the item is removed.
+
+Effect support is limited in v0.8. Effect scripts will be called and its up to the caller to ensure these work. In particular there is no support yet for effects that, for example, wear off over time.
+
+=== Example
+
+....
+@effect drunk begin
+  name: "Drunk"
+  description: "you're drunk, it's so much harder to concentrate"
+  on_apply: (evt) => {
+    const actor = $(evt.actor_id);
+    // Add drunkness effects
+  }
+  on_remove: (evt) => {
+    const actor = $(evt.actor_id);
+    // Remove drunkness effects
+  }
+end
+....
+
+=== Required Attributes
+=== Optional Attributes
+
+* tags [Set]: keywords
+
+=== Event Handlers
+
+==== on_init
+
+: `(effect, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+==== on_apply
+
+: `(effect, event = {}) => {...}`
+
+==== on_remove
+
+: `(effect, event = {}) => {...}`
+
+==== on_turn
+
+: `(effect, event = {}) => {...}`
+
+If the game turn mechanism is being used this callback will be received on each
+game turn. This allows an effect to, for example, grow or decline over time.
+
+== Faction
+
+Factions represent in-game groups with their own agenda, reputation, and views
+of others. Define a faction using a `@faction` element.
+
+=== Example
+
+....
+@faction police begin
+  ...
+end
+
+@faction gutman begin
+  ...
+end
+
+@faction player begin
+  ...
+end
+....
+
+=== Required Attributes
+
+=== Optional Attributes
+
+- tags [Set]: keywords
+
+=== Event Handlers
+
+==== on_init
+
+: `(faction, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+== Filter (Directive)
+
+A `@filter` directive defines a filter function that can be used in a subsitution Template Expression. A filter has a name which is how you refer to it in a template expression, e.g. `capitalize` and an impl function that takes a variable number of parameters (but at least one).
+
+=== Example
+
+Let's say we wanted to be able to output a numeric attribute replacing any value over 4 with "a suffusion of yellow". Here's a filter that would do that:
+
+....
+@filter SUFFUSION_OF_YELLOW_FILTER begin
+  name: "soyf"
+  impl: (n) => {
+    if(n < 4) {
+      return ""+n;
+    } else {
+      return "a suffusion of yellow";
+    }
+  }
+end
+....
+
+and the expression would be
+
+....
+${number_value | soyf}
+....
+
+As of v0.11.0 the Rez stdlib defines a number of filters and you can see how they are implemented by reading the `stdlib.rez`.
+
+See also the filter_catalog.
+
+
+
+== Game
+
+The game element is the top-level specification of the game and its metadata. It also defines the scebe entry point of the game.
+
+The `@game` element has an implicit ID of `game`. All other elements and directives should be nested inside the top-level `@game`.
+
+=== Example
+
+....
+@game begin
+  name: "The Maltese Parrot"
+  author_name: "Dachshund Hamlet"
+  IFID: "D2050DE2-97A2-1ED1-4CCA-AF9D3B0DD883"
+  created: "2022-08-31 22:13:43.830755Z"
+  version: 10
+  layout: ```${content}```
+  initial_scene: #sam_and_wonderly_meet
+end
+....
+
+=== Required Attributes
+
+* name [String]: name of the game
+* initial_scene [Element Ref]: id of the initial scene
+* IFID [String]: ID of the game in the IFID database
+
+=== Optional Attributes
+
+* tags [Set]: set of keyword tags applied to the game
+
+=== Event Handlers
+
+==== on_init
+
+: `(game, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+==== on_start
+
+: `(game, event = {}) => {...}`
+
+The `on_start` event is triggered right after the Rez framework has initialized
+itself and before the first scene or card gets rendered. It's an opportunity
+to customise game setup.
+
+==== on_scene_change
+
+: `(game, event) => {...}`
+
+    event = {
+      scene_id: <id>
+    }
+
+The `on_scene_change` script is called whenever a new scene gets started.
+
+The callback happens between the `on_finish` and `on_start` scripts of the
+scenes that are ending and beginning respectively.
+
+==== on_card_change
+
+: `(game, event = {}) => {...}`
+
+The `on_card_change` script is called whenever a new card is played into the
+current scene.
+
+The callback happens between the `on_leave` and `on_enter` scripts of the card
+that is being played.
+
+=== API
+
+==== archive()
+
+Returns a JSON string containing the archived state of the game. This is used
+internally by the save() call.
+
+==== save()
+
+Archives the current game state and triggers a file download of a JSON save
+game. The file will automatically be named using the game name as a prefix and
+the date & time as a suffix.
+
+It works by adding the JSON to a `File` object and adding a link to the
+document link to that `File` and automatically clicking it.
+
+Before the download gets triggered a `save` event is raised allowing the game
+an opportunity to make changes before state gets archived.
+
+==== load(json)
+
+Retrieves a game state from the passed in JSON and attempts to reload it first
+checking that it has the same archive_version.
+
+After the state has been reloaded a `load` event is raised giving the game an
+opportunity to do any necessary work before the player sees the new state.
+
+==== addGameObject(obj)
+
+Adds a game object (one of the RezXXX object types) to the games database. Once
+an object has been added it becomes available using `$(obj_id)`.
+
+If the object has a `tags` attribute the object will be automatically indexed
+against its tags and will appear in searches using `getTaggedWith(tag)`.
+
+Note that unlike most other attributes it is inadvisable to use
+`obj.setAttribute("tag", ...)` to update tags. The `setTags()`, `addTag()` and
+`removeTag()` functions should be used instead and will automatically keep the
+game tag-index up to date.
+
+==== getGameObject(id, should_throw = true)
+
+Retrieves the game object with id.
+
+If `should_throw` is true (default: true) then an exception is thrown if the id
+is not in the game database.
+
+Returns:
+
+`null` if the specified `id` is not in the game database
+`ref` reference to the object with id `id`
+
+The compiler attempts to ensure that invalid id references are not used however
+this cannot be enforced when copies with dynamic ids get made.
+
+==== getRelationship(source_id, target_id)
+
+Returns a relationship from the source object towards the target object.
+
+Returns:
+
+`null` if there is no relationship from source to target
+`ref` a `RezRelationship` from source to target
+
+==== getTaggedWith(tag)
+
+Get objects that have the tag.
+
+Returns:
+
+`[]` if there are no objects with the tag
+`[...]` array of objects that have the tag
+
+==== getAll(target_type)
+
+Get objects that have the specified target type, e.g. 'actor', 'item', 'scene'.
+
+Returns:
+
+`[]` if there are no objects with this target type
+`[...]` array of objects of the target type
+
+==== getCurrentScene()
+
+Get a reference to the current scene.
+
+Returns:
+
+`ref` reference to the current `RezScene`
+
+==== setCurrentScene(new_scene_id)
+
+Transitions from the current scene to a new scene with id `new_scene_id`.
+
+The current scene will receive a call to `finish()` to give it an opportunity
+to clean up.
+
+The new scene will receive a call to `start()` to indicate it should get ready
+to render.
+
+==== getTarget(target_id)
+
+This method will probably be deprecated when the renderer gets rewritten.
+
+==== container()
+
+Gets the HTML element that the game is rendered inside.
+
+==== render()
+
+Triggers a render pass.
+
+The current scene is asked to render itself and the resulting content is passed
+into the game layout template.
+
+The `innerHTML` property of the HTML container is set to this content.
+
+The scene is then given an opportunity to transform links, forms, inputs and so
+on to add the `rez-live` functionality.
+
+The inner workings of the render method are likely to change when the renderer
+is rewritten. Do not depend upon them.
+
+==== interludeWithScene(scene_id)
+
+Interrupts the current scene with another scene.
+
+Unlike when the scene is changed with `setCurrentScene` the old scene is
+expected to be resumed.
+
+The current scene gets a call to `interrupt` to notify it that it is being
+interrupted and the new scene is started.
+
+Interrupted scenes are held in a stack allowing an interrupted scene to,
+itself, be interrupted.
+
+Use `resumePrevScene` to return to the last scene in the stack.
+
+==== resumePrevScene()
+
+Use to return to the previous scene after an interruption.
+
+The current scene will receive a call to `finish()` to let it know a scene
+change is coming.
+
+The last interrupted scene is then made the current scene again and receives a
+call to `resume()` to let it know that its on stage again.
+
+==== start(container_id)
+
+Used to start the game and tells it which HTML element it should live inside.
+An author should never need to call this as the framework does this
+automatically.
+
+==== getEnabledSystems()
+
+Returns a list of `RezSystem` objects that have `enabled: true` and ordered by
+`priority` with the highest priority system appearing first in the list.
+
+Returns:
+
+`[]` no systems are enabled
+`[...]` a list of systems in increasing priority order
+
+==== runTick()
+
+Sends a `tick` event to all enabled systems returned by `getEnabledSystems`.
+
+This area is not yet well thought out but the idea is that a 'tick' represents
+a unit of game time and probably there is a correspondence between player
+actions and ticks. After a player has taken an action use `runTick()` to allow
+the game systems to respond.
+
+For example a system might run actor behaviours, or create items, or whatever
+your game needs.
+
+There'll probably be more on this in the Cookbook as time goes on. Or maybe the
+whole thing will get rewritten.
+
+== Group
+
+A group specifies a collection of assets that can be selected from. Groups can be static by defining the id of member assets, or dynamic by specifying a set of tags. In the latter case the group will collect together all assets with any of the specified tags.
+
+A group can be used to select an image at random, or cycle through the collection one-by-one.
+
+=== Example
+
+=== Required Attributes
+
+- assets [List]: list of id of elements
+- tags [Set]: set of keywords
+
+=== Optional Attributes
+
+=== Event Handlers
+
+==== on_init
+
+....
+on_init: (group, event = {}) => {...}
+....
+
+This script will be called during game initialization and before the game has
+started.
+
+== Inventory
+
+The `@inventory` element creates a container that can hold `@item`s through the use of `@slot`s. Rez inventories are deliberately flexible to handle a range of use cases for example working memory (where items are thoughts) or spell books (where items are spells).
+
+Rez has a fairly flexible inventory system that is based around 'slots' that define how items can be held. This allows an inventory to hold different kinds of items: you could have an inventory for items as well as an inventory for spells (spell book).
+
+Inventory slots are matched against items to determine whether it's possible to put an item in a slot.
+
+Inventories are defined using the `@inventory` tag.
+
+Inventories have a category which determines the kind of items that can be added to their slots. For example "spell" could represent a spell book, while "equipment" could represent the players inventory.
+
+=== Example
+
+....
+@inventory player_inventory begin
+  slots: #{#hat_slot #jacket_slot #trousers_slot #shoes_slot #holster_slot}
+end
+....
+
+=== Required Attributes
+
+- slots [Set]: set of element-id's
+
+=== Optional Attributes
+
+- tags [Set]: set of keywords
+
+=== Event Handlers
+
+==== on_init
+
+on_init: (inventory, event = {}) => {...}
+
+This script will be called during game initialization and before the game has started.
+
+==== on_insert
+
+on_insert: (inventory, event) => {...}
+
+event = {
+  slot_id: <id>,
+  item_id: <id>
+}
+
+This script will be called when an item has been added to the specified slot of this inventory.
+
+==== on_remove
+
+on_remove: (inventory, event) => {...}
+
+  event = {
+    slot_id: <id>,
+    item_id: <id>
+  }
+
+This script will be called after an item has been removed from the specified slot of this inventory.
+
+== Item
+
+The `@item` element defines a conceptual item the player the player (or potentially an NPC) can acquire and add to an inventory. Items don't have to represent physical objects but anything a player has for example a spell could be an item or even a memory.
+
+Items are required to have a `type` keyword-attribute that connects them to compatible slots in inventories. That might include a shop, a wardobe, and a players backpack inventories.
+
+However the Item/Inventory system is quite flexible so we can also think about spells as Items with the Inventory being a spell-book, or knowledge as Items with an Inventory being memory.
+
+Items may be usable in which case they may have a limit to the number of times they can be used.
+
+Some items can grant effects, either when the item is acquired, put into a specific slot (e.g. equipped), or when it is used.
+
+The can_equip/on_equip scripts are used to decide whether the player can put an item in a given inventory & slot, and to process what happens when doing so.
+
+For example equipping a magic ring might confer an effect on the player. But first it may be necessary to check that the player doesn't already have a magic ring equipped.
+
+A potion on the other hand confers no effect until it is used and might have only one use after which is presumed to be consumed.
+
+=== Example
+
+....
+@item black_fedora begin
+  type: :hat
+  description: "black fedora"
+  wearable: true
+  description: "A Messer wool fedora hat. Classy."
+end
+....
+
+Note that this example throws up a design issue to be aware of: tags and boolean attributes are equivalent. For example `wearable: true` can also be represented by presence or absence of a tag `wearable`. In the case of `Item` elements its further possible to use the type system:
+
+....
+@derive :wearable :item
+@derive :hat :wearable
+....
+
+In this case an `Item` with `type: :hat` will automatically be tagged as `:wearable` and `:item`.
+
+=== Required attributes
+
+- type [Keyword]:
+- name [String]:
+
+=== Optional attributes
+
+- description [String|Heredoc]
+- size [Number]: defaults to 1
+- usable [Boolean]: defaults to false
+- uses [Number]: assumed >= 0
+- container — element-id
+- on_equip: script
+- can_equip: script
+- on_use: script
+- can_use: script
+
+=== Event Handlers
+
+==== on_init
+
+: `(item, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+== Location
+
+Locations in Rez are an optional concept that can be used to create a "stage" for one or more scenes. In cases where different scenes may play out in one virtual location it may make sense to use a location to represent what is the same about the background. If scenes and cards get the job done, you don't have to worry about using locations.
+
+Locations are defined using the `@location` tag.
+
+=== Example
+
+=== Required Attributes
+
+=== Optional Attributes
+
+=== Event Handlers
+
+==== on_init
+
+: `(location, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+== List
+
+A list is a named collection of values that can be used by other in-game elements, for example lists of names, locations, actors, and so on. Lists are defined using the `@list` element.
+
+The run-time API supports selecting randomly from lists including with & without replacement.
+
+=== Example
+
+....
+@list antagnoists begin
+  content: [#sam_spade #miss_wonderly #kaspar_gutman #joel_cairo]
+end
+
+@list lines begin
+  content: [
+    "I distrust a man that says when. If he's got to be careful not to drink to much it's because he's not to be trusted when he does."
+    "The cheaper the crook, the gaudier the patter."
+    "I couldn't be fonder of you if you were my own son. But, well, if you lose a son, its possible to get another. There's only one Maltese Falcon."
+    "What do you want me to do, learn to stutter?"
+  ]
+end
+....
+
+=== API
+
+==== randomElement()
+
+`list.randomElement()`
+
+Return a random element of the list.
+
+==== nextForCycle()
+
+`list.nextForCycle(key)`
+
+Cycles through the list element by element. Each cycle is identified by a key.
+
+==== randomUnique()
+
+`list.randomUnique(key)`
+
+Returns a random element of the list without repeating elements. Each random walk is idenfied by a key.
+
+=== Required Attributes
+
+=== Optional Attributes
+
+* tags [Set]: keywords
+
+=== Event Handlers
+
+==== on_init
+
+: `(list, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has started.
+
+== Object
+
+An `@object` element describes an author-driven concept. Isn't everything in Rez an object of some kind? Yes, but elements like `@author`, `@item`, and `@plot` have built-in meaning and functionality. By contrast `@object` is a blank canvas that an author can use for anything they think of.
+
+=== Example
+
+Imagine we are building a role-playing game and we want to introduce the notion skills and perks. Rez does not provide either of these concepts out of the box but we can use the `@object` element to make them ourselves.
+
+....
+@object skill begin
+  $template: true
+  description: "Something an actor has acquired the ability to do"
+  min: 0
+  max: 5
+  cur: 0
+end
+
+@alias skill = object<skill>
+
+@object perk begin
+  $template: true
+  cost: 1
+end
+
+@alias perk = object<perk>
+
+@perk gun_license begin
+  description: "Without this cops might pick you up for flashing your lead pumper."
+end
+
+@perk dont_go_down_easy begin
+  description: "Takes more than a bullet to put you down."
+end
+
+@perk beguile begin
+  description: "One look into your eyes and they're putty in your hands."
+  cost: 2
+end
+
+@skill puzzling begin
+  description: "Figuring out how the clues fit together."
+  ...
+end
+
+@skill gunplay begin
+  description: "Shooting straight, esp. when it matters."
+  ...
+end
+
+@skill drinking begin
+  description: "Hold your liquour, yes sir!"
+  ...
+end
+
+@skill fisticuffs begin
+  description: "Marquis of Queensbury be damned, hit 'em where it hurts."
+  ...
+end
+
+@skill intimidate begin
+  description: "You don't actually **need** to shoot 'em."
+  ...
+end
+
+@skill evade begin
+  description: "Never end up in the wrong place at the wrong time."
+  ...
+end
+
+@skill fast_talk begin
+  description: "They'll think it was you doing a favour for them!"
+  ...
+end
+
+@skill scheming begin
+  description: "They'll never see it coming."
+  ...
+end
+....
+
+In a real-game we'd expect to see more definition of what skills & perks do but at least we can talk about them meaningfully even though Rez knows nothing about them. As a consequence Rez cannot validate them or their attributes.
+
+Extra care should be taken here that they are well-formed.
+
+== Plot
+
+=== Example
+
+=== Required Attributes
+
+* priority [Number]: from 1 to 100, higher priorities break plot deadlocks
+
+=== Optional Attributes
+
+* tags [Set]:
+
+=== Event Handlers
+
+==== on_init
+
+: `(plot, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+== Relationship
+
+The `@rel` directive describes the relationship between two game elements called the `source` (the element which has the relationship) and the `target` (the element the relationship is about).
+
+A relationship is unidirectional from source to target. Where applicable use a second `@rel` to describe the relationship in the opposite direction.
+
+Each relationship has an `affinity` which is a value from -5 (maximum negative) to +5 (maximum positive).
+
+A relationship may, optionally, carry a set of tags to add flavour.
+
+A relationship can be specified between any two elements with an id.
+
+To keep the number of relationships manageable it may be preferable to setup relationships between <<Faction, Factions>> rather than specific actors as demonstrated in the examples below. However you can setup relationships in any combination you like.
+
+=== Example
+
+The `@rel` element does not follow the usual element syntax. Instead it looks like this:
+
+....
+@rel source_id target_id affinity_value #{optional tags}
+....
+
+You'll notice there's no id and no `begin` & `end` and, consequently, no attributes. Here are a couple of examples:
+
+....
+@rel #player_faction #gutman_faction -2
+@rel #gutman_faction #player_faction 0
+....
+
+The id of a relationship is auto-generated:
+
+....
+rel_<source id>_<target id>
+rel_player_gutman
+....
+
+The `getRelationship(source, target)` API on the `RezGame` object is a short-
+hand for doing this lookup manually.
+
+We can use `@rel` to define all kinds of relationships:
+
+....
+%% the Gutman faction loves the Falcon
+@declare falcon
+@rel #gutman_faction #falcton 5
+
+%% the player hates brocolli
+@declare brocolli
+@rel #player #brocolli -5
+....
+
+When we want to add more context to a relationship we can use tags:
+
+....
+@rel #player #miss_wannalee 5 #{:lover :suspicious}
+....
+
+=== Required Attributes
+
+* `source` [Element Ref]: element that holds the relationship
+* `target` [Element Ref]: element to which the relationship refers
+* `affinity` [Number]: from -5.0 to +5.0 indicating the strength of the relationship positive or negative
+
+=== Optional Attributes
+
+* `tags` [Set]: keywords
+
+=== Event Handlers
+
+==== on_init
+
+    on_init: (relationship, event) => {...}
+
+    event = {}
+
+==== on_change_affinity
+
+    on_change_affinity: (relationship, event) => {...}
+
+    event = {
+      prior: previous affinity value,
+      current: updated affinity value
+    }
+
+This event handler will be called whenever the relationship affinity changes and will be passed the prior & new affinity values.
+
+=== API
+
+
+- `getAffinity()`
+- `setAffinity(new_affinity)`
+- `alterAffinity(change)`
+
+== Scene
+
+A Game in Rez is authored in terms of `@scene`s and `@card`s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which `@card`s to represent and how to respond to player input.
+
+If you are familiar with Twine then a `@card` is roughly equivalent to a Twine passage. A Twine game is one long stream of passages woven together. Rez differs from Twine in that it uses the `@scene` to organise how the player interacts with the game and which/how the content is presented.
+
+For example you might use different scenes for moving around the map, examining items, interacting with NPCs, buying from shops, and so on. You don't have to, you could implement the game in a single scene, but the different layout and event handling possibilities make it easier.
+
+A `@scene` requires an `initial_card: #card_ref` attribute that identifies the card that will be rendered when the scene begins. Additionally it requires a `layout:` attribute that specifies the surrounding markup.
+
+Within the layout using the `${content}` template expression to specify where scene content is inserted.
+
+A `@scene` requires a `layout_mode:` attribute which must be either `:single` or `:stack`. In the `:single` layout mode only a single `@card` is ever displayed. While in `:stack` mode each new `@card` is layed out after the previous one.
+
+Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` attribute. Each referenced `@card` will be rendered and it's content can be inserted into the layout using `${card_id_1}`, `${card_id_2}`, etc.
+
+=== Example
+....
+@scene introduction begin
+  title: "Introduction"
+  initial_card: #intro_part_1
+  blocks: [#sidebar_1 #sidebar_2]
+  layout_mode: :single
+  layout: """
+    <div class="sidebar">
+      {{{sidebar_1}}}
+      {{{sidebar_2}}}
+    </div>
+    <div>
+      {{{content}}}
+    </div>
+  """
+  on_new_card: (game, evt) => {...}
+end
+....
+
+=== Required Attributes
+
+* title [String]:
+* initial_card [Element Ref]:
+* layout_mode [Keyword]: one of `:single` or `:stack`
+* layout [Template]:
+
+=== Optional Attributes
+
+* tags [Set]:
+* blocks [Map]:
+* bindings [Map]:
+
+=== Event Handlers
+
+Scenes support a range of events:
+
+==== on_init
+
+: `(scene, event = {}) => {...}`
+
+The `on_init` script is called during game initialization and before the player has been able to take any actions. It will be passed an empty map of arguments.
+
+==== on_start
+
+: `(scene, event) => {...}`
+
+    event = {
+      card_id: <id>
+    }
+
+The `on_start` script is called when a new scene is started. It will receive a map containing the scene_id.
+
+==== on_finish
+
+: `(scene, event = {}) => {...}`
+
+The `on_finish` script is called when a scene has eneded.
+
+==== on_interrupt
+
+: `(scene, event = {}) => {...}`
+
+The `on_interrupt` script is called when a scene is being interrupted by an interlude.
+
+==== on_resume
+
+: `(scene, event = {}) => {...}`
+
+The `on_resume` script is called when a scene is being resumed after an interlude.
+
+==== on_render
+
+: `(scene, event = {}) => {...}`
+
+The `on_render` script is called every time the scene is being rendered.
+
+==== on_start_card
+
+: `(scene, event) => {...}`
+
+    event = {
+      card_id: <id>
+    }
+
+The `on_start_card` script is called when a new card is played into the scene. It will be passed a map containing the id of the card that has been played.
+
+==== on_finish_card
+
+: `(scene, event) => {...}`
+
+    event = {
+      card_id: <id>
+    }
+
+The `on_finish_card` script is called when when a card has 'finished' as a new card is being played into the scene. It will be passed the id of the card that is finished.
+
+== Script (Directive)
+
+A script is used to include arbitrary Javascript code into the compiled game. Specify a script using the `@script` directive.
+
+The `@script` directive consists of a string containing the code to include between `begin` and `end` markers. Note that the Javascript code should not include the term "end" as this will cause the parser to fail. In a future version a more robust approach will be included.
+
+The code defined in the game's `@script` directives will be automatically included as &lt;script&gt; tags before the end of the &lt;body&gt; element of the generated HTML template.
+
+== Example
+
+....
+@script begin
+  function customFunction() {
+    // Javascript code here
+  }
+end
+....
+
+== Slot
+
+A `@slot` describes a component of an `@inventory` so that an inventory can hold different types of things.
+
+For example an inventory representing what a player is wearing might have slots for coats, trousers, and so forth while an inventory representing a spell book might have slots for different levels of spell.
+
+See also: <<Type Hierarchy>>
+
+=== Example
+
+....
+@slot holster_slot begin
+  accepts: :pistol
+end
+....
+
+=== Required Attributes
+
+* `name` [String]: name of the slot
+* `accepts` [Keyword]: type of <<Item, Items>> that can be placed in the slot
+
+=== Optional Attributes
+
+* `tags` [Set]: tag keywords
+* `capacity` [Number]: the sum of the size of items that fit in the slot
+
+=== Event Handlers
+
+==== on_init
+
+: `(slot, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has
+started.
+
+==== on_insert
+
+: `(slot, event) => {...}`
+
+    event = {
+      inventory: <id>,
+      item: <id>
+    }
+
+When an `@item` is placed into a `@slot` the `on_insert` event handler will be
+called.
+
+    on_insert: (inventory_id, item_id) => {
+      // Do something
+    }
+
+==== on_remove
+
+: `(slot, event) => {...}`
+
+    event = {
+      inventory_id: <id>,
+      item_id: <id>
+    }
+
+When an `@item` is taken out of an inventory `@slot` the `on_remove` event
+handler will be called.
+
+    on_remove: (inventory_id, item_id) => {
+      // Do something
+    }
+
+== Style (Directive)
+
+A style is used to include arbitrary CSS into the compiled game. Specify a style using the `@style` directive.
+
+The `@style` directive consists of a string containing the CSS to include between `begin` and `end` markers.
+
+The styles defined in the game's `@style` directives will be automatically included as &lt;style&gt; tags before the end of the &lt;head&gt; element of the generated HTML template.
+
+=== Example
+
+....
+@style begin
+  .card {
+    /* My custom styles here */
+  }
+end
+....
+
+=== Required Attributes
+=== Optional Attributes
+=== Event Handlers
+=== API
+
+== System
+
+The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world.
+
+For example we might want to model weather in our game so we could create a "weather system" that would update the in-game weather.
+
+Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the `RezGame.runTick()` API.
+
+=== Example
+
+....
+%% Here is a system that maintains wall clock time, advancing the clock
+%% by one hour on each game tick. It also maintains a description of the
+%% hour in terms of morning, afternoon, etc…
+
+@system clock_system begin
+  enabled: true
+  priority: 1
+
+  wallTime: 0
+  description: ""
+
+  on_tick: (system, evt) => {
+    this.wallTime += 1;
+    if(this.wallTime > 18) {
+      this.description = "evening";
+    } else if(this.wallTime > 12) {
+      this.description = "afternoon";
+    } else if(this.wallTime > 6) {
+      this.description = "morning";
+    } else {
+      this.description = "night";
+    }
+  }
+end
+....
+
+=== Required Attributes
+
+* `enabled` [Boolean]: if false, this system will not be run
+* `priority` [Number]: systems are run in priority order
+
+=== Optional Attributes
+=== Event Handlers
+
+==== on_init
+
+: `(system, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has started.
+
+==== on_tick
+
+: `(system, event = {}) => {...}
+
+As long as the system `enabled` attribute is `true` this script will be called every time the `RezGame` method `runTick` is called.
+
+== Task (Directive)
+
+Tasks are elements that describe components of a behaviour tree. Author defined tasks are usually **conditions** (that test the state of the game) and **actions** (that change the state of the game). The built in tasks provided in the stdlib are **composites** (that work on groups of tasks) and **decorators** (that modify the meaning of other tasks)
+
+Note that, by convention, we use UPPER CASE ids for task elements.
+
+The core of the task is the execute attribute which implements the functionality of the task and returns a value indicating success or failure.
+
+Optionally a task can update the working memory that is passed through the tree as it gets executed.
+
+=== Example
+
+....
+@task ACTOR_IN begin
+  options: [:actor :location]
+
+  execute: (task, wmem) => {
+    const actor_id = task.option("actor");
+    const actor = task.$(actor_id);
+    const location_id = task.option("location");
+    if(actor.location == location_id) {
+      return {success: true, wmem: wmem};
+    } else {
+      return {success: false, error: "Actor is not in location", wmem: wmem};
+    }
+  }
+end
+....
+
+In this example we have defined a condition task to test whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
+
+....
+^[SEQUENCE [
+  [ACTOR_IN actor=sam_spade location=sams_office]
+  [ACTOR_RELOADS item=sams_gun]]]
+....
+
+=== Required Attributes
+
+* options [List]: keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
+* execute [Script]: script that takes two parameters `task` (a reference to the task itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between tasks.
+
+The return value must either be `{success: true, wmem: wmem}` or
+`{success: false, error: "Message", wmem: wmem}`.
+
+=== Optional Attributes
+=== API
+
+== Zone
+
+A `@zone` element defines a map zone which is an abstract representation of a region which groups logically related locations together.
+
+For example a zone could represent a planet, a building, a street, or a shopping mall with a location defining a specific areas of each.
+
+The idea is that locations in the same zone can be reached easily while locations in different zones may require a specific transition.
+
+For example a player can walk between locations in the "downtown" zone but might need to use a cab to reach the connected "suburbs" zone. A cab rank location in each zone could act as the gateway to the other zones and their locations.
+
+Individual locations must be defined in a zone. If you don't require multiple zones just create a single zone and define all your locations in it.
+
+=== Example
+
+....
+@zone docks begin
+  @location la_paloma_gangway begin
+    ...
+  end
+
+  @location la_paloma_bridge begin
+    ...
+  end
+
+  @location docks_cabrank begin
+    ...
+  end
+end
+
+@zone spade_and_archer begin
+  @location street_cabrank begin
+    ...
+  end
+
+  @location hallway begin
+    ...
+  end
+
+  @location outer_office begin
+    ...
+  end
+
+  @location sams_office begin
+    ...
+  end
+end
+....
+
+=== Required Attributes
+=== Optional Attributes
+=== Event Handlers
+
+==== on_init
+
+: `(zone, event = {}) => {...}`
+
+This script will be called during game initialization and before the game has started.
+
+=== API

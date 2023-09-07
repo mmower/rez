@@ -1,4 +1,31 @@
 //-----------------------------------------------------------------------------
+// Templates use this for conditionals
+//-----------------------------------------------------------------------------
+
+function evaluateExpression(expression, bindings) {
+  const proxy = new Proxy(
+    {},
+    {
+      get: (target, property) => {
+        if (bindings.hasOwnProperty(property)) {
+          return bindings[property];
+        }
+        return undefined; // Or return some default value if you prefer.
+      },
+    }
+  );
+
+  const argNames = Object.keys(bindings);
+  const argValues = argNames.map((name) => proxy[name]);
+
+  // Create a new function with bindings as arguments and the expression as the body
+  const func = new Function(...argNames, `return ${expression};`);
+
+  // Invoke the function with the values from the bindings
+  return func(...argValues);
+}
+
+//-----------------------------------------------------------------------------
 // View
 //-----------------------------------------------------------------------------
 
@@ -27,9 +54,11 @@ let block_proto = {
     });
   },
 
-  bindValues() {
-    this.bound_values = this.bound_values ?? this.getBindings();
-    return this.bound_values;
+  bindValues(block_type) {
+    return {
+      [block_type]: this.source,
+      ...this.getBindings(),
+    };
   },
 
   // blocks are a list of id's of other card elements that we
@@ -67,8 +96,7 @@ let block_proto = {
 
   renderBlock(block_type, active) {
     const bindings = {
-      [block_type]: this.source,
-      ...this.bindValues(),
+      ...this.bindValues(block_type),
       ...this.bindBlocks(active),
     };
 
@@ -118,7 +146,7 @@ let layout_proto = {
   html() {
     const content = this.renderContents();
     const template_fn = this.getViewTemplate();
-    const bound_values = this.bindValues();
+    const bound_values = this.bindValues("scene"); // <- implictly always a scene
     const bound_blocks = this.bindBlocks(true);
     return template_fn({
       content: content,

@@ -5,13 +5,14 @@ defmodule Rez.AST.NodeValidatorTest do
 
   test "Validates required attribute" do
     inventory = %Inventory{id: "inv-1", position: {"test.rez", 1, 1}}
+    game = Rez.AST.Game.add_child(inventory, %Rez.AST.Game{})
 
     assert %Validation{
              errors: [
                {_inventory, "Missing required attribute: slots"}
              ],
              validated: ["inventory/inv-1 @ test.rez:1:1"]
-           } = NodeValidator.validate(inventory, nil)
+           } = NodeValidator.validate(inventory, game)
   end
 
   test "Searches for parent attributes" do
@@ -22,8 +23,8 @@ defmodule Rez.AST.NodeValidatorTest do
       id: "d6_1",
       path_info: ["assets/img/dice/d6_1.png"],
       attributes: %{
-        "$parents" => %Rez.AST.Attribute{
-          name: "$parents",
+        "_parents" => %Rez.AST.Attribute{
+          name: "_parents",
           type: :list,
           value: [keyword: :dice_asset_template]
         }

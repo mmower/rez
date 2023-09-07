@@ -27,6 +27,7 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Plot do
   import Rez.AST.NodeValidator
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -38,7 +39,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
     NodeHelper.get_attr_value(plot, "js_ctor", "RezPlot")
   end
 
-  def default_attributes(_plot), do: %{}
+  def default_attributes(_plot),
+    do: %{
+      "cur_stage" => Attribute.number("cur_stage", 0)
+    }
 
   def pre_process(plot), do: plot
 
@@ -67,7 +71,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
         attribute_is_keyword_set?()
       ),
       attribute_present?(
-        "ticks",
+        "stages",
         attribute_has_type?(:number)
       ),
       attribute_if_present?(

@@ -62,7 +62,7 @@ end
   method: "obj_map"
   impl: function(f) {
     const entries = Object.entries(this);
-    const new_entries = entries.map(([k, v]) => [k, f(v)]);
+    const new_entries = entries.map(([k, v]) => [k, f(v, k)]);
     return Object.fromEntries(new_entries);
   }
 end
