@@ -36,8 +36,8 @@ defmodule Rez.Parser.TemplateParser do
       [
         DP.text_delimited_by_prefix_and_nested_parsers(
           ignore(literal("$if")),
-          char(?{),
-          char(?})
+          char(?(),
+          char(?))
         ),
         iows(),
         DP.text_delimited_by_nested_parsers(
@@ -99,7 +99,7 @@ defmodule Rez.Parser.TemplateParser do
       sequence([
         not_lookahead(
           choice([
-            literal("$if{"),
+            literal("$if("),
             literal("${"),
             literal("\\$")
           ])

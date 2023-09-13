@@ -7,7 +7,18 @@ let card_proto = {
   targetType: "card",
 
   get viewTemplate() {
-    return this.$content_template;
+    if (this.$flipped) {
+      if (!this.$flipped_template) {
+        throw (
+          "Card |" +
+          this.id +
+          "| was asked for its flipped content template but does not define one."
+        );
+      }
+      return this.$flipped_template;
+    } else {
+      return this.$content_template;
+    }
   },
 
   handleCustomEvent(event_name, evt) {
@@ -22,6 +33,7 @@ let card_proto = {
 
 function RezCard(id, attributes) {
   this.id = id;
+  this.auto_id_idx = 0;
   this.game_object_type = "card";
   this.attributes = attributes;
   this.render_id = 0;

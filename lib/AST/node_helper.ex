@@ -221,29 +221,11 @@ defmodule Rez.AST.NodeHelper do
   end
 
   def js_initializer(node) do
-    keys = Map.keys(node.attributes) |> Enum.map_join(",", fn key -> ~s|"#{key}"| end)
-
     ~s"""
-    (function () {
-      const obj = new #{Node.js_ctor(node)}(
-        "#{node.id}",
-        #{encode_attributes(node.attributes)}
-      );
-
-      for(let attr of [#{keys}]) {
-        Object.defineProperty(obj, attr, {
-          get: function() {
-            return obj.getAttribute(attr);
-          },
-          set: function(v) {
-            obj.setAttribute(attr, v);
-          },
-          configurable: true
-        });
-      }
-
-      return obj;
-    })()
+    new #{Node.js_ctor(node)}(
+      "#{node.id}",
+      #{encode_attributes(node.attributes)}
+    )
     """
   end
 end

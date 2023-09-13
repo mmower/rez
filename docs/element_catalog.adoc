@@ -92,9 +92,9 @@ Note that an alias can specify multiple parents.
 
 == Actor
 
-An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element.
+An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element. In-game actors are represented by the xref:jsapi#RezActor[RezActor] object.
 
-If your game is simple enough you may not need actors and they are an optional concept. However if you want to keep track of attributes, behaviours, and relationships between actors the actor element helps you do this.
+Actors are an optional concept and a simple game might not need them, choosing instead to represent any actors via attributes of the game or scene. But in more complex games it's useful to be able to model actors separately.
 
 === Example
 
@@ -111,13 +111,12 @@ In this example of our game the player can decide which of the antagonists they 
     sluething: 9
     chat: 6
   }
-  trusts: {
-    miss_wonderly: 5
-    joel_cairo: 4
-    kaspar_gutman: 2
-  }
   container: #sams_stuff
 end
+
+@rel #sam_spade #miss_wonderly +2
+@rel #sam_spade #joel_cairo -2
+@rel #sam_spade #kaspar_gutman -4
 
 @actor joel_cairo begin
   name: "Joel Cairo"
@@ -129,13 +128,12 @@ end
     sleuthing: 6
     chat: 8
   }
-  trusts: {
-    miss_wonderly: 3
-    kaspar_gutman: 5
-    sam_spade: 3
-  }
   container: #joels_stuff
 end
+
+@rel #joel_cairo #sam_spade 1
+@rel #joel_cairo #miss_wonderly -1
+@rel #joel_cairo #kaspar_gutman -3
 
 @actor miss_wonderly begin
   name: "Ruth Wonderly"
@@ -147,13 +145,12 @@ end
     sleuthing: 4
     chat: 9
   }
-  trusts: {
-    sam_spade: 6
-    joel_cairo: 4
-    kaspar_gutman: 5
-  }
   container: #ruths_stuff
 end
+
+@rel #miss_wonderly #sam_spade 4
+@rel #miss_wonderly #joel_cairo 1
+@rel #miss_wonderly #kaspar_gutman -2
 
 @actor kaspar_gutman begin
   name: "Kaspar Gutman"
@@ -165,21 +162,28 @@ end
     sleuthing: 7,
     chat: 9
   }
-  trusts: {
-    sam_space: 6
-    joel_cairo: 6
-    miss_wonderly: 2
-  }
   container: #kaspar_stuff
 end
+
+@rel #kaspar_gutman #sam_spade 2
+@rel #kaspar_gutman #miss_wonderly -2
+@rel #kaspar_gutman #joel_cairo 1
 ....
 
+By using a set of `@actor`s we can keep things separate and easier to understand and use the built-in `@rel` directive to create relationships between the actors.
+
 === Required Attributes
-
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`tags`
+|Set
+|a set of keyword tags
 
-* tags [Set]:
-* container [Element Ref]: id of the inventory representing this actors stuff
+|`container`
+|Element Ref
+|id of the inventory that represents items carried by this actor
+|===
 
 === Event Handlers
 
@@ -283,13 +287,14 @@ Rez will ensure that all assets are available during compilation.
 Assets are the key to using asset groups that can be used for showing different but randomised media.
 
 === Required Attributes
-
-* file_name [String]: name of the asset file in the assets folder
+[cols="2,1,4"]
+|===
+|`file_name`
+|String
+|name of the asset file in the assets folder
+|===
 
 === Optional Attributes
-
-* tags [Set]: keywords
-
 === Event Handlers
 
 ==== on_init
@@ -302,13 +307,13 @@ This script will be called during game initialization and before the game has st
 
 == Card
 
-Cards are the basic unit of content in a Rez game.
+Cards are the basic unit of content & interaction in a Rez game. Cards are "played" into a scene to present what is happening to the user and offer them choices about what to do next. In this they serve a similar role to Twine passages.
 
-They serve a similar role to the passage in Twine. A card defines content that is added to the current scene when the card is played.
+The `content` attribute is key as it defines the template that is rendered each time the card is played. Optionally a card may also define `flipped_content` which is what is displayed in a scene using a stack layout after the card has been used (i.e. the player has followed a link from that card).
 
-The `content` attribute is key as it defines the template that is rendered each time the card is played.
+Cards can be part of the main interface but can also be used as blocks in other cards. For example a card could be defined to represent a sidebar and included into scene layout.
 
-Internally the `content` attribute of the card is converted into a template expression which is a kind of Javascript function so that it renders quickly.
+Internally the `content` and `flipped_content` attributes of the card are converted into template expressions (a kind of Javascript function) so that they render quickly.
 
 === Example
 
@@ -329,43 +334,32 @@ end
 ....
 
 === Required Attributes
-
-* content [Template]:
+[cols="2,1,4"]
+|===
+|`content`
+|Template
+|primary content to be displayed when this card is played into a scene
+|===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`flipped_content`
+|Template
+|content that is presented after the card is used in a stack layout
 
-* blocks [List]: list of element-ids
-* css_class [String]: a string containing custom CSS classes to apply
-* bindings [Table]: map of label to element-id
-* tags [Set]: set of keywords
+|`blocks`
+|List
+|List of element-ids of the cards that can be referenced in the `content` or `flipped_content` templates, e.g. `[#sidebar]` is available as `${sidebar}`
 
-==== blocks
+|`bindings`
+|Table
+|keys to bindings which can either be game object ids or functions returning a value. E.g. `bindings: {player: #player}` allows `${player.name}`
 
-If specified, the `blocks` attribute should contain a list of ids of cards that are going to be included in the output content of this card. At render time all blocks are pre-rendered and passed into the rendering context.
-
-....
-@card test_card begin
-  blocks: [#other_card]
-
-  content: ```
-  This is what is in #other_card ${other_card}
-  ```
-end
-....
-
-==== bindings
-
-If specified this should be a map of keys to game object ids. When the card is rendered all bindings will be resolved and made available to the rendering context. You can then use the `$` macro to render attributes of the bound objects.
-
-....
-@card test_card begin
-  bindings: {player: #player}
-
-  content: ```
-  The player's name is ${player.name}
-  ```
-end
-....
+|`css_class`
+|String
+|custom CSS classes to apply, "information is-primary"
+|===
 
 === Event Handlers
 
@@ -500,11 +494,7 @@ end
 
 === Required Attributes
 === Optional Attributes
-
-* tags [Set]: keywords
-
 === Event Handlers
-
 ==== on_init
 
 : `(effect, event = {}) => {...}`
@@ -549,13 +539,8 @@ end
 ....
 
 === Required Attributes
-
 === Optional Attributes
-
-- tags [Set]: keywords
-
 === Event Handlers
-
 ==== on_init
 
 : `(faction, event = {}) => {...}`
@@ -594,8 +579,6 @@ As of v0.11.0 the Rez stdlib defines a number of filters and you can see how the
 
 See also the filter_catalog.
 
-
-
 == Game
 
 The game element is the top-level specification of the game and its metadata. It also defines the scebe entry point of the game.
@@ -617,20 +600,27 @@ end
 ....
 
 === Required Attributes
+[cols="2,1,4"]
+|===
+|`name`
+|String
+|name of the game
 
-* name [String]: name of the game
-* initial_scene [Element Ref]: id of the initial scene
-* IFID [String]: ID of the game in the IFID database
+|`initial_scene_id`
+|Element Ref
+|id of the scene the game begins with
 
+|`IFID`
+|String
+|ID of the game in the IFID database (an ID will automatically be generated when the game is created, it's up to you whether you register it or not)
+|===
 === Optional Attributes
-
-* tags [Set]: set of keyword tags applied to the game
-
 === Event Handlers
-
 ==== on_init
 
-: `(game, event = {}) => {...}`
+....
+on_init: `(game, event = {}) => {...}`
+....
 
 This script will be called during game initialization and before the game has
 started.
@@ -666,185 +656,6 @@ current scene.
 The callback happens between the `on_leave` and `on_enter` scripts of the card
 that is being played.
 
-=== API
-
-==== archive()
-
-Returns a JSON string containing the archived state of the game. This is used
-internally by the save() call.
-
-==== save()
-
-Archives the current game state and triggers a file download of a JSON save
-game. The file will automatically be named using the game name as a prefix and
-the date & time as a suffix.
-
-It works by adding the JSON to a `File` object and adding a link to the
-document link to that `File` and automatically clicking it.
-
-Before the download gets triggered a `save` event is raised allowing the game
-an opportunity to make changes before state gets archived.
-
-==== load(json)
-
-Retrieves a game state from the passed in JSON and attempts to reload it first
-checking that it has the same archive_version.
-
-After the state has been reloaded a `load` event is raised giving the game an
-opportunity to do any necessary work before the player sees the new state.
-
-==== addGameObject(obj)
-
-Adds a game object (one of the RezXXX object types) to the games database. Once
-an object has been added it becomes available using `$(obj_id)`.
-
-If the object has a `tags` attribute the object will be automatically indexed
-against its tags and will appear in searches using `getTaggedWith(tag)`.
-
-Note that unlike most other attributes it is inadvisable to use
-`obj.setAttribute("tag", ...)` to update tags. The `setTags()`, `addTag()` and
-`removeTag()` functions should be used instead and will automatically keep the
-game tag-index up to date.
-
-==== getGameObject(id, should_throw = true)
-
-Retrieves the game object with id.
-
-If `should_throw` is true (default: true) then an exception is thrown if the id
-is not in the game database.
-
-Returns:
-
-`null` if the specified `id` is not in the game database
-`ref` reference to the object with id `id`
-
-The compiler attempts to ensure that invalid id references are not used however
-this cannot be enforced when copies with dynamic ids get made.
-
-==== getRelationship(source_id, target_id)
-
-Returns a relationship from the source object towards the target object.
-
-Returns:
-
-`null` if there is no relationship from source to target
-`ref` a `RezRelationship` from source to target
-
-==== getTaggedWith(tag)
-
-Get objects that have the tag.
-
-Returns:
-
-`[]` if there are no objects with the tag
-`[...]` array of objects that have the tag
-
-==== getAll(target_type)
-
-Get objects that have the specified target type, e.g. 'actor', 'item', 'scene'.
-
-Returns:
-
-`[]` if there are no objects with this target type
-`[...]` array of objects of the target type
-
-==== getCurrentScene()
-
-Get a reference to the current scene.
-
-Returns:
-
-`ref` reference to the current `RezScene`
-
-==== setCurrentScene(new_scene_id)
-
-Transitions from the current scene to a new scene with id `new_scene_id`.
-
-The current scene will receive a call to `finish()` to give it an opportunity
-to clean up.
-
-The new scene will receive a call to `start()` to indicate it should get ready
-to render.
-
-==== getTarget(target_id)
-
-This method will probably be deprecated when the renderer gets rewritten.
-
-==== container()
-
-Gets the HTML element that the game is rendered inside.
-
-==== render()
-
-Triggers a render pass.
-
-The current scene is asked to render itself and the resulting content is passed
-into the game layout template.
-
-The `innerHTML` property of the HTML container is set to this content.
-
-The scene is then given an opportunity to transform links, forms, inputs and so
-on to add the `rez-live` functionality.
-
-The inner workings of the render method are likely to change when the renderer
-is rewritten. Do not depend upon them.
-
-==== interludeWithScene(scene_id)
-
-Interrupts the current scene with another scene.
-
-Unlike when the scene is changed with `setCurrentScene` the old scene is
-expected to be resumed.
-
-The current scene gets a call to `interrupt` to notify it that it is being
-interrupted and the new scene is started.
-
-Interrupted scenes are held in a stack allowing an interrupted scene to,
-itself, be interrupted.
-
-Use `resumePrevScene` to return to the last scene in the stack.
-
-==== resumePrevScene()
-
-Use to return to the previous scene after an interruption.
-
-The current scene will receive a call to `finish()` to let it know a scene
-change is coming.
-
-The last interrupted scene is then made the current scene again and receives a
-call to `resume()` to let it know that its on stage again.
-
-==== start(container_id)
-
-Used to start the game and tells it which HTML element it should live inside.
-An author should never need to call this as the framework does this
-automatically.
-
-==== getEnabledSystems()
-
-Returns a list of `RezSystem` objects that have `enabled: true` and ordered by
-`priority` with the highest priority system appearing first in the list.
-
-Returns:
-
-`[]` no systems are enabled
-`[...]` a list of systems in increasing priority order
-
-==== runTick()
-
-Sends a `tick` event to all enabled systems returned by `getEnabledSystems`.
-
-This area is not yet well thought out but the idea is that a 'tick' represents
-a unit of game time and probably there is a correspondence between player
-actions and ticks. After a player has taken an action use `runTick()` to allow
-the game systems to respond.
-
-For example a system might run actor behaviours, or create items, or whatever
-your game needs.
-
-There'll probably be more on this in the Cookbook as time goes on. Or maybe the
-whole thing will get rewritten.
-
 == Group
 
 A group specifies a collection of assets that can be selected from. Groups can be static by defining the id of member assets, or dynamic by specifying a set of tags. In the latter case the group will collect together all assets with any of the specified tags.
@@ -854,9 +665,18 @@ A group can be used to select an image at random, or cycle through the collectio
 === Example
 
 === Required Attributes
-
-- assets [List]: list of id of elements
-- tags [Set]: set of keywords
+[cols="2,1,4"]
+|===
+|`type`
+|Keyword
+|One of `:image`, `:audio`, `:video` which specifies the type of assets the group should contain
+|`include_tags`
+|Set
+|Set of tags that appear on assets that should be included in the group
+|`exclude_tags`
+|Set
+|Set of tags that appear on assets that should be excluded from the group
+|===
 
 === Optional Attributes
 
@@ -892,13 +712,13 @@ end
 ....
 
 === Required Attributes
-
-- slots [Set]: set of element-id's
-
+[cols="2,1,4"]
+|===
+|`slots`
+|Set
+|Set of element ids of `@slot`s that are included in this inventory
+|===
 === Optional Attributes
-
-- tags [Set]: set of keywords
-
 === Event Handlers
 
 ==== on_init
@@ -968,21 +788,56 @@ Note that this example throws up a design issue to be aware of: tags and boolean
 In this case an `Item` with `type: :hat` will automatically be tagged as `:wearable` and `:item`.
 
 === Required attributes
+[cols="2,1,4"]
+|===
+|`type`
+|Keyword
+|a keyword representing the type of the item, e.g. `:hat` that has optionally been `@derived`'d
 
-- type [Keyword]:
-- name [String]:
+|`name`
+|String
+|the name of the item
+|===
 
 === Optional attributes
+[cols="2,1,4"]
+|===
+|`description`
+|String\|Heredoc\|Template
+|player description of the item
 
-- description [String|Heredoc]
-- size [Number]: defaults to 1
-- usable [Boolean]: defaults to false
-- uses [Number]: assumed >= 0
-- container — element-id
-- on_equip: script
-- can_equip: script
-- on_use: script
-- can_use: script
+|`size`
+|Number
+|where inventories should manage size, defaults to `1`
+
+|`usable`
+|Boolean
+|if the item can be used, defaults to `false`
+
+|`uses`
+|Number
+|if `usable` is true, number of uses, assumed >= 0
+
+|`container`
+|Element Ref
+|Container this item begins the game inside
+
+|`on_equip`
+|Script
+|
+
+|`can_equip`
+|Script
+|
+
+|`on_use`
+|Script
+|
+
+|`can_use`
+|Script
+|
+|===
 
 === Event Handlers
 
@@ -1037,31 +892,9 @@ end
 end
 ....
 
-=== API
-
-==== randomElement()
-
-`list.randomElement()`
-
-Return a random element of the list.
-
-==== nextForCycle()
-
-`list.nextForCycle(key)`
-
-Cycles through the list element by element. Each cycle is identified by a key.
-
-==== randomUnique()
-
-`list.randomUnique(key)`
-
-Returns a random element of the list without repeating elements. Each random walk is idenfied by a key.
-
 === Required Attributes
 
 === Optional Attributes
-
-* tags [Set]: keywords
 
 === Event Handlers
 
@@ -1161,11 +994,14 @@ Extra care should be taken here that they are well-formed.
 
 === Required Attributes
 
-* priority [Number]: from 1 to 100, higher priorities break plot deadlocks
+[cols="2,1,4"]
+|===
+|`priority`
+|Number
+|from 1 to 100, higher priorities break plot deadlocks
+|===
 
 === Optional Attributes
-
-* tags [Set]:
 
 === Event Handlers
 
@@ -1262,13 +1098,6 @@ When we want to add more context to a relationship we can use tags:
 
 This event handler will be called whenever the relationship affinity changes and will be passed the prior & new affinity values.
 
-=== API
-
-
-- `getAffinity()`
-- `setAffinity(new_affinity)`
-- `alterAffinity(change)`
-
 == Scene
 
 A Game in Rez is authored in terms of `@scene`s and `@card`s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which `@card`s to represent and how to respond to player input.
@@ -1306,17 +1135,36 @@ end
 ....
 
 === Required Attributes
+[cols="2,1,4"]
+|===
+|`title`
+|String
+|what you present to the user to tell them what scene they are in
 
-* title [String]:
-* initial_card [Element Ref]:
-* layout_mode [Keyword]: one of `:single` or `:stack`
-* layout [Template]:
+|`initial_card_id`
+|Element Ref
+|id of the `@card` that is played when the scene begins
+
+|`layout_mode`
+|Keyword
+|One of `:single` for one-card-at-a-time and `:stack` for multi-card scenes
+
+|`layout`
+|Template
+|template containing the scene content in which cards are embedded
+|===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`blocks`
+|List
+|See <<Card>>
 
-* tags [Set]:
-* blocks [Map]:
-* bindings [Map]:
+|`bindings`
+|Table
+|See <<Card>>
+|===
 
 === Event Handlers
 
@@ -1409,7 +1257,6 @@ For example an inventory representing what a player is wearing might have slots 
 See also: <<Type Hierarchy>>
 
 === Example
-
 ....
 @slot holster_slot begin
   accepts: :pistol
@@ -1417,14 +1264,24 @@ end
 ....
 
 === Required Attributes
+[cols="2,1,4"]
+|===
+|`name`
+|String
+|name of the slot e.g. "Holster" that could be displayed to the player
 
-* `name` [String]: name of the slot
-* `accepts` [Keyword]: type of <<Item, Items>> that can be placed in the slot
+|`accepts`
+|Keyword
+|a keyword representing the type of <<Item, Items>> that are permitted to be in the slot
+|===
 
 === Optional Attributes
-
-* `tags` [Set]: tag keywords
-* `capacity` [Number]: the sum of the size of items that fit in the slot
+[cols="2,1,4"]
+|===
+|`capacity`
+|Number
+|the sum of the sizes of `@item`s that fit in the slot, see <<Item>> `size` attribute
+|===
 
 === Event Handlers
 
@@ -1492,11 +1349,11 @@ end
 
 == System
 
-The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world.
+The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world. In-game a system is represented by a xref:jsapi#RezSystem[RezSystem] object.
 
 For example we might want to model weather in our game so we could create a "weather system" that would update the in-game weather.
 
-Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the `RezGame.runTick()` API.
+Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the xref:jsapi#RezGame[RezGame] `runTick()` API.
 
 === Example
 
@@ -1585,19 +1442,22 @@ In this example we have defined a condition task to test whether a specified act
 ....
 
 === Required Attributes
+[cols="2,1,4"]
+|===
+|`options`
+|List
+|keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
 
-* options [List]: keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
-* execute [Script]: script that takes two parameters `task` (a reference to the task itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between tasks.
-
-The return value must either be `{success: true, wmem: wmem}` or
-`{success: false, error: "Message", wmem: wmem}`.
+|`execute`
+|Script
+|script that takes two parameters `task` (a reference to the task itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between tasks. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+|===
 
 === Optional Attributes
-=== API
 
 == Zone
 
-A `@zone` element defines a map zone which is an abstract representation of a region which groups logically related locations together.
+A `@zone` element defines a map zone which is an abstract representation of a region which groups logically related locations together. In-game a zone is represented by a xref:jsapi#RezZone[RezZone] object.
 
 For example a zone could represent a planet, a building, a street, or a shopping mall with a location defining a specific areas of each.
 
@@ -1652,5 +1512,3 @@ end
 : `(zone, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
-
-=== API

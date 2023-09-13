@@ -36,27 +36,39 @@ defmodule Rez.AST.Card do
     )
   end
 
-  @doc ~S"""
-  ## Examples
-      iex> alias Rez.AST.{NodeHelper, Card}
-      iex> card = %Card{id: "test"} |> NodeHelper.set_string_attr("content", "This is **bold** text") |> Card.process()
-      iex> assert %{
-      ...>  status: :ok,
-      ...>  attributes: %{"$content_template" => %Rez.AST.Attribute{name: "$content_template", type: :compiled_template, value: "function(bindings, filters) {return [function(bindings, filters) {return `<div id=\"card_test\" data-card=\"test\" class=\"card\"><p>\nThis is <strong>bold</strong> text</p>\n</div>`;}].reduce(function(text, f) {return text + f(bindings, filters)}, \"\");}"}, "content" => %Rez.AST.Attribute{name: "content", type: :string, value: "This is **bold** text"}}
-      ...> } = card
-  """
-  def process(%Card{status: :ok} = card) do
-    build_template(card)
+  def build_flipped_template(%Card{id: card_id} = card) do
+    NodeHelper.set_compiled_template_attr(
+      card,
+      "$flipped_template",
+      TemplateHelper.compile_template(
+        card_id,
+        NodeHelper.get_attr_value(card, "flipped_content", ""),
+        NodeHelper.get_attr_value(card, "flipped_format", "markdown"),
+        fn html ->
+          html = TemplateHelper.process_links(html)
+          custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
+          css_classes = Utils.add_css_class("flipped", custom_css_class)
+          ~s|<div class="#{css_classes}">#{html}</div>|
+        end
+      )
+    )
   end
 
-  def process(%Card{} = card), do: card
+  def build_templates(%Card{} = card) do
+    card
+    |> build_template()
+    |> build_flipped_template()
+  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Card do
   import Rez.AST.NodeValidator
-  alias Rez.AST.Card
+
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
+
+  alias Rez.AST.Card
 
   def node_type(_card), do: "card"
 
@@ -66,14 +78,17 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
     NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
   end
 
-  def default_attributes(_card), do: %{}
+  def default_attributes(_card),
+    do: %{
+      "$flipped" => Attribute.boolean("$flipped", false)
+    }
 
   def pre_process(card), do: card
 
   def process(%Card{status: :ok} = card, node_map) do
     card
     |> NodeHelper.copy_attributes(node_map)
-    |> Card.build_template()
+    |> Card.build_templates()
     |> TemplateHelper.compile_template_attributes()
   end
 
@@ -93,6 +108,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
       ),
       attribute_present?(
         "content",
+        attribute_has_type?(:source_template)
+      ),
+      attribute_if_present?(
+        "flipped_content",
         attribute_has_type?(:source_template)
       ),
       attribute_if_present?(

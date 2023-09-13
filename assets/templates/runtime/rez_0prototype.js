@@ -44,6 +44,7 @@ const basic_object = {
   },
 
   init_0() {
+    this.initStaticProperties();
     this.initDynamicProperties();
   },
 
@@ -60,6 +61,20 @@ const basic_object = {
 
   init_2() {
     this.initialised = true;
+  },
+
+  initStaticProperties() {
+    for (let [attr_name, _] of Object.entries(this.attributes)) {
+      Object.defineProperty(this, attr_name, {
+        get: function () {
+          return this.getAttribute(attr_name);
+        },
+        set: function (value) {
+          this.setAttribute(attr_name, value);
+        },
+        configurable: true,
+      });
+    }
   },
 
   initDynamicProperties() {
@@ -139,7 +154,7 @@ const basic_object = {
     const copy = new this.constructor(id, attributes);
     copy.setAttribute("$template", false);
     copy.runEvent("copy", { original: this });
-    copy.setAttribute("copy_of", this.id);
+    copy.setAttribute("$original", this.id);
     copy.init_all();
     return copy;
   },

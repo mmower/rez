@@ -255,20 +255,32 @@ let game_proto = {
     );
   },
 
-  getCurrentScene() {
-    return this.getGameObject(this.current_scene_id);
+  get currentScene() {
+    return this.current_scene;
   },
 
-  setCurrentScene(new_scene_id) {
+  startSceneWithId(new_scene_id) {
     if (new_scene_id == null) {
       throw "new_scene_id cannot be null!";
     }
 
-    this.current_scene_id = new_scene_id;
-    const scene = this.getCurrentScene();
+    if (this.current_scene) {
+      this.current_scene.finish();
+    }
+
+    const scene_template = this.getGameObject(new_scene_id);
+
+    // We make a copy of the scene so that changes to scene attributes
+    // will not affect future scene runs
+    const scene = scene_template.copyWithAutoId();
+    this.current_scene_id = scene.id;
+    this.current_scene = scene;
+
     this.setViewContent(scene.getViewLayout());
+    scene.start();
     this.clearFlashMessages();
-    this.getCurrentScene().start();
+    this.updateView();
+    scene.ready();
   },
 
   playCard(card_id) {
@@ -306,7 +318,9 @@ let game_proto = {
     // Save the state of the current scene
     this.pushScene();
 
-    this.setCurrentScene(interlude_scene_id);
+    this.startSceneWithId(interlude_scene_id, false);
+
+    // this.setCurrentScene(interlude_scene_id, false);
     this.updateView();
   },
 
@@ -316,7 +330,7 @@ let game_proto = {
       throw "Cannot resume without a scene on the stack!";
     } else {
       // Let the interlude know we're done
-      this.getCurrentScene().finish();
+      this.current_scene.finish();
 
       this.popScene();
       this.updateView();
@@ -359,8 +373,8 @@ let game_proto = {
 
     this.view = new RezView(container_id, this, new RezSingleLayout(this));
 
-    const initial_scene_id = this.getAttributeValue("initial_scene");
-    this.setCurrentScene(initial_scene_id);
+    // const initial_scene_id = this.getAttributeValue("initial_scene");
+    this.startSceneWithId(this.initial_scene);
   },
 
   getEnabledSystems() {
@@ -418,14 +432,14 @@ let game_proto = {
   handleCardEvent(evt) {
     console.log("Handle card event");
     const card_id = evt.target.dataset.target;
-    this.getCurrentScene().playCardWithId(card_id);
+    this.currentScene.playCardWithId(card_id);
     return true;
   },
 
   handleShiftEvent(evt) {
     console.log("Handle shift event");
     const scene_id = evt.target.dataset.target;
-    this.setCurrentScene(scene_id);
+    this.startSceneWithId(scene_id);
     return true;
   },
 

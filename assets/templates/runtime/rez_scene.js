@@ -10,38 +10,42 @@ let scene_proto = {
     return this.$layout_template;
   },
 
-  getCurrentCard() {
-    return this.game.$(this.current_card_id);
+  get currentCard() {
+    this.current_card = this.current_card ?? $(this.current_card_id);
+    return this.current_card;
+  },
+
+  get currentCardId() {
+    return this.current_card_id;
+  },
+
+  get isStackLayout() {
+    return this.layout_mode == "stack";
   },
 
   getInitialCard() {
     return this.game.$(this.initial_card);
   },
 
-  finish() {
-    this.runEvent("finish", {});
-  },
-
   finishCurrentCard() {
-    if (this.current_card_id != null) {
-      const card = this.getCurrentCard();
-      if (card) {
-        card.runEvent("finish", { scene: this.id });
-        this.runEvent("finish_card", { card: card.id });
+    if (this.current_card) {
+      this.current_card.runEvent("finish", {});
+      this.runEvent("finish_card", {});
+      if (this.isStackLayout) {
+        this.current_card.$flipped = true;
       }
     }
   },
 
-  startNewCard() {
-    const card = this.getCurrentCard();
-    if (card) {
-      card.scene = this;
-
-      this.runEvent("start_card", { card: card.id });
-      card.runEvent("start", { scene: this.id });
-
-      const block = new RezBlock(card);
-      this.getViewLayout().addContent(block);
+  startNewCard(card) {
+    card.scene = this;
+    this.current_card = card;
+    this.runEvent("start_card", {});
+    card.runEvent("start", {});
+    const block = new RezBlock("card", card);
+    this.getViewLayout().addContent(block);
+    if (this.isStackLayout) {
+      this.cards_played.push(card);
     }
   },
 
@@ -62,23 +66,16 @@ let scene_proto = {
 
     this.finishCurrentCard();
 
-    this.current_card_id = new_card_id;
-    this.startNewCard();
+    const card_template = $(new_card_id);
+    const card = card_template.copyWithAutoId();
+    this.startNewCard(card);
 
     this.game.updateView();
-    this.getCurrentCard().runEvent("ready", {});
-  },
-
-  getCard(card_id) {
-    const card = this.$(card_id);
-    if (card.game_object_type != "card") {
-      throw "Attempt to get id which does not correspond to a card";
-    }
-    return card;
+    this.currentCard.runEvent("ready", {});
   },
 
   createViewLayout() {
-    if (this.layout_mode == "stack") {
+    if (this.isStackLayout) {
       return new RezStackLayout(this);
     } else {
       return new RezSingleLayout(this);
@@ -112,17 +109,22 @@ let scene_proto = {
     this.runEvent("start", {});
     this.playCardWithId(this.getAttribute("initial_card"));
   },
+
+  ready() {
+    this.runEvent("ready", {});
+  },
+
+  finish() {
+    this.runEvent("finish", {});
+  },
 };
 
 function RezScene(id, attributes) {
   this.id = id;
+  this.auto_id_idx = 0;
   this.game_object_type = "scene";
   this.attributes = attributes;
-  this.properties_to_archive = [
-    "current_card_id",
-    "current_render",
-    "cards_played",
-  ];
+  this.properties_to_archive = ["current_card_id", "cards_played"];
   this.changed_attributes = [];
   this.reset();
 }

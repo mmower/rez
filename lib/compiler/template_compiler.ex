@@ -19,11 +19,11 @@ defmodule Rez.Compiler.TemplateCompiler do
   alias Rez.Compiler.TemplateCompiler.Values
 
   def js_create_fn(expr, ret),
-    do: ~s|function(bindings, filters) {#{if ret, do: "return"} #{expr};}|
+    do: ~s|function(bindings) {#{if ret, do: "return"} #{expr};}|
 
   def compile({:source_template, chunks}) do
     compiled_chunks = compile_chunks(chunks)
-    reducer = ~s|function(text, f) {return text + f(bindings, filters)}|
+    reducer = ~s|function(text, f) {return text + f(bindings)}|
     body = ~s|#{compiled_chunks}.reduce(#{reducer}, "")|
     {:compiled_template, js_create_fn(body, true)}
   end
@@ -42,9 +42,14 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(~s|`#{s}`|, true)
   end
 
-  def compile_chunk({:interpolate, {:expression, expr, filters}}) when is_list(filters) do
+  def compile_chunk({:interpolate, {:expression, expr, expr_filters}})
+      when is_list(expr_filters) do
     applied_filters =
-      Filters.js_apply_filters_to_value("bindings", filters, Values.js_exp("bindings", expr))
+      Filters.js_apply_expr_filters_to_value(
+        "bindings",
+        expr_filters,
+        Values.js_exp("bindings", expr)
+      )
 
     js_create_fn(applied_filters, true)
   end
@@ -55,7 +60,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     body = ~s|
     if(evaluateExpression("#{expr}", bindings)) {
       const sub_template = #{sub_template};
-      return sub_template(bindings, filters);
+      return sub_template(bindings);
     } else {
       return "";
     }|
@@ -114,20 +119,30 @@ defmodule Rez.Compiler.TemplateCompiler do
       Enum.map_join(params, ",", fn param -> Values.js_exp(bindings_map_name, param) end)
     end
 
-    def js_apply_filter(bindings_map_name, {filter, []}) do
-      js_function([bindings_map_name, "value"], "return filters.#{filter}(value);")
+    # def js_apply_filter(bindings_map_name, {filter_name, []}) do
+    #   js_function(
+    #     [bindings_map_name, "value"],
+    #     "return Rez.template_expression_filters.#{filter_name}(value);"
+    #   )
+    # end
+
+    def js_expr_filter_fn(expr_filter_name) do
+      "Rez.template_expression_filters.#{expr_filter_name}"
     end
 
-    def js_apply_filter(bindings_map_name, {filter, params}) do
-      filter_params = js_params(bindings_map_name, params)
-      filter_call = "filters.#{filter}(value, #{filter_params})"
-      js_function([bindings_map_name, "value"], "return #{filter_call};")
+    def js_apply_expr_filter(bindings_map_name, {expr_filter_name, params}) do
+      expr_filter_params = js_params(bindings_map_name, params)
+      expr_filter_call = js_expr_filter_fn(expr_filter_name)
+      expr_filter_params = "value, #{expr_filter_params}"
+      expr_filter_call = "#{expr_filter_call}(#{expr_filter_params})"
+      js_function([bindings_map_name, "value"], "return #{expr_filter_call};")
     end
 
-    def js_filter_list(bindings_map_name, filters) do
-      filter_application = fn filter -> js_apply_filter(bindings_map_name, filter) end
-      filter_list = Enum.map_join(filters, ",", filter_application)
-      "[#{filter_list}]"
+    def js_expr_filter_list(bindings_map_name, expr_filters) do
+      expr_filter_list =
+        Enum.map_join(expr_filters, ",", &js_apply_expr_filter(bindings_map_name, &1))
+
+      "[#{expr_filter_list}]"
     end
 
     @doc """
@@ -135,11 +150,14 @@ defmodule Rez.Compiler.TemplateCompiler do
     These filters are turned into a JS array that can be used to reduce the initial value that
     is contained in the JS variable named by the 'var_name' parameter.
     """
-    def js_apply_filters_to_value(bindings_map_name, filters, initial_value)
-        when is_list(filters) do
-      filter_list = js_filter_list(bindings_map_name, filters)
-      filter_call = "function(value, filter) {return filter(#{bindings_map_name}, value);}"
-      "#{filter_list}.reduce(#{filter_call}, #{initial_value})"
+    def js_apply_expr_filters_to_value(bindings_map_name, expr_filters, initial_value)
+        when is_list(expr_filters) do
+      expr_filter_list = js_expr_filter_list(bindings_map_name, expr_filters)
+
+      expr_filter_call =
+        "function(value, expr_filter) {return expr_filter(#{bindings_map_name}, value);}"
+
+      "#{expr_filter_list}.reduce(#{expr_filter_call}, #{initial_value})"
     end
   end
 end

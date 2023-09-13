@@ -38,22 +38,37 @@ function isObject(obj) {
 }
 end
 
-@patch OBJECT_COPY begin
+@patch OBJECT_DEEP_COPY begin
   patch: "Object"
   method: "copy"
   impl: function() {
-    const copy = {};
-    for(const property in this) {
-      let value = this[property];
-      if(Array.isArray(value)) {
-        copy[property] = value.map((o) => {return o.copy()});
-      } else if(typeof(value) == "object") {
-        copy[property] = value.copy();
-      } else {
-        copy[property] = value;
-      }
+    // Handle null or undefined
+    if (this === null || typeof this === 'undefined') {
+        return this;
     }
-    return copy;
+
+    // Handle array
+    if (Array.isArray(this)) {
+        const copiedArr = [];
+        for (let i = 0; i < this.length; i++) {
+            copiedArr[i] = this[i].copy();
+        }
+        return copiedArr;
+    }
+
+    // Handle object
+    if (typeof this === 'object') {
+        const copiedObj = {};
+        for (const key in this) {
+            if (this.hasOwnProperty(key)) {
+                copiedObj[key] = this[key].copy();
+            }
+        }
+        return copiedObj;
+    }
+
+    // Handle other primitive types (e.g., string, number, etc.)
+    return this;
   }
 end
 
@@ -375,74 +390,81 @@ end
 %% Template Filters
 %% ----------------------------------------------------------------------------
 
-@filter COMPARE_EQ begin
+@filter COMPARE_EQ_FILTER begin
   %% v -> v -> bool
 
   name: "eq"
   impl: (v1, v2) => {return v1 === v2;}
 end
 
-@filter COMPARE_NE begin
+@filter COMPARE_NE_FILTER begin
   %% v -> v -> bool
 
   name: "ne"
   impl: (v1, v2) => {return !(v1 === v2);}
 end
 
-@filter COMPARE_GT begin
+@filter COMPARE_GT_FILTER begin
   %% n -> n -> bool
 
   name: "gt"
   impl: (n1, n2) => {return n1 > n2;}
 end
 
-@filter COMPARE_GTE begin
+@filter COMPARE_GTE_FILTER begin
   %% n -> n -> bool
 
   name: "gte"
   impl: (n1, n2) => {return n1 >= n2;}
 end
 
-@filter COMPARE_LT begin
+@filter COMPARE_LT_FILTER begin
   %% n -> n -> bool
 
   name: "lt"
   impl: (n1, n2) => {return n1 < n2;}
 end
 
-@filter COMPARE_LTE begin
+@filter COMPARE_LTE_FILTER begin
   %% n -> n -> bool
 
   name: "lte"
   impl: (n1, n2) => {return n1 <= n2;}
 end
 
-@filter BSEL begin
+@filter BSEL_FILTER begin
   %% bool -> array -> any
 
   name: "bsel"
   impl: (sel, options) => {return options[sel ? 0 : 1];}
 end
 
-@filter SEL begin
+@filter SEL_FILTER begin
   %% n -> array -> any
 
   name: "sel"
   impl: (idx, options) => {return options[idx];}
 end
 
-@filter INC begin
+@filter INC_FILTER begin
   %% n -> n
 
   name: "inc"
   impl: (n) => {return n+1;}
 end
 
-@filter DEC begin
+@filter DEC_FILTER begin
   %% n -> n
 
   name: "dec"
   impl: (n) => {return n-1;}
+end
+
+@filter ROUND_FILTER begin
+  %% n -> n
+
+  name: "round"
+  impl: (n, dp) => {return n.roundp(dp);}
 end
 
 @filter STRING_MAKE_FILTER begin

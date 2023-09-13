@@ -192,24 +192,45 @@ There are seven attributes defined here:
 
 The pattern for any attribute is `<name>: <value>`. The space after the colon is required and note that there is no `,` or `;` at the end as you may be familiar with from other programming languages.
 
+**Legal**
+
+    title: "The Maltese Parrot"
+
+**Not-legal**
+
+    title : "The Maltese Parrot"
+    title :"The Maltese Parrot"
+    title:"The Maltese Parrot"
+
+Attribute names follow the rule for Javascript identifiers:
+
+* cannot contain spaces
+* are case sensitive
+* must begin with a letter, underscore `_`, or dollar `$`
+* can only contain letters, numbers, underscores, or dollar signs
+
+Note that attribute names with a leading underscore (`_`) are considered to be 'internal' to the Rez compiler. These attributes are not converted into runtime attributes and are, therefore, not available.
+
+Attribute names with a leading dollar (`$`) are considered to be 'special' and it is not advised to use them yourself unless you know what you are doing.
+
 Rez defines a number of attribute types, some simple and some more complicated requiring some Javascript knowledge:
 
 [cols="1,2,2"]
 |===
 |Boolean
 |a truth value that you can test to create conditional behaviour
-|`true`\|`false`
+|`true`\|`false` (not that `yes` and `no` can also be used interchangably)
 
 |Number
-|a number value, Rez doesn't have separate types for integers and decimals
+|a numeric value that can be positive, negative, integer, or decimal. Rez doesn't have separate types for these.
 |`5`\|`-1`\|`0.5`
 
 |String
-|a text value
+|a text value suitable for shorter strings. For longer passages a Heredoc may be easier
 |`"it's a plaster bust of a parrot"`
 
 |Keyword
-|a symbol representing one of a set of values
+|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[`@derive`]
 |`:single`\|`:multiple`, `:red`\|`:green`\|`:blue`
 
 |Element Reference
@@ -240,13 +261,17 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |a text value whose contents should be a https://github.com/galaxykate/tracery[Tracery] grammar
 |`+G``{origin: ...}```+`
 
-|Script
-|a Javascript function, typically an event handler and typically written using the arrow function format
-|`(game, event) => {<JS code>}`
+|Script (Event)
+|a Javascript function for handling an event. Expected to be in arrow format and passed the object receiving the event and the event as parameters.
+|`(game, event) => {...}`
+
+|Script (Action)
+|a Javascript function expected to be called, e.g. in an event handler. Expected to be in traditional function style and where `this` is the object in question.
+|`function() {...}`
 
 |Dice
-|a dice roll, re-evaluated each time it is referenced
-|`2d6+1`
+|a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
+|`2d6+1`, `d4`, `3d6-1`, `2d10`
 
 |File
 |a string value that is imported from a file
@@ -280,6 +305,8 @@ The simplest possible Rez game would look something like this:
   ${content}
   ```
 
+  %(stdlib.rez)
+
   @scene play_game begin
     initial_card: #did_you_win
     layout_mode: :single
@@ -287,17 +314,35 @@ The simplest possible Rez game would look something like this:
     won: 0
     win_p: 0
     layout: ```
-    $if{this.played > 0} {%
-      <p>You've won ${this.win_p}% of your games.</p>
-    %}
-    ${content}
+    <div class="container">
+      $if{scene.played > 0} {%
+        <section class="hero is-primary">
+          <div class="hero-body">
+            <p class="title">Winning Percentage: ${scene.win_p | round: 0}%</p>
+            <p class="subtitle">
+              $if{scene.win_p >= 50.0} {%
+                You are a winner!
+              %}
+              $if{scene.win_p < 50.0} {%
+                You are a loser!
+              %}
+            </p>
+          </div>
+        </section>
+      %}
+
+      <p>Played: ${scene.played}</p>
+      <p>Won ${scene.won}</p>
+
+      ${content}
+    </div>
     ```
-    win: () => {
+    win: function() {
       this.played += 1;
       this.won += 1;
       this.win_p = this.won * 100 / this.played;
     }
-    lost: () => {
+    lose: function() {
       this.played += 1;
       this.win_p = this.won * 100 / this.played;
     }
@@ -315,8 +360,8 @@ The simplest possible Rez game would look something like this:
 
     [[Play again|did_you_win]]
     ```
-    on_render: () => {
-      this.scene.won();
+    on_start: (card) => {
+      card.scene.win();
     }
   end
 
@@ -326,24 +371,370 @@ The simplest possible Rez game would look something like this:
 
     [[Play again|did_you_win]]
     ```
-    on_render: () => {
-      this.scene.lost()
+    on_start: (card) => {
+      card.scene.lose();
     }
   end
 end
 ....
 
+image::test_game_1.png[]
+image::test_game_2.png[]
+
 This is a terrible game but it illuminates some of the basic principles of how you create a game using Rez.
 
-We're using 3 elements: xref:element_catalog#game[`@game`], xref:element_catalog#scene[`@scene`], and xref:element_catalog#card[`@card`].
+It uses 3 types of element: xref:element_catalog#Game[`@game`], xref:element_catalog#Scene[`@scene`], and xref:element_catalog#Card[`@card`]. The scene has some attributes to keep track of the game state and two actions, the cards use an event handler and some template links.
 
-The game wraps everything up and defines the initial scene of the game but the real work is going on in the scene and the cards that are played into it.
+The `@game` is a required top-level element that contains the definintion of the game and holds the master layout into which scene content is inserted, and the reference to the scene that starts the game.
 
-Every game has to have at least one scene, but a scene can be very simple as you can see. In the scene `layout` the `${content}` template expression will include the content from the current card (or cards). In more complex games different scenes allow you to present a different interface to the player. You could have a "map" scene that presents a graphical map, for example.
+A game must have at least one `@scene`. A scene represents a context where specific events or interactions take place. It must also have an `initial_card` attribute that defines which card is played into the scene when it starts. You can run your game from a single scene or use multiple scenes where it makes sense to do so.
 
-Cards are the basic unit of content in a Rez game. They serve a similar purpose to passages in a Twine game. The `content` attribute is the template that is rendered to be displayed when the card is played into the scene. In this example we're also using the cards `on_render` callback to keep the scene up to date with whether the player is winning or losing.
+Lastly the cards, which are "played" into the scene, and which provide the bulk of the content presented to the player.
 
-== In the Browser
+So we have a structure:
 
-We need to distinguish between two environments: _author_time_ where we're in an editor working in a `.rez`` source files with elements and attributes and _runtime_ where the compiled game is running in the browser and we are working with
-Javascript objects like `RezGame`, `RezCard`, and `RezItem`.
+....
+@game/layout
+  @scene/layout
+    @card/content
+....
+
+The card content is rendered into the scene layout, and the scene layout is rendered into the game layout. You might notice the scene has a `layout_mode` attribute. In this case we are using the `single` layout mode that presents only the current card. There is also a `stack` layout mode that presents all of the cards played into the scene.
+
+The scene in this case defines two script attributes `win` and `lose` that update the score and winning percentage. These are called from the `on_start` event handler of the cards `yes_i_won` and `no_i_lost`. The event handlers are Javascript arrow functions that take their source object (and, optionally, an event object) as a parameter. The scene scripts are regular functions where `this` is the object in question (in this case the scene `play_game`).
+
+You can use Markup for simple formatting although here we are showing off some of the Bulma CSS classes. We also using template expressions to display variables `${}` and conditionally present content `$if{} {% ... %}`.
+
+You can go quite a long way using only this subset of Rez's features.
+
+== What's Going on in the Browser
+
+We should distinguish between two environments: The _author_time_ environment where we're dealing with `.rez` source files containg elements & attributes, and the _runtime_ environment where these have been compiled into JavaScript code that runs in the browser.
+
+In the runtime environment `@game` has been translated into a JS object with `RezGame` as its prototype, the scene into a JS object with `RezScene` as its prototype, and the cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object.
+
+[Advanced Note]: If you want to use different objects you can use the `js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
+
+The Game starts with a called to the game object `start` method which handles initialization and presenting the first scene & card.
+
+== The Rez Rendering Process
+
+When the game layout gets rendered its content is embedded inside a built-in template:
+
+....
+<div class="game">
+    ...game layout...
+</div>
+....
+
+You can target the whole game content using the `game` CSS class.
+
+The game `layout`` is a good place to put fixed parts of the interface, for example titles, score, current time or location, and so on. The game layout is expected to contain the template expression `${content}` which will include the contents of the current scene.
+
+When the current scene gets rendered its content is embedded into a different template:
+
+....
+<div id="scene_<scene-id>" class="scene">
+  ...scene layout...
+</div>
+....
+
+In the same was as the game, the scene `layout` is expected to contain the template expression `${content}` which will include the contents of the current card or cards. You can style scenes by targetting the `scene` CSS class or customise styles for particular scenes by targetting the DOM id. In our example game that would be `scene_play_the_game`.
+
+When a card gets rendered its content is embedded into yet another template:
+
+....
+<div id="card_<render-id>" data-card="<card-id>" class="card <card-type>">
+   ...card content...
+</div>
+....
+
+Here are introduce two new concepts the `render-id` and `card-type`. The `render-id` becomes important when using `layout_mode: :stack` for a scene. In this context the same card may be rendered multiple times. Each card gets its own render ID and preserves uniqueness of DOM ids.
+
+The `card-type` will be one of `card_active`, `card_passive`, or `block`. We'll come back to active & passive blocks later when we talk about the stack layout.
+
+Block content comes from cards that are being rendered inside another card. For example you might have a card `#sidebar` that we want to use to render sidebar content that should always be visible.
+
+In this case we would add it to (for example) the scenes `blocks:` attribute. To include it within the scene layout you would use the template expression `${sidebar}`.
+
+== Scene Layout Mode
+
+A `@scene`` has a required attribute `layout_mode:` which can, as of v0.11, have two values:
+
+* `:single`
+* `:stack`
+
+In `:single` mode the `${content}` substituion embeds the content of the current card in the scene. When the card changes the content will change to match it. The effect is that the scene will jump from card to card.
+
+In `:stack` mode the `${content}` substitution embeds the content of every card that has been played into the scene so far. Rather than jumping from card to card the cards will accumulate.
+
+However, as a new card is played the previous card gets "flipped". What that means is that instead of rendering the `content` attribute it renders the `flipped_content` attribute.
+
+For example a card might present the player with two options. If the card didn't get flipped it would continue to present two options even though an option had been selected. But the flipped version can, instead, display the chosen option.
+
+== Linking to the next card or scene
+
+Borrowing from Twine there is an easy way to specify a link to play a new card or change to a new scene. The simplest form is:
+
+....
+[[Link Text|card_id]]
+....
+
+e.g.
+
+....
+[[Play Again|play_the_game]]
+....
+
+This will be converted into a link that plays the card with id `play_the_game` and is titled "Play Again". If you don't specify a card id it will convert the title and look for that. So:
+
+....
+[[Play Again]]
+....
+
+is equivalent to:
+
+....
+[[Play Again|play_again]]
+....
+
+There may be situations where you only want links to appear under specific circumstances. You could do this a template expression but Rez has a built-in facility for dynamic links. Using the syntax:
+
+....
+[[*play_again]]
+....
+
+Causes Rez to look for a script attribute `play_again` in the current card or scene and pass it a xref:jsapi#RezDynamicLink[RezDynamicLink] object that it can use to customise link presentation.
+
+....
+play_again: function(link) {
+  if(this.play_count > 9) {
+    link.deny("You have played too many times already!");
+  } else {
+    link.allow("Play Again", "play_again");
+  }
+}
+....
+
+Once the player plays their 10th game this link becomes inactive. Alternatively you can use `link.hide()` and the link won't appear at all. Good for options which should be concealed until some gameplay condition is met.
+
+A link to switch to a new scene uses the syntax:
+
+....
+[[Link text|>scene_id]]
+....
+
+This presents a link which, when clicked, while load the new scene with id `scene_id` and automatically play its initial card.
+
+....
+[[Link text|!scene_id]]
+....
+
+This presents a link which, when clicked, acts like the previous type of link except that it interrupts, rather than ending, the current scene so that the current scene can be resumed. An example of where this kind of link is useful is for presenting a player inventory. Looking at the inventory steps out of normal gameplay. When the player is done with the inventory they expect to be back where they were before they triggered it.
+
+....
+[[Link text|!!]]
+....
+
+Presents a link that, when clicked, ends an interlude scene and resumes the previous scene from where it left off. Interludes are held in a stack so it's possible to interlude from an interlude and then rewind back to the starting point.
+
+== Assets
+
+Assets are files that you want to include in your game for example images, audio files or movies. Rez handles copying these into your game distribution folder and generating appropriate references.
+
+You declare an asset with an `@asset` element:
+
+....
+@asset pistol_image begin
+  file: "pistol_image_01.png"
+  width: 60
+  height: 60
+end
+....
+
+Rez handles finding the asset file and making it available in the dist folder. Now if you want to include it you have two options, both using template expressions.
+
+....
+${"pistol_image" | asset_tag}
+....
+
+Because the asset is an image this will generate an `<img />` tag that points to the image file relative to the game file.
+
+As of v0.11 only image files are supported but sound & movie support will be included soon.
+
+The second approach is to generate a path and build your own tag:
+
+....
+<img src='${"pistol_image" | asset_path}' />
+....
+
+This will work for audio & movie assets.
+
+== Template Expressions
+
+Template expressions are how you include dynamic content in your game user interface.
+
+[Advanced Note: Prior to v0.10 Rez used the Handlebars.js templating system and the handlerbars compiler and had the `@helper` directive to create new helpers. This has been completely replaced by the Rez template expression system which has a built-in compiler and offers `@filter`s as an alternative to helpers.]
+
+Template Expressions are loosely based on the https://shopify.github.io/liquid/[Liquid] template system. But it's worth noting that they are not Liquid and you should always refer to this documentation not the Liquid docs.
+
+There are two kinds of template expression.
+
+=== Subsitution Expressions
+
+A substitution is where we replace a token like `${player.name}` in a template with the value of the expression. For example:
+
+....
+content: ```Your name is ${player.name}. It is a good name.```
+....
+
+If the `player`` objects `name` attribute is "matt" this will return:
+
+....
+Your name is matt. It is a good name.
+....
+
+Where does this `player` reference come from? Good question, this is an example of a binding. You've already seen bindings at work with `${content}` and `${sidebar}`. `content` is an example of a binding that Rez automatically makes available but you can add your own to refer to any objects you like.
+
+....
+bindings: {player: #player}
+....
+
+Here we are binding the Javascript variable `player` to an element with id `#player` which we assume would be an `@actor` element for representing the player character. We can also make function bindings:
+
+....
+bindings: {player: () => {return $("player")}}
+....
+
+Would be an equivalent way of creating this binding. Because we often want to refer to game elements we have the shorthand above. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
+
+=== Substitution Filters
+
+If all we could do was return the attribute values of functions then expressions wouldn't be very useful. Filters, inspired by Liquid, let us manipulate values into the content we want to display.
+
+For example, let's say we wanted to capitalize the players name:
+
+....
+content: ```Your name is ${player.name | capitalize}. It is a good name.```
+....
+
+Would render as:
+
+....
+Your name is Matt. It is a good name.
+....
+
+When using a filter you put a pipe symbol `|` followed by the filter expression which is sometimes just the name of the filter (See the xref:filter_catalog[Filter Catalog] for a complete list of built-in filters) but can also include parameters.
+
+....
+content: ```The item has the inscription "${item.inscription | trunc: 40}"```
+....
+
+This is an example of a filter that takes parameters. They are separated from the filter name by a colon `:` and if there is more than one parameter separate them with a comma.
+
+You can also have multiple filters, separating each with a `|`. For example:
+
+....
+content: ```The book belongs to ${actor.name | prepend: actor.title}.```
+....
+
+might render as:
+
+....
+The book belongs to Mr Sam Spade.
+....
+
+=== Conditional Templates
+
+The second type of template expression is the conditional template. This allows content to be dynamically included based on an expression. The format of a conditional template is:
+
+....
+$if(expression) {%
+  <template content>
+%}
+....
+
+In the game example above we used:
+
+....
+$if(scene.played >0) {%...%}
+....
+
+To determine whether to show the won/lost percentage template content. Nested template can also contain template expressions and their own conditional templates.
+
+At the moment there is no support for `else` requiring paired conditional templates for the `true` and `false` paths. This may be addressed in a future release.
+
+== Custom Scripts & Styles
+
+Rez supports the addition of custom Javascript & CSS in a number of different ways.
+
+=== Script & Style Directives
+
+The `@script` and `@style` directives allow embedding arbitrary Javascript or CSS classes into your game.
+
+....
+@script begin
+  function identifyParrot(p) {
+    if(p === "parrot") {
+      return "Sqwauk";
+    } else {
+      return "Pfffft";
+    }
+  }
+end
+....
+
+....
+@style begin
+  /* https://gist.github.com/JoeyBurzynski/617fb6201335779f8424ad9528b72c41 */
+  .main {
+    max-width: 38rem;
+    padding: 2rem;
+    margin: auto;
+  }
+end
+....
+
+The contents of these directives is automatically inserted into an appropriate spot in the game files.
+
+=== Patching Javascript
+
+Another way to include your own Javascript is through the use of the `@patch` directive which allows you to add new methods to existing JS classes. Here is an example from the stdlib.
+
+....
+@patch ARRAY_FY_SHUFFLE begin
+  %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
+  patch: "Array"
+  method: "fy_shuffle"
+  impl: function() {
+    let idx = this.length;
+    while(--idx > 0) {
+      const rand_idx = Math.floor(Math.random() * (idx+1));
+      [this[rand_idx], this[idx]] = [this[idx], this[rand_idx]];
+    }
+    return this;
+  }
+end
+....
+
+This adds a new method `fy_shuffle` to Javascript `Array` instances. So you can now write:
+
+....
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].fy_shuffle()
+=> [3, 7, 6, 8, 4, 9, 1, 2, 5, 10]
+....
+
+To add a method to instances use the `method:` attribute and specify the method name. To add a function to a constructor use the `function:` attribute instead.
+
+=== Write Your Own Filters
+
+A third way to include custom Javascript is by implementing a template expression filter. Here is an example from the stdlib:
+
+....
+@filter STRING_STARTS_WITH_FILTER begin
+  %% String -> Bool
+
+  name: "starts_with"
+  impl: (s, search) => {return s.startsWith(search);}
+end
+....
