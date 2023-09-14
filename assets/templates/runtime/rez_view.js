@@ -355,14 +355,12 @@ let event_link_transformer_proto = {
   __proto__: event_transformer_proto,
 
   transformElement(elem) {
-    elem.classList.remove("inactive");
-    elem.classList.add("active");
     this.addEventListener(elem, this.getEventName());
   },
 };
 
 function RezEventLinkTransformer(receiver) {
-  this.selector = "div.card a";
+  this.selector = "div.card a:not(.inactive)";
   this.event = "click";
   this.receiver = receiver;
 }

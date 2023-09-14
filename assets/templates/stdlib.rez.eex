@@ -446,6 +446,55 @@ end
   impl: (idx, options) => {return options[idx];}
 end
 
+@filter ADD_FILTER begin
+  %% n -> n
+
+  name: "add"
+  impl: (n, x) => {return n+x;}
+end
+
+@filter SUB_FILTER begin
+  %% n -> n
+
+  name: "sub"
+  impl: (n, x) => {return n-x;}
+end
+
+@filter MUL_FILTER begin
+  %% n -> n
+
+  name: "mul"
+  impl: (n, x) => {return n*x;}
+end
+
+@filter DIV_FILTER begin
+  %% n -> n
+
+  name: "div"
+  impl: (n, x) => {return n/x;}
+end
+
+@filter MOD_FILTER begin
+  %% n -> n
+
+  name: "mod"
+  impl: (n, x) => {return n % x;}
+end
+
+@filter ABS_FILTER begin
+  %% n -> n
+
+  name: "abs"
+  impl: (n) => {return Math.abs(n)}
+end
+
+@filter NEG_FILTER begin
+  %% n -> n
+
+  name: "neg"
+  impl: (n) => {return -n;}
+end
+
 @filter INC_FILTER begin
   %% n -> n
 
