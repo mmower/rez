@@ -233,7 +233,17 @@ let stack_layout_proto = {
   },
 
   renderContents() {
-    return this.contents.map((block) => block.html()).join("");
+    let separator = "";
+    if (this.source.layout_separator) {
+      separator = this.source.layout_separator;
+    }
+
+    let contents = this.contents;
+    if (this.source.layout_reverse) {
+      contents = contents.reverse();
+    }
+
+    return contents.map((block) => block.html()).join(separator);
   },
 };
 

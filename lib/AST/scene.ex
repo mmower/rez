@@ -58,6 +58,7 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Scene do
   import Rez.AST.NodeValidator
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -71,7 +72,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
     NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
   end
 
-  def default_attributes(_scene), do: %{}
+  def default_attributes(_scene),
+    do: %{
+      "layout_reverse" => Attribute.boolean("layout_reverse", false)
+    }
 
   def pre_process(scene), do: scene
 
