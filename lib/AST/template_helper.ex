@@ -20,7 +20,7 @@ defmodule Rez.AST.TemplateHelper do
     """
     def convert_dynamic_links(text) do
       Regex.replace(~r/\[\[\*([\w\s]+)\]\]/, text, fn _, action ->
-        "${card | link: \"#{action}\"}"
+        ~s<${card | decision: "#{action}"}>
       end)
     end
 

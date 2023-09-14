@@ -54,18 +54,15 @@ let block_proto = {
     });
   },
 
+  bindAs() {
+    return "card";
+  },
+
   bindValues() {
-    if (this.block_type === "block") {
-      return {
-        [this.source.id]: this.source,
-        ...this.getBindings(),
-      };
-    } else {
-      return {
-        [this.block_type]: this.source,
-        ...this.getBindings(),
-      };
-    }
+    return {
+      [this.bindAs()]: this.source,
+      ...this.getBindings(),
+    };
   },
 
   // blocks are a list of id's of other card elements that we
@@ -85,12 +82,6 @@ let block_proto = {
   bindBlocks() {
     return this.getBlocks().obj_map((block) => block.html());
   },
-
-  // validate_block_type(t) {
-  //   if (!(t == "block" || t == "card")) {
-  //     throw "Invalid card render type: |" + t + "|!";
-  //   }
-  // },
 
   getViewTemplate() {
     return this.source.viewTemplate;
@@ -173,6 +164,10 @@ let layout_proto = {
     throw "Must implement renderContents()";
   },
 
+  bindAs() {
+    throw "Must implement bindAs()";
+  },
+
   html() {
     const content = this.renderContents();
     const template_fn = this.getViewTemplate();
@@ -200,13 +195,18 @@ let single_layout_proto = {
     this.content = block;
   },
 
+  bindAs() {
+    return this.source_name;
+  },
+
   renderContents() {
     return this.content.html();
   },
 };
 
-function RezSingleLayout(source) {
+function RezSingleLayout(source_name, source) {
   RezBlock.call(this, "scene", source);
+  this.source_name = source_name;
   this.content = null;
 }
 
@@ -228,13 +228,18 @@ let stack_layout_proto = {
     this.contents.push(block);
   },
 
+  bindAs() {
+    return this.source_name;
+  },
+
   renderContents() {
     return this.contents.map((block) => block.html()).join("");
   },
 };
 
-function RezStackLayout(source) {
+function RezStackLayout(source_name, source) {
   RezBlock.call(this, "scene", source);
+  this.source_name = source_name;
   this.contents = [];
 }
 
@@ -322,6 +327,14 @@ let event_transformer_proto = {
 
         if (response.flash) {
           receiver.addFlashMessage(response.flash);
+        }
+
+        if (response.render) {
+          receiver.updateView();
+        }
+
+        if (response.error) {
+          console.log("Error: " + response.error);
         }
       } else if (typeof response == "undefined") {
         throw "Event handlers must return a value, preferably an exec-object!";

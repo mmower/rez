@@ -54,7 +54,7 @@ let scene_proto = {
     if (handler && typeof handler == "function") {
       return handler(this, evt);
     } else {
-      return this.getCurrentCard().handleCustomEvent(event_name, evt);
+      return this.currentCard.handleCustomEvent(event_name, evt);
     }
   },
 
@@ -76,9 +76,9 @@ let scene_proto = {
 
   createViewLayout() {
     if (this.isStackLayout) {
-      return new RezStackLayout(this);
+      return new RezStackLayout("scene", this);
     } else {
-      return new RezSingleLayout(this);
+      return new RezSingleLayout("scene", this);
     }
   },
 

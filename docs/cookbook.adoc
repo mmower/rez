@@ -128,7 +128,7 @@ end
 end
 ....
 
-Note that you can change the value but only in the object that holds it.
+Note that you can change the value, but only in the object that holds it.
 
 == Using Decisions
 
@@ -289,34 +289,32 @@ ${asset_id | asset_tag}
 
 to generate appropriate markup to embed the asset into the game. Rez assets auto-detect the MIME type of the asset file and generate the appropriate HTML tag for the asset.
 
-== Procedural Generation
+=== Using your own prototypes
 
-Rez was designed at the outset to support procedural generation of content.
+The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `js_ctor` attribute on any object.
 
-CAUTION: This content is out of date and the APIs and processes have changed.
+....
+@actor kaspar_gutman begin
+  js_ctor: "Gutman"
+  name: "Kaspar Gutman"
+  villain: true
+end
+....
 
-=== Creating copies
+Now, instead of using the `RezActor()` constructor function the initialization code will look for a `Gutman()` constructor function. Constructor functions are passed the id (in this case `kaspar_gutman`) and a map of attributes.
 
-Rez supports the idea that you will create 'template' elements that are designed to be copied, you do this by applying the `template`` attribute to it.
+It is advisable to base your object on the object you are replacing.
+
+=== Procedural Generation
+
+Procedural generation is about content that is created at run-time and Rez has good support for this through it's `copyAssigningId()` and `copyWithAutoId()` methods in `basic_object`
+
+Rez supports the idea that you will create 'template' elements that are designed to be copied and modified to create something new. You do this by applying the `$template` attribute to it and then calling the appropriate copy method.
+
+Although most objects support copying, by specifying `$template: true` you will suppress some of Rez's automatic initialization. This means that the copy will get its own initialization.
 
 ....
 @actor basic_npc begin
   $template: true
 end
 ....
-
-This enables the use of the `copyAssigningId()` and `copyWithAutoId()` API functions to make copies.
-
-Then specify attributes that should initialised in the copy when it is created by using refs.
-
-    name: &name_gen
-    name_gen: () => {function returning a name}
-
-All ref-based attributes are assigned their values when a template is copied.
-
-There is a special behaviour that when a ref references an attribute which is either a die roll or a function that the attribute is evaluated, i.e. the function is called or the dice rolled and the resulting value is assigned to the referring attribute. Hence:
-
-    skill_roll: 3d6
-    skill: &skill_roll
-
-When the object is copied the `skill_roll` will be made (e.g. 3d6 = 13) and the value 13 will be assigned to the attribute `skill`.

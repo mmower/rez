@@ -58,7 +58,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     {:compiled_template, sub_template} = compile(content)
 
     body = ~s|
-    if(evaluateExpression("#{expr}", bindings)) {
+    if(evaluateExpression(`#{expr}`, bindings)) {
       const sub_template = #{sub_template};
       return sub_template(bindings);
     } else {

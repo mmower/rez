@@ -284,7 +284,7 @@ let game_proto = {
   },
 
   playCard(card_id) {
-    this.getCurrentScene().playCardWithId(card_id);
+    this.currentScene.playCardWithId(card_id);
   },
 
   setViewContent(content) {
@@ -307,7 +307,7 @@ let game_proto = {
   interludeWithScene(interlude_scene_id) {
     if (interlude_scene_id == null) {
       throw "interlude_scene_id cannot be null!";
-    } else if (this.getCurrentScene() == null) {
+    } else if (this.currentScene == null) {
       throw "cannot interlude without a current scene!";
     }
 
@@ -338,15 +338,15 @@ let game_proto = {
   },
 
   pushScene() {
-    this.getCurrentScene().interrupt();
+    this.currentScene.interrupt();
     this.scene_stack.push(this.current_scene_id);
-    this.view.pushLayout(new RezSingleLayout(this));
+    this.view.pushLayout(new RezSingleLayout("scene", this));
   },
 
   popScene() {
     this.view.popLayout();
     this.current_scene_id = this.scene_stack.pop();
-    this.getCurrentScene().resume();
+    this.currentScene.resume();
   },
 
   setViewLayout(layout) {
@@ -371,7 +371,11 @@ let game_proto = {
     // this.container_id = container_id;
     this.runEvent("start", {});
 
-    this.view = new RezView(container_id, this, new RezSingleLayout(this));
+    this.view = new RezView(
+      container_id,
+      this,
+      new RezSingleLayout("game", this)
+    );
 
     // const initial_scene_id = this.getAttributeValue("initial_scene");
     this.startSceneWithId(this.initial_scene);
@@ -406,7 +410,7 @@ let game_proto = {
       return false;
     }
 
-    const event_name = evt.target.dataset.event;
+    const event_name = evt.target.dataset.event.toLowerCase();
     if (event_name == "card") {
       return this.handleCardEvent(evt);
     } else if (event_name == "shift") {
@@ -425,7 +429,7 @@ let game_proto = {
     if (handler && typeof handler == "function") {
       return handler(this, evt);
     } else {
-      return this.getCurrentScene().handleCustomEvent(event_name, evt);
+      return this.currentScene.handleCustomEvent(event_name, evt);
     }
   },
 
@@ -458,9 +462,7 @@ let game_proto = {
 
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
-    const card_div = evt.target.closest(
-      ".active_card > div.card, .active_block > div.card"
-    );
+    const card_div = evt.target.closest(".div.card");
     if (!card_div) {
       throw "Cannot find div for input " + evt.target.id + "!";
     }
@@ -482,9 +484,7 @@ let game_proto = {
       throw "Cannot get form name!";
     }
 
-    const card_div = evt.target.closest(
-      ".active_card > div.card, .active_block > div.card"
-    );
+    const card_div = evt.target.closest("div.card");
     if (!card_div) {
       throw "Cannot find div for form: " + form_name + "!";
     }

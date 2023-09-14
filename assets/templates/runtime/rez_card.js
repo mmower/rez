@@ -26,7 +26,9 @@ let card_proto = {
     if (handler && typeof handler == "function") {
       return handler(this, evt);
     } else {
-      console.log("No handler for custom event");
+      return {
+        error: `No handler for event ${event_name}`,
+      };
     }
   },
 };

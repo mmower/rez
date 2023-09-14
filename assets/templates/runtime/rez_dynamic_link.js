@@ -13,12 +13,7 @@ let dynamic_link_proto = {
     if (typeof response == "function") {
       this.markup = response();
     } else {
-      this.markup =
-        '<a href="javascript:void(0)" data-target="' +
-        target_id +
-        '">' +
-        response +
-        "</a>";
+      this.markup = `<a href="javascript:void(0)" data-event="card" data-target="${target_id}">${response}</a>`;
     }
   },
 

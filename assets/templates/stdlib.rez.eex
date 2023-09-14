@@ -284,7 +284,7 @@ end
 
 @patch NUMBER_RND_BETWEEN begin
   patch: "Number"
-  function: "rnd_between"
+  function: "rand_between"
   impl: function(min, max) {
     if(min > max) {
       [min, max] = [max, min]
@@ -295,7 +295,7 @@ end
 
 @patch NUMBER_RNDF_BETWEEN begin
   patch: "Number"
-  function: "rndf_between"
+  function: "randf_between"
   impl: function(min, max) {
     if(min > max) {
       [min, max] = [max, min]
@@ -471,21 +471,21 @@ end
   %% any -> String
 
   name: "string"
-  impl: (v) => {return ""+s;}
+  impl: (s) => {return ""+s;}
 end
 
 @filter STRING_APPEND_FILTER begin
   %% String -> String
 
   name: "append"
-  impl: (v, p) => {return v + p;}
+  impl: (s, t) => {return s + t;}
 end
 
 @filter STRING_CAMELIZE_FILTER begin
   %% String -> String
 
   name: "camelize"
-  impl: (v) => {return v.replace(/[_.-](\w|$)/g, function (_, x) {
+  impl: (s) => {return s.replace(/[_.-](\w|$)/g, function (_, x) {
 		return x.toUpperCase();
 	});}
 end
@@ -501,42 +501,42 @@ end
 @filter STRING_CAPITALIZE_FILTER begin
   %% String -> String
   name: "capitalize"
-  impl: (v) => {return v.replace(/(^|\s)\S/g, l => l.toUpperCase());}
+  impl: (s) => {return s.replace(/(^|\s)\S/g, l => l.toUpperCase());}
 end
 
 @filter STRING_DOWNCASE_FILTER begin
   %% String -> String
 
   name: "downcase"
-  impl: (v) => {return v.toLowerCase();}
+  impl: (s) => {return s.toLowerCase();}
 end
 
 @filter STRING_PREPEND_FILTER begin
   %% String -> String
 
   name: "prepend"
-  impl: (v, p) => {return p + v;}
+  impl: (s, t) => {return t + s;}
 end
 
 @filter STRING_UPCASE_FILTER begin
   %% String -> String
 
   name: "upcase"
-  impl: (v) => {return v.toUpperCase();}
+  impl: (s) => {return s.toUpperCase();}
 end
 
 @filter STRING_PLURALIZE_FILTER begin
   %% String -> String
 
   name: "pluralize"
-  impl: (v) => {return pluralize(v);}
+  impl: (s) => {return pluralize(s);}
 end
 
 @filter STRING_SPLIT_FILTER begin
   %% String -> Array
 
   name: "split"
-  impl: (v, p) => {return v.split(p);}
+  impl: (s, p) => {return s.split(p);}
 end
 
 @filter STRING_STARTS_WITH_FILTER begin
@@ -578,14 +578,14 @@ end
 
   name: "decision"
   impl: (card, action) => {
-    handler = card.getAttribute(action);
-    if(typeof(handler) != "function") {
-      throw "Attribute '" + action + "' of card '" + card.id + "' is not a handler function!";
+    const link_handler = card.getAttribute(action);
+    if(typeof(link_handler) != "function") {
+      throw `Attribute |${action}| of card |${card.id}| is not a handler function!`;
     } else {
       let link = new RezDynamicLink(card);
-      action_handler(link);
+      link_handler(link);
       if(!link.choosen) {
-        throw new Error("Choice must call one of hide/deny/allow");
+        throw new Error("Choice must call one of hide/deny/allow!");
       }
       if(link.display) {
         return link.markup;
