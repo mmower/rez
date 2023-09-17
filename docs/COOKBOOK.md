@@ -106,6 +106,29 @@ The `figher_class` object will end up with the description "Fighter" not "A clas
 
 Anywhere that you want a common way of defining multiple game objects, the alias is a possible solution.
 
+# Multiple elements sharing a unique random value
+
+In some circumstances you want multiple elements to have an attribute that
+shares the same random value. This is easily achieved using an extra object
+and attribute refs. Here is an example:
+
+    @object holds_random_value begin
+      %% this will be assigned a random value when the game is initialized
+      rand: &{Math.rand_int(1, 10)}
+    end
+
+    @actor player begin
+      %% this will refer to the value from the object
+      rand: &hold_random_value.rand
+    end
+
+    @actor npc begin
+      %% as will this
+      rand: &hold_random_value.rand
+    end
+
+Note that you can change the value but only in the object that holds it.
+
 # Using Decisions
 
 `RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
@@ -163,11 +186,11 @@ Rez will look for a `main_street` script attribute of the card and will call tha
 
 The options are:
 
- * **allow** which will display the link and point to the id
-of a card or scene to load if the player clicks it.
-* **deny** which will present the link text but disable the link so that it
-cannot be selected.
-* **hide** which will return empty text so that no link is presented at all
+- **allow** which will display the link and point to the id
+  of a card or scene to load if the player clicks it.
+- **deny** which will present the link text but disable the link so that it
+  cannot be selected.
+- **hide** which will return empty text so that no link is presented at all
 
 Example
 
@@ -208,12 +231,12 @@ that contains the form.
 
 Alternatively if you just want an input that is "live" you can use:
 
-  <input id="…" rez-live … />
+<input id="…" rez-live … />
 
 Whenever the input generates an event (e.g. the user changes the value of the
 field) a corresponding handler:
 
-  on_input: (game, evt) => {// do something with evt.input}
+on_input: (game, evt) => {// do something with evt.input}
 
 will be called on the enclosing Card.
 

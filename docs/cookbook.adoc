@@ -175,6 +175,33 @@ This will embed a link to load a card with the id `main_street` and is syntactic
 
 If no id is included the link text is converted into lower case and spacres are replaced with underscores, so "Main Street" becomes "main_street".
 
+== Event Links
+
+Somes you want to do more than simply link to another card and event links are how you can do that. You write an event link as:
+
+....
+[[Title|*event]]
+....
+
+e.g.
+
+....
+[[Roll the dice|*roll]]
+....
+
+This creates a link that will attempt to find an `on_roll` event handler attribute in the current card. If one is found it will be called and can decide how to respond to the event. Event handlers are expected to return an object.
+
+....
+on_roll: (card, evt) => {
+  ...
+  return {
+    card: "after_roll"
+  };
+}
+....
+
+In this case the handler, after doing its work, plays the card `#after_roll``.
+
 == Dynamic Links
 
 Sometimes you want more control over whether links are displayed at all, can be clicked, and what text they present. For example an option may be disabled with a message that informs the player why they can't take that action at present. Or hidden because it doesn't make sense yet.

@@ -223,9 +223,18 @@ window.Rez.single_layout = RezSingleLayout;
 let stack_layout_proto = {
   __proto__: layout_proto,
 
+  get reversed() {
+    return this.source.layout_reverse;
+  },
+
   addContent(block) {
     block.parent_block = this;
-    this.contents.push(block);
+
+    if (this.reversed) {
+      this.contents.unshift(block);
+    } else {
+      this.contents.push(block);
+    }
   },
 
   bindAs() {
@@ -238,12 +247,7 @@ let stack_layout_proto = {
       separator = this.source.layout_separator;
     }
 
-    let contents = this.contents;
-    if (this.source.layout_reverse) {
-      contents = contents.reverse();
-    }
-
-    return contents.map((block) => block.html()).join(separator);
+    return this.contents.map((block) => block.html()).join(separator);
   },
 };
 

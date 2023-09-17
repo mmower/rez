@@ -1157,13 +1157,21 @@ end
 === Optional Attributes
 [cols="2,1,4"]
 |===
+|`bindings`
+|Table
+|See <<Card>>
+
 |`blocks`
 |List
 |See <<Card>>
 
-|`bindings`
-|Table
-|See <<Card>>
+|`layout_reverse`
+|Boolean
+|In reverse mode new cards are played at the top of the stack (default: false)
+
+|`layout_separator`
+|String
+|Markup content to be inserted between cards when in stack mode (defaults: "")
 |===
 
 === Event Handlers
