@@ -413,7 +413,7 @@ We should distinguish between two environments: The _author_time_ environment wh
 
 In the runtime environment `@game` has been translated into a JS object with `RezGame` as its prototype, the scene into a JS object with `RezScene` as its prototype, and the cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object.
 
-[Advanced Note]: If you want to use different objects you can use the `js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
+[Advanced Note]: If you want to use different objects you can use the `$js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
 
 The Game starts with a called to the game object `start` method which handles initialization and presenting the first scene & card.
 

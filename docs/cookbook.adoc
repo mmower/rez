@@ -318,11 +318,11 @@ to generate appropriate markup to embed the asset into the game. Rez assets auto
 
 === Using your own prototypes
 
-The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `js_ctor` attribute on any object.
+The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `$js_ctor` attribute on any object.
 
 ....
 @actor kaspar_gutman begin
-  js_ctor: "Gutman"
+  $js_ctor: "Gutman"
   name: "Kaspar Gutman"
   villain: true
 end

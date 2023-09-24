@@ -72,6 +72,10 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :set, value: values}
   end
 
+  def source_template(name, value) when is_binary(value) do
+    %Attribute{name: name, type: :source_template, value: value}
+  end
+
   def compiled_template(name, value) when is_binary(value) do
     %Attribute{name: name, type: :compiled_template, value: value}
   end

@@ -69,7 +69,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
   def node_type(_scene), do: "scene"
 
   def js_ctor(scene) do
-    NodeHelper.get_attr_value(scene, "js_ctor", "RezScene")
+    NodeHelper.get_attr_value(scene, "$js_ctor", "RezScene")
   end
 
   def default_attributes(_scene),
@@ -170,7 +170,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
         attribute_has_type?(:function)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

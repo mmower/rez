@@ -14,14 +14,21 @@ let list_proto = {
    */
 
   at: function (idx) {
-    return this.values.at(idx);
+    const values = this.getAttribute("values");
+    return values.at(idx);
+  },
+
+  lookup: function (value) {
+    const values = this.getAttribute("values");
+    return values.indexOf(value);
   },
 
   /*
    *  Returns a random element of the list with replacement.
    */
   randomElement() {
-    return this.values.randomElement();
+    const values = this.getAttribute("values");
+    return values.randomElement();
   },
 
   //---------------------------------------------------------------------------
@@ -38,7 +45,8 @@ let list_proto = {
       cycle = 0;
     }
 
-    const value = this.values.at(cycle);
+    const values = this.getAttribute("values");
+    const value = values.at(cycle);
 
     cycle += 1;
     this.cycles[cycle_id] = cycle;
@@ -81,7 +89,8 @@ let list_proto = {
   },
 
   create_bag(bag_id) {
-    const bag = Array.from(this.values);
+    const values = this.getAttribute("values");
+    const bag = Array.from(values);
     this.bags[bag_id] = bag;
     return bag;
   },
@@ -101,7 +110,8 @@ let list_proto = {
       walk = this.resetWalk(walk_id);
     } else {
       const idx = walk.shift();
-      return this.values.at(idx);
+      const values = this.getAttribute("values");
+      return values.at(idx);
     }
   },
 
@@ -114,7 +124,8 @@ let list_proto = {
   },
 
   resetWalk(walk_id) {
-    const walk = Array.from(this.values.keys()).fy_shuffle();
+    const values = this.getAttribute("values");
+    const walk = Array.from(values.keys()).fy_shuffle();
     this.walks[walk_id] = walk;
     return walk;
   },

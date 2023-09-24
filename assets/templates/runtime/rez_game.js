@@ -362,6 +362,8 @@ let game_proto = {
 
       this.init(init_level);
 
+      const game_objects = this.getAttribute("$init_order");
+
       this.$init_order.forEach(function (obj_id) {
         const obj = this.getGameObject(obj_id);
         obj.init(init_level);
@@ -462,7 +464,7 @@ let game_proto = {
 
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
-    const card_div = evt.target.closest(".div.card");
+    const card_div = evt.target.closest("div.card");
     if (!card_div) {
       throw "Cannot find div for input " + evt.target.id + "!";
     }
@@ -508,10 +510,15 @@ let game_proto = {
   clearFlashMessages() {
     this.flash = [];
   },
+
+  get undoManager() {
+    return this.undo_manager;
+  },
 };
 
 function RezGame(id, attributes) {
   this.id = id;
+  this.undo_manager = new RezUndoManager();
   this.game_object_type = "game";
   this.attributes = attributes;
   this.tag_index = {};

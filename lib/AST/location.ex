@@ -54,7 +54,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
   def node_type(_location), do: "location"
 
   def js_ctor(location) do
-    NodeHelper.get_attr_value(location, "js_ctor", "RezLocation")
+    NodeHelper.get_attr_value(location, "$js_ctor", "RezLocation")
   end
 
   def default_attributes(_location), do: %{}
@@ -149,7 +149,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Location do
         )
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

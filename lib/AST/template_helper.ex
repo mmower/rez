@@ -53,8 +53,11 @@ defmodule Rez.AST.TemplateHelper do
       end)
     end
 
+    # ~r/\[\[(.+?)\|([a-zA-Z_$][a-zA-Z\d_$]*)\]\]/U
+    @card_regex ~r/\[\[([^|]+)\|([a-zA-Z_$][a-zA-Z0-9_$]*)(?:\s*,\s*([a-zA-Z0-9_-]+))?\]\]/U
+
     @doc """
-    Convert a target link in the form `[[Title|card_id]]` into a link which
+    Convert a target link in the form `[[Title|id,class]]` into a link which
     loads the relevant card or scene.
 
     ## Examples
@@ -62,9 +65,11 @@ defmodule Rez.AST.TemplateHelper do
         iex> assert "<a href='javascript:void(0)' data-event='card' data-target='new_scene_id'>New Scene</a>" = convert_target_id_links("[[New Scene|new_scene_id]]")
     """
     def convert_target_id_links(text) do
-      Regex.replace(~r/\[\[([\w\s]+)\|([\w\s]+)\]\]/U, text, fn _, target_text, target_id ->
-        "<a href='javascript:void(0)' data-event='card' data-target='#{target_id}'>#{target_text}</a>"
-      end)
+      converter = fn _, target_text, target_id, css_class ->
+        ~s/${"#{target_id}" | card_link: "#{target_text}", "#{css_class}"}/
+      end
+
+      Regex.replace(@card_regex, text, converter)
     end
 
     @scene_shift_syntax ~r/\[\[([^|]*)\|\>\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/

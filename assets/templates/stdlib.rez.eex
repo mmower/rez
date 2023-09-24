@@ -645,6 +645,14 @@ end
   }
 end
 
+@filter CARD_LINK_FILTER begin
+  name: "card_link"
+  impl: (card_id, title, css_class) => {
+    css_class = css_class ?? "";
+    return `<a href="javascript:void(0);" class="${css_class}" data-event="card" data-target="${card_id}">${title}</a>`;
+  }
+end
+
 @filter SCENE_CHANGE_FILTER begin
   %% ${card | scene_change: <scene_id>, <title>}
   %% ${card | scene_change: "new_scene_id", "Action leading to a new scene"}

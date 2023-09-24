@@ -201,22 +201,62 @@ defmodule Rez.AST.NodeHelper do
         node
 
       parents ->
-        Enum.reduce(parents, node, fn {:keyword, parent_id}, node ->
+        parents
+        |> Enum.reduce(node, fn {:keyword, parent_id}, node ->
           case Map.get(node_map, to_string(parent_id)) do
             nil ->
               IO.puts("Cannot find claimed parent #{parent_id} of #{node.id}!")
               node
 
             parent ->
-              Enum.reduce(parent.attributes, node, fn {_, attribute}, node ->
-                if has_attr?(node, attribute.name) do
-                  node
-                else
-                  set_attr(node, attribute)
-                end
-              end)
+              copy_attributes_from_parent(node, parent)
           end
+
+          copy_attributes_from_parent(node, Map.get(node_map, to_string(parent_id)))
         end)
+    end
+  end
+
+  def copy_attributes_from_parent(node, parent) do
+    Enum.reduce(parent.attributes, node, fn {_, attribute}, node ->
+      cond do
+        String.starts_with?(attribute.name, "_") ->
+          node
+
+        has_attr?(node, attribute.name) ->
+          node
+
+        true ->
+          set_attr(node, attribute)
+      end
+    end)
+  end
+
+  defp is_virtual_parent?(node_map, {:keyword, parent_id}) do
+    case Map.get(node_map, parent_id) do
+      nil ->
+        false
+
+      parent ->
+        get_attr_value(parent, "_virtual", false)
+    end
+  end
+
+  @doc """
+  Virtual elements (typically used in @alias's) do not actually get turned into
+  gametime objects and, therefore, do not get initialized. We shouldn't consider
+  them after their attributes have been copied over.
+  """
+  def remove_virtual_parents(node, node_map) do
+    case get_attr(node, "_parents") do
+      nil ->
+        node
+
+      %Attribute{value: parent_ids} = attr ->
+        set_attr(node, %{
+          attr
+          | value: Enum.filter(parent_ids, &(!is_virtual_parent?(node_map, &1)))
+        })
     end
   end
 

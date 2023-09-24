@@ -96,7 +96,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
   def node_type(_item), do: "item"
 
   def js_ctor(item) do
-    NodeHelper.get_attr_value(item, "js_ctor", "RezItem")
+    NodeHelper.get_attr_value(item, "$js_ctor", "RezItem")
   end
 
   def default_attributes(_item), do: %{}
@@ -120,7 +120,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       ),
       attribute_if_present?(

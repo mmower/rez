@@ -40,7 +40,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
   def node_type(_slot), do: "slot"
 
   def js_ctor(slot) do
-    NodeHelper.get_attr_value(slot, "js_ctor", "RezSlot")
+    NodeHelper.get_attr_value(slot, "$js_ctor", "RezSlot")
   end
 
   def default_attributes(_slot), do: %{}
@@ -83,7 +83,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
         attribute_has_type?(:function)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

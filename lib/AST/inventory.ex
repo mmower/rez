@@ -23,7 +23,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   def node_type(_inventory), do: "inventory"
 
   def js_ctor(inventory) do
-    NodeHelper.get_attr_value(inventory, "js_ctor", "RezInventory")
+    NodeHelper.get_attr_value(inventory, "$js_ctor", "RezInventory")
   end
 
   def default_attributes(_inventory), do: %{}
@@ -73,7 +73,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
         attribute_has_type?(:function)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

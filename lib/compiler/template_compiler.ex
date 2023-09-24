@@ -119,13 +119,6 @@ defmodule Rez.Compiler.TemplateCompiler do
       Enum.map_join(params, ",", fn param -> Values.js_exp(bindings_map_name, param) end)
     end
 
-    # def js_apply_filter(bindings_map_name, {filter_name, []}) do
-    #   js_function(
-    #     [bindings_map_name, "value"],
-    #     "return Rez.template_expression_filters.#{filter_name}(value);"
-    #   )
-    # end
-
     def js_expr_filter_fn(expr_filter_name) do
       "Rez.template_expression_filters.#{expr_filter_name}"
     end
@@ -133,7 +126,14 @@ defmodule Rez.Compiler.TemplateCompiler do
     def js_apply_expr_filter(bindings_map_name, {expr_filter_name, params}) do
       expr_filter_params = js_params(bindings_map_name, params)
       expr_filter_call = js_expr_filter_fn(expr_filter_name)
-      expr_filter_params = "value, #{expr_filter_params}"
+
+      expr_filter_params =
+        case expr_filter_params do
+          "" -> "value"
+          s -> "value, #{s}"
+        end
+
+      #  "value, #{expr_filter_params}"
       expr_filter_call = "#{expr_filter_call}(#{expr_filter_params})"
       js_function([bindings_map_name, "value"], "return #{expr_filter_call};")
     end

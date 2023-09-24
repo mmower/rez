@@ -40,7 +40,7 @@ defmodule Rez.AST.Asset do
   end
 
   def js_runtime?(%Asset{} = asset) do
-    NodeHelper.get_attr_value(asset, "js_runtime", false)
+    NodeHelper.get_attr_value(asset, "$js_runtime", false)
   end
 
   def is_compile_time_script?(%Asset{} = asset) do
@@ -111,7 +111,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
   def node_type(_asset), do: "asset"
 
   def js_ctor(asset) do
-    NodeHelper.get_attr_value(asset, "js_ctor", "RezAsset")
+    NodeHelper.get_attr_value(asset, "$js_ctor", "RezAsset")
   end
 
   def default_attributes(_asset), do: %{}
@@ -128,7 +128,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
   def process(%Asset{path_info: [path]} = asset, node_map) do
     asset
     |> NodeHelper.set_string_attr("$path", path)
-    |> NodeHelper.set_string_attr("detected_mime_type", MIME.from_path(path))
+    |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()
   end
@@ -167,11 +167,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       ),
       attribute_if_present?(
-        "js_runtime",
+        "$js_runtime",
         attribute_has_type?(
           :boolean,
           other_attributes_present?(["js_depends"])

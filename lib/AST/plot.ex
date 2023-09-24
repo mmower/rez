@@ -36,7 +36,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
   def node_type(_plot), do: "plot"
 
   def js_ctor(plot) do
-    NodeHelper.get_attr_value(plot, "js_ctor", "RezPlot")
+    NodeHelper.get_attr_value(plot, "$js_ctor", "RezPlot")
   end
 
   def default_attributes(_plot),
@@ -83,7 +83,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
         attribute_has_type?(:function)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

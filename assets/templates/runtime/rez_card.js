@@ -27,7 +27,7 @@ let card_proto = {
       return handler(this, evt);
     } else {
       return {
-        error: `No handler for event ${event_name}`,
+        error: `No handler for event ${event_name}. Did you use an on_xxx prefix?`,
       };
     }
   },

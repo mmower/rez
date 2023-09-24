@@ -24,7 +24,7 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
   def node_type(_list), do: "list"
 
   def js_ctor(list) do
-    NodeHelper.get_attr_value(list, "js_ctor", "RezList")
+    NodeHelper.get_attr_value(list, "$js_ctor", "RezList")
   end
 
   def default_attributes(_list), do: %{}
@@ -50,7 +50,7 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
         attribute_has_type?(:list)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

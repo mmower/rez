@@ -8,19 +8,17 @@ let asset_proto = {
   elementInitializer() {},
 
   tag() {
-    if (this.isImage()) {
-      return this.imageTag();
-    } else if (this.isAudio()) {
-      return this.audioTag();
-    } else if (this.isVideo()) {
-      return this.videoTag();
+    const type = this.getAttribute("$type");
+    const generator = this.tagGenerators[type];
+    if (generator) {
+      return generator.call(this);
     } else {
-      throw "No tag implementation for MIME type: " + this.type + "!";
+      throw "No tag generator implementated for MIME type: " + type + "!";
     }
   },
 
   assetType() {
-    const mime_type = this.getAttributeValue("detected_mime_type");
+    const mime_type = this.getAttributeValue("$detected_mime_type");
     if (typeof mime_type == "undefined") {
       throw "No MIME information available for asset: " + this.id;
     }
@@ -28,19 +26,19 @@ let asset_proto = {
   },
 
   isImage() {
-    return this.type == "image";
+    return this.getAttribute("$type") == "image";
   },
 
   isAudio() {
-    return this.type == "audio";
+    return this.getAttribute("$type") == "audio";
   },
 
   isVideo() {
-    return this.type == "video";
+    return this.getAttribute("$type") == "video";
   },
 
   isText() {
-    return this.type == "text";
+    return this.getAttribute("$type") == "text";
   },
 
   audioTag() {
@@ -98,17 +96,29 @@ let asset_proto = {
     console.log("Video tags not implemented");
     return "";
   },
+
+  tagGenerators: {
+    image: function (asset) {
+      return asset.imageTag();
+    },
+    audio: function (asset) {
+      return asset.audioTag();
+    },
+    video: function (asset) {
+      return asset.videoTag();
+    },
+  },
 };
 
 function RezAsset(id, attributes) {
   this.id = id;
   this.game_object_type = "asset";
   this.attributes = attributes;
-  if (!this.isTemplateObject()) {
-    this.type = this.assetType();
-  }
-  this.properties_to_archive = ["type"];
+  this.properties_to_archive = []; // ["type"];
   this.changed_attributes = [];
+  if (!this.isTemplateObject()) {
+    this.setAttribute("$type", this.assetType(), false);
+  }
 }
 
 RezAsset.prototype = asset_proto;

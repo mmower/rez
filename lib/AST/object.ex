@@ -21,7 +21,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
   def node_type(_object), do: "object"
 
   def js_ctor(object) do
-    NodeHelper.get_attr_value(object, "js_ctor", "RezObject")
+    NodeHelper.get_attr_value(object, "$js_ctor", "RezObject")
   end
 
   def default_attributes(_object), do: %{}
@@ -43,7 +43,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

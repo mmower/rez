@@ -29,7 +29,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
   def node_type(_group), do: "group"
 
   def js_ctor(group) do
-    NodeHelper.get_attr_value(group, "js_ctor", "RezGroup")
+    NodeHelper.get_attr_value(group, "$js_ctor", "RezGroup")
   end
 
   def default_attributes(_group), do: %{}
@@ -60,7 +60,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

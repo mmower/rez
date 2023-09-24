@@ -31,7 +31,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
   def node_type(_relationship), do: "relationship"
 
   def js_ctor(relationship) do
-    NodeHelper.get_attr_value(relationship, "js_ctor", "RezRelationship")
+    NodeHelper.get_attr_value(relationship, "$js_ctor", "RezRelationship")
   end
 
   def default_attributes(_relationship), do: %{}
@@ -77,7 +77,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

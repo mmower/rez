@@ -39,8 +39,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Filter do
       attribute_present?(
         "impl",
         attribute_has_type?(:function)
-      ),
-      attribute_must_not_be_present?("js_ctor")
+      )
     ]
   end
 end

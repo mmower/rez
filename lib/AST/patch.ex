@@ -65,8 +65,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Patch do
       attribute_if_present?("function", attribute_has_type?(:string)),
       attribute_if_present?("method", attribute_has_type?(:string)),
       attribute_one_of_present?(["function", "method"], true),
-      attribute_present?("impl", attribute_has_type?(:function)),
-      attribute_must_not_be_present?("js_ctor")
+      attribute_present?("impl", attribute_has_type?(:function))
     ]
   end
 end

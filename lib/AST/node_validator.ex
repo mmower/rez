@@ -258,7 +258,7 @@ defmodule Rez.AST.NodeValidator do
           :ok
 
         value ->
-          {:error, "js_ctor is not permitted (was: #{value})"}
+          {:error, "#{attr_key} is not permitted (was: #{value})"}
       end
     end
   end

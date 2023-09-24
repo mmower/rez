@@ -23,7 +23,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
   def node_type(_task), do: "task"
 
   def js_ctor(task) do
-    NodeHelper.get_attr_value(task, "js_ctor", "RezTask")
+    NodeHelper.get_attr_value(task, "$js_ctor", "RezTask")
   end
 
   def default_attributes(_task), do: %{}
@@ -59,7 +59,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
         )
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

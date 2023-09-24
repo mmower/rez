@@ -100,10 +100,10 @@ const basic_object = {
 
   createDynamicallyInitializedAttribute(attr_name, value) {
     if (value.constructor == RezDie) {
-      this.setAttribute(attr_name, value.roll());
+      this.setAttribute(attr_name, value.roll(), false);
     } else {
       const initializer = value["initializer"];
-      this.setAttribute(attr_name, eval(initializer));
+      this.setAttribute(attr_name, eval(initializer), false);
     }
   },
 
@@ -152,10 +152,10 @@ const basic_object = {
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
-    copy.setAttribute("$template", false);
-    copy.runEvent("copy", { original: this });
-    copy.setAttribute("$original", this.id);
+    copy.setAttribute("$template", false, false);
+    copy.setAttribute("$original", this.id, false);
     copy.init_all();
+    copy.runEvent("copy", { original: this });
     return copy;
   },
 
@@ -261,18 +261,19 @@ const basic_object = {
     return $(id);
   },
 
-  setObjectViaAttribute(name, object) {
-    this.setAttribute(name, object.id);
-  },
-
   attributeHasChanged(attr_name) {
     this.changed_attributes.push(attr_name);
   },
 
-  setAttribute(name, value) {
+  setAttribute(name, value, undo_tracking = true) {
     if (typeof value == "undefined") {
       throw "Call to setAttribute with undefined value!";
     }
+
+    if (undo_tracking) {
+      this.game.undoManager.recordChange(this.id, name, this.attributes[name]);
+    }
+
     this.attributes[name] = value;
     this.attributeHasChanged(name);
   },

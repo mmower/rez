@@ -38,7 +38,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
   def node_type(_zone), do: "zone"
 
   def js_ctor(zone) do
-    NodeHelper.get_attr_value(zone, "js_ctor", "RezZone")
+    NodeHelper.get_attr_value(zone, "$js_ctor", "RezZone")
   end
 
   def default_attributes(_zone), do: %{}
@@ -65,7 +65,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Zone do
         attribute_has_type?(:string)
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

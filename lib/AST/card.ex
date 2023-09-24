@@ -75,7 +75,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
   defdelegate js_initializer(card), to: NodeHelper
 
   def js_ctor(card) do
-    NodeHelper.get_attr_value(card, "js_ctor", "RezCard")
+    NodeHelper.get_attr_value(card, "$js_ctor", "RezCard")
   end
 
   def default_attributes(_card),
@@ -103,7 +103,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       ),
       attribute_present?(

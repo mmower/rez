@@ -29,7 +29,7 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
   def node_type(_system), do: "system"
 
   def js_ctor(system) do
-    NodeHelper.get_attr_value(system, "js_ctor", "RezSystem")
+    NodeHelper.get_attr_value(system, "$js_ctor", "RezSystem")
   end
 
   def default_attributes(_system), do: %{}
@@ -69,7 +69,7 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
         )
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       )
     ]

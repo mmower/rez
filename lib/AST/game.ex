@@ -211,7 +211,7 @@ defmodule Rez.AST.Game do
     assets
     |> Map.values()
     |> Enum.filter(fn %Asset{} = asset ->
-      !NodeHelper.is_template?(asset) && NodeHelper.get_attr_value(asset, "js_runtime", false)
+      !NodeHelper.is_template?(asset) && NodeHelper.get_attr_value(asset, "$js_runtime", false)
     end)
   end
 
@@ -289,6 +289,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   alias Rez.Utils
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -300,10 +301,14 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
   def node_type(_game), do: "game"
 
   def js_ctor(game) do
-    NodeHelper.get_attr_value(game, "js_ctor", "RezGame")
+    NodeHelper.get_attr_value(game, "$js_ctor", "RezGame")
   end
 
-  def default_attributes(_game), do: %{}
+  def default_attributes(_game) do
+    %{
+      "layout" => Attribute.source_template("layout", "${content}")
+    }
+  end
 
   def pre_process(game), do: game
 
@@ -377,7 +382,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
         attribute_is_keyword_set?()
       ),
       attribute_if_present?(
-        "js_ctor",
+        "$js_ctor",
         attribute_has_type?(:string)
       ),
       attribute_present?(
