@@ -194,7 +194,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Element Ref
-  # &elem_id
+  # #elem_id
 
   def elem_ref_value() do
     ParserCache.get_parser("value_ref", fn ->
@@ -235,12 +235,13 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dynamic Value
-  # ^{...}
+  # ^v{...}
   def dynamic_value() do
     ParserCache.get_parser("dynamic_value", fn ->
       sequence(
         [
           ignore(caret()),
+          ignore(char(?v)),
           text_delimited_by_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:dynamic_value, f} end
@@ -249,15 +250,31 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Dynamic Initializer
-  # &{...}
+  # ^i{...}
   def dynamic_initializer_value() do
     ParserCache.get_parser("dynamic_initializer", fn ->
       sequence(
         [
-          ignore(amp()),
+          ignore(caret()),
+          ignore(char(?i)),
           text_delimited_by_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:dynamic_initializer, f} end
+      )
+    end)
+  end
+
+  # Property
+  # ^p{}
+  def property_value() do
+    ParserCache.get_parser("property_value", fn ->
+      sequence(
+        [
+          ignore(caret()),
+          ignore(char(?p)),
+          text_delimited_by_parsers(open_brace(), close_brace())
+        ],
+        ast: fn [f] -> {:property, f} end
       )
     end)
   end
@@ -505,6 +522,7 @@ defmodule Rez.Parser.ValueParsers do
           function_value(),
           dynamic_initializer_value(),
           dynamic_value(),
+          property_value(),
           attr_ref_value(),
           file_value()
         ],

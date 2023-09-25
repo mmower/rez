@@ -87,6 +87,8 @@ const basic_object = {
       if (typeof value == "object") {
         if (value.hasOwnProperty("initializer")) {
           this.createDynamicallyInitializedAttribute(attr_name, value);
+        } else if (value.hasOwnProperty("property")) {
+          this.createCustomProperty(attr_name, value);
         } else if (value.hasOwnProperty("attr_ref")) {
           this.createReferenceAttribute(attr_name, value);
         } else if (value.hasOwnProperty("dynamic_value")) {
@@ -96,6 +98,15 @@ const basic_object = {
         }
       }
     }
+  },
+
+  createCustomProperty(attr_name, value) {
+    delete this[attr_name];
+    const property_def = value["property"];
+    const src = `function() {${property_def}}`;
+    console.log(`defineProperty:${attr_name}`);
+    console.log(src);
+    eval(`Object.defineProperty(this, "${attr_name}", {get: ${src}})`);
   },
 
   createDynamicallyInitializedAttribute(attr_name, value) {
