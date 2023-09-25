@@ -12,7 +12,7 @@ defmodule Rez.Debug do
   end
 
   @spec dbg_level :: integer()
-  defp dbg_level() do
+  def dbg_level() do
     Agent.get(__MODULE__, & &1)
   end
 

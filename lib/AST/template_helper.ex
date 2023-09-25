@@ -159,8 +159,13 @@ defmodule Rez.AST.TemplateHelper do
     end
   end
 
+  def convert_haml(markup) do
+    Calliope.render(markup)
+  end
+
   def convert_markup(markup, "html"), do: markup
   def convert_markup(markup, "markdown"), do: convert_markdown(markup)
+  def convert_markup(markup, "haml"), do: convert_haml(markup)
 
   def prepare_html(markup, format, html_processor)
       when is_binary(markup) and is_function(html_processor) do

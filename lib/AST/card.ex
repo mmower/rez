@@ -24,7 +24,7 @@ defmodule Rez.AST.Card do
       TemplateHelper.compile_template(
         card_id,
         NodeHelper.get_attr_value(card, "content", ""),
-        NodeHelper.get_attr_value(card, "format", "markdown"),
+        NodeHelper.get_attr_value(card, "content_format", "markdown"),
         fn html ->
           html = TemplateHelper.process_links(html)
           custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
