@@ -281,14 +281,78 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |References an attribute in another element
 |`&sauron.location`
 
+|Probability Table
+|A list of pairs wrapped in `\|` that becomes a generator property.
+|\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
+
 |Dynamic Initializer
 |A Javascript expression that is evaluated when the game starts
-|`&{Math.rand_int(1,10)}`
+|`^i{Math.rand_int(1,10)}`
 
 |Dynamic Value
 |A Javascript expression that is evaluated each time the attribute is referenced
-|`^{this.uses * this.item_value * 25}`
+|`^v{this.uses * this.item_value * 25}`
+
+|Dynamic Property
+|A Javascript function expression that is converted into an object property
+|`^p{return this.first_name + " " + this.last_name}`
 |===
+
+These last four dynamic attribute types are worth a special mention.
+
+=== Probability Table
+
+Esp. useful for procedural generation a probability table is a list of pairs where the first element is the key and the second is the frequency. Let's take eye color for example, we want characters we generate to have different coloured eyes. In reality brown eyes are most common at about 48% of the population, then blue at 29, green at 14%, and grey at about 9%. How could we generate a realistic distribution of eye colour (very important in games):
+
+....
+eye_color: |:brown 48 :blue 29 :green 14 :grey 9|
+....
+
+A different example might be a loot table, how could we generate one of those:
+
+....
+loot_quality: |:poor 20 :okay 10 :great 5 :amazing 1|
+....
+
+Our frequencies don't have to % based and add up to 100, in this example we've given relative frequencies.
+
+We can also use `#id`'s as the key:
+
+....
+meet_on_the_road: |#ranger 15 #wizard 10 #traveller 45 #evil 30|
+....
+
+At the moment, due to a lack of JSON support, it is not possible to use functions as keys. However you can use objects with an identically named function:
+
+....
+@object f1 begin f: function() {...} end
+@object f2 begin f: function() {...} end
+@object f3 begin f: function() {...} end
+
+@object f begin
+f: |#f1 50 #f2 25 #f3 25|
+end
+
+$("f").f.f()
+....
+
+It's not elegant but it's feasible. This will likely get cleaned up in a future version.
+
+=== Dynamic Initializer
+
+A dynamic initializer uses the form `^i{...}` to run an expression once at the time the object is created. This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
+
+=== Dynamic Value
+
+A dynamic value uses the form `^v{...}` to create an expression that gets evaluated each time it is referenced. This should be mostly superceded by the use of `^p{...}` to create properties.
+
+We use the caret symbol `^` to create different kinds of dynamic attribute value. There are three kinds:
+
+* dynamic initializers
+* dynamic values
+* properties
+
+
 
 == What's in a Game?
 

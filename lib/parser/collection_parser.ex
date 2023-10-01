@@ -22,6 +22,7 @@ defmodule Rez.Parser.CollectionParser do
       colon: 0,
       hash: 0,
       comma: 0,
+      pipe: 0,
       open_brace: 0,
       close_brace: 0,
       open_bracket: 0,
@@ -98,6 +99,34 @@ defmodule Rez.Parser.CollectionParser do
     end)
   end
 
+  # Probability Table
+
+  def probability_table() do
+    ParserCache.get_parser("probability_table", fn ->
+      sequence(
+        [
+          ignore(pipe()),
+          many(
+            sequence([
+              iows(),
+              value(),
+              iws(),
+              Ergo.Numeric.uint()
+            ])
+          ),
+          ignore(pipe())
+        ],
+        ast: fn ast ->
+          {:ptable,
+           ast
+           |> List.flatten(ast)
+           |> Enum.chunk_every(2, 2, :discard)
+           |> Enum.map(fn [a, b] -> {a, b} end)}
+        end
+      )
+    end)
+  end
+
   # Table
 
   def table_attribute() do
@@ -155,7 +184,8 @@ defmodule Rez.Parser.CollectionParser do
     choice([
       lazy(set()),
       lazy(list()),
-      lazy(table())
+      lazy(table()),
+      probability_table()
     ])
   end
 end

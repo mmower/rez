@@ -44,11 +44,15 @@ const basic_object = {
   },
 
   init_0() {
-    this.initStaticProperties();
-    this.initDynamicProperties();
+    this.createStaticProperties();
+    this.createDynamicProperties();
   },
 
   init_1() {
+    this.initDynamicAttributes();
+  },
+
+  init_2() {
     if (!this.initialised) {
       if (!this.isTemplateObject()) {
         // Templates don't initialise like regular objects
@@ -59,11 +63,11 @@ const basic_object = {
     }
   },
 
-  init_2() {
+  init_3() {
     this.initialised = true;
   },
 
-  initStaticProperties() {
+  createStaticProperties() {
     for (let [attr_name, _] of Object.entries(this.attributes)) {
       Object.defineProperty(this, attr_name, {
         get: function () {
@@ -77,7 +81,7 @@ const basic_object = {
     }
   },
 
-  initDynamicProperties() {
+  createDynamicProperties() {
     if (this.getAttributeValue("$template", false)) {
       return;
     }
@@ -85,8 +89,8 @@ const basic_object = {
     for (let attr_name of Object.keys(this.attributes)) {
       const value = this.getAttribute(attr_name);
       if (typeof value == "object") {
-        if (value.hasOwnProperty("initializer")) {
-          this.createDynamicallyInitializedAttribute(attr_name, value);
+        if (value.hasOwnProperty("ptable")) {
+          this.createProbabilityTable(attr_name, value);
         } else if (value.hasOwnProperty("property")) {
           this.createCustomProperty(attr_name, value);
         } else if (value.hasOwnProperty("attr_ref")) {
@@ -100,13 +104,56 @@ const basic_object = {
     }
   },
 
+  initDynamicAttributes() {
+    if (this.getAttributeValue("$template", false)) {
+      return;
+    }
+
+    for (let attr_name of Object.keys(this.attributes)) {
+      const value = this.getAttribute(attr_name);
+      if (typeof value == "object") {
+        if (value.hasOwnProperty("initializer")) {
+          this.createDynamicallyInitializedAttribute(attr_name, value);
+        }
+      }
+    }
+  },
+
+  createProbabilityTable(attr_name, value) {
+    delete this[attr_name];
+
+    const ptable = JSON.parse(value["ptable"]);
+
+    Object.defineProperty(this, attr_name, {
+      get: function () {
+        const p = Math.random();
+        const idx = ptable.findIndex((pair) => p <= pair[1]);
+        if (idx == -1) {
+          throw "Invalid p_table. Must contain range 0<n<1";
+        }
+
+        return ptable[idx][0];
+      },
+    });
+
+    Object.defineProperty(this, `${attr_name}_roll`, {
+      get: function () {
+        const p = Math.random();
+        const idx = ptable.findIndex((pair) => p <= pair[1]);
+        if (idx == -1) {
+          throw "Invalid p_table. Must contain range 0<n<1";
+        }
+
+        return { p: p, obj: ptable[idx][0] };
+      },
+    });
+  },
+
   createCustomProperty(attr_name, value) {
     delete this[attr_name];
     const property_def = value["property"];
-    const src = `function() {${property_def}}`;
-    console.log(`defineProperty:${attr_name}`);
-    console.log(src);
-    eval(`Object.defineProperty(this, "${attr_name}", {get: ${src}})`);
+    const property_src = `function() {${property_def}}`;
+    eval(`Object.defineProperty(this, "${attr_name}", {get: ${property_src}})`);
   },
 
   createDynamicallyInitializedAttribute(attr_name, value) {

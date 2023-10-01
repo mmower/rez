@@ -30,6 +30,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def dollar(), do: ParserCache.get_parser("dollar", fn -> char(?$) end)
 
+  def pipe(), do: ParserCache.get_parser("pipe", fn -> char(?|) end)
+
   def dot(), do: ParserCache.get_parser("dot", fn -> char(?.) end)
 
   def plus(), do: ParserCache.get_parser("plus", fn -> char(?+) end)

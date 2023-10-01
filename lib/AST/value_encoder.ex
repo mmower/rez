@@ -56,6 +56,23 @@ defmodule Rez.AST.ValueEncoder do
     "{property: #{Poison.encode!(f)}}"
   end
 
+  def encode_value({:ptable, pairs}) do
+    total = Enum.map(pairs, fn {_value, freq} -> freq end) |> Enum.sum()
+
+    {_, entries} =
+      Enum.reduce(pairs, {0, []}, fn {value, freq}, {last_p, entries} ->
+        p = freq / total + last_p
+        {p, [{:list, [value, {:number, p}]} | entries]}
+      end)
+
+    entries =
+      entries
+      |> Enum.reverse()
+      |> encode_list()
+
+    "{ptable: #{Poison.encode!(entries)}}"
+  end
+
   def encode_value({:tracery_grammar, g}) do
     ~s|{tracery_grammar: #{Poison.encode!(g)}}|
   end

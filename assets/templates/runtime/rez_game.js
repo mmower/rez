@@ -15,7 +15,7 @@ let game_proto = {
   },
 
   initLevels() {
-    return [0, 1, 2];
+    return [0, 1, 2, 3];
   },
 
   saveFileName(prefix) {

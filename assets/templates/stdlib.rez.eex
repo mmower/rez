@@ -157,6 +157,20 @@ end
   }
 end
 
+@patch ARRAY_PAIRS begin
+  patch: "Array"
+  method: "to_pairs"
+  impl: function() {
+    let pairs = [];
+    for(let i = 0; i < this.length; i += 2) {
+      if(this[i + 1] !== undefined) {
+        pairs.push([this[i], this[i + 1]]);
+      }
+    }
+    return pairs;
+  }
+end
+
 @patch STRING_INTERPOLATE begin
   patch: "String"
   method: "interpolate"
