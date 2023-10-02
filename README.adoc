@@ -31,7 +31,7 @@ Rez builds in asset management, actors & behaviours (both through embedded Javas
 
 Rez includes a simple but flexible UI and includes the https://bulma.io/[Bulma] CSS framework and https://alpinejs.dev/[Alpine.JS] for modern layout and dynamic content.
 
-See the https://github.com/mmower/rez/blob/main/docs/REZ.html[online documentation] for a complete description of the language and runtime.
+See the http://rez-lang.com/docs/REZ.html[online documentation] for a complete description of the language and runtime.
 
 == Getting Started
 
