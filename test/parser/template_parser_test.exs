@@ -94,9 +94,9 @@ defmodule Rez.Parser.TemplateParserTest do
   test "can parse conditional" do
     expr = "player.health < 50"
     output = "<div>wounded</div>"
-    input = "$if{#{expr}} {%#{output}%}"
+    input = "$if(#{expr}) {%#{output}%}"
 
-    assert %{status: :ok, ast: {:conditional, ^expr, ^output}} =
+    assert %{status: :ok, ast: {:conditional, ^expr, {:source_template, [^output]}}} =
              Ergo.parse(TP.conditional(), input)
   end
 

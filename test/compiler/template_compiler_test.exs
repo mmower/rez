@@ -7,7 +7,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
 
   # @tag :skip
   test "compiles string chunk to string function" do
-    assert "function(bindings, filters) {return `The rain in Spain falls mainly on the plain.`;}" =
+    assert "function(bindings) {return `The rain in Spain falls mainly on the plain.`;}" =
              C.compile_chunk("The rain in Spain falls mainly on the plain.")
   end
 
@@ -15,7 +15,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   test "compile interpolate chunk to interpolate function" do
     {:ok, chunk} = TEP.parse("player.name")
 
-    assert ~s|function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));}| =
+    assert ~s|function(bindings) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));}| =
              C.compile_chunk({:interpolate, chunk})
   end
 
@@ -29,7 +29,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   test "compile conditional chunk into render function" do
     chunk = {:conditional, "player.health < 50", "<div>wounded!</div>"}
 
-    assert "function(bindings, filters) {return (player.health < 50) ? `<div>wounded!</div>` : ``;}" =
+    assert "function(bindings) {return (player.health < 50) ? `<div>wounded!</div>` : ``;}" =
              C.compile_chunk(chunk)
   end
 
@@ -40,14 +40,14 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     """
 
     assert {:compiled_template,
-            ~s|function(bindings, filters) {return [function(bindings, filters) {return `This is text containing an interpolation `;},function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));},function(bindings, filters) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
+            ~s|function(bindings) {return [function(bindings) {return `This is text containing an interpolation `;},function(bindings) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.player.name;})(bindings));},function(bindings) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings)}, "");}|} =
              template |> P.parse() |> C.compile()
   end
 
   # @tag :skip
   test "compiler" do
     assert {:compiled_template,
-            ~s|function(bindings, filters) {return [function(bindings, filters) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.person.age;})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
+            ~s|function(bindings) {return [function(bindings) {return [].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return bindings.person.age;})(bindings));}].reduce(function(text, f) {return text + f(bindings)}, "");}|} =
              "${person.age}" |> P.parse() |> C.compile()
   end
 
@@ -56,7 +56,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     template = P.parse("${\"year\" | pluralize: player.age}")
 
     assert {:compiled_template,
-            ~s|function(bindings, filters) {return [function(bindings, filters) {return [function(bindings, value) {return filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return "year";})(bindings));}].reduce(function(text, f) {return text + f(bindings, filters)}, "");}|} =
+            ~s|function(bindings) {return [function(bindings) {return [function(bindings, value) {return Rez.template_expression_filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, filter) {return filter(bindings, value);}, (function(bindings) {return "year";})(bindings));}].reduce(function(text, f) {return text + f(bindings)}, "");}|} =
              C.compile(template)
   end
 

@@ -68,6 +68,73 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
+  def compile_chunk({:conditional, expr, true_content, false_content}) do
+    {:compiled_template, true_template} = compile(true_content)
+    {:compiled_template, false_template} = compile(false_content)
+
+    body = ~s|
+    if(evaluateExpression(`#{expr}`, bindings)) {
+      const true_template = #{true_template};
+      return true_template(bindings);
+    } else {
+      const false_template = #{false_template};
+      return false_template(bindings);
+    }|
+
+    js_create_fn(body, false)
+  end
+
+  def compile_chunk({:foreach, iter_name, binding_spec, content}) do
+    compile_chunk({:foreach, iter_name, binding_spec, content, {:source_template, [""]}})
+  end
+
+  def compile_chunk(
+        {:foreach, iter_name, {binding_name, property_name} = binding_spec, content, divider}
+      ) do
+    {:compiled_template, content_template} = compile(content)
+    {:compiled_template, divider_template} = compile(divider)
+
+    binding_describe = fn
+      {binding_name, nil} ->
+        binding_name
+
+      {binding_name, property_name} ->
+        binding_name <> "." <> property_name
+    end
+
+    binding_lookup =
+      case property_name do
+        nil ->
+          "binding"
+
+        prop_name ->
+          "binding.#{prop_name}"
+      end
+
+    body =
+      ~s|
+    const binding = bindings.#{binding_name};
+    if(typeof(binding) === "undefined") {
+      throw "'#{binding_describe.(binding_spec)}' must be defined in bindings!";
+    }
+
+    const iterable = #{binding_lookup};
+    if(typeof(iterable) === "undefined") {
+      throw "'#{binding_describe.(binding_spec)}' must be bound";
+    }
+    if(!Array.isArray(iterable)) {
+      throw "'#{binding_describe.(binding_spec)}' must be bound to a list";
+    }
+    const content_template = #{content_template};
+    const divider_template = #{divider_template};
+    return iterable.map((#{iter_name}) => {
+      const iter_bindings = {...bindings, #{iter_name}: #{iter_name}};
+      return content_template(iter_bindings)
+    }).join(divider_template(bindings));|
+
+    js_create_fn(body, false)
+  end
+
   defmodule Values do
     def js_make_fn(bindings_map_name, expr),
       do: ~s|function(#{bindings_map_name}) {return #{expr};}|
