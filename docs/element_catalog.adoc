@@ -57,35 +57,35 @@ In our Maltese Parrot game hats are a big deal and a range of hat items will be 
 Here's an example:
 
 ....
-@item hat begin
+@item hat {
   type: :hat
   wearable: true
   usable: false
   bogie_would_approve: false
-end
+}
 
 @alias hat = item<hat>
 
-@hat wool_fedora begin
+@hat wool_fedora {
   material: :wool
   colour: :black
   description: "A Messer black wool fedora hat"
   bogie_would_approve: true
-end
+}
 
-@hat brown_derby begin
+@hat brown_derby {
   material: :felt
   colour: :brown
   description: "Battered brown derby"
-end
+}
 ....
 
 In this example we have made an alias, `@hat` for `@item` specifying a parent id `hat`. Using `@hat` creates new `@item`s that specify the `hat` item as their parent. Equalivent to:
 
 ....
-@item wool_fedora<hat> begin
+@item wool_fedora<hat> {
   ...
-end
+}
 ....
 
 Note that an alias can specify multiple parents.
@@ -101,7 +101,7 @@ Actors are an optional concept and a simple game might not need them, choosing i
 In this example of our game the player can decide which of the antagonists they wish to play as. Each has different abilities and trust other characters different amounts.
 
 ....
-@actor sam_spade begin
+@actor sam_spade {
   name: "Sam Spade"
   stats: {
     gunplay: 6
@@ -112,13 +112,13 @@ In this example of our game the player can decide which of the antagonists they 
     chat: 6
   }
   container: #sams_stuff
-end
+}
 
 @rel #sam_spade #miss_wonderly +2
 @rel #sam_spade #joel_cairo -2
 @rel #sam_spade #kaspar_gutman -4
 
-@actor joel_cairo begin
+@actor joel_cairo {
   name: "Joel Cairo"
   stats: {
     gunplay: 3
@@ -129,13 +129,13 @@ end
     chat: 8
   }
   container: #joels_stuff
-end
+}
 
 @rel #joel_cairo #sam_spade 1
 @rel #joel_cairo #miss_wonderly -1
 @rel #joel_cairo #kaspar_gutman -3
 
-@actor miss_wonderly begin
+@actor miss_wonderly {
   name: "Ruth Wonderly"
   stats: {
     gunplay: 4
@@ -146,13 +146,13 @@ end
     chat: 9
   }
   container: #ruths_stuff
-end
+}
 
 @rel #miss_wonderly #sam_spade 4
 @rel #miss_wonderly #joel_cairo 1
 @rel #miss_wonderly #kaspar_gutman -2
 
-@actor kaspar_gutman begin
+@actor kaspar_gutman {
   name: "Kaspar Gutman"
   stats: {
     gunplay: 1,
@@ -163,7 +163,7 @@ end
     chat: 9
   }
   container: #kaspar_stuff
-end
+}
 
 @rel #kaspar_gutman #sam_spade 2
 @rel #kaspar_gutman #miss_wonderly -2
@@ -274,10 +274,10 @@ Assets can be collected into groups (using <<Group, `@group`>>) dynamically choo
 === Example
 
 ....
-@asset hat_01 begin
+@asset hat_01 {
   file_name: "hat_01.png"
   tags: #{:hat}
-end
+}
 ....
 
 This defines an asset that will be copied into the game when built and which can be referred to in-game by it's id.
@@ -318,19 +318,19 @@ Internally the `content` and `flipped_content` attributes of the card are conver
 === Example
 
 ....
-@card intro_part_1 begin
+@card intro_part_1 {
   content: ```
   You are in a mazy of twisty passages all alike.
   [[Go forward|intro_part_2]]
   ```
-end
+}
 
-@card intro_part_2 begin
+@card intro_part_2 {
   content: ```
   You get the idea!
   [[Go backward|intro_part_1]]
   ```
-end
+}
 ....
 
 === Required Attributes
@@ -402,13 +402,13 @@ Card content is written in Markdown and converted to HTML. It's somewhat similar
 However there are a number of additional syntaxes. For example it's possible to hijack this mechanism using a script:
 
 ....
-@card intro_part_1 begin
+@card intro_part_1 {
   content: ```
   You are in a mazy of twisty passages all alike.
   [[Go forward]]
   ```
   on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2");}
-end
+}
 ....
 
 Here we define an event handler which will respond to the link being clicked. By default Rez will automatically convert a link such as "Go forward" into the equivalent "go_forward" by downcasing and replacing whitespace with a single `_` character.
@@ -416,14 +416,14 @@ Here we define an event handler which will respond to the link being clicked. By
 Rez also has support for more dynamic types of links:
 
 ....
-@card intro_part_1 begin
+@card intro_part_1 {
   content: ```
   You are in a mazy of twist passages all alike.
   [[Go forward|go_forward]]
   ```
   go_forward: (game, evt) => {evt.choice.show("Go forward);}
   on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2")}
-end
+}
 ....
 
 When a card link is written in this format, Rez will look inside the card for an attribute with the same name and a function value. It will call the function which can determine whether the link should be shown or hidden and, if it is shown whether it should be enabled or disabled. whether it is enabled or disabled.
@@ -478,7 +478,7 @@ Effect support is limited in v0.8. Effect scripts will be called and its up to t
 === Example
 
 ....
-@effect drunk begin
+@effect drunk {
   name: "Drunk"
   description: "you're drunk, it's so much harder to concentrate"
   on_apply: (evt) => {
@@ -489,7 +489,7 @@ Effect support is limited in v0.8. Effect scripts will be called and its up to t
     const actor = $(evt.actor_id);
     // Remove drunkness effects
   }
-end
+}
 ....
 
 === Required Attributes
@@ -525,17 +525,17 @@ of others. Define a faction using a `@faction` element.
 === Example
 
 ....
-@faction police begin
+@faction police {
   ...
-end
+}
 
-@faction gutman begin
+@faction gutman {
   ...
-end
+}
 
-@faction player begin
+@faction player {
   ...
-end
+}
 ....
 
 === Required Attributes
@@ -557,7 +557,7 @@ A `@filter` directive defines a filter function that can be used in a subsitutio
 Let's say we wanted to be able to output a numeric attribute replacing any value over 4 with "a suffusion of yellow". Here's a filter that would do that:
 
 ....
-@filter SUFFUSION_OF_YELLOW_FILTER begin
+@filter SUFFUSION_OF_YELLOW_FILTER {
   name: "soyf"
   impl: (n) => {
     if(n < 4) {
@@ -566,7 +566,7 @@ Let's say we wanted to be able to output a numeric attribute replacing any value
       return "a suffusion of yellow";
     }
   }
-end
+}
 ....
 
 and the expression would be
@@ -588,7 +588,7 @@ The `@game` element has an implicit ID of `game`. All other elements and directi
 === Example
 
 ....
-@game begin
+@game {
   name: "The Maltese Parrot"
   author_name: "Dachshund Hamlet"
   IFID: "D2050DE2-97A2-1ED1-4CCA-AF9D3B0DD883"
@@ -596,7 +596,7 @@ The `@game` element has an implicit ID of `game`. All other elements and directi
   version: 10
   layout: ```${content}```
   initial_scene: #sam_and_wonderly_meet
-end
+}
 ....
 
 === Required Attributes
@@ -706,9 +706,9 @@ Inventories have a category which determines the kind of items that can be added
 === Example
 
 ....
-@inventory player_inventory begin
+@inventory player_inventory {
   slots: #{#hat_slot #jacket_slot #trousers_slot #shoes_slot #holster_slot}
-end
+}
 ....
 
 === Required Attributes
@@ -770,12 +770,12 @@ A potion on the other hand confers no effect until it is used and might have onl
 === Example
 
 ....
-@item black_fedora begin
+@item black_fedora {
   type: :hat
   description: "black fedora"
   wearable: true
   description: "A Messer wool fedora hat. Classy."
-end
+}
 ....
 
 Note that this example throws up a design issue to be aware of: tags and boolean attributes are equivalent. For example `wearable: true` can also be represented by presence or absence of a tag `wearable`. In the case of `Item` elements its further possible to use the type system:
@@ -878,18 +878,18 @@ The run-time API supports selecting randomly from lists including with & without
 === Example
 
 ....
-@list antagnoists begin
+@list antagnoists {
   content: [#sam_spade #miss_wonderly #kaspar_gutman #joel_cairo]
-end
+}
 
-@list lines begin
+@list lines {
   content: [
     "I distrust a man that says when. If he's got to be careful not to drink to much it's because he's not to be trusted when he does."
     "The cheaper the crook, the gaudier the patter."
     "I couldn't be fonder of you if you were my own son. But, well, if you lose a son, its possible to get another. There's only one Maltese Falcon."
     "What do you want me to do, learn to stutter?"
   ]
-end
+}
 ....
 
 === Required Attributes
@@ -913,75 +913,75 @@ An `@object` element describes an author-driven concept. Isn't everything in Rez
 Imagine we are building a role-playing game and we want to introduce the notion skills and perks. Rez does not provide either of these concepts out of the box but we can use the `@object` element to make them ourselves.
 
 ....
-@object skill begin
+@object skill {
   $template: true
   description: "Something an actor has acquired the ability to do"
   min: 0
   max: 5
   cur: 0
-end
+}
 
 @alias skill = object<skill>
 
-@object perk begin
+@object perk {
   $template: true
   cost: 1
-end
+}
 
 @alias perk = object<perk>
 
-@perk gun_license begin
+@perk gun_license {
   description: "Without this cops might pick you up for flashing your lead pumper."
-end
+}
 
-@perk dont_go_down_easy begin
+@perk dont_go_down_easy {
   description: "Takes more than a bullet to put you down."
-end
+}
 
-@perk beguile begin
+@perk beguile {
   description: "One look into your eyes and they're putty in your hands."
   cost: 2
-end
+}
 
-@skill puzzling begin
+@skill puzzling {
   description: "Figuring out how the clues fit together."
   ...
-end
+}
 
-@skill gunplay begin
+@skill gunplay {
   description: "Shooting straight, esp. when it matters."
   ...
-end
+}
 
-@skill drinking begin
+@skill drinking {
   description: "Hold your liquour, yes sir!"
   ...
-end
+}
 
-@skill fisticuffs begin
+@skill fisticuffs {
   description: "Marquis of Queensbury be damned, hit 'em where it hurts."
   ...
-end
+}
 
-@skill intimidate begin
+@skill intimidate {
   description: "You don't actually **need** to shoot 'em."
   ...
-end
+}
 
-@skill evade begin
+@skill evade {
   description: "Never end up in the wrong place at the wrong time."
   ...
-end
+}
 
-@skill fast_talk begin
+@skill fast_talk {
   description: "They'll think it was you doing a favour for them!"
   ...
-end
+}
 
-@skill scheming begin
+@skill scheming {
   description: "They'll never see it coming."
   ...
-end
+}
 ....
 
 In a real-game we'd expect to see more definition of what skills & perks do but at least we can talk about them meaningfully even though Rez knows nothing about them. As a consequence Rez cannot validate them or their attributes.
@@ -1034,7 +1034,7 @@ The `@rel` element does not follow the usual element syntax. Instead it looks li
 @rel source_id target_id affinity_value #{optional tags}
 ....
 
-You'll notice there's no id and no `begin` & `end` and, consequently, no attributes. Here are a couple of examples:
+You'll notice there's no id and no `{` & `}` and, consequently, no attributes. Here are a couple of examples:
 
 ....
 @rel #player_faction #gutman_faction -2
@@ -1116,7 +1116,7 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
 
 === Example
 ....
-@scene introduction begin
+@scene introduction {
   title: "Introduction"
   initial_card: #intro_part_1
   blocks: [#sidebar_1 #sidebar_2]
@@ -1131,7 +1131,7 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
     </div>
   """
   on_new_card: (game, evt) => {...}
-end
+}
 ....
 
 === Required Attributes
@@ -1242,18 +1242,18 @@ The `on_finish_card` script is called when when a card has 'finished' as a new c
 
 A script is used to include arbitrary Javascript code into the compiled game. Specify a script using the `@script` directive.
 
-The `@script` directive consists of a string containing the code to include between `begin` and `end` markers. Note that the Javascript code should not include the term "end" as this will cause the parser to fail. In a future version a more robust approach will be included.
+The `@script` directive consists of a string containing the code to include between `{` and `}` markers.
 
 The code defined in the game's `@script` directives will be automatically included as &lt;script&gt; tags before the end of the &lt;body&gt; element of the generated HTML template.
 
 == Example
 
 ....
-@script begin
+@script {
   function customFunction() {
     // Javascript code here
   }
-end
+}
 ....
 
 == Slot
@@ -1266,9 +1266,9 @@ See also: <<Type Hierarchy>>
 
 === Example
 ....
-@slot holster_slot begin
+@slot holster_slot {
   accepts: :pistol
-end
+}
 ....
 
 === Required Attributes
@@ -1336,18 +1336,18 @@ handler will be called.
 
 A style is used to include arbitrary CSS into the compiled game. Specify a style using the `@style` directive.
 
-The `@style` directive consists of a string containing the CSS to include between `begin` and `end` markers.
+The `@style` directive consists of a string containing the CSS to include between `{` and `}` markers.
 
 The styles defined in the game's `@style` directives will be automatically included as &lt;style&gt; tags before the end of the &lt;head&gt; element of the generated HTML template.
 
 === Example
 
 ....
-@style begin
+@style {
   .card {
     /* My custom styles here */
   }
-end
+}
 ....
 
 === Required Attributes
@@ -1370,7 +1370,7 @@ Rez uses the notion of a "tick" (as in, when the clock ticks) for running system
 %% by one hour on each game tick. It also maintains a description of the
 %% hour in terms of morning, afternoon, etc…
 
-@system clock_system begin
+@system clock_system {
   enabled: true
   priority: 1
 
@@ -1389,7 +1389,7 @@ Rez uses the notion of a "tick" (as in, when the clock ticks) for running system
       this.description = "night";
     }
   }
-end
+}
 ....
 
 === Required Attributes
@@ -1425,7 +1425,7 @@ Optionally a task can update the working memory that is passed through the tree 
 === Example
 
 ....
-@task ACTOR_IN begin
+@task ACTOR_IN {
   options: [:actor :location]
 
   execute: (task, wmem) => {
@@ -1438,7 +1438,7 @@ Optionally a task can update the working memory that is passed through the tree 
       return {success: false, error: "Actor is not in location", wmem: wmem};
     }
   }
-end
+}
 ....
 
 In this example we have defined a condition task to test whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
@@ -1478,37 +1478,37 @@ Individual locations must be defined in a zone. If you don't require multiple zo
 === Example
 
 ....
-@zone docks begin
-  @location la_paloma_gangway begin
+@zone docks {
+  @location la_paloma_gangway {
     ...
-  end
+  }
 
-  @location la_paloma_bridge begin
+  @location la_paloma_bridge {
     ...
-  end
+  }
 
-  @location docks_cabrank begin
+  @location docks_cabrank {
     ...
-  end
-end
+  }
+}
 
-@zone spade_and_archer begin
-  @location street_cabrank begin
+@zone spade_and_archer {
+  @location street_cabrank {
     ...
-  end
+  }
 
-  @location hallway begin
+  @location hallway {
     ...
-  end
+  }
 
-  @location outer_office begin
+  @location outer_office {
     ...
-  end
+  }
 
-  @location sams_office begin
+  @location sams_office {
     ...
-  end
-end
+  }
+}
 ....
 
 === Required Attributes

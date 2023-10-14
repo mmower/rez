@@ -9,6 +9,8 @@ By Matt Mower &lt;self@mattmower.com&gt;
 [cols="2"]
 [%autowidth]
 |===
+|v0.13
+|14 Oct 2023
 |v0.12
 |25 Sep 2023
 |v0.11

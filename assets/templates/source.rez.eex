@@ -5,7 +5,7 @@
 %% Released 2022, 2023 under the GPLv3 license
 %%
 
-@game begin
+@game {
   name: "<%= @name %>"
   archive_format: 1
   title: "<%= @game_title %>"
@@ -24,14 +24,14 @@
 
   %(stdlib.rez)
 
-  @actor player begin
+  @actor player {
     name: "The adventurer"
-  end
+  }
 
-  @actor troll begin
+  @actor troll {
     name: "A big ugly troll"
     race: :troll
-  end
+  }
 
   @derive :weapon :item
   @derive :edged_weapon :weapon
@@ -39,55 +39,55 @@
   @derive :belt :item
   @derive :bottle :item
 
-  @item sword_template begin
+  @item sword_template {
     $template: true
     type: :sword
     magic: false
-  end
+  }
 
   @alias sword = item<sword_template>
 
-  @sword elvish_sword begin
+  @sword elvish_sword {
     description: """
     A sword that glows with a pale light
     """
     origin: :elvish
     magic: true
-  end
+  }
 
-  @sword fine_iron_sword begin
+  @sword fine_iron_sword {
     description: """
     A fine iron sword with a wicked sharp blade
     """
     origin: :human
-  end
+  }
 
-  @item water_bottle begin
+  @item water_bottle {
     status: "full"
     type: :bottle
     description: ```
     A ${this.status} water bottle
     ```
-  end
+  }
 
-  @slot sword_slot begin
+  @slot sword_slot {
     accepts: :sword
-  end
+  }
 
-  @slot belt_slot begin
+  @slot belt_slot {
     accepts: :belt
-  end
+  }
 
-  @slot backpack_slot begin
+  @slot backpack_slot {
     accepts: :item
-  end
+  }
 
-  @inventory player_inventory begin
+  @inventory player_inventory {
     title: "Player inventory"
     slots: #{#sword_slot #belt_slot}
-  end
+  }
 
-  @scene scene_one begin
+  @scene scene_one {
     title: "A Maze of Twisty Cards"
     blocks: []
     layout: ```
@@ -96,37 +96,37 @@
     layout_mode: :single
     initial_card: #twisty_passage
     on_start: (game, evt) => {return game;}
-  end
+  }
 
-  @scene battle_with_the_troll begin
+  @scene battle_with_the_troll {
     layout: ```
     ${content}
     ```
     layout_mode: :single
     title: "The Troll Battle"
     initial_card: #troll_attacks
-  end
+  }
 
-  @card troll_attacks begin
+  @card troll_attacks {
     content: ```
     A huge troll attacks you. [[Run Away|scene_one]]
     ```
-  end
+  }
 
-  @list names begin
+  @list names {
     values: [
       "Frobz"
       "Kroz"
     ]
-  end
+  }
 
-  @effect eff1 begin
+  @effect eff1 {
     type: :spell
     on_add: (game, evt) => {return game;}
     on_remove: (game, evt) => {return game;}
-  end
+  }
 
-  @card twisty_passage begin
+  @card twisty_passage {
     pick_up_bottle: (choice) => {
       if( Math.random() < 0.5 ) {
         choice.allow("Hit the troll with the bottle", "battle_with_the_troll");
@@ -138,41 +138,41 @@
     You are in a maze of [[another twisty passage]], all alike.
     There is a bottle of water here. [[*pick_up_bottle]]
     ```
-  end
+  }
 
-  @card another_twisty_passage begin
+  @card another_twisty_passage {
     content: ```
     You can only go back to the first [[twisty passage]] from here.
     ```
-  end
+  }
 
-  @asset img1 begin
+  @asset img1 {
     _ignore_missing: true
     type: #image
     tags: #{:foo :bar :baz}
     file_name: "asset.jpg"
     width: "340"
     height: "280"
-  end
+  }
 
-  @asset snd1 begin
+  @asset snd1 {
     _ignore_missing: true
     type: #sound
     file_name: "sound.mp3"
-  end
+  }
 
-  @asset mov1 begin
+  @asset mov1 {
     _ignore_missing: true
     type: #movie
     file_name: "moo.mpg"
-  end
+  }
 
-  @script begin
+  @script {
     // Javascript code goes here
-  end
+  }
 
-  @style begin
+  @style {
     /* CSS goes here */
-  end
+  }
 
-end
+}

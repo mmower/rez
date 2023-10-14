@@ -6,39 +6,39 @@
 %% Head Assets
 %% ----------------------------------------------------------------------------
 
-@asset _ALPINE_JS begin
+@asset _ALPINE_JS {
   file_name: "alpinejs.min.js"
   defer: true
   pre_runtime: true
-end
+}
 
-@asset _BULMA_CSS begin
+@asset _BULMA_CSS {
   file_name: "bulma.min.css"
-end
+}
 
-@asset _PLURALIZE_JS begin
+@asset _PLURALIZE_JS {
   file_name: "pluralize.js"
   defer: false
   pre_runtime: true
-end
+}
 
-@asset _TRACERY_JS begin
+@asset _TRACERY_JS {
   file_name: "tracery.js"
   defer: false
   pre_runtime: true
-end
+}
 
 %% ----------------------------------------------------------------------------
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
 
-@script begin
+@script {
 function isObject(obj) {
   return obj !== null && typeof obj === "object" && Object.prototype.toString.call(obj) === "[object Object]";
 }
-end
+}
 
-@patch OBJECT_DEEP_COPY begin
+@patch OBJECT_DEEP_COPY {
   patch: "Object"
   method: "copy"
   impl: function() {
@@ -70,9 +70,9 @@ end
     // Handle other primitive types (e.g., string, number, etc.)
     return this;
   }
-end
+}
 
-@patch OBJECT_OBJ_MAP begin
+@patch OBJECT_OBJ_MAP {
   patch: "Object"
   method: "obj_map"
   impl: function(f) {
@@ -80,17 +80,17 @@ end
     const new_entries = entries.map(([k, v]) => [k, f(v, k)]);
     return Object.fromEntries(new_entries);
   }
-end
+}
 
-@patch OBJECT_DQ_WRAP begin
+@patch OBJECT_DQ_WRAP {
   patch: "Object"
   method: "dq_wrap"
   impl: function() {
     return "\"" + this + "\"";
   }
-end
+}
 
-@patch ARRAY_FY_SHUFFLE begin
+@patch ARRAY_FY_SHUFFLE {
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
   method: "fy_shuffle"
@@ -102,25 +102,25 @@ end
     }
     return this;
   }
-end
+}
 
-@patch ARRAY_RANDOM_ELEMENT begin
+@patch ARRAY_RANDOM_ELEMENT {
   patch: "Array"
   method: "randomElement"
   impl: function() {
     return this.at(Math.floor(Math.random() * this.length));
   }
-end
+}
 
-@patch ARRAY_RANDOM_INDEX begin
+@patch ARRAY_RANDOM_INDEX {
   patch: "Array"
   method: "randomIndex"
   impl: function() {
     return Math.floor(Math.random() * this.length);
   }
-end
+}
 
-@patch ARRAY_FREQUENCIES begin
+@patch ARRAY_FREQUENCIES {
   patch: "Array"
   method: "frequencies"
   impl: function() {
@@ -136,17 +136,17 @@ end
     }
     return freqs;
   }
-end
+}
 
-@patch ARRAY_SUM begin
+@patch ARRAY_SUM {
   patch: "Array"
   method: "sum"
   impl: function() {
     return this.reduce((a, b) => a+b, 0);
   }
-end
+}
 
-@patch ARRAY_EQUALS begin
+@patch ARRAY_EQUALS {
   patch: "Array"
   function: "equals"
   impl: function(a, b) {
@@ -155,9 +155,9 @@ end
         a.length === b.length &&
         a.every((val, index) => val === b[index]);
   }
-end
+}
 
-@patch ARRAY_PAIRS begin
+@patch ARRAY_PAIRS {
   patch: "Array"
   method: "to_pairs"
   impl: function() {
@@ -169,17 +169,17 @@ end
     }
     return pairs;
   }
-end
+}
 
-@patch STRING_INTERPOLATE begin
+@patch STRING_INTERPOLATE {
   patch: "String"
   method: "interpolate"
   impl: function(game) {
     return this;
   }
-end
+}
 
-@patch STRING_TO_SNAKE_CASE begin
+@patch STRING_TO_SNAKE_CASE {
   patch: "String"
   method: "toSnakeCase"
   impl: function() {
@@ -188,9 +188,9 @@ end
       .map(x => x.toLowerCase())
       .join('_');
   }
-end
+}
 
-@patch STRING_PARSE_TIME begin
+@patch STRING_PARSE_TIME {
   patch: "String"
   method: "parseTime"
   impl: function() {
@@ -216,71 +216,71 @@ end
 
     return [hour, mins];
   }
-end
+}
 
-@patch STRING_RANDOM_ID begin
+@patch STRING_RANDOM_ID {
   patch: "String"
   function: "randomId"
   impl: function() {
     const rand = window.crypto.getRandomValues(new Uint32Array(1))[0];
     return rand.toString(16);
   }
-end
+}
 
-@patch STRING_WRAP_WITH begin
+@patch STRING_WRAP_WITH {
   patch: "String"
   method: "wrapWith"
   impl: function(prefix, suffix) {
     return prefix + this + suffix;
   }
-end
+}
 
 %% Some helpful set functions from:
 %% https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
 %% https://stackoverflow.com/a/31129384/7518
 
-@patch SET_UNION begin
+@patch SET_UNION {
   patch: "Set"
   method: "union"
   impl: function(otherSet) {
     return new Set([...this, ...otherSet]);
   }
-end
+}
 
-@patch SET_INTERSECTION begin
+@patch SET_INTERSECTION {
   patch: "Set"
   method: "intersection"
   impl: function(otherSet) {
     return new Set([...this].filter(x => otherSet.has(x)));
   }
-end
+}
 
-@patch SET_DIFFERENCE begin
+@patch SET_DIFFERENCE {
   patch: "Set"
   method: "difference"
   impl: function(otherSet) {
     return new Set([...this].filter(x => !otherSet.has(x)));
   }
-end
+}
 
-@patch SET_EQUALS begin
+@patch SET_EQUALS {
   patch: "Set"
   method: "equals"
   impl: function(otherSet) {
     return this.size === otherSet.size &&
     [...this].every((x) => otherSet.has(x));
   }
-end
+}
 
-@patch SET_HAS_SUBSET begin
+@patch SET_HAS_SUBSET {
   patch: "Set"
   method: "hasSubset"
   impl: function(otherSet) {
     return this.intersection(otherSet).equals(otherSet);
   }
-end
+}
 
-@patch NUMBER_RANGE begin
+@patch NUMBER_RANGE {
   patch: "Number"
   function: "range"
   impl: function(from, to, step) {
@@ -294,9 +294,9 @@ end
       {length: (to-from)/step+1},
       (_, i) => from + (i * step));
   }
-end
+}
 
-@patch NUMBER_RND_BETWEEN begin
+@patch NUMBER_RND_BETWEEN {
   patch: "Number"
   function: "rand_between"
   impl: function(min, max) {
@@ -305,9 +305,9 @@ end
     }
     return Math.floor(min + Math.random() * (max - min + 1));
   }
-end
+}
 
-@patch NUMBER_RNDF_BETWEEN begin
+@patch NUMBER_RNDF_BETWEEN {
   patch: "Number"
   function: "randf_between"
   impl: function(min, max) {
@@ -317,9 +317,9 @@ end
 
     return min + (Math.random() * (max - min));
   }
-end
+}
 
-@patch NUMBER_ROUNDP begin
+@patch NUMBER_ROUNDP {
   %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
   patch: "Number"
   method: "roundp"
@@ -327,9 +327,9 @@ end
     var multiplier = Math.pow(10, precision || 0);
     return Math.round(this * multiplier) / multiplier;
   }
-end
+}
 
-@patch NUMBER_CL_AVG begin
+@patch NUMBER_CL_AVG {
   patch: "Number"
   method: "cl_avg"
   impl: function(rounds) {
@@ -337,26 +337,26 @@ end
     const f = Math.random() < 0.5 ? Math.ceil : Math.floor;
     return f(this/rounds);
   }
-end
+}
 
-@patch NUMBER_ROUND_TO_NEAREST_HALF begin
+@patch NUMBER_ROUND_TO_NEAREST_HALF {
   %% rounds a number to the nearest 0.5
   patch: "Number"
   method: "r2nh"
   impl: function() {
     return Math.round(this * 2) / 2;
   }
-end
+}
 
-@patch NUMBER_DIST_ROUND begin
+@patch NUMBER_DIST_ROUND {
   patch: "Number"
   method: "dist_round"
   impl: function() {
     return Math.dist_round(this);
   }
-end
+}
 
-@patch MATH_DIST_ROUND begin
+@patch MATH_DIST_ROUND {
   %% Because JS only gives us random numbers as floating point we sometimes
   %% end up having to round when we want an. The question is whether we round
   %% up or round down which can create a bias. The dist_round function randomly
@@ -370,17 +370,17 @@ end
       return Math.floor(v);
     }
   }
-end
+}
 
-@patch MATH_RAND_INT begin
+@patch MATH_RAND_INT {
   patch: "Math"
   function: "rand_int"
   impl: function(lim) {
     return Math.floor(Math.random() * lim);
   }
-end
+}
 
-@patch MATH_CLRAND_INT begin
+@patch MATH_CLRAND_INT {
   patch: "Math"
   function: "clrand_int"
   impl: function(lim) {
@@ -388,9 +388,9 @@ end
     const v2 = Math.rand_int(lim);
     return (v1+v2)/2;
   }
-end
+}
 
-@patch MATH_CLRANDR_INT begin
+@patch MATH_CLRANDR_INT {
   patch: "Math"
   function: "clrandr_int"
   impl: function(lo, hi) {
@@ -398,232 +398,232 @@ end
     const v2 = Number.rnd_between(lo, hi);
     return Math.dist_round((v1+v2)/2);
   }
-end
+}
 
 %% ----------------------------------------------------------------------------
 %% Template Filters
 %% ----------------------------------------------------------------------------
 
-@filter COMPARE_EQ_FILTER begin
+@filter COMPARE_EQ_FILTER {
   %% v -> v -> bool
 
   name: "eq"
   impl: (v1, v2) => {return v1 === v2;}
-end
+}
 
-@filter COMPARE_NE_FILTER begin
+@filter COMPARE_NE_FILTER {
   %% v -> v -> bool
 
   name: "ne"
   impl: (v1, v2) => {return !(v1 === v2);}
-end
+}
 
-@filter COMPARE_GT_FILTER begin
+@filter COMPARE_GT_FILTER {
   %% n -> n -> bool
 
   name: "gt"
   impl: (n1, n2) => {return n1 > n2;}
-end
+}
 
-@filter COMPARE_GTE_FILTER begin
+@filter COMPARE_GTE_FILTER {
   %% n -> n -> bool
 
   name: "gte"
   impl: (n1, n2) => {return n1 >= n2;}
-end
+}
 
-@filter COMPARE_LT_FILTER begin
+@filter COMPARE_LT_FILTER {
   %% n -> n -> bool
 
   name: "lt"
   impl: (n1, n2) => {return n1 < n2;}
-end
+}
 
-@filter COMPARE_LTE_FILTER begin
+@filter COMPARE_LTE_FILTER {
   %% n -> n -> bool
 
   name: "lte"
   impl: (n1, n2) => {return n1 <= n2;}
-end
+}
 
-@filter BSEL_FILTER begin
+@filter BSEL_FILTER {
   %% bool -> array -> any
 
   name: "bsel"
   impl: (sel, options) => {return options[sel ? 0 : 1];}
-end
+}
 
-@filter SEL_FILTER begin
+@filter SEL_FILTER {
   %% n -> array -> any
 
   name: "sel"
   impl: (idx, options) => {return options[idx];}
-end
+}
 
-@filter ADD_FILTER begin
+@filter ADD_FILTER {
   %% n -> n
 
   name: "add"
   impl: (n, x) => {return n+x;}
-end
+}
 
-@filter SUB_FILTER begin
+@filter SUB_FILTER {
   %% n -> n
 
   name: "sub"
   impl: (n, x) => {return n-x;}
-end
+}
 
-@filter MUL_FILTER begin
+@filter MUL_FILTER {
   %% n -> n
 
   name: "mul"
   impl: (n, x) => {return n*x;}
-end
+}
 
-@filter DIV_FILTER begin
+@filter DIV_FILTER {
   %% n -> n
 
   name: "div"
   impl: (n, x) => {return n/x;}
-end
+}
 
-@filter MOD_FILTER begin
+@filter MOD_FILTER {
   %% n -> n
 
   name: "mod"
   impl: (n, x) => {return n % x;}
-end
+}
 
-@filter ABS_FILTER begin
+@filter ABS_FILTER {
   %% n -> n
 
   name: "abs"
   impl: (n) => {return Math.abs(n)}
-end
+}
 
-@filter NEG_FILTER begin
+@filter NEG_FILTER {
   %% n -> n
 
   name: "neg"
   impl: (n) => {return -n;}
-end
+}
 
-@filter INC_FILTER begin
+@filter INC_FILTER {
   %% n -> n
 
   name: "inc"
   impl: (n) => {return n+1;}
-end
+}
 
-@filter DEC_FILTER begin
+@filter DEC_FILTER {
   %% n -> n
 
   name: "dec"
   impl: (n) => {return n-1;}
-end
+}
 
-@filter ROUND_FILTER begin
+@filter ROUND_FILTER {
   %% n -> n
 
   name: "round"
   impl: (n, dp) => {return n.roundp(dp);}
-end
+}
 
-@filter STRING_MAKE_FILTER begin
+@filter STRING_MAKE_FILTER {
   %% any -> String
 
   name: "string"
   impl: (s) => {return ""+s;}
-end
+}
 
-@filter STRING_APPEND_FILTER begin
+@filter STRING_APPEND_FILTER {
   %% String -> String
 
   name: "append"
   impl: (s, t) => {return s + t;}
-end
+}
 
-@filter STRING_CAMELIZE_FILTER begin
+@filter STRING_CAMELIZE_FILTER {
   %% String -> String
 
   name: "camelize"
   impl: (s) => {return s.replace(/[_.-](\w|$)/g, function (_, x) {
 		return x.toUpperCase();
 	});}
-end
+}
 
-@filter STRING_TRIM_FILTER begin
+@filter STRING_TRIM_FILTER {
   %% String -> String
   %% ${"  Foo  " | trim} => foo
 
   name: "trim"
   impl: (s) => {return s.trim();}
-end
+}
 
-@filter STRING_CAPITALIZE_FILTER begin
+@filter STRING_CAPITALIZE_FILTER {
   %% String -> String
   name: "capitalize"
   impl: (s) => {return s.replace(/(^|\s)\S/g, l => l.toUpperCase());}
-end
+}
 
-@filter STRING_DOWNCASE_FILTER begin
+@filter STRING_DOWNCASE_FILTER {
   %% String -> String
 
   name: "downcase"
   impl: (s) => {return s.toLowerCase();}
-end
+}
 
-@filter STRING_PREPEND_FILTER begin
+@filter STRING_PREPEND_FILTER {
   %% String -> String
 
   name: "prepend"
   impl: (s, t) => {return t + s;}
-end
+}
 
-@filter STRING_UPCASE_FILTER begin
+@filter STRING_UPCASE_FILTER {
   %% String -> String
 
   name: "upcase"
   impl: (s) => {return s.toUpperCase();}
-end
+}
 
-@filter STRING_PLURALIZE_FILTER begin
+@filter STRING_PLURALIZE_FILTER {
   %% String -> String
 
   name: "pluralize"
   impl: (s) => {return pluralize(s);}
-end
+}
 
-@filter STRING_SPLIT_FILTER begin
+@filter STRING_SPLIT_FILTER {
   %% String -> Array
 
   name: "split"
   impl: (s, p) => {return s.split(p);}
-end
+}
 
-@filter STRING_STARTS_WITH_FILTER begin
+@filter STRING_STARTS_WITH_FILTER {
   %% String -> Bool
 
   name: "starts_with"
   impl: (s, search) => {return s.startsWith(search);}
-end
+}
 
-@filter STRING_ENDS_WITH_FILTER begin
+@filter STRING_ENDS_WITH_FILTER {
   %% String -> Bool
 
   name: "ends_with"
   impl: (s, search) => {return s.endsWith(search);}
-end
+}
 
-@filter STRING_CONTAINS_FILTER begin
+@filter STRING_CONTAINS_FILTER {
   %% String -> Bool
 
   name: "contains"
   impl: (s, search) => {return s.includes(search);}
-end
+}
 
-@filter EVENT_LINK_FILTER begin
+@filter EVENT_LINK_FILTER {
   %% String -> Link
 
   %% ${<Title> | event: <event-id>}
@@ -633,9 +633,9 @@ end
   impl: (event, title) => {
     return "<a href='javascript:void(0);' class='event' data-event='" + event + "'>" + title + "</a>";
   }
-end
+}
 
-@filter DECISION_FILTER begin
+@filter DECISION_FILTER {
   %% ${card | decision: <action>}
   %% ${card | decision: "can_attack"}
 
@@ -657,17 +657,17 @@ end
       }
     }
   }
-end
+}
 
-@filter CARD_LINK_FILTER begin
+@filter CARD_LINK_FILTER {
   name: "card_link"
   impl: (card_id, title, css_class) => {
     css_class = css_class ?? "";
     return `<a href="javascript:void(0);" class="${css_class}" data-event="card" data-target="${card_id}">${title}</a>`;
   }
-end
+}
 
-@filter SCENE_CHANGE_FILTER begin
+@filter SCENE_CHANGE_FILTER {
   %% ${card | scene_change: <scene_id>, <title>}
   %% ${card | scene_change: "new_scene_id", "Action leading to a new scene"}
 
@@ -675,9 +675,9 @@ end
   impl: (card, scene_id, title) => {
     return "<a href='javascript:void(0);' data-event='shift' data-target='" + scene_id + "'>" + title + "</a>";
   }
-end
+}
 
-@filter SCENE_INTERLUDE_FILTER begin
+@filter SCENE_INTERLUDE_FILTER {
   %% ${card | scene_interlude: <scene_id>, <title>}
   %% ${card | scene_interlude: "new_scene_id", "Action leading to a scene interrupt"}
 
@@ -685,9 +685,9 @@ end
   impl: (card, scene_id, title) => {
     return "<a href='javascript:void(0);' data-event='interlude' data-target='" + scene_id + "'>" + title + "</a>";
   }
-end
+}
 
-@filter SCENE_RESUME_FILTER begin
+@filter SCENE_RESUME_FILTER {
   %% ${card | scene_resume: <title>}
   %% ${card | scene_resume "Back to game"}
 
@@ -695,9 +695,9 @@ end
   impl: (title) => {
     return "<a href='javascript:void(0);' data-event='resume'>" + title + "</a>";
   }
-end
+}
 
-@filter ASSET_TAG_FILTER begin
+@filter ASSET_TAG_FILTER {
   %% ${asset_id | asset_tag}
 
   name: "asset_tag"
@@ -711,9 +711,9 @@ end
       return asset.tag();
     }
   }
-end
+}
 
-@filter ASSET_PATH_FILTER begin
+@filter ASSET_PATH_FILTER {
   %% ${asset_id | asset_path}
   %% ${"image_01" | asset_path}
 
@@ -728,21 +728,21 @@ end
       return asset.path;
     }
   }
-end
+}
 
 %% ----------------------------------------------------------------------------
 %% A scene that handles loading a game
 %% ----------------------------------------------------------------------------
 
-@scene default_load_game begin
+@scene default_load_game {
     initial_card: #default_load_game_form
     layout: ```
     ${content}
     ```
     layout_mode: :single
-  end
+  }
 
-@card default_load_game_form begin
+@card default_load_game_form {
   content: ```
   <form name="load_form">
     <input type="file" name="data"/>
@@ -762,13 +762,13 @@ end
     });
     reader.readAsText(file);
   }
-end
+}
 
 %% ----------------------------------------------------------------------------
 %% Default Behaviour Tasks
 %% ----------------------------------------------------------------------------
 
-@system actor_behaviours begin
+@system actor_behaviours {
   enabled: true
   priority: 10
   on_tick: (event) => {
@@ -781,7 +781,7 @@ end
       btree.execute(wmem);
     });
   }
-end
+}
 
 %% Standard behaviours
 %% By convention we give behaviours an UPPER CASE id to make it less likely
@@ -790,7 +790,7 @@ end
 %% https://docs.cryengine.com/display/CEPROG/Modular+Behavior+Tree+Nodes
 %% See the Behaviour Tree part of the user guide for more information.
 
-@task SELECT begin
+@task SELECT {
   %% The SELECT task executes it's children in turn until one of them
   %% succeeds, then SELECT succeeds. If no child succeeeds then SELECT fails.
 
@@ -808,9 +808,9 @@ end
     }
     return result;
   }
-end
+}
 
-@task SELECT_P begin
+@task SELECT_P {
   %% The SELECT_P task is similar to SELECT except that before ticking any
   %% child it does a probability check using the "p" option. If the check passes
   %% it ticks the child, otherwise it moves on to the next child. If a child
@@ -841,9 +841,9 @@ end
     }
     return result;
   }
-end
+}
 
-@task SEQUENCE begin
+@task SEQUENCE {
   %% The SEQUENCE task executes its children in turn. If they all succeed
   %% then the SEQUENCE succeeds. If a child fails the SEQUENCE fails and does
   %% not execute any further children.
@@ -863,9 +863,9 @@ end
 
     return result;
   }
-end
+}
 
-@task LOOP begin
+@task LOOP {
   %% The LOOP task takes one child and executes it 'count' times. If it
   %% succeeds on every repetition the LOOP succeeds. If the child ever fails
   %% the LOOP fails.
@@ -887,9 +887,9 @@ end
 
     return result;
   }
-end
+}
 
-@task LOOP_UNTIL begin
+@task LOOP_UNTIL {
   %% The LOOP_UNTIL task takes one child and executes it until it
   %% succeeds. The 'attempts' option specifies how many times it will
   %% executed. If the child ever succeeds, LOOP_UNTIL succeeds. If the
@@ -911,9 +911,9 @@ end
 
     return result;
   }
-end
+}
 
-@task MAYBE begin
+@task MAYBE {
   %% The MAYBE task takes one child and based on the option "p" determines
   %% whether to execute it or not. If it executes the child then MAYBE succeeds
   %% if the child succeeds or fails if the child fails. If it doesn't execute
@@ -934,9 +934,9 @@ end
       return {success: false, id: task.id, error: "Didn't execute"};
     }
   }
-end
+}
 
-@task EITHER begin
+@task EITHER {
   %% The EITHER task takes two children and based on the probability
   %% option "p" determines whether to execute the first or second child.
   %% Having decided which child to execute EITHER succeeds or fails based
@@ -958,9 +958,9 @@ end
       return task.secondChild().execute(wmem);
     }
   }
-end
+}
 
-@task RANDOM_CHOICE begin
+@task RANDOM_CHOICE {
   %% The RANDOM_CHOICE task takes two or more children. When RANDOM_CHOICE
   %% executes it selects a child at random and executes it. If that child
   %% succeeds then RANDOM_CHOICE succeeds, otherwise it fails.
@@ -974,9 +974,9 @@ end
     const child = task.getChild(die.roll());
     return child.execute(wmem);
   }
-end
+}
 
-@task RANDOM_EACH begin
+@task RANDOM_EACH {
   %% The RANDOM_EACH task takes two or more children. When RANDOM_EACH
   %% executes it selects a child, without replacement, and executes it. If
   %% the selected child succeeds then RANDOM_EACH succeeds, otherwise it
@@ -999,9 +999,9 @@ end
 
     return child.execute(wmem);
   }
-end
+}
 
-@task ALWAYS begin
+@task ALWAYS {
   %% The ALWAYS task takes one child and executes it, ALWAYS succeeds
   %% regardless of whether the child succeeds.
 
@@ -1015,9 +1015,9 @@ end
     result.success = true;
     return result;
   }
-end
+}
 
-@task NEVER begin
+@task NEVER {
   %% The NEVER task takes one child and executes it, NEVER fails regardless
   %% of whether the child fails.
 
@@ -1031,9 +1031,9 @@ end
     result.success = false;
     return result;
   }
-end
+}
 
-@task INVERT begin
+@task INVERT {
   %% The INVERT task takes one child and executes it. If the child succeeds
   %% then INVERT will fail. If the child fails then INVERT will succeed.
 
@@ -1052,9 +1052,9 @@ end
       result.success = true;
     }
   }
-end
+}
 
-@task FAIL begin
+@task FAIL {
   %% The FAIL task automatically fails.
 
   $template: true
@@ -1064,9 +1064,9 @@ end
   execute: (task, wmem) => {
     return {success: false, wmem: wmem};
   }
-end
+}
 
-@task SUCCEED begin
+@task SUCCEED {
   %% The SUCCEED task automatically succeeds.
 
   $template: true
@@ -1076,4 +1076,4 @@ end
   execute: (task, wmem) => {
     return {success: true, wmem: wmem};
   }
-end
+}

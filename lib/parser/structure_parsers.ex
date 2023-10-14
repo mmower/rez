@@ -6,7 +6,6 @@ defmodule Rez.Parser.StructureParsers do
   """
   alias Ergo.Context
   import Ergo.Combinators
-  import Ergo.Terminals
   import Ergo.Meta
 
   alias LogicalFile
@@ -465,7 +464,7 @@ defmodule Rez.Parser.StructureParsers do
       [
         iliteral("@#{label}"),
         iws(),
-        text_delimited_by_parsers(literal("begin"), literal("end"), trim: true)
+        text_delimited_by_nested_parsers(open_brace(), close_brace(), trim: true)
       ],
       label: "#{label}-block",
       ctx: fn %Context{entry_points: [{line, col} | _], ast: [text], data: %{source: source}} =

@@ -162,7 +162,9 @@ defmodule Rez.Parser.Parser do
     sequence(
       [
         iows(),
-        game_block()
+        game_block(),
+        iows(),
+        Ergo.Terminals.eoi()
       ],
       label: "top-level",
       ast: &List.first/1

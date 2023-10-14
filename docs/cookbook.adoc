@@ -15,61 +15,61 @@ The `@object` element allows you to create a fully-custom object that has no bui
 Let's look at an example:
 
 ....
-@object soldier begin
+@object soldier {
   specialisation: :combat
   perks: #{#two_weapon_style #pounce #shield_bash #second_wind}
-end
+}
 
-@object two_weapon_style begin
+@object two_weapon_style {
   level: 3
   label: "Fight with two weapons almost as well as one"
-end
+}
 
-@object pounce begin
+@object pounce {
   level: 5
   label: "Close distance to an enemy and engage them quicker"
-end
+}
 
-@object shield_bash begin
+@object shield_bash {
   level: 7
   label: "Shields can be a weapon in the right hands"
-end
+}
 
-@object second_wind begin
+@object second_wind {
   level: 9
   label: "When the chips are down, you come out fighting"
-end
+}
 
-@object wizard begin
+@object wizard {
   specialisation: :magic
   perks: #{#fast_cast #mana_surge #concentration #max_damage}
-end
+}
 
-@object fast_cast begin
+@object fast_cast {
   level: 3
   label: "Faster than a speeding magic missile"
-end
+}
 
-@object mana_surge begin
+@object mana_surge {
   level: 5
   label: "You can always reach down for just one more spell"
-end
+}
 
-@object concentration begin
+@object concentration {
   level: 7
   label: "Nothing can distract you"
-end
+}
 
-@object max_damage begin
+@object max_damage {
   level: 9
   label: "Your fireballs are the crispiest"
-end
+}
 
-@actor thaugrim_the_wise begin
+@actor thaugrim_the_wise {
   %% Code dealing with this actor can lookup available perks from
   %% the Wizards class object
   class: #wizard
-end
+}
 ....
 
 How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
@@ -81,30 +81,30 @@ A common scenario is a number of scenes wanting to share the same layout. While 
 An alias has a name, element type, and one or more objects to base instances of the alias upon. These objects will define the default attributes.
 
 ....
-@item magic_item_template begin
+@item magic_item_template {
   magical: true
-end
+}
 
 @alias magic_item = item<magic_item_template>
 
-@magic_item magic_ring begin
+@magic_item magic_ring {
   description: "A plain golden band. Probably nobody is interested in this ring at all."
-end
+}
 ....
 
 Another example might be wanting to specify a common layout for a group of scenes:
 
 ....
-@scene standard_scene begin
+@scene standard_scene {
   layout_format: :markdown
   layout: ```${content}```
-end
+}
 
 @alias standard_scene = scene<standard_scene>
 
-@standard_scene scene_01 begin
+@standard_scene scene_01 {
   %% scene specific content here
-end
+}
 ....
 
 == Multiple elements sharing a unique random value
@@ -112,20 +112,20 @@ end
 In some circumstances you want multiple elements to have an attribute that shares the same random value. This is easily achieved using an extra object and attribute refs. Here is an example:
 
 ....
-@object holds_random_value begin
+@object holds_random_value {
   %% this will be assigned a random value when the game is initialized
   rand: &{Math.rand_int(1, 10)}
-end
+}
 
-@actor player begin
+@actor player {
   %% this will refer to the value from the object
   rand: &hold_random_value.rand
-end
+}
 
-@actor npc begin
+@actor npc {
   %% as will this
   rand: &hold_random_value.rand
-end
+}
 ....
 
 Note that you can change the value, but only in the object that holds it.
@@ -223,7 +223,7 @@ The options are:
 Example
 
 ....
-@card side_street begin
+@card side_street {
   main_street: (choice) => {
     if choice.game.is("dark") {
       choice.deny("You can't see a thing, maybe use your flashlight or a match.");
@@ -231,17 +231,17 @@ Example
       choice.allow("Head to Main st.", "main_street");
     }
   }
-end
+}
 ....
 
 You can also take over what happens when a link is clicked:
 
 ....
-@card side_street begin
+@card side_street {
   on_main_street: (game, evt) => {
     // do what you want here
   }
-end
+}
 ....
 
 == Forms and Inputs
@@ -299,7 +299,7 @@ Rez has built in support for assets including images, sounds, and movie files.
 You specify the assets you want to use in your source file.
 
 ....
-@asset frobzz_1 begin
+@asset frobzz_1 {
   tags: #[:background]
   file_name: "scary_dungeon.jpg"
 end
@@ -321,7 +321,7 @@ to generate appropriate markup to embed the asset into the game. Rez assets auto
 The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `$js_ctor` attribute on any object.
 
 ....
-@actor kaspar_gutman begin
+@actor kaspar_gutman {
   $js_ctor: "Gutman"
   name: "Kaspar Gutman"
   villain: true
@@ -341,7 +341,7 @@ Rez supports the idea that you will create 'template' elements that are designed
 Although most objects support copying, by specifying `$template: true` you will suppress some of Rez's automatic initialization. This means that the copy will get its own initialization.
 
 ....
-@actor basic_npc begin
+@actor basic_npc {
   $template: true
 end
 ....

@@ -67,10 +67,10 @@ defmodule Rez.Parser.UtilityParsers do
   def arrow(), do: ParserCache.get_parser("arrow", fn -> literal("=>") end)
 
   def block_begin(_block_type),
-    do: ParserCache.get_parser("block_begin", fn -> ignore(literal("begin")) end)
+    do: ParserCache.get_parser("block_begin", fn -> ignore(open_brace()) end)
 
   def block_end(_block_type),
-    do: ParserCache.get_parser("block_end", fn -> ignore(literal("end")) end)
+    do: ParserCache.get_parser("block_end", fn -> ignore(close_brace()) end)
 
   def elem_start_char(),
     do: ParserCache.get_parser("elem_start_char", fn -> char([?a..?z, ?A..?Z]) end)

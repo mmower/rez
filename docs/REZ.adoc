@@ -104,7 +104,7 @@ Rez uses Javascript functions to supply dynamic behaviour. For the most part you
 
 Here is an example of a Rez element that includes a dynamic attribute:
 ....
-@item magic_ring begin
+@item magic_ring {
   is_a: :ring
   magic: true
   material: gold
@@ -118,7 +118,7 @@ Here is an example of a Rez element that includes a dynamic attribute:
       actor.makeInvisible();
     }
    }
-end
+}
 ....
 
 There's a lot going on here but we'll unpack it piece by piece.
@@ -127,18 +127,18 @@ There's a lot going on here but we'll unpack it piece by piece.
 
 In the first place is the element itself:
 ....
-@item magic_ring begin
+@item magic_ring {
   ....attributes....
-end
+}
 ....
 
 With the exception of xref:element_catalog#Relationship[@rel], element declarations follow a common pattern:
 
 * element specifier with `@` prefix, e.g. `@item`
 * a unique ID of the element, e.g. `magic_ring`
-* `begin` statement
+* open brace `{`
 * attributes
-* `end` statement
+* close brace `}`
 
 Elements are used to describe in-game concepts. The xref:element_catalog.adoc[Element Catalog] describes each element in detail.
 
@@ -325,13 +325,13 @@ meet_on_the_road: |#ranger 15 #wizard 10 #traveller 45 #evil 30|
 At the moment, due to a lack of JSON support, it is not possible to use functions as keys. However you can use objects with an identically named function:
 
 ....
-@object f1 begin f: function() {...} end
-@object f2 begin f: function() {...} end
-@object f3 begin f: function() {...} end
+@object f1 { f: function() {...} }
+@object f2 { f: function() {...} }
+@object f3 { f: function() {...} }
 
-@object f begin
-f: |#f1 50 #f2 25 #f3 25|
-end
+@object f {
+  f: |#f1 50 #f2 25 #f3 25|
+}
 
 $("f").f.f()
 ....
@@ -357,7 +357,7 @@ We use the caret symbol `^` to create different kinds of dynamic attribute value
 The simplest possible Rez game would look something like this:
 
 ....
-@game begin
+@game {
   name: "Test Game"
   IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
   archive_format: 1
@@ -369,7 +369,7 @@ The simplest possible Rez game would look something like this:
 
   %(stdlib.rez)
 
-  @scene play_game begin
+  @scene play_game {
     initial_card: #did_you_win
     layout_mode: :single
     played: 0
@@ -407,15 +407,15 @@ The simplest possible Rez game would look something like this:
       this.played += 1;
       this.win_p = this.won * 100 / this.played;
     }
-  end
+  }
 
-  @card did_you_win begin
+  @card did_you_win {
     content: ```
     Did you win? [[yes|yes_i_won]] | [[no|no_i_lost]]
     ```
-  end
+  }
 
-  @card yes_i_won begin
+  @card yes_i_won {
     content: ```
     Congratulations!
 
@@ -424,9 +424,9 @@ The simplest possible Rez game would look something like this:
     on_start: (card) => {
       card.scene.win();
     }
-  end
+  }
 
-  @card no_i_lost begin
+  @card no_i_lost {
     content: ```
     Better luck next time!
 
@@ -435,8 +435,8 @@ The simplest possible Rez game would look something like this:
     on_start: (card) => {
       card.scene.lose();
     }
-  end
-end
+  }
+}
 ....
 
 image::test_game_1.png[]
@@ -654,11 +654,11 @@ Assets are files that you want to include in your game for example images, audio
 You declare an asset with an `@asset` element:
 
 ....
-@asset pistol_image begin
+@asset pistol_image {
   file: "pistol_image_01.png"
   width: 60
   height: 60
-end
+}
 ....
 
 Rez handles finding the asset file and making it available in the dist folder. Now if you want to include it you have two options, both using template expressions.
@@ -842,7 +842,7 @@ Rez supports the addition of custom Javascript & CSS in a number of different wa
 The `@script` and `@style` directives allow embedding arbitrary Javascript or CSS classes into your game.
 
 ....
-@script begin
+@script {
   function identifyParrot(p) {
     if(p === "parrot") {
       return "Sqwauk";
@@ -850,18 +850,18 @@ The `@script` and `@style` directives allow embedding arbitrary Javascript or CS
       return "Pfffft";
     }
   }
-end
+}
 ....
 
 ....
-@style begin
+@style {
   /* https://gist.github.com/JoeyBurzynski/617fb6201335779f8424ad9528b72c41 */
   .main {
     max-width: 38rem;
     padding: 2rem;
     margin: auto;
   }
-end
+}
 ....
 
 The contents of these directives is automatically inserted into an appropriate spot in the game files.
@@ -871,7 +871,7 @@ The contents of these directives is automatically inserted into an appropriate s
 Another way to include your own Javascript is through the use of the `@patch` directive which allows you to add new methods to existing JS classes. Here is an example from the stdlib.
 
 ....
-@patch ARRAY_FY_SHUFFLE begin
+@patch ARRAY_FY_SHUFFLE {
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
   method: "fy_shuffle"
@@ -883,7 +883,7 @@ Another way to include your own Javascript is through the use of the `@patch` di
     }
     return this;
   }
-end
+}
 ....
 
 This adds a new method `fy_shuffle` to Javascript `Array` instances. So you can now write:
@@ -900,10 +900,10 @@ To add a method to instances use the `method:` attribute and specify the method 
 A third way to include custom Javascript is by implementing a template expression filter. Here is an example from the stdlib:
 
 ....
-@filter STRING_STARTS_WITH_FILTER begin
+@filter STRING_STARTS_WITH_FILTER {
   %% String -> Bool
 
   name: "starts_with"
   impl: (s, search) => {return s.startsWith(search);}
-end
+}
 ....
