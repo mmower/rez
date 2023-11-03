@@ -14,21 +14,6 @@ basic_object.game = game;
   game.addGameObject(<%= Node.js_initializer(obj) %>);
 <% end %>
 
-/* Build Map */
-
-<%= for {_id, zone} <- @game.zones do %>
-(function() {
-  let zone = Node.js_initializer(zone);
-  game.addGameObject(zone);
-
-  <%= for {_id, location} <- zone.locations do %>
-    let location = <%= Node.js_initializer(location) %>
-    zone.addLocation(location);
-    game.addGameObject(location);
-  <% end %>
-})();
-<% end %>
-
 <%
   generator_init = {
     ["list", "event"],

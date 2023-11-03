@@ -10,16 +10,12 @@
 let inventory_proto = {
   __proto__: basic_object,
 
-  slots() {
-    return this.getAttributeValue("slots");
-  },
-
   addContentHolderForSlot(slot_id) {
     this.contents[slot_id] = [];
   },
 
   elementInitializer() {
-    for(const slot_id of this.slots()) {
+    for (const slot_id of this.slots) {
       this.addContentHolderForSlot(slot_id);
     }
   },
@@ -50,11 +46,13 @@ let inventory_proto = {
    * Either returns the slot_id that contains the item, or null.
    */
   containsItem(item_id) {
-    for(const slot_id in this.contents) {
+    for (const slot_id in this.contents) {
       const contents = this.getContentsForSlot(slot_id);
-      if(contents.some((contained_item_id) => {
-        return contained_item_id == item_id;
-      })) {
+      if (
+        contents.some((contained_item_id) => {
+          return contained_item_id == item_id;
+        })
+      ) {
         return slot_id;
       }
     }
@@ -78,7 +76,7 @@ let inventory_proto = {
     const size = this.game.$(item_id).size();
     const current_size = this.countItemsInSlot(slot_id);
 
-    return (current_size + size) <= capacity;
+    return current_size + size <= capacity;
   },
 
   slotAcceptsItem(slot_id, item_id) {
@@ -91,13 +89,15 @@ let inventory_proto = {
   canAddItemForSlot(slot_id, item_id) {
     const decision = new RezDecision("canItemForSlot");
 
-    if(!this.slotAcceptsItem(slot_id, item_id)) {
-      decision.no("slot doesn't take this kind of item").setData("failed_on", "accepts");
-    } else if(!this.itemFitsInSlot(slot_id, item_id)) {
+    if (!this.slotAcceptsItem(slot_id, item_id)) {
+      decision
+        .no("slot doesn't take this kind of item")
+        .setData("failed_on", "accepts");
+    } else if (!this.itemFitsInSlot(slot_id, item_id)) {
       decision.no("does not fit").setData("failed_on", "fits");
-    } else if(this.isOwned()) {
+    } else if (this.isOwned()) {
       const actor_decision = this.owner().checkItem(this.id, slot_id, item_id);
-      if(actor_decision.result()) {
+      if (actor_decision.result()) {
         decision.yes();
       } else {
         decision.no(actor_decision.reason()).setData("failed_on", "actor");
@@ -112,73 +112,83 @@ let inventory_proto = {
   addItemToSlot(slot_id, item_id) {
     this.appendContentToSlot(slot_id, item_id);
 
-    this.runEvent("insert", {slot_id: slot_id, item_id: item_id});
+    this.runEvent("insert", { slot_id: slot_id, item_id: item_id });
 
     const slot = this.game.$(slot_id);
-    slot.runEvent("insert", {inventory_id: this.id, item_id: item_id});
+    slot.runEvent("insert", { inventory_id: this.id, item_id: item_id });
 
     this.applyEffects(item_id);
   },
 
   applyEffects(item_id) {
-    if(!this.getAttributeValue("apply_effects", false)) {
+    if (!this.getAttributeValue("apply_effects", false)) {
       return;
     }
 
     const item = this.game.$(item_id);
-    if(!item.hasAttribute("effects")) {
+    if (!item.hasAttribute("effects")) {
       return;
     }
 
-    if(!this.hasAttribute("owner")) {
+    if (!this.hasAttribute("owner")) {
       return;
     }
 
     const effects = item.getAttributeValue("effects");
     const owner = this.getAttributeValue("owner");
 
-    for(const effect_id of effects) {
+    for (const effect_id of effects) {
       owner.applyEffect(effect_id, item_id);
     }
   },
 
   removeItemFromSlot(slot_id, item_id) {
     const contents = this.getContentsForSlot(slot_id);
-    if(!contents.includes(item_id)) {
-      throw "Attempt to remove item |"+item_id+"| from slot |"+slot_id+"| on inventory |"+this.id+"|. No such item found!";
+    if (!contents.includes(item_id)) {
+      throw (
+        "Attempt to remove item |" +
+        item_id +
+        "| from slot |" +
+        slot_id +
+        "| on inventory |" +
+        this.id +
+        "|. No such item found!"
+      );
     }
 
-    const remaining_contents = contents.filter((id) => {return id != item_id;})
+    const remaining_contents = contents.filter((id) => {
+      return id != item_id;
+    });
     this.setContentsForSlot(slot_id, new_contents);
 
     const slot = this.game.$(slot_id);
-    slot.runEvent("remove", {inventory: this.id, item: item_id});
-    this.runEvent("remove", {slot: slot_id, item: item_id});
+    slot.runEvent("remove", { inventory: this.id, item: item_id });
+    this.runEvent("remove", { slot: slot_id, item: item_id });
 
     this.removeEffects(item_id);
   },
 
   removeEffects(item_id) {
-    if(!this.getAttributeValue("apply_effects", false)) {
+    if (!this.getAttributeValue("apply_effects", false)) {
       return;
     }
 
     const item = this.game.$(item_id);
-    if(!item.hasAttribute("effects")) {
+    if (!item.hasAttribute("effects")) {
       return;
     }
 
-    if(!this.hasAttribute("owner")) {
+    if (!this.hasAttribute("owner")) {
       return;
     }
 
     const effects = item.getAttributeValue("effects");
     const owner = this.getAttributeValue("owner");
 
-    for(const effect_id of effects) {
+    for (const effect_id of effects) {
       owner.removeEffect(effect_id, item_id);
     }
-  }
+  },
 };
 
 function RezInventory(id, attributes) {

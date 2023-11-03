@@ -26,12 +26,29 @@ function evaluateExpression(expression, bindings) {
 }
 
 //-----------------------------------------------------------------------------
+// Binder
+//-----------------------------------------------------------------------------
+
+const binder_proto = {};
+
+function RezBinder() {}
+
+RezBinder.prototype = binder_proto;
+RezBinder.prototype.constructor = RezBinder;
+window.Rez.binder = RezBinder;
+
+//-----------------------------------------------------------------------------
 // View
 //-----------------------------------------------------------------------------
 
 let block_proto = {
   instantiateIdBinding(id) {
     return this.source.$(id);
+  },
+
+  instantiatPropertyBinding(ref) {
+    const target = $(ref.elem_id);
+    return target[ref.attr_name];
   },
 
   instantiateFunctionBinding(f) {
@@ -46,6 +63,11 @@ let block_proto = {
     return this.source.getAttributeValue("bindings", {}).obj_map((query) => {
       if (typeof query == "string") {
         return this.instantiateIdBinding(query);
+      } else if (
+        typeof query == "object" &&
+        typeof query.attr_ref == "object"
+      ) {
+        return this.instantiatPropertyBinding(query.attr_ref);
       } else if (typeof query == "function") {
         return this.instantiateFunctionBinding(query);
       } else {
@@ -277,9 +299,9 @@ let transformer_proto = {
     return document.querySelectorAll(this.getSelector());
   },
 
-  transformElements() {
+  transformElements(view) {
     this.getElements().forEach(function (elem) {
-      this.transformElement(elem);
+      this.transformElement(elem, view);
     }, this);
   },
 
@@ -406,6 +428,82 @@ function RezInputTransformer(receiver) {
 RezInputTransformer.prototype = event_transformer_proto;
 
 //-----------------------------------------------------------------------------
+// BindingTransformer
+//-----------------------------------------------------------------------------
+
+const binding_transformer_proto = {
+  __proto__: event_transformer_proto,
+
+  decodeBinding(binding_expr) {
+    const [binding_id, binding_attr] = binding_expr.split(".");
+    if (
+      typeof binding_id === "undefined" ||
+      typeof binding_attr === "undefined"
+    ) {
+      throw `Unable to parse binding: ${binding_expr}`;
+    }
+
+    return [binding_id, binding_attr];
+  },
+
+  transformTextInput(view, input, binding_id, binding_attr) {
+    view.registerBinding(binding_id, binding_attr, function (value) {
+      input.value = value;
+    });
+    input.value = $(binding_id)[binding_attr];
+    input.addEventListener("input", function (evt) {
+      $(binding_id).setAttribute(binding_attr, evt.target.value);
+    });
+  },
+
+  transformCheckboxInput(view, input, binding_id, binding_attr) {
+    view.registerBinding(binding_id, binding_attr, function (value) {
+      input.checked = value;
+    });
+    input.checked = $(binding_id)[binding_attr];
+    input.addEventListener("change", function (evt) {
+      $(binding_id).setAttribute(binding_attr, evt.target.checked);
+    });
+  },
+
+  transformSelect(view, select, binding_id, binding_attr) {
+    view.registerBinding(binding_id, binding_attr, function (value) {
+      select.value = value;
+    });
+    select.value = $(binding_id)[binding_attr];
+    select.addEventListener("change", function (evt) {
+      $(binding_id).setAttribute(binding_attr, evt.target.value);
+    });
+  },
+
+  transformElement(input, view) {
+    const [binding_id, binding_attr] = this.decodeBinding(
+      input.getAttribute("rez-bind")
+    );
+
+    if (input.type === "text") {
+      this.transformTextInput(view, input, binding_id, binding_attr);
+    } else if (input.type === "checkbox") {
+      this.transformCheckboxInput(view, input, binding_id, binding_attr);
+    } else if (
+      input.type === "select-one" ||
+      input.type === "select-multiple"
+    ) {
+      this.transformSelect(view, input, binding_id, binding_attr);
+    } else {
+      console.log(`Unsupported input type: ${input.type}`);
+    }
+  },
+};
+
+function RezBindingTransformer(receiver) {
+  this.selector = "div.card input[rez-bind], select[rez-bind]";
+  this.receiver = receiver;
+}
+
+RezBindingTransformer.prototype = binding_transformer_proto;
+
+//-----------------------------------------------------------------------------
 // View
 //-----------------------------------------------------------------------------
 
@@ -437,14 +535,33 @@ let view_proto = {
       new RezEventLinkTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
+      new RezBindingTransformer(this.receiver),
     ];
   },
 
   transform() {
-    this.transformers.forEach((transformer) => transformer.transformElements());
+    this.transformers.forEach((transformer) =>
+      transformer.transformElements(this)
+    );
+  },
+
+  registerBinding(binding_id, binding_attr, callback) {
+    this.bindings.set(`${binding_id}.${binding_attr}`, callback);
+  },
+
+  updateBoundControls(binding_id, binding_attr, value) {
+    const callback = this.bindings.get(`${binding_id}.${binding_attr}`);
+    if (typeof callback == "function") {
+      callback(value);
+    }
+  },
+
+  clearBindings() {
+    this.bindings.clear();
   },
 
   update() {
+    this.clearBindings();
     this.render();
     this.transform();
   },
@@ -458,6 +575,7 @@ function RezView(container_id, receiver, layout, transformers) {
 
   this.layout = layout;
   this.layout_stack = [];
+  this.bindings = new Map();
   this.receiver = receiver;
   this.transformers = transformers ?? this.defaultTransformers();
 }

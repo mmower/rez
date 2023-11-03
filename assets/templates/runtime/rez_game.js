@@ -227,6 +227,11 @@ let game_proto = {
     return this.game_objects.get(id);
   },
 
+  elementAttributeHasChanged(elem, attr_name, old_value, new_value) {
+    this.undoManager.recordChange(elem.id, attr_name, old_value);
+    this.view.updateBoundControls(elem.id, attr_name, new_value);
+  },
+
   /*
    * We can cheat looking up a relationship because we know how their IDs
    * are constructed.
@@ -277,9 +282,8 @@ let game_proto = {
     this.current_scene = scene;
 
     this.setViewContent(scene.getViewLayout());
-    scene.start();
     this.clearFlashMessages();
-    this.updateView();
+    scene.start();
     scene.ready();
   },
 

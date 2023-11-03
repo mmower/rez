@@ -319,21 +319,22 @@ const basic_object = {
     return $(id);
   },
 
-  attributeHasChanged(attr_name) {
-    this.changed_attributes.push(attr_name);
-  },
-
-  setAttribute(name, value, undo_tracking = true) {
-    if (typeof value == "undefined") {
+  setAttribute(attr_name, new_value, notify_observers = true) {
+    if (typeof new_value == "undefined") {
       throw "Call to setAttribute with undefined value!";
     }
 
-    if (undo_tracking) {
-      this.game.undoManager.recordChange(this.id, name, this.attributes[name]);
+    const old_value = this.attributes[attr_name];
+    this.attributes[attr_name] = new_value;
+    this.changed_attributes.push(attr_name);
+    if (notify_observers) {
+      this.game.elementAttributeHasChanged(
+        this,
+        attr_name,
+        old_value,
+        new_value
+      );
     }
-
-    this.attributes[name] = value;
-    this.attributeHasChanged(name);
   },
 
   addTag(tag) {

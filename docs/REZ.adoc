@@ -647,6 +647,53 @@ play_again: function(link) {
 
 Once the player plays their 10th game this link becomes inactive. Alternatively you can use `link.hide()` and the link won't appear at all. Good for options which should be concealed until some gameplay condition is met.
 
+== Forms
+
+An HTML interface will often use form controls to allow the player to input or interact with data. A simple example would be using an <input> to accept a characters name. Rez offers a number of ways to support using forms.
+
+=== Binding form elements
+
+For data capture the simplest approach is to bind an `<input>` or `<select>` control to an attribute value using the `rez-bind` attribute.
+
+....
+<input type="text" rez-bind="player.name">
+....
+
+This sets up a two-way binding between the content of the `<input>` and the `player.name` attribute. Whatever is entered into the form input will be set directly on the `player.name` attribute. Equally assigning to the attribute `$("player").name = "..."` will update the input field.
+
+This also works for checkboxes and boolean attributes.
+
+....
+<input type="checkbox" rez-bind="player.isOver18">
+....
+
+And for `<select>` controls:
+
+....
+<select rez-bind="player.gender">
+  <option value="m">Male</option>
+  <option value="f">Female</option>
+</select>
+....
+
+At present radio inputs are not supported.
+
+=== Adding events to inputs and forms
+
+For more complex interactions use the `rez-live` attribute to generate events.
+
+....
+<input name="name" rez-live >
+....
+
+When the user changes the value of the field this will generate an `on_input` event on the corresponding `RezCard` object, passing the generated event as a parameter.
+
+....
+<form rez-live>...</form>
+....
+
+Will generate an `on_submit` event to the form. The handlers in either case should return as any other event handler. In the case of submit it is probably to load a new card or scene.
+
 == Assets
 
 Assets are files that you want to include in your game for example images, audio files or movies. Rez handles copying these into your game distribution folder and generating appropriate references.

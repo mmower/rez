@@ -106,10 +106,6 @@ defmodule Rez.Parser.Parser do
     block_with_id("task", Rez.AST.Task)
   end
 
-  def zone_block() do
-    block_with_id_children("zone", Rez.AST.Zone, location_block(), &Rez.AST.Zone.add_child/2)
-  end
-
   def game_content() do
     choice(
       [
@@ -139,7 +135,7 @@ defmodule Rez.Parser.Parser do
         style_block(),
         system_block(),
         task_block(),
-        zone_block(),
+        location_block(),
         # Now user defined aliases
         alias_block()
       ],
