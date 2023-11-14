@@ -46,13 +46,13 @@ defmodule Rez.Compiler.ParseSource do
         Compilation.add_error(compilation, reason)
 
       {:error, reasons, line, col, _input} ->
-        {file, _logical_line} = LogicalFile.resolve_line(source, line)
+        {file, logical_line} = LogicalFile.resolve_line(source, line)
         context = source_context(source, line, col)
         reasons = Enum.map_join(reasons, "\n", fn {_line, _col, reason} -> reason end)
 
         Compilation.add_error(
           compilation,
-          "#{file} L#{line}:#{col} Unable to compile source: #{reasons}\n#{context}"
+          "#{file} L#{logical_line}:#{col} Unable to compile source: #{reasons}\n#{context}"
         )
     end
   end
@@ -66,7 +66,10 @@ defmodule Rez.Compiler.ParseSource do
     last_line = min(line + 2, LogicalFile.last_line_number(source))
 
     first_line..last_line
-    |> Enum.map(fn lno -> {lno, LogicalFile.line(source, lno)} end)
+    |> Enum.map(fn lno ->
+      {_file, l_lno} = LogicalFile.resolve_line(source, lno)
+      {l_lno, LogicalFile.line(source, lno)}
+    end)
     |> List.insert_at(3, {"", "#{String.duplicate(" ", col)}^"})
     |> Enum.reject(fn {_, line} -> is_nil(line) end)
     |> Enum.map_join("\n", fn {lno, line} -> "#{lno}> #{line}" end)

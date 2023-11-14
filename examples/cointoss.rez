@@ -2,7 +2,7 @@
   name: "Test Game"
   IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
   archive_format: 1
-  initial_scene: #intro
+  initial_scene_id: #intro
   links: [
     "https://jenil.github.io/bulmaswatch/journal/bulmaswatch.min.css"
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"

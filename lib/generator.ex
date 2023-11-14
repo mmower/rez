@@ -29,8 +29,8 @@ defmodule Rez.Generator do
 
     overwrite = Map.get(options, :overwrite, false)
 
-    author_name = Map.get(options, :author_name)
-    author_email = Map.get(options, :author_email)
+    author_name = Map.get(options, :author_name, "Author Name")
+    author_email = Map.get(options, :author_email, "author.email@domain.foo")
 
     game_title = Map.get(options, :game_title, "Twisty Maze Adventure")
     game_homepage = Map.get(options, :game_homepage, "https://rez-lang.com/")
@@ -71,18 +71,18 @@ defmodule Rez.Generator do
       Debug.v_log("Skipping game source write")
     end
 
+    # Lib path is where user-written Javascript goes
+    lib_path = Path.join(name, "lib")
+    File.mkdir_p!(lib_path)
+
     Debug.v_log("Generate stdlib template")
-    stdlib_path = Path.join(source_path, "stdlib.rez")
+    stdlib_path = Path.join(lib_path, "stdlib.rez")
 
     if !File.exists?(stdlib_path) || overwrite do
       File.write!(stdlib_path, render_stdlib([]))
     else
       Debug.v_log("Skipping stdlib source write")
     end
-
-    # Lib path is where user-written Javascript goes
-    lib_path = Path.join(name, "lib")
-    File.mkdir_p!(lib_path)
 
     # Assets path is where all static assets live
     assets_path = Path.join(name, "assets")

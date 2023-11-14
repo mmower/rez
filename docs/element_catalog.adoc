@@ -31,7 +31,6 @@ Elements describe in-game concepts.
 * <<Scene>>
 * <<Slot>>
 * <<System>>
-* <<Zone>>
 
 == Directives
 
@@ -595,7 +594,7 @@ The `@game` element has an implicit ID of `game`. All other elements and directi
   created: "2022-08-31 22:13:43.830755Z"
   version: 10
   layout: ```${content}```
-  initial_scene: #sam_and_wonderly_meet
+  initial_scene_id: #sam_and_wonderly_meet
 }
 ....
 
@@ -1462,61 +1461,3 @@ In this example we have defined a condition task to test whether a specified act
 |===
 
 === Optional Attributes
-
-== Zone
-
-A `@zone` element defines a map zone which is an abstract representation of a region which groups logically related locations together. In-game a zone is represented by a xref:jsapi#RezZone[RezZone] object.
-
-For example a zone could represent a planet, a building, a street, or a shopping mall with a location defining a specific areas of each.
-
-The idea is that locations in the same zone can be reached easily while locations in different zones may require a specific transition.
-
-For example a player can walk between locations in the "downtown" zone but might need to use a cab to reach the connected "suburbs" zone. A cab rank location in each zone could act as the gateway to the other zones and their locations.
-
-Individual locations must be defined in a zone. If you don't require multiple zones just create a single zone and define all your locations in it.
-
-=== Example
-
-....
-@zone docks {
-  @location la_paloma_gangway {
-    ...
-  }
-
-  @location la_paloma_bridge {
-    ...
-  }
-
-  @location docks_cabrank {
-    ...
-  }
-}
-
-@zone spade_and_archer {
-  @location street_cabrank {
-    ...
-  }
-
-  @location hallway {
-    ...
-  }
-
-  @location outer_office {
-    ...
-  }
-
-  @location sams_office {
-    ...
-  }
-}
-....
-
-=== Required Attributes
-=== Optional Attributes
-=== Event Handlers
-
-==== on_init
-
-: `(zone, event = {}) => {...}`
-
-This script will be called during game initialization and before the game has started.

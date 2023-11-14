@@ -374,7 +374,6 @@ let game_proto = {
       }, this);
     }
 
-    // this.container_id = container_id;
     this.runEvent("start", {});
 
     this.view = new RezView(
@@ -383,8 +382,7 @@ let game_proto = {
       new RezSingleLayout("game", this)
     );
 
-    // const initial_scene_id = this.getAttributeValue("initial_scene");
-    this.startSceneWithId(this.initial_scene);
+    this.startSceneWithId(this.initial_scene_id);
   },
 
   getEnabledSystems() {
@@ -419,8 +417,8 @@ let game_proto = {
     const event_name = evt.target.dataset.event.toLowerCase();
     if (event_name == "card") {
       return this.handleCardEvent(evt);
-    } else if (event_name == "shift") {
-      return this.handleShiftEvent(evt);
+    } else if (event_name == "switch") {
+      return this.handleSwitchEvent(evt);
     } else if (event_name == "interlude") {
       return this.handleInterludeEvent(evt);
     } else if (event_name == "resume") {
@@ -446,8 +444,8 @@ let game_proto = {
     return true;
   },
 
-  handleShiftEvent(evt) {
-    console.log("Handle shift event");
+  handleSwitchEvent(evt) {
+    console.log("Handle switch event");
     const scene_id = evt.target.dataset.target;
     this.startSceneWithId(scene_id);
     return true;

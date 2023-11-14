@@ -1,7 +1,7 @@
 @game begin
   name: "Twisty Maze Adventure"
   IFID: "051F7581-43EF-48A7-93C3-A84A70203917"
-  initial_scene: #cards
+  initial_scene_id: #cards
 
   @item sword begin
     $template: true

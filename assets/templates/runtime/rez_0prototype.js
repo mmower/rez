@@ -78,6 +78,19 @@ const basic_object = {
         },
         configurable: true,
       });
+
+      if (attr_name.endsWith("_id")) {
+        const direct_attr_name = attr_name.slice(0, -3);
+        Object.defineProperty(this, direct_attr_name, {
+          get: function () {
+            const ref_id = this.getAttribute(attr_name);
+            return $(ref_id);
+          },
+          set: function (ref) {
+            this.setAttribute(attr_name, ref.id);
+          },
+        });
+      }
     }
   },
 

@@ -247,7 +247,7 @@ updating a stored value or triggering a new scene/interlude.
 
 There are two ways to change the scene:
 
-A scene shift is where we move from one scene to another as part of the
+A scene switch is where we move from one scene to another as part of the
 narrative flow of the game.
 
 A scene interlude is where we suspend the current scene and temporarily switch

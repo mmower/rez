@@ -158,6 +158,7 @@ defmodule Rez.AST.Game do
     :groups,
     :inventories,
     :items,
+    :locations,
     :lists,
     :plots,
     :relationships,
@@ -404,7 +405,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
         )
       ),
       attribute_present?(
-        "initial_scene",
+        "initial_scene_id",
         attribute_has_type?(
           :elem_ref,
           attribute_refers_to?("scene")

@@ -623,6 +623,20 @@ function isObject(obj) {
   impl: (s, search) => {return s.includes(search);}
 }
 
+@filter STRING_QUOTED {
+  %% String -> String
+
+  name: "quoted"
+  impl: (s) => {return `'${s}'`;}
+}
+
+@filter STRING_DOUBLE_QUOTED {
+  %% String -> String
+
+  name: "dquoted"
+  impl: (s) => {return `"${s}"`;}
+}
+
 @filter EVENT_LINK_FILTER {
   %% String -> Link
 
@@ -667,13 +681,13 @@ function isObject(obj) {
   }
 }
 
-@filter SCENE_CHANGE_FILTER {
-  %% ${card | scene_change: <scene_id>, <title>}
-  %% ${card | scene_change: "new_scene_id", "Action leading to a new scene"}
+@filter SCENE_SWITCH_FILTER {
+  %% ${card | scene_switch: <scene_id>, <title>}
+  %% ${card | scene_switch: "new_scene_id", "Action leading to a new scene"}
 
-  name: "scene_change"
+  name: "scene_switch"
   impl: (card, scene_id, title) => {
-    return "<a href='javascript:void(0);' data-event='shift' data-target='" + scene_id + "'>" + title + "</a>";
+    return "<a href='javascript:void(0);' data-event='switch' data-target='" + scene_id + "'>" + title + "</a>";
   }
 }
 
@@ -735,7 +749,7 @@ function isObject(obj) {
 %% ----------------------------------------------------------------------------
 
 @scene default_load_game {
-    initial_card: #default_load_game_form
+    initial_card_id: #default_load_game_form
     layout: ```
     ${content}
     ```

@@ -107,7 +107,7 @@ let scene_proto = {
     this.reset();
     this.init();
     this.runEvent("start", {});
-    this.playCardWithId(this.getAttribute("initial_card"));
+    this.playCardWithId(this.initial_card_id);
   },
 
   ready() {

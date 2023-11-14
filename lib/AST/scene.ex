@@ -131,7 +131,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
         )
       ),
       attribute_present?(
-        "initial_card",
+        "initial_card_id",
         attribute_has_type?(
           :elem_ref,
           attribute_refers_to?("card")

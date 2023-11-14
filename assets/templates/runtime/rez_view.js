@@ -331,50 +331,51 @@ let event_transformer_proto = {
     return this.event;
   },
 
+  dispatchResponse(response) {
+    if (typeof response == "object") {
+      if (response.scene) {
+        this.receiver.startSceneWithId(response.scene);
+      }
+
+      if (response.card) {
+        this.receiver.playCard(response.card);
+      }
+
+      if (response.flash) {
+        this.receiver.addFlashMessage(response.flash);
+      }
+
+      if (response.render) {
+        this.receiver.updateView();
+      }
+
+      if (response.error) {
+        console.log(`Error: ${response.error}`);
+      }
+    } else if (typeof response == "undefined") {
+      throw "Event handlers must return a value, preferably an exec-object!";
+    }
+  },
+
   addEventListener(elem, event) {
+    const transformer = this;
     const receiver = this.getReceiver();
     elem.addEventListener(event, function (evt) {
       evt.preventDefault();
 
-      // A handler can return an object with keys representing actions to
-      // be taken after the handler is complete. For example {scene: "xxx"}
-      // would then set the current scene to "xxx".
-      //
-      // Why is this better than the handler doing this and returning?
-      //
-      // Potentially it could mean that we require a return to validate that
-      // the handler has completed properly.
-      //
-      // It also means we can circumscribe the final action of any given
-      // handler.
-      //
-      // 1) We know that a handler has taken a correct action
-      // 2) Potentially different handlers can interact
-
-      const response = receiver.handleBrowserEvent(evt);
-      if (typeof response == "object") {
-        if (response.scene) {
-          receiver.startSceneWithId(response.scene);
-        }
-
-        if (response.card) {
-          receiver.playCard(response.card);
-        }
-
-        if (response.flash) {
-          receiver.addFlashMessage(response.flash);
-        }
-
-        if (response.render) {
-          receiver.updateView();
-        }
-
-        if (response.error) {
-          console.log("Error: " + response.error);
-        }
-      } else if (typeof response == "undefined") {
-        throw "Event handlers must return a value, preferably an exec-object!";
-      }
+      // A handler should return an object with keys representing the side-
+      // effects of an event.
+      // {scene: "scene_id"}
+      // Load a new scene
+      // {card: "card_id"}
+      // Play a card into the current scene
+      // {flash: "flash message"}
+      // Update the current flash
+      // {render: true}
+      // Trigger a re-render of the view
+      // {error: "Error Message"}
+      // Log an error message
+      transformer.dispatchResponse(receiver.handleBrowserEvent(evt));
     });
   },
 
@@ -402,6 +403,26 @@ function RezEventLinkTransformer(receiver) {
 }
 
 RezEventLinkTransformer.prototype = event_link_transformer_proto;
+
+//-----------------------------------------------------------------------------
+// Button Transformer
+//-----------------------------------------------------------------------------
+
+const button_transformer_proto = {
+  __proto__: event_transformer_proto,
+
+  transformElement(elem) {
+    this.addEventListener(elem, this.getEventName());
+  },
+};
+
+function RezButtonTransformer(receiver) {
+  this.selector = "div.card button[data-event]:not(.inactive)";
+  this.event = "click";
+  this.receiver = receiver;
+}
+
+RezButtonTransformer.prototype = button_transformer_proto;
 
 //-----------------------------------------------------------------------------
 // FormTransformer
@@ -466,6 +487,38 @@ const binding_transformer_proto = {
     });
   },
 
+  setRadioGroupValue(group_name, value) {
+    const radios = document.getElementsByName(group_name);
+    for (let radio of radios) {
+      if (radio.value == value) {
+        radio.checked = true;
+      }
+    }
+  },
+
+  trackRadioGroupChange(group_name, callback) {
+    const radios = document.getElementsByName(group_name);
+    for (let radio of radios) {
+      radio.addEventListener("change", callback);
+    }
+  },
+
+  transformRadioInput(view, input, binding_id, binding_attr) {
+    const transformer = this;
+    if (!view.hasBinding(binding_id, binding_attr)) {
+      // We only need to bind the first radio in the group
+      view.registerBinding(binding_id, binding_attr, function (value) {
+        transformer.setRadioGroupValue(input.name, value);
+      });
+    }
+
+    this.setRadioGroupValue(input.name, $(binding_id)[binding_attr]);
+
+    this.trackRadioGroupChange(input.name, function (evt) {
+      $(binding_id).setAttribute(binding_attr, evt.target.value);
+    });
+  },
+
   transformSelect(view, select, binding_id, binding_attr) {
     view.registerBinding(binding_id, binding_attr, function (value) {
       select.value = value;
@@ -481,10 +534,12 @@ const binding_transformer_proto = {
       input.getAttribute("rez-bind")
     );
 
-    if (input.type === "text") {
+    if (input.type === "text" || input.type == "textarea") {
       this.transformTextInput(view, input, binding_id, binding_attr);
     } else if (input.type === "checkbox") {
       this.transformCheckboxInput(view, input, binding_id, binding_attr);
+    } else if (input.type === "radio") {
+      this.transformRadioInput(view, input, binding_id, binding_attr);
     } else if (
       input.type === "select-one" ||
       input.type === "select-multiple"
@@ -497,7 +552,8 @@ const binding_transformer_proto = {
 };
 
 function RezBindingTransformer(receiver) {
-  this.selector = "div.card input[rez-bind], select[rez-bind]";
+  this.selector =
+    "div.card input[rez-bind], select[rez-bind], textarea[rez-bind]";
   this.receiver = receiver;
 }
 
@@ -533,6 +589,7 @@ let view_proto = {
   defaultTransformers() {
     return [
       new RezEventLinkTransformer(this.receiver),
+      new RezButtonTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
       new RezBindingTransformer(this.receiver),
@@ -543,6 +600,10 @@ let view_proto = {
     this.transformers.forEach((transformer) =>
       transformer.transformElements(this)
     );
+  },
+
+  hasBinding(binding_id, binding_attr) {
+    return this.bindings.has(`${binding_id}.${binding_attr}`);
   },
 
   registerBinding(binding_id, binding_attr, callback) {

@@ -53,7 +53,6 @@ defmodule Rez.AST.TemplateHelper do
       end)
     end
 
-    # ~r/\[\[(.+?)\|([a-zA-Z_$][a-zA-Z\d_$]*)\]\]/U
     @card_regex ~r/\[\[([^|]+)\|([a-zA-Z_$][a-zA-Z0-9_$]*)(?:\s*,\s*([a-zA-Z0-9_-]+))?\]\]/U
 
     @doc """
@@ -72,16 +71,16 @@ defmodule Rez.AST.TemplateHelper do
       Regex.replace(@card_regex, text, converter)
     end
 
-    @scene_shift_syntax ~r/\[\[([^|]*)\|\>\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
+    @scene_switch_syntax ~r/\[\[([^|]*)\|\>\s*([_$a-zA-Z][_$a-zA-Z0-9]*)\]\]/
 
     @doc """
-    Convert a link in the form `[[Title|><scene-id>]]` into a scene change
+    Convert a link in the form `[[Title|><scene-id>]]` into a scene switch
     template expression.
     """
-    def convert_scene_shift_links(text) do
-      Regex.replace(@scene_shift_syntax, text, fn _, title, scene_id ->
+    def convert_scene_switch_links(text) do
+      Regex.replace(@scene_switch_syntax, text, fn _, title, scene_id ->
         title = String.trim(title)
-        "${card | scene_change: \"#{scene_id}\", \"#{title}\"}"
+        "${card | scene_switch: \"#{scene_id}\", \"#{title}\"}"
       end)
     end
 
@@ -131,7 +130,7 @@ defmodule Rez.AST.TemplateHelper do
 
   def process_links(original_html) do
     original_html
-    |> Transforms.convert_scene_shift_links()
+    |> Transforms.convert_scene_switch_links()
     |> Transforms.convert_scene_interlude_links()
     |> Transforms.convert_resume_links()
     |> Transforms.convert_target_name_links()

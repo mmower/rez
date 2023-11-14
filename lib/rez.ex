@@ -80,11 +80,6 @@ defmodule Rez do
 
       case command do
         "new" ->
-          if is_nil(options[:author_name]) || is_nil(options[:author_email]) do
-            IO.puts("When creating a new game you must specify --author-name and --author-email")
-            quit.(1)
-          end
-
           Rez.Generator.generate(args, options)
           quit.(0)
 

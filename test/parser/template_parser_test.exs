@@ -159,9 +159,9 @@ defmodule Rez.Parser.TemplateParserTest do
     assert {:ok,
             {:expression, {:binding, "card"},
              [
-               {"scene_change",
+               {"scene_switch",
                 [{:string, "examine_player_scene"}, {:string, "Examine Yourself"}]}
-             ]}} = EP.parse("card | scene_change: \"examine_player_scene\", \"Examine Yourself\"")
+             ]}} = EP.parse("card | scene_switch: \"examine_player_scene\", \"Examine Yourself\"")
   end
 
   # @tag :skip

@@ -17,4 +17,9 @@ defmodule Rez.Compiler.Config do
   def src_path_name() do
     @src_path_name
   end
+
+  @lib_path_name "lib"
+  def lib_path_name() do
+    @lib_path_name
+  end
 end

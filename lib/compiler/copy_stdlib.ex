@@ -15,7 +15,7 @@ defmodule Rez.Compiler.CopyStdlib do
 
   def run_phase(%Compilation{status: :ok, game: game, progress: progress} = compilation) do
     source = render_index(game: game)
-    output_path = Path.join(Config.src_path_name(), @stdlib_file_name)
+    output_path = Path.join(Config.lib_path_name(), @stdlib_file_name)
 
     case File.write(output_path, source) do
       :ok ->

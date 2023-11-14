@@ -30,10 +30,10 @@ the other elements that make up the game.
 
 The command:
 ....
-rez new --author-name="Name" --author-email="email" --game-title="Title" --game-homepage="URL" <name>
+rez new <game name> --author-name="Name" --author-email="email" --game-title="Title" --game-homepage="URL"
 ....
 
-For example specifying `<name>` as "mygame" will create a `mygame` folder containing a number of subfolders. In the `src` subfolder will be `mygame.rez` that will contain some example source.
+For example specifying `<game name>` as "mygame" will create a `mygame` folder containing a number of subfolders. In the `src` subfolder will be `mygame.rez` that will contain some example source. In the `lib` folder will be the `stdlib.rez` containing Rez standard library. It's good to familiarize yourself with the contents of `stdlib.rez` but do not modify it as the game will overwrite it when you compile.
 
 === Compiling your game
 
@@ -116,6 +116,7 @@ Here is an example of a Rez element that includes a dynamic attribute:
       actor.game.sauron_victory = true;
     } else {
       actor.makeInvisible();
+      actor.corruption += 10;
     }
    }
 }
@@ -181,7 +182,7 @@ There are seven attributes defined here:
 |a number
 
 |`belongs_to`
-|a reference to another element
+|a reference to the ID of an element
 
 |`inscription`
 |a string
@@ -361,7 +362,7 @@ The simplest possible Rez game would look something like this:
   name: "Test Game"
   IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
   archive_format: 1
-  initial_scene: #play_game
+  initial_scene_id: #play_game
   layout_mode: :single
   layout: ```
   ${content}
@@ -589,7 +590,7 @@ An event link is written:
 [[Link Title|*event_name]]
 ....
 
-This will be rendered as a link that looks for an `on_<event_name>` event handler attribute on the current card.
+This will be rendered as a link that looks for an `on_<event_name>` event handler attribute on the current card. The link syntax for loading new cards and scenes is transparently converted into event links with a built-in handler.
 
 Once the event handler has done its work it should return a response object.
 
@@ -627,6 +628,44 @@ To have the current view re-rendered.
 
 To log an error message to the console.
 
+== Buttons
+
+An alternative to using a link is to use a `<button>` with a `data-event` attribute. For example a button to play a new card would look like:
+
+....
+<button data-event="card" data-target="new_card_id" class="button">Load Card</button>
+....
+
+By specifying `data-event="card"` we tell the button it's loading a new card and the `data-target` attribute specifies which card to load. We can use a similar approach to load new scene:
+
+....
+<button data-event="switch" data-target="new_scene_id" class="button">Switch Scene</button>
+....
+
+Here `data-target` specifies the id of the scene to switch to. Use `data-event="interlude"` for an interluded scene, rather than a scene switch.
+
+Where you want to run a custom event handler, `on_something_interesting`, use specify the event name directly in the `data-event` attribute:
+
+....
+<button data-event="something_interesting" data-custom-value="..." class="button">Something Interesting!</button>
+....
+
+You would pair this with an event handler as follows
+
+....
+on_something_interesting: (card, evt) => {
+  const custom_data = evt.target.dataset.custom_value;
+  // Interesting processing happens here
+  // then...
+  // what should happen next?
+  return {
+    render: true
+  }
+}
+....
+
+In this example the handler is in a card but you can also put in the scene or game as appropriate.
+
 == Dynamic Links
 
 ....
@@ -653,21 +692,42 @@ An HTML interface will often use form controls to allow the player to input or i
 
 === Binding form elements
 
-For data capture the simplest approach is to bind an `<input>` or `<select>` control to an attribute value using the `rez-bind` attribute.
+For data capture the simplest approach is to bind an HTML form input element to an attribute value using the `rez-bind` attribute.
+
+==== textfields and textareas
+
+To bind an `input` with `type='text'` or a `textarea`:
 
 ....
 <input type="text" rez-bind="player.name">
+<textarea rez-bind="player.description">
 ....
 
-This sets up a two-way binding between the content of the `<input>` and the `player.name` attribute. Whatever is entered into the form input will be set directly on the `player.name` attribute. Equally assigning to the attribute `$("player").name = "..."` will update the input field.
+This sets up a two-way binding between the content of the `<input>` and the `player.name` and `player.description` attributes respectively. For example, whatever is entered into the name form input will be set directly on the `player.name` attribute. Equally assigning to the attribute `$("player").name = "..."` will update the input field.
 
-This also works for checkboxes and boolean attributes.
+==== checkboxes
+
+You can bind a checkbox input to a boolean attributes.
 
 ....
 <input type="checkbox" rez-bind="player.isOver18">
 ....
 
-And for `<select>` controls:
+==== radios
+
+You can bind a set of radio buttons to an attribute.
+
+....
+<input type="radio" name="class" value="detective" rez-bind="player.class">
+<input type="radio" name="class" value="hood">
+<input type="radio" name="class" value="dame">
+....
+
+Note that radios with the same `name` attribute will form a group and you only need to bind the first radio in the group.
+
+==== select drop-downs
+
+You can bind a `<select>` to an attribute:
 
 ....
 <select rez-bind="player.gender">
@@ -675,8 +735,6 @@ And for `<select>` controls:
   <option value="f">Female</option>
 </select>
 ....
-
-At present radio inputs are not supported.
 
 === Adding events to inputs and forms
 
@@ -728,11 +786,11 @@ This will work for audio & movie assets.
 
 == Template Expressions
 
-Template expressions are how you include dynamic content in your game user interface.
+Template expressions are how you include dynamic content in your game user interface. They work in `@game` & `@scene` `layout` attributes and in a `@card`s `content` and `flipped_content` template attributes.
 
-[Advanced Note: Prior to v0.10 Rez used the Handlebars.js templating system and the handlerbars compiler and had the `@helper` directive to create new helpers. This has been completely replaced by the Rez template expression system which has a built-in compiler and offers `@filter`s as an alternative to helpers.]
+[Advanced Note: Prior to v0.10 Rez used the Handlebars.js templating system and the handlerbars compiler and had the `@helper` directive to create new Handlebars helpers. This has been completely replaced by the Rez template expression system which has a built-in compiler and offers `@filter`s as an alternative to helpers.]
 
-Template Expressions are loosely based on the https://shopify.github.io/liquid/[Liquid] template system. But it's worth noting that they are not Liquid and you should always refer to this documentation not the Liquid docs.
+Template Expressions are loosely based on the https://shopify.github.io/liquid/[Liquid] markup system. But it's worth noting that they are _not_ actually Liquid and you should always refer to this documentation not the Liquid docs.
 
 There are three kinds of template expression.
 
@@ -756,7 +814,11 @@ Note that the an expression is only a lookup. You cannot use arbitrary JS expres
 content: ```Your name is ${player.name + "!"}```
 ....
 
-Will not work. If you want to modify the value you must use a filter expression (see below) to do so.
+Will not work. If you want to modify the value you must use a filter expression (see below) to do so. In this case it would be:
+
+....
+content: ```Your name is ${player.name | append: "!"}```
+....
 
 Where does this `player` reference come from? Good question, this is an example of a binding. You've already seen bindings at work with `${content}` and `${sidebar}`. `content` is an example of a binding that Rez automatically makes available but you can add your own to refer to any objects you like.
 
@@ -765,13 +827,26 @@ bindings: {player: #player}
 content: ```Your name is ${player.name}```
 ....
 
-Here we are binding the Javascript variable `player` to an element with id `#player` which we assume would be an `@actor` element for representing the player character. We can also make function bindings:
+Here we are binding the Javascript variable `player` to an element with id `player` (which we might assume is an `@actor` element defining the player character). We can also make function bindings:
 
 ....
 bindings: {player: () => {return $("player")}}
 ....
 
 Would be an equivalent way of creating this binding. Because we often want to refer to game elements we have the shorthand above. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
+
+....
+bindings: {actor: () => {return $("npc_list").randomElement()}}
+....
+
+But you don't have to make bindings only to elements, you can bind to any Javascript value:
+
+....
+bindings: {coins: Math.clrand_int(25)}
+content: ```
+You found ${coins} coins on the floor and put them in your pocket.
+```
+....
 
 ==== Substitution Filters
 
@@ -811,11 +886,11 @@ The book belongs to Mr Sam Spade.
 
 === Conditional Templates
 
-The second type of template expression is the conditional template. This allows content to be dynamically included based on an expression. The format of a conditional template is:
+The third type of template expression is the conditional template. This allows content to be dynamically included based on an expression. The format of a conditional template is:
 
 ....
 $if(expression) {%
-  <if content template>
+  ...true path template content...
 %}
 ....
 
@@ -823,9 +898,9 @@ or
 
 ....
 $if(expression) {%
-  <if content template>
+  ...true path template content...
 %}, {%
-  <else content template>
+  ...false path template content...
 %}
 ....
 
@@ -835,11 +910,11 @@ In the game example above we used:
 $if(scene.played > 0) {%...%}
 ....
 
-To determine whether to show the won/lost percentage template content. Nested template can also contain template expressions and their own conditional templates.
+To determine whether to show the won/lost percentage template content. You can nest conditional templates inside other conditional templates.
 
 === Iteration Templates
 
-The third type of template expression is an iterator template. This allows content to be created from a list of values (In Javascript terms, anything that could be an array). The format of an iterator template is:
+The fourth type of template expression is an iterator template. This allows content to be created from a list of values (In Javascript terms, anything that could be an treated as an array). The format of an iterator template is:
 
 ....
 $foreach(x: list) {%
