@@ -66,10 +66,6 @@ defmodule Rez.Parser.Parser do
     block_with_id("list", Rez.AST.List)
   end
 
-  def location_block() do
-    block_with_id("location", Rez.AST.Location)
-  end
-
   def object_block() do
     block_with_id("object", Rez.AST.Object)
   end
@@ -135,7 +131,6 @@ defmodule Rez.Parser.Parser do
         style_block(),
         system_block(),
         task_block(),
-        location_block(),
         # Now user defined aliases
         alias_block()
       ],

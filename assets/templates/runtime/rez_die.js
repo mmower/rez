@@ -4,8 +4,8 @@
 
 const die_proto = {
   roll() {
-    return Number.rnd_between(1, this.sides);
-  }
+    return Number.rand_between(1, this.sides);
+  },
 };
 
 function RezDie(sides = 6) {
@@ -27,20 +27,22 @@ window.Rez.D100 = new RezDie(100);
 const die_roll_proto = {
   rollRound() {
     let sum = this.modifier;
-    for(let i = 0; i<this.count; i++) {
+    for (let i = 0; i < this.count; i++) {
       sum += this.die.roll();
     }
     return sum;
   },
 
   roll() {
-    if(this.rounds == 1) {
+    if (this.rounds == 1) {
       return this.rollRound();
     } else {
-      const sum = Number.range(1, this.rounds).map(() => this.rollRound()).reduce((sum, round) => sum+round, 0);
+      const sum = Number.range(1, this.rounds)
+        .map(() => this.rollRound())
+        .reduce((sum, round) => sum + round, 0);
       return sum.cl_avg(this.rounds);
     }
-  }
+  },
 };
 
 function RezDieRoll(die, count, modifier, rounds = 1) {

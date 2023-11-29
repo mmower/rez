@@ -38,7 +38,6 @@ defmodule Rez.AST.Game do
             generators: %{},
             groups: %{},
             inventories: %{},
-            locations: %{},
             items: %{},
             lists: %{},
             objects: %{},
@@ -50,8 +49,7 @@ defmodule Rez.AST.Game do
             slots: %{},
             styles: [],
             systems: %{},
-            tasks: %{},
-            zones: %{}
+            tasks: %{}
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: append_list(scripts, script)}
@@ -158,7 +156,6 @@ defmodule Rez.AST.Game do
     :groups,
     :inventories,
     :items,
-    :locations,
     :lists,
     :plots,
     :relationships,
@@ -330,7 +327,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:inventories, node_map)
     |> NodeHelper.process_collection(:slots, node_map)
     |> NodeHelper.process_collection(:items, node_map)
-    |> NodeHelper.process_collection(:locations, node_map)
     |> process_item_types()
     |> NodeHelper.process_collection(:lists, node_map)
     |> NodeHelper.process_collection(:objects, node_map)
@@ -363,7 +359,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.slots))
     |> Utils.append_list(Map.values(game.items))
     |> Utils.append_list(Map.values(game.lists))
-    |> Utils.append_list(Map.values(game.locations))
     |> Utils.append_list(Map.values(game.objects))
     |> Utils.append_list(Map.values(game.plots))
     |> Utils.append_list(Map.values(game.relationships))

@@ -18,7 +18,6 @@ defmodule Rez.Parser.TemplateParser do
 
   import Rez.Parser.UtilityParsers,
     only: [
-      dot: 0,
       iws: 0,
       iows: 0,
       colon: 0,
@@ -82,6 +81,8 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  import Rez.Parser.JSBindingParser, only: [binding_or_bound_attribute: 0]
+
   def foreach() do
     sequence(
       [
@@ -91,12 +92,7 @@ defmodule Rez.Parser.TemplateParser do
         js_identifier(),
         ignore(colon()),
         iws(),
-        choice([
-          sequence([js_identifier(), ignore(dot()), js_identifier()],
-            ast: fn [binding_id, property_name] -> {binding_id, property_name} end
-          ),
-          sequence([js_identifier()], ast: fn [binding_id] -> {binding_id, nil} end)
-        ]),
+        binding_or_bound_attribute(),
         iows(),
         ignore(close_paren()),
         iows(),
@@ -111,11 +107,11 @@ defmodule Rez.Parser.TemplateParser do
         )
       ],
       ast: fn
-        [iter_id, binding_spec, content] ->
-          {:foreach, iter_id, binding_spec, TemplateParser.parse(content)}
+        [iter_id, bound_path, content] ->
+          {:foreach, iter_id, bound_path, TemplateParser.parse(content)}
 
-        [iter_id, binding_spec, content, [divider]] ->
-          {:foreach, iter_id, binding_spec, TemplateParser.parse(content),
+        [iter_id, bound_path, content, [divider]] ->
+          {:foreach, iter_id, bound_path, TemplateParser.parse(content),
            TemplateParser.parse(divider)}
       end
     )

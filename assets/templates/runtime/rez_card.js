@@ -6,6 +6,7 @@ let card_proto = {
   __proto__: basic_object,
   targetType: "card",
 
+  // Return the compiled template function that returns content for this card to the current view.
   get viewTemplate() {
     if (this.$flipped) {
       if (!this.$flipped_template) {

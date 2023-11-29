@@ -10,7 +10,7 @@ function evaluateExpression(expression, bindings) {
         if (bindings.hasOwnProperty(property)) {
           return bindings[property];
         }
-        return undefined; // Or return some default value if you prefer.
+        return undefined;
       },
     }
   );
@@ -24,18 +24,6 @@ function evaluateExpression(expression, bindings) {
   // Invoke the function with the values from the bindings
   return func(...argValues);
 }
-
-//-----------------------------------------------------------------------------
-// Binder
-//-----------------------------------------------------------------------------
-
-const binder_proto = {};
-
-function RezBinder() {}
-
-RezBinder.prototype = binder_proto;
-RezBinder.prototype.constructor = RezBinder;
-window.Rez.binder = RezBinder;
 
 //-----------------------------------------------------------------------------
 // View
@@ -60,7 +48,8 @@ let block_proto = {
   // or a function. The result of instantiation is either
   // {name, element_ref} or {name, func_result}
   getBindings() {
-    return this.source.getAttributeValue("bindings", {}).obj_map((query) => {
+    const source_bindings = this.source.getAttributeValue("bindings", {});
+    return source_bindings.obj_map((query) => {
       if (typeof query == "string") {
         return this.instantiateIdBinding(query);
       } else if (
@@ -82,6 +71,7 @@ let block_proto = {
 
   bindValues() {
     return {
+      $block: this,
       [this.bindAs()]: this.source,
       ...this.getBindings(),
     };
@@ -170,6 +160,30 @@ function RezBlock(block_type, source) {
 RezBlock.prototype = block_proto;
 RezBlock.prototype.constructor = RezBlock;
 window.Rez.block = RezBlock;
+
+//-----------------------------------------------------------------------------
+// Synthetic Source
+//-----------------------------------------------------------------------------
+
+let synthetic_source_proto = {
+  __proto__: window.Rez.basic_object,
+
+  get viewTemplate() {
+    return this.getAttribute("template");
+  },
+};
+
+function RezSyntheticSource(template) {
+  this.id = String.randomId();
+  this.game_object_type = "synthetic_source";
+  this.attributes = {
+    template: template,
+  };
+}
+
+RezSyntheticSource.prototype = synthetic_source_proto;
+RezSyntheticSource.prototype.constructor = RezSyntheticSource;
+window.Rez.synthetic_source = RezSyntheticSource;
 
 //-----------------------------------------------------------------------------
 // Layout
@@ -353,7 +367,7 @@ let event_transformer_proto = {
         console.log(`Error: ${response.error}`);
       }
     } else if (typeof response == "undefined") {
-      throw "Event handlers must return a value, preferably an exec-object!";
+      throw "Event handlers must return an object with at least one key from: [scene, card, flash, render, error, nop]!";
     }
   },
 

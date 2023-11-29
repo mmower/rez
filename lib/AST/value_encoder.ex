@@ -24,6 +24,10 @@ defmodule Rez.AST.ValueEncoder do
     {name, encode_value({type, value})}
   end
 
+  def encode_value({:undefined, _}) do
+    "no_value"
+  end
+
   def encode_value({:number, n}) do
     to_string(n)
   end

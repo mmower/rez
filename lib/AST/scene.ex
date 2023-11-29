@@ -14,9 +14,6 @@ defmodule Rez.AST.Scene do
   The `Scene` contains a layout that is wrapped around the content generated
   by `Card`s. For example a `Scene` might layout a storefront and use
   `Cards` to represent the process of browsing the store and buying items.
-
-  Additionally a `Scene` can specify a `Location` to refer to objects that can
-  be included or scenery that can be used to embellish.
   """
   defstruct status: :ok,
             game_element: true,
@@ -74,6 +71,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def default_attributes(_scene),
     do: %{
+      "layout_mode" => Attribute.keyword("layout_mode", "single"),
+      "layout" => Attribute.source_template("layout", "```${content}```"),
       "layout_reverse" => Attribute.boolean("layout_reverse", false)
     }
 
@@ -121,13 +120,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
             :elem_ref,
             attribute_list_references?("card")
           )
-        )
-      ),
-      attribute_if_present?(
-        "location",
-        attribute_has_type?(
-          :elem_ref,
-          attribute_refers_to?("location")
         )
       ),
       attribute_present?(

@@ -173,7 +173,6 @@ defmodule Rez.AST.NodeHelper do
   with the collection under `coll_key` having been passed through
   `Node.process` themselves.
   """
-
   def process_collection(parent, coll_key, node_map) do
     case Map.get(parent, coll_key) do
       nil ->

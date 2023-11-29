@@ -504,6 +504,12 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
+  def undefined_value() do
+    ParserCache.get_parser("undefined_value", fn ->
+      char(?_) |> transform(fn _ast -> {:undefined, nil} end)
+    end)
+  end
+
   # Value
 
   def value() do
@@ -524,7 +530,8 @@ defmodule Rez.Parser.ValueParsers do
           dynamic_value(),
           property_value(),
           attr_ref_value(),
-          file_value()
+          file_value(),
+          undefined_value()
         ],
         label: "value",
         debug: true

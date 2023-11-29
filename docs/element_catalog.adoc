@@ -24,7 +24,6 @@ Elements describe in-game concepts.
 * <<Inventory>>
 * <<Item>>
 * <<List>>
-* <<Location>>
 * <<Object>>
 * <<Plot>>
 * <<Relationship>>
@@ -843,27 +842,6 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 ==== on_init
 
 : `(item, event = {}) => {...}`
-
-This script will be called during game initialization and before the game has
-started.
-
-== Location
-
-Locations in Rez are an optional concept that can be used to create a "stage" for one or more scenes. In cases where different scenes may play out in one virtual location it may make sense to use a location to represent what is the same about the background. If scenes and cards get the job done, you don't have to worry about using locations.
-
-Locations are defined using the `@location` tag.
-
-=== Example
-
-=== Required Attributes
-
-=== Optional Attributes
-
-=== Event Handlers
-
-==== on_init
-
-: `(location, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has
 started.

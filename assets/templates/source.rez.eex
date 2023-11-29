@@ -23,10 +23,18 @@
 
   %(../lib/stdlib.rez)
 
+  @object clock {
+    turns: 0
+
+    advance: function() {
+      this.turns += 1;
+    }
+  }
+
   @actor player {
     name: "The adventurer"
 
-    location_id: #dungeon_entrance
+    fought_boss: false
 
     strength: :d8
     vigor: :d6
@@ -368,74 +376,111 @@
     layout: ```
     ${content}
     ```
-    initial_card_id: #explore_location
+    initial_card_id: #c_dungeon_entrance
   }
 
-  @card explore_location {
-    bindings: {player: #player
-              location: player.location}
+  @filter exit_link {
+    name: "exit_link"
+    impl: (exit, location) => {
+      function title(exit) {
+        if(exit.by) {
+          return `${exit.by.capitalize()} ${exit.dir} to ${exit.alias.capitalize()}`;
+        } else {
+          return `${exit.dir.capitalize()} to ${exit.alias.capitalize()}`;
+        }
+      }
+
+      if(exit.check) {
+        const can_exit = new RezDecision();
+        const decide = location.getAttribute(exit.check);
+        decide(can_exit);
+        if(can_exit.wasYes) {
+          return `<li><a href="javascript:void(0);" data-event="card" data-target="${exit.to}">${title(exit)}</a></li>`;
+        } else {
+          return `<li><p class="is_info">${title(exit)} — ${can_exit.reason}</p></li>`;
+        }
+      } else {
+        return `<li><a href="javascript:void(0);" data-event="card" data-target="${exit.to}">${title(exit)}</a></li>`;
+      }
+    }
+  }
+
+  @card c_exits {
+    bindings: {location: function(block) {return block.parent_block.source;}}
     content: ```
-    <div>
-    ${location.description}
-    </div>
+    From here you can:<br /><ul>
+    $foreach(exit: location.exits) {%
+      ${exit | exit_link: location}
+    %}</ul>
     ```
   }
 
-  @location dungeon_entrance {
-    name: "Dungeon entrance"
-    description: """
+  @card c_dungeon_entrance {
+    exits: [{alias: "outside" dir: "north" to: #c_outside_world check: :can_leave} {alias: "tunnel" dir: "west" to: #c_dungeon_tunnel_1}]
+    blocks: [#c_exits]
+    location: [:dungeon :entrance]
+    content: ```
     The entrance to a dank, dark, dungeon. Water drips from the ceiling and the floor is slimy and uneven. Should you be doing this?
-    """
-    west_id: #dungeon_tunnel_1
-    north_id: #outside_world
-  }
 
-  @location dungeon_tunnel_1 {
-    name: "Dungeon tunnel"
-    description: """
-    A dark echo-ey tunnel. You can hear your heart beating fast.
-    """
-    east_id: #dungeon_entrance
-    south_id: #dungeon_tunnel_2
-  }
-
-  @location_dungeon_tunnel_2 {
-    name: "Dungeon tunnel"
-    description: """
-    A narrow tunnel that smells foul, something horrible lurks nearby.
-    """
-    north_id: #dungeon_tunnel_1
-    south_id: #dungeon_chamber
-  }
-
-  @location dungeon_chamber {
-    name: "Dungeon chamber"
-    description: ```
-    Clearly the lair of the beast. Bones and small trinkets litter the filthy floor.
+    ${c_exits}
     ```
-    monster: false
 
-    on_enter: (location) => {
+    can_leave: function(decision) {
+      if($("player").fought_boss) {
+        decision.yes();
+      } else {
+        decision.no("You know you cannot escape until you have defeated the boss!");
+      }
+    }
+  }
+
+  @card c_dungeon_tunnel_1 {
+    location: [:dungeon :tunnel_1]
+    content: ```
+    A dark echo-ey tunnel. You can hear your heart beating fast.
+
+    From here you can go [[east to the entance|c_dungeon_entrance]] or [[south to the tunnels|c_dungeon_tunnel_2]].
+    ```
+  }
+
+  @card c_dungeon_tunnel_2 {
+    location: [:dungeon :tunnel_2]
+    content: ```
+    A narrow tunnel that smells foul, something horrible lurks nearby.
+
+    From here you can go [[into a tunnel to the north|c_dungeon_tunnel_1]] or [[south to a dank chamber|c_dungeon_chamber]].
+    ```
+  }
+
+  @object location {
+    monster: _
+  }
+
+  @card c_dungeon_chamber {
+    bindings: {location: #location}
+    location: [:dungeon :chamber]
+    monster_id: 0
+    content: ```
+    Clearly the lair of the beast. Bomes and small trinkets litter the filthy floor.
+    There is a ${location.monster.name} here!
+    ```
+
+    on_start: () => {
       const goblin = $("goblin").copyWithAutoId();
-      $.addGameObject(goblin);
-      location.monster = goblin;
+      $game.addGameObject(goblin);
+      $("location").monster = goblin;
     }
   }
 
-  @location outside_world {
-    on_enter: (location) => {
-      $game.startNewSceneWithId("end_game");
-    }
+  @card c_outside_world {
+    content: ```
+    The clear daylight of the outside!
+
+    You have [[made it|>end_game]].
+    ```
   }
-
-
 
   @scene engage_in_battle {
-    layout_mode: :single
-    layout: ```
-    ${content}
-    ```
-
     on_start: (scene) => {
 
     }
@@ -450,17 +495,14 @@
   }
 
   @scene end_game {
-    layout_mode: :single
-    layout: ```
-    ${content}
-    ```
     initial_card_id: #end_game_card
   }
 
   @card end_game_card {
-    bindings: {player: #player}
+    bindings: {player: #player
+              clock: #clock}
     content: ```
-    You have escaped the dungeon in #{player.turns} turns. You killed ${player.kills} monsters, won ${player.gold} gold and ${player.xp} xp.
+    You have escaped the dungeon in ${clock.turns} turns. You killed ${player.kills} monsters, won ${player.gold} gold and ${player.xp} xp.
     ```
   }
 }

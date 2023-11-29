@@ -14,40 +14,37 @@ let decision_proto = {
   yes() {
     this.made = true;
     this.result = true;
-    this.default = false;
+    this.used_default = false;
     return this;
   },
 
   default_yes() {
     this.made = true;
     this.result = true;
-    this.default = true;
+    this.used_default = true;
   },
 
   no(reason = "none given") {
     this.made = true;
     this.result = false;
     this.reason = reason;
-    this.default = false;
+    this.used_default = false;
     return this;
   },
 
-  default_no() {
+  default_no(reason = "none given") {
     this.made = true;
     this.result = false;
-    this.default = true;
+    this.reason = reason;
+    this.used_default = true;
   },
 
-  wasMade() {
+  get wasMade() {
     return this.made;
   },
 
-  usedDefault() {
-    return this.default;
-  },
-
-  data() {
-    return this.data;
+  get usedDefault() {
+    return this.used_default;
   },
 
   setData(key, value) {
@@ -55,16 +52,20 @@ let decision_proto = {
     return this;
   },
 
-  result() {
+  get wasYes() {
     return this.result;
   },
 
-  purpose() {
-    return this.purpose;
+  get wasNo() {
+    return !this.result;
   },
 
-  reason() {
-    return this.reason;
+  explain() {
+    if (this.result) {
+      return `Result was yes`;
+    } else {
+      return `Result was no (${this.reason})`;
+    }
   },
 };
 

@@ -171,11 +171,29 @@ function isObject(obj) {
   }
 }
 
+@patch STRING_CAPITALIZE {
+  patch: "String"
+  method: "capitalize"
+  impl: function(s) {
+    return this.replace(/(^|\s)\S/g, l => l.toUpperCase());
+  }
+}
+
 @patch STRING_INTERPOLATE {
   patch: "String"
   method: "interpolate"
   impl: function(game) {
     return this;
+  }
+}
+
+@patch STRING_CAMELIZE {
+  patch: "String"
+  method: "camelize"
+  impl: function(s) {
+    return s.replace(/[_.-](\w|$)/g, function (_, x) {
+	  	return x.toUpperCase();
+	  });
   }
 }
 
@@ -548,9 +566,7 @@ function isObject(obj) {
   %% String -> String
 
   name: "camelize"
-  impl: (s) => {return s.replace(/[_.-](\w|$)/g, function (_, x) {
-		return x.toUpperCase();
-	});}
+  impl: (s) => {return s.camelize();}
 }
 
 @filter STRING_TRIM_FILTER {
@@ -564,7 +580,7 @@ function isObject(obj) {
 @filter STRING_CAPITALIZE_FILTER {
   %% String -> String
   name: "capitalize"
-  impl: (s) => {return s.replace(/(^|\s)\S/g, l => l.toUpperCase());}
+  impl: (s) => {return s.capitalize();}
 }
 
 @filter STRING_DOWNCASE_FILTER {
@@ -669,6 +685,31 @@ function isObject(obj) {
       } else {
         return "";
       }
+    }
+  }
+}
+
+@filter RENDER {
+  %% Template, View -> String
+
+  %% The render filter bends the renderer to allow inline rendering of templates
+  %% it depends upon the $block binding that makes the view available to rendering
+  %% blocks. You pass (template, $block) and it will treat the template as a block
+  %% with the current block as parents (ergo all parent bindings are available
+  %% to the rendering block).
+
+  name: "render"
+  impl: (source_obj, attribute, parent_block) => {
+    const template = source_obj.getAttribute(attribute);
+    if(typeof(template) === "undefined") {
+      throw `Unable to render ${attribute} of ${source_obj.id} as it is not defined`;
+    } else if(typeof(template) === "string") {
+      return template;
+    } else {
+      const render_source = new RezSyntheticSource(template);
+      const sub_block = new RezBlock("block", render_source);
+      sub_block.parent_block = parent_block;
+      return sub_block.renderBlock();
     }
   }
 }

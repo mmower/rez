@@ -121,7 +121,31 @@ This method is intended to be overriden in objects using `basic_object` as a pro
 
 == RezDecision
 
-== RezDie
+== RezDieRoll
+
+[cols="h,5a"]
+|===
+| new RezDieRoll(die, count, modifier, rounds)
+|===
+
+Constructs a new die roll, e.g. `new RezDieRoll(Rez.D6, 3, 1)` returns the result of rolling 3d6+1.
+
+`die`: an instance of RezDie, typically use Rez.D4, Rez.D6, Rez.D8, Rez.D10, Rez.D12, Rez.D20, or Rez.D100 but you can construct your own.
+`count`: number of die to roll
+`modifier`: +/- integer modification to the sum of the die roll
+`rounds`: default=1, number of rounds to average (CLRAND)
+
+....
+rollRound()
+....
+
+Rolls a single round (equivalent to `roll` where count=1).
+
+....
+roll()
+....
+
+Rolls `rounds` rounds and returns the average. This can be used to simulate a normal distribution of dice rolls where the middle of the range is more common. Adding more rounds will cause the rolls to tend more towards the middle of the range.
 
 == RezDynamicLink
 
@@ -340,9 +364,7 @@ Cycles through the list element by element. Each cycle is identified by a key.
 
 `list.randomUnique(key)`
 
-Returns a random element of the list without repeating elements. Each random walk is idenfied by a key.
-
-== RezLocation
+Returns the next element in a random walk through the list elements. No element will be repeated in a walk. Walks are identified by a key.
 
 == RezObject
 
@@ -371,5 +393,3 @@ Returns a random element of the list without repeating elements. Each random wal
 == RezTemplate
 
 == RezView
-
-== RezZone

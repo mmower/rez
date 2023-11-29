@@ -115,13 +115,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         attribute_has_type?(:source_template)
       ),
       attribute_if_present?(
-        "location",
-        attribute_has_type?(
-          :elem_ref,
-          attribute_refers_to?("location")
-        )
-      ),
-      attribute_if_present?(
         "blocks",
         attribute_has_type?(
           :list,

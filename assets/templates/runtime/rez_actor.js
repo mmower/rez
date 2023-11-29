@@ -24,24 +24,24 @@ let actor_proto = {
 
   elementInitializer() {
     if (this.hasAttribute("initial_location")) {
-      this.move(this.getAttributeValue("initial_location"));
+      this.move_to(this.getAttributeValue("initial_location"));
     }
   },
 
-  move(to_location_id) {
+  move_to(to_location_id) {
     console.log("Moving |" + this.id + "| to |" + to_location_id + "|");
 
-    if (this.hasAttribute("location")) {
-      const from_location_id = this.getAttributeValue("location");
+    if (this.hasAttribute("location_id")) {
+      const from_location_id = this.getAttributeValue("location_id");
       this.runEvent("leave", { location_id: from_location_id });
       const from_location = $(from_location_id);
-      from_location.runEvent("actor_leaves", { actor_id: this.id });
+      from_location.runEvent("leave", { actor_id: this.id });
     }
 
-    this.setAttribute("location", to_location_id);
+    this.setAttribute("location_id", to_location_id);
     this.runEvent("enter", { location_id: to_location_id });
     const to_location = $(to_location_id);
-    to_location.runEvent("actor_enters", { actor_id: this.id });
+    to_location.runEvent("enter", { actor_id: this.id });
   },
 };
 

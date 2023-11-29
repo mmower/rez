@@ -518,15 +518,13 @@ const basic_object = {
   },
 };
 
+const no_value = {
+  __proto__: basic_object,
+};
+
 window.isGameObject = function (v) {
   return basic_object.isPrototypeOf(v);
 };
-
-// Object.defineProperty(Object.prototype, "isGameObject", {
-//   value: function() {
-//       return basic_object.isPrototypeOf(this);
-//   }
-// });
 
 window.Rez ??= {};
 window.Rez.basic_object = basic_object;

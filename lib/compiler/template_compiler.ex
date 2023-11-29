@@ -42,6 +42,10 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(~s|`#{s}`|, true)
   end
 
+  def compile_chunk({:interpolate, {:expression, expr, []}}) do
+    js_create_fn(Values.js_exp("bindings", expr), true)
+  end
+
   def compile_chunk({:interpolate, {:expression, expr, expr_filters}})
       when is_list(expr_filters) do
     applied_filters =
@@ -88,49 +92,37 @@ defmodule Rez.Compiler.TemplateCompiler do
     compile_chunk({:foreach, iter_name, binding_spec, content, {:source_template, [""]}})
   end
 
-  def compile_chunk(
-        {:foreach, iter_name, {binding_name, property_name} = binding_spec, content, divider}
-      ) do
+  def compile_chunk({:foreach, iter_name, {:bound_path, bound_path}, content, divider}) do
     {:compiled_template, content_template} = compile(content)
     {:compiled_template, divider_template} = compile(divider)
 
-    binding_describe = fn
-      {binding_name, nil} ->
-        binding_name
-
-      {binding_name, property_name} ->
-        binding_name <> "." <> property_name
-    end
-
-    binding_lookup =
-      case property_name do
-        nil ->
-          "binding"
-
-        prop_name ->
-          "binding.#{prop_name}"
-      end
+    [bound_obj | _] = bound_path
+    bound_path = Enum.join(bound_path, ".")
+    binding_spec = "bindings." <> bound_path
 
     body =
       ~s|
-    const binding = bindings.#{binding_name};
+    const binding = bindings.#{bound_obj};
     if(typeof(binding) === "undefined") {
-      throw "'#{binding_describe.(binding_spec)}' must be defined in bindings!";
+      throw `#{bound_obj} must be defined in bindings!`;
     }
 
-    const iterable = #{binding_lookup};
+    const iterable = #{binding_spec};
     if(typeof(iterable) === "undefined") {
-      throw "'#{binding_describe.(binding_spec)}' must be bound";
+      throw `#{bound_path} must be bound`;
     }
     if(!Array.isArray(iterable)) {
-      throw "'#{binding_describe.(binding_spec)}' must be bound to a list";
+      throw `#{bound_path} must bind to a list`;
     }
     const content_template = #{content_template};
     const divider_template = #{divider_template};
-    return iterable.map((#{iter_name}) => {
+
+    const iter_output = iterable.map((#{iter_name}) => {
       const iter_bindings = {...bindings, #{iter_name}: #{iter_name}};
       return content_template(iter_bindings)
-    }).join(divider_template(bindings));|
+    }).join(divider_template(bindings));
+
+    return iter_output;|
 
     js_create_fn(body, false)
   end
@@ -158,15 +150,8 @@ defmodule Rez.Compiler.TemplateCompiler do
       js_apply_fn(bindings_map_name, "[#{list}]")
     end
 
-    def js_exp(bindings_map_name, {:binding, binding_name}),
-      do: js_apply_fn(bindings_map_name, "#{bindings_map_name}.#{binding_name}")
-
-    def js_exp(bindings_map_name, {:attribute, binding_name, attribute_name}),
-      do:
-        js_apply_fn(
-          bindings_map_name,
-          ~s|#{bindings_map_name}.#{binding_name}.#{attribute_name}|
-        )
+    def js_exp(bindings_map_name, {:bound_path, bound_path}),
+      do: js_apply_fn(bindings_map_name, "#{bindings_map_name}.#{Enum.join(bound_path, ".")}")
   end
 
   defmodule Filters do

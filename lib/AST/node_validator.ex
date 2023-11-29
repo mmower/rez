@@ -270,6 +270,40 @@ defmodule Rez.AST.NodeValidator do
     )
   end
 
+  @syntax %{
+    attr_ref: ~s|&elem_id.attr_name|,
+    elem_ref: ~s|#elem_id|,
+    string: ~s|"string"|,
+    list: ~s|[item1 item2 ...]|,
+    set: ~s|\#{item1 item2 ...}|
+  }
+
+  def syntax_for_type(type) do
+    Map.get(@syntax, type)
+  end
+
+  def syntax_help(types) when is_list(types) do
+    help = types |> Enum.map(&syntax_for_type/1) |> Enum.reject(&is_nil/1)
+
+    case help do
+      [] ->
+        ""
+
+      list ->
+        " (syntax: " <> Enum.join(list, ", ") <> ")"
+    end
+  end
+
+  def syntax_help(type) do
+    case syntax_for_type(type) do
+      nil ->
+        ""
+
+      syntax ->
+        " (syntax: " <> syntax <> ")"
+    end
+  end
+
   def attribute_has_type?(query, chained_validator \\ nil)
 
   def attribute_has_type?(expected_type, chained_validator) when is_atom(expected_type) do
@@ -283,7 +317,7 @@ defmodule Rez.AST.NodeValidator do
 
         {unexpected_type, _} ->
           {:error,
-           "Attribute '#{name}' expected to have type #{to_string(expected_type)}, was #{to_string(unexpected_type)}"}
+           "Attribute '#{name}' expected to have type '#{to_string(expected_type)}'#{syntax_help(expected_type)}, was '#{to_string(unexpected_type)}'"}
       end
     end
   end
@@ -299,8 +333,11 @@ defmodule Rez.AST.NodeValidator do
           chained_validator.(attr, node, game)
 
         {false, _} ->
+          types =
+            Enum.map_join(expected_types, ", ", fn type -> "'" <> to_string(type) <> "'" end)
+
           {:error,
-           "Attribute '#{name}' is expected to be one of #{inspect(expected_types)} but was #{to_string(type)}"}
+           "Attribute '#{name}' is expected to be one of #{types}#{syntax_help(expected_types)} but was #{to_string(type)}"}
       end
     end
   end

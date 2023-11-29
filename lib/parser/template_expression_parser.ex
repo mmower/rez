@@ -8,30 +8,16 @@ defmodule Rez.Parser.TemplateExpressionParser do
       choice: 1,
       ignore: 1,
       optional: 1,
-      lazy: 1,
-      transform: 2
+      lazy: 1
     ]
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
 
   import Rez.Parser.UtilityParsers,
-    only: [dot: 0, open_bracket: 0, close_bracket: 0, comma: 0, colon: 0, iws: 0, iows: 0, bar: 0]
+    only: [open_bracket: 0, close_bracket: 0, comma: 0, colon: 0, iws: 0, iows: 0, bar: 0]
 
   import Rez.Parser.ValueParsers, only: [string_value: 0, number_value: 0, bool_value: 0]
   import Rez.Parser.ParserCache, only: [get_parser: 2]
-
-  def attribute() do
-    sequence(
-      [
-        js_identifier(),
-        ignore(dot()),
-        js_identifier()
-      ],
-      ast: fn [binding, attribute] ->
-        {:attribute, binding, attribute}
-      end
-    )
-  end
 
   def js_value() do
     choice([
@@ -79,14 +65,11 @@ defmodule Rez.Parser.TemplateExpressionParser do
     ])
   end
 
-  def el_binding() do
-    js_identifier() |> transform(fn id -> {:binding, id} end)
-  end
+  import Rez.Parser.JSBindingParser, only: [binding_or_bound_attribute: 0]
 
   def expression_value() do
     choice([
-      attribute(),
-      el_binding(),
+      binding_or_bound_attribute(),
       js_value_or_array()
     ])
   end
