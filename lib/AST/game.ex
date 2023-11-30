@@ -28,6 +28,7 @@ defmodule Rez.AST.Game do
             init_order: [],
             attributes: %{},
             by_id: %{},
+            enums: %{},
             actors: %{},
             assets: %{},
             cards: %{},
@@ -81,6 +82,10 @@ defmodule Rez.AST.Game do
   def add_child({:derive, tag, parent}, %Game{is_a: is_a} = game)
       when is_binary(tag) and is_binary(parent) do
     %{game | is_a: TypeHierarchy.add(is_a, tag, parent)}
+  end
+
+  def add_child({:enum, id, values}, %Game{enums: enums} = game) do
+    %{game | enums: Map.put(enums, id, values)}
   end
 
   def add_child(%{} = child, %Game{} = game) do

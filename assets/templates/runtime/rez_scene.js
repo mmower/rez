@@ -58,7 +58,7 @@ let scene_proto = {
     }
   },
 
-  playCardWithId(new_card_id) {
+  playCardWithId(new_card_id, params = {}) {
     // Obviously if you try to set no card we should blow up
     if (new_card_id == null) {
       throw "Cannot specify null card_id!";
@@ -68,6 +68,11 @@ let scene_proto = {
 
     const card_template = $(new_card_id);
     const card = card_template.copyWithAutoId();
+
+    Object.entries(params).forEach(([key, value]) => {
+      card[key] = value;
+    });
+
     this.startNewCard(card);
 
     this.game.updateView();

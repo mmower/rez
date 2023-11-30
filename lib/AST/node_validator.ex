@@ -53,6 +53,7 @@ defmodule Rez.AST.NodeValidator do
   def validate(%Validation{} = validation) do
     validation
     |> validate_specification()
+    |> validate_enums()
     |> validate_children()
     |> record_validation()
   end
@@ -69,6 +70,32 @@ defmodule Rez.AST.NodeValidator do
         end
       end
     )
+  end
+
+  def validate_enums(
+        %Validation{game: %{enums: enums}, node: %{attributes: attributes} = node} =
+          pre_validation
+      ) do
+    Enum.reduce(attributes, pre_validation, fn {_id, %{name: attr_name, value: attr_value}},
+                                               validation ->
+      case Map.get(enums, attr_name) do
+        nil ->
+          validation
+
+        legal_values ->
+          case Enum.member?(legal_values, attr_value) do
+            true ->
+              validation
+
+            false ->
+              Validation.add_error(
+                validation,
+                node,
+                "'#{attr_name}' attribute value '#{attr_value}' is not legal enum value (#{Enum.map_join(legal_values, ", ", fn v -> "'#{v}'" end)})"
+              )
+          end
+      end
+    end)
   end
 
   def validate_children(%Validation{game: game, node: node} = parent_validation) do

@@ -40,7 +40,15 @@ let block_proto = {
   },
 
   instantiateFunctionBinding(f) {
-    return f(this);
+    if (this.parent_block) {
+      return f(this, this.parent_block.source);
+    } else {
+      return f(this);
+    }
+  },
+
+  instantiateBindingPath(p) {
+    return p(this.source);
   },
 
   // bindings are key-value pairs of the form {name, expr}
@@ -50,15 +58,18 @@ let block_proto = {
   getBindings() {
     const source_bindings = this.source.getAttributeValue("bindings", {});
     return source_bindings.obj_map((query) => {
-      if (typeof query == "string") {
+      if (typeof query === "string") {
         return this.instantiateIdBinding(query);
-      } else if (
-        typeof query == "object" &&
-        typeof query.attr_ref == "object"
-      ) {
-        return this.instantiatPropertyBinding(query.attr_ref);
-      } else if (typeof query == "function") {
+      } else if (typeof query === "function") {
         return this.instantiateFunctionBinding(query);
+      } else if (typeof query === "object") {
+        if (typeof query.attr_ref === "object") {
+          return this.instantiatPropertyBinding(query.attr_ref);
+        } else if (typeof query.binding === "function") {
+          return this.instantiateBindingPath(query.binding);
+        } else {
+          throw "Invalid binding type: " + typeof query + "!";
+        }
       } else {
         throw "Invalid binding type: " + typeof query + "!";
       }

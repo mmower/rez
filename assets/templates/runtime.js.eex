@@ -24,4 +24,8 @@ window.Rez = window.Rez ?? {};
 window.$ = (id) => game.$(id);
 window.$game = game;
 
+if($("player")) {
+  window.$player = $("player");
+}
+
 })();

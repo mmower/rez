@@ -91,7 +91,7 @@ defmodule Rez.Parser.Parser do
   end
 
   def style_block() do
-    delimited_block("style", fn -> "style_" <> random_str() end, Rez.AST.Style)
+    delimited_block("stylesheet", fn -> "styles_" <> random_str() end, Rez.AST.Style)
   end
 
   def system_block() do
@@ -107,6 +107,7 @@ defmodule Rez.Parser.Parser do
       [
         alias_define(),
         derive_define(),
+        enum_define(),
         # Now the pre-defined blocks
         actor_block(),
         asset_block(),

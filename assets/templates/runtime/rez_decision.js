@@ -32,6 +32,15 @@ let decision_proto = {
     return this;
   },
 
+  no_list(reason = "none given") {
+    this.made = true;
+    this.result = false;
+    this.reason = reason;
+    this.hidden = true;
+    this.used_default = false;
+    return this;
+  },
+
   default_no(reason = "none given") {
     this.made = true;
     this.result = false;
@@ -64,7 +73,11 @@ let decision_proto = {
     if (this.result) {
       return `Result was yes`;
     } else {
-      return `Result was no (${this.reason})`;
+      if (this.hide) {
+        return `Result was no (${this.reason}) and hide the decision`;
+      } else {
+        return `Result was no (${this.reason})`;
+      }
     }
   },
 };
@@ -73,9 +86,10 @@ function RezDecision(purpose, data = {}) {
   this.purpose = purpose;
   this.made = false;
   this.decision = false;
+  this.hidden = false;
   this.reason = "";
   this.data = data;
-  this.default = false;
+  this.used_default = false;
 }
 
 RezDecision.prototype = decision_proto;

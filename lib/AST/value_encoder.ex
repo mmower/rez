@@ -48,6 +48,17 @@ defmodule Rez.AST.ValueEncoder do
     ~s|"#{k}"|
   end
 
+  def encode_value({:bound_path, path}) do
+    js_path =
+      "[" <> Enum.map_join(path, ", ", fn path_component -> ~s|"#{path_component}"| end) <> "]"
+
+    ~s|{binding: (root) => {
+      return #{js_path}.reduce((obj, path_component) => {
+        return obj[path_component]}, root);
+      }
+    }|
+  end
+
   def encode_value({:dynamic_value, f}) do
     "{dynamic_value: #{Poison.encode!(f)}}"
   end

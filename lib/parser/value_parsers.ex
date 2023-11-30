@@ -14,6 +14,7 @@ defmodule Rez.Parser.ValueParsers do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DelimitedParser
+  import Rez.Parser.JSBindingParser
 
   # String
 
@@ -229,6 +230,20 @@ defmodule Rez.Parser.ValueParsers do
         ],
         ast: fn [elem_id, attr_name] ->
           {:attr_ref, {elem_id, attr_name}}
+        end
+      )
+    end)
+  end
+
+  def binding_path_value() do
+    ParserCache.get_parser("binding_path", fn ->
+      sequence(
+        [
+          ignore(back_tick()),
+          binding_path()
+        ],
+        ast: fn [binding_path] ->
+          binding_path
         end
       )
     end)
@@ -524,6 +539,7 @@ defmodule Rez.Parser.ValueParsers do
           heredoc_value(),
           string_value(),
           elem_ref_value(),
+          binding_path_value(),
           keyword_value(),
           function_value(),
           dynamic_initializer_value(),

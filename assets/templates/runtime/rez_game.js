@@ -264,7 +264,7 @@ let game_proto = {
     return this.current_scene;
   },
 
-  startSceneWithId(new_scene_id) {
+  startSceneWithId(new_scene_id, params = {}) {
     if (new_scene_id == null) {
       throw "new_scene_id cannot be null!";
     }
@@ -278,6 +278,11 @@ let game_proto = {
     // We make a copy of the scene so that changes to scene attributes
     // will not affect future scene runs
     const scene = scene_template.copyWithAutoId();
+
+    Object.entries(params).forEach(([key, value]) => {
+      scene[key] = value;
+    });
+
     this.current_scene_id = scene.id;
     this.current_scene = scene;
 
@@ -308,7 +313,7 @@ let game_proto = {
     this.view.update();
   },
 
-  interludeWithScene(interlude_scene_id) {
+  interludeWithScene(interlude_scene_id, params = {}) {
     if (interlude_scene_id == null) {
       throw "interlude_scene_id cannot be null!";
     } else if (this.currentScene == null) {
@@ -322,13 +327,11 @@ let game_proto = {
     // Save the state of the current scene
     this.pushScene();
 
-    this.startSceneWithId(interlude_scene_id, false);
-
-    // this.setCurrentScene(interlude_scene_id, false);
-    this.updateView();
+    this.startSceneWithId(interlude_scene_id, params);
+    // this.updateView();
   },
 
-  resumePrevScene() {
+  resumePrevScene(params = {}) {
     console.log("Resume from " + this.current_scene_id);
     if (this.scene_stack.length < 1) {
       throw "Cannot resume without a scene on the stack!";
@@ -337,6 +340,10 @@ let game_proto = {
       this.current_scene.finish();
 
       this.popScene();
+      Object.entries(params).forEach(([key, value]) => {
+        this.currentScene[key] = value;
+      });
+
       this.updateView();
     }
   },
@@ -440,27 +447,30 @@ let game_proto = {
   handleCardEvent(evt) {
     console.log("Handle card event");
     const card_id = evt.target.dataset.target;
-    this.currentScene.playCardWithId(card_id);
+    const { target, ...params } = evt.target.dataset;
+    this.currentScene.playCardWithId(card_id, params);
     return true;
   },
 
   handleSwitchEvent(evt) {
     console.log("Handle switch event");
     const scene_id = evt.target.dataset.target;
-    this.startSceneWithId(scene_id);
+    const { target, ...params } = evt.target.dataset;
+    this.startSceneWithId(scene_id, params);
     return true;
   },
 
   handleInterludeEvent(evt) {
     console.log("Handle interlude event");
     const scene_id = evt.target.dataset.target;
-    this.interludeWithScene(scene_id);
+    const { target, ...params } = evt.target.dataset;
+    this.interludeWithScene(scene_id, params);
     return true;
   },
 
   handleResumeEvent(evt) {
     console.log("Handle resume event");
-    this.resumePrevScene();
+    this.resumePrevScene(evt.target.dataset);
     return true;
   },
 

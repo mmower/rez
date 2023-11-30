@@ -38,6 +38,7 @@ Directives modify in-game concepts.
 * <<Alias (Directive), Alias>>
 * <<Derive (Directive), Derive>>
 * <<Declare (Directive), Declare>>
+* <<Enum (Directive), Enum>>
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
 * <<Script (Directive), Script>>
@@ -545,6 +546,35 @@ of others. Define a faction using a `@faction` element.
 
 This script will be called during game initialization and before the game has
 started.
+
+== Enum (Directive)
+
+An `@enum` directive defines a set of legal values for an attribute. The syntax is:
+
+....
+@enum <attr-name> [:value1 :value2 :value3]
+....
+
+Here's an example:
+
+....
+@enum color [:red :green :blue]
+
+@object {
+  color: :orange
+}
+....
+
+This would cause a compilation error because the `color` attribute does not use one of the legally defined values.
+
+....
+'color' attribute value 'orange' is not legal enum value ('red', 'green', 'blue')
+....
+
+Notes:
+
+* an enum applies over **all** uses of that named attribute, you can't use `color: [255, 0, 255]` in another element.
+* an enum only applies to attributes using keyword values, `@enum size [1.0 2.0 3.0]` is not a legal enum.
 
 == Filter (Directive)
 

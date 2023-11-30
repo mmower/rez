@@ -234,6 +234,32 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
+  def enum_define() do
+    sequence(
+      [
+        iliteral("@enum"),
+        iws(),
+        commit(),
+        js_identifier("enum"),
+        iws(),
+        ignore(open_bracket()),
+        keyword_value() |> transform(fn {:keyword, keyword} -> keyword end),
+        many(
+          sequence([
+            iws(),
+            keyword_value() |> transform(fn {:keyword, keyword} -> keyword end)
+          ])
+        ),
+        iows(),
+        ignore(close_bracket())
+      ],
+      label: "enum",
+      ast: fn [id, first_kw, other_kws] ->
+        {:enum, id, [first_kw | List.flatten(other_kws)]}
+      end
+    )
+  end
+
   def block_with_id(label, block_struct) do
     sequence(
       [

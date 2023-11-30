@@ -3,7 +3,7 @@ defmodule Rez.Parser.JSBindingParser do
   import Rez.Parser.UtilityParsers, only: [dot: 0]
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
 
-  def binding_or_bound_attribute() do
+  def binding_path() do
     sequence(
       [
         js_identifier(),

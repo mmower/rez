@@ -58,6 +58,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def right_angle_bracket(), do: ParserCache.get_parser("right_angle_bracket", fn -> char(?>) end)
 
+  def back_tick(), do: ParserCache.get_parser("backtick", fn -> char(?`) end)
+
   def amp(), do: ParserCache.get_parser("ampersand", fn -> char(?&) end)
 
   def caret(), do: ParserCache.get_parser("caret", fn -> char(?^) end)

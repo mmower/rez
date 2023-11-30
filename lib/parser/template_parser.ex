@@ -81,7 +81,7 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  import Rez.Parser.JSBindingParser, only: [binding_or_bound_attribute: 0]
+  import Rez.Parser.JSBindingParser, only: [binding_path: 0]
 
   def foreach() do
     sequence(
@@ -92,7 +92,7 @@ defmodule Rez.Parser.TemplateParser do
         js_identifier(),
         ignore(colon()),
         iws(),
-        binding_or_bound_attribute(),
+        binding_path(),
         iows(),
         ignore(close_paren()),
         iows(),

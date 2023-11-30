@@ -17,6 +17,39 @@
   created: "<%= @created %>"
   initial_scene_id: #explore_dungeon
 
+  @stylesheet {
+    .disabled-link {
+      color: #757575; /* Greyed out color */
+      cursor: default; /* Change cursor to default to indicate it's not clickable */
+      pointer-events: none; /* Prevent clicking */
+    }
+
+    .tooltip {
+      display: inline-block;
+      position: relative;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
   layout: ```
   ${content}
   ```
@@ -87,6 +120,19 @@
       </div>
     </div>
     ```
+  }
+
+  @actor balrog {
+    monster: true
+    boss: true
+
+    name: "Balrog"
+    description: "A huge figure wreathed in fire and smoke, terrible to behold"
+
+    strength: :d12
+    vigor: :d12
+    fighting: :d12
+    damage: :d12
   }
 
   @actor troll {
@@ -391,13 +437,15 @@
       }
 
       if(exit.check) {
-        const can_exit = new RezDecision();
-        const decide = location.getAttribute(exit.check);
-        decide(can_exit);
-        if(can_exit.wasYes) {
+        const can_use_exit = new RezDecision();
+        const decide_fn = location.getAttribute(exit.check);
+        decide_fn(can_use_exit);
+        if(can_use_exit.wasYes) {
           return `<li><a href="javascript:void(0);" data-event="card" data-target="${exit.to}">${title(exit)}</a></li>`;
+        } else if(can_use_exit.data.hide) {
+          return "";
         } else {
-          return `<li><p class="is_info">${title(exit)} — ${can_exit.reason}</p></li>`;
+          return `<li class="tooltip"><a href="#"" class="disabled-link">${title(exit)}</a><span class="tooltiptext">${can_use_exit.reason}</li>`;
         }
       } else {
         return `<li><a href="javascript:void(0);" data-event="card" data-target="${exit.to}">${title(exit)}</a></li>`;
@@ -429,7 +477,7 @@
       if($("player").fought_boss) {
         decision.yes();
       } else {
-        decision.no("You know you cannot escape until you have defeated the boss!");
+        decision.no("You cannot escape the dungeon, the boss is exerting their evil will on you!");
       }
     }
   }

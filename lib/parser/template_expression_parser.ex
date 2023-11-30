@@ -65,11 +65,11 @@ defmodule Rez.Parser.TemplateExpressionParser do
     ])
   end
 
-  import Rez.Parser.JSBindingParser, only: [binding_or_bound_attribute: 0]
+  import Rez.Parser.JSBindingParser, only: [binding_path: 0]
 
   def expression_value() do
     choice([
-      binding_or_bound_attribute(),
+      binding_path(),
       js_value_or_array()
     ])
   end
