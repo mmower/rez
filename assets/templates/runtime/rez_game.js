@@ -447,7 +447,7 @@ let game_proto = {
   handleCardEvent(evt) {
     console.log("Handle card event");
     const card_id = evt.target.dataset.target;
-    const { target, ...params } = evt.target.dataset;
+    const { event, target, ...params } = evt.target.dataset;
     this.currentScene.playCardWithId(card_id, params);
     return true;
   },
@@ -455,7 +455,7 @@ let game_proto = {
   handleSwitchEvent(evt) {
     console.log("Handle switch event");
     const scene_id = evt.target.dataset.target;
-    const { target, ...params } = evt.target.dataset;
+    const { event, target, ...params } = evt.target.dataset;
     this.startSceneWithId(scene_id, params);
     return true;
   },
@@ -463,7 +463,7 @@ let game_proto = {
   handleInterludeEvent(evt) {
     console.log("Handle interlude event");
     const scene_id = evt.target.dataset.target;
-    const { target, ...params } = evt.target.dataset;
+    const { event, target, ...params } = evt.target.dataset;
     this.interludeWithScene(scene_id, params);
     return true;
   },

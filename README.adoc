@@ -1,7 +1,7 @@
 = Rez
 :table-caption!:
 
-A language, compiler, and runtime system for creating interaction fiction games with HTML
+A language, compiler, and runtime system for creating choice-based HTML interaction fiction
 
 By Matt Mower &lt;self@mattmower.com&gt;
 
@@ -27,13 +27,11 @@ By Matt Mower &lt;self@mattmower.com&gt;
 
 == Introduction
 
-Rez is a tool for creating HTML-based interactive fiction/games where we use HTML/CSS, images, movies, and sounds to present an interface and players interact with the game through HTML elements like links & form inputs.
+Rez is a tool for creating sophisticated choice-based HTML interactive fiction. These are games that use HTML/CSS, Javascript, images, movies, and sounds to present an interface and where players interact with the game through choices presented via HTML elements like links & form inputs.
 
-A very common example of such games are choice-based stories for which many authors use https://twinery.org/[Twine]. While you can use Rez to make straightforward choice-based games, Twine already does this well and has a big community of authors and players that can be helpful. However, if your game is getting complicated to implement in Twine you may find Rez a better fit.
+Rez has excellent support for good looking & usable interfaces. It also builds in asset management, actors & behaviours, item & inventory management, factions, relationships, scenes/card structure, plots, customisable systems, and more.
 
-Rez builds in asset management, actors & behaviours (through embedded Javascript & beta-level support for behaviour trees), item & inventory management, maps & locations, factions & relationships, scenes, plots, fully customisable systems, and more.
-
-Rez includes a simple but flexible UI and includes the https://bulma.io/[Bulma] CSS framework and https://alpinejs.dev/[Alpine.JS] for modern layout and dynamic content.
+Rez UI are built on top of the https://bulma.io/[Bulma] CSS framework and https://alpinejs.dev/[Alpine.JS] for modern layout and dynamic content.
 
 Rez is relatively deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/docs/REZ.html[online documentation] for tutorials, language reference, and runtime API documentation.
 
@@ -41,13 +39,13 @@ Rez is relatively deep but you can be productive with a subset of the language a
 
 To write a game with Rez you write one or more `.rez` source files and then use the rez compiler to turn them into a complete game: all the HTML, javascript code, & assets bundled ready to play the game in the browser, or distribute it.
 
-The Rez language is mostly declarative: that means that you define the contents of the game (and how they interact) and the Rez runtime takes care of the details. Dynamic behaviours (for example procedural generation) are supported by inserting simple Javascript functions. It requires only a little Javascript knowledge to get productive.
+The Rez language is mostly declarative. You use attributes to specify what happens and Rez takes care of the details. Dynamic behaviours (for example procedural generation) are supported by through incorporating Javascript functions. It requires only a little Javascript knowledge to get productive.
 
 The most obvious comparison for Rez is https://twinery.org/[Twine]. Twine describes itself as an "open source tool for telling interactive, nonlinear stories." and it shines by making it relatively easy for non-developers to build this kind of story. Rez aims to be an "open source tool for playing interactive-fiction games".
 
 There are other tools that target game authors such as https://www.inklestudios.com/ink/[Ink], https://www.linusakesson.net/dialog/[Dialog], https://ganelson.github.io/inform-website/[Inform], and https://www.tads.org[TADS]. Each has advantages and compromises for example having a more complex language, depending on a Z-machine runtime, or being parser based. All these tools are good in their niche, Rez aims to fit into a different niche.
 
-The ideal Rez user is likely creating a game that has become over-ambitious for Twine and is not afraid to learn to write simple Javascript functions.
+The ideal Rez user is likely creating a game that is over-ambitious for Twine and is not afraid to learn to write simple Javascript functions.
 
 == Installation
 
@@ -130,10 +128,19 @@ If you are able to get Rez to run on a different platform please create a PR wit
 To create a new game:
 
 ....
-rez new <game-name> --author-name="My name" --author-email="My email" [--game-title="What my game is called" --game-homepage="URL for more info about my game"]
+rez new <game-name>
 ....
 
 This creates a new game directory with the same name as the game name and populates it with a template game and its dependencies. The `dist` folder is where the compiled game will be placed.
+
+Optionally you can specify any of these additional command line arguments:
+
+....
+--author-name="My name"
+--author-email="My email"
+--game-title="What my game is called"
+--game-homepage="URL for more info about my game"
+....
 
 === Compiling
 
@@ -162,7 +169,6 @@ Note that, at present, no attempt is made to minimise or optimise the resulting 
 
 === Backend dependencies
 
-- https://github.com/pragdave/earmark[Earmark] used courtesy of https://pragdave.me/[Dave Thomas] under the https://github.com/pragdave/earmark/blob/master/LICENSE[Apache 2.0 license]
 - https://github.com/rrrene/credo[Credo] used courtesy of https://rrrene.org/[René Föhring] under the https://github.com/rrrene/credo/blob/master/LICENSE[MIT license]
 - https://github.com/zyro/elixir-uuid[elixir-uuid] used courtesy of http://andreimihu.com/[Andrei Mihu] under the https://github.com/zyro/elixir-uuid/blob/master/LICENSE[Apache 2.0 license]
 - https://github.com/danhper/elixir-temp[Temp] used courtesy of https://daniel.perez.sh/[Daniel Perez] under the https://github.com/danhper/elixir-temp/blob/master/LICENSE[MIT license]

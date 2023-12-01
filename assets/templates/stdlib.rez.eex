@@ -665,11 +665,11 @@ function isObject(obj) {
   }
 }
 
-@filter DECISION_FILTER {
-  %% ${card | decision: <action>}
-  %% ${card | decision: "can_attack"}
+@filter DYN_LINK_FILTER {
+  %% ${card | dyn_link: <action>}
+  %% ${card | dyn_link: "can_attack"}
 
-  name: "decision"
+  name: "dyn_link"
   impl: (card, action) => {
     const link_handler = card.getAttribute(action);
     if(typeof(link_handler) != "function") {

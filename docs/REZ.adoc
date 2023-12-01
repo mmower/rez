@@ -534,65 +534,78 @@ However, as a new card is played the previous card gets "flipped". What that mea
 
 For example a card might present the player with two options. If the card didn't get flipped it would continue to present two options even though an option had been selected. But the flipped version can, instead, display the chosen option.
 
-== Linking to the next card or scene
+== Linking to cards, scenes & events
 
-Borrowing from Twine there is an easy way to specify a link to play a new card or change to a new scene. The simplest form is:
+=== Playing a card
 
-....
-[[Link Title|card_id]]
-....
-
-e.g.
+When we play a card into the current scene we are either replacing (scene `layout_mode: :single`) or adding (scene `layout_mode: :stack`) to the content in the scene.
 
 ....
-[[Play Again|play_the_game]]
+<a href="javascript:void(0)" data-event="card" data-target="play_game">Play Again</a>
 ....
 
-This will be converted into a link that plays the card with id `play_the_game` and is titled "Play Again". If you don't specify a card id it will convert the title and look for that. So:
+This will create a link titled "Play Again" that plays the card with id `#play_game`.
+
+=== Switching to another scene
+
+A scene switch is when we end one scene and begin another, automatically playing its initial card.
 
 ....
-[[Play Again]]
+<a href="javascript:void(0)" data-event="switch" data-target="fight">Draw your gun</a>
 ....
 
-is equivalent to:
+This will create a link titled "Draw your gun" that will end the current scene and begin the scene `#fight`.
+
+=== Creating an interlude
+
+An interlude is when we interrupt one scene to play out another, and when that scene ends returning to the original scene.
 
 ....
-[[Play Again|play_again]]
+<a href="javascript:void(0)" data-event="interlude" data-target="store">Shop at the store</a>
 ....
+
+This will create a link "Shop at the store" that interrupts the current scene and starts the scene `#store`. This should be followed by a resume to return to the original scene.
+
+An example of where this kind of link is useful is for presenting a player inventory. Looking at the inventory steps out of normal gameplay. When the player is done with the inventory they expect to be back where they were before they triggered it.
+
+It is possible to have an interlude within an interlude but may get confusing if taken too far.
+
+=== Resuming the previous scene
+
+From an interlude we can resume the previous scene using a resume link.
+
+....
+<a href="javascript:void(0)" data-event="resume">Leave the store</a>
+....
+
+This will end the interluded scene and resume the previous scene where it left off.
 
 There may be situations where you only want links to appear under specific circumstances. You could do this a template expression but Rez has a built-in facility for dynamic links. Using the syntax:
 
-A link to switch to a new scene uses the syntax:
+=== Triggering events
+
+A link can trigger a custom event.
 
 ....
-[[Link Title|>scene_id]]
+<a href="javascript:void(0)" data-event="reload">Reload gat</a>
 ....
 
-This presents a link which, when clicked, while load the new scene with id `scene_id` and automatically play its initial card.
-
-....
-[[Link Title|!scene_id]]
-....
-
-This presents a link which, when clicked, acts like the previous type of link except that it interrupts, rather than ending, the current scene so that the current scene can be resumed. An example of where this kind of link is useful is for presenting a player inventory. Looking at the inventory steps out of normal gameplay. When the player is done with the inventory they expect to be back where they were before they triggered it.
-
-....
-[[Link Title|!!]]
-....
-
-Presents a link that, when clicked, ends an interlude scene and resumes the previous scene from where it left off. Interludes are held in a stack so it's possible to interlude from an interlude and then rewind back to the starting point.
-
-== Event Links
-
-An event link is written:
-
-....
-[[Link Title|*event_name]]
-....
-
-This will be rendered as a link that looks for an `on_<event_name>` event handler attribute on the current card. The link syntax for loading new cards and scenes is transparently converted into event links with a built-in handler.
+This will create a link titled "Reload gat" that when clicked will run an event `on_reload` on the game, scene, or card (in that order).
 
 Once the event handler has done its work it should return a response object.
+
+=== Passing data
+
+Any of the previous types of link can be amended to pass arbitrary data values. For example we might have a dialogue scene and want to control which actor the player is going to have a dialog with:
+
+....
+<ul>
+  <li><a href="javascript:void(0)" data-event="switch" data-target="conversation" data-actor_id="gutman">Speak with Gutman</a></li>
+  <li><a href="javascript:void(0)" data-event="switch" data-target="conversation" data-actor_id="wilmer">Speak with Wilmer</a></li>
+</ul>
+....
+
+When either link is clicked it will start the new scene `#conversation` and that scene will have it's `actor_id` attribute set to either `#gutman` or `#wilmer` based on which of the links is clicked. This offers a great deal of ability to customise the behaviour of cards and scenes.
 
 === Event Reponse Objects
 
@@ -628,7 +641,7 @@ To have the current view re-rendered.
 
 To log an error message to the console.
 
-== Buttons
+=== Buttons
 
 An alternative to using a link is to use a `<button>` with a `data-event` attribute. For example a button to play a new card would look like:
 
@@ -666,25 +679,31 @@ on_something_interesting: (card, evt) => {
 
 In this example the handler is in a card but you can also put in the scene or game as appropriate.
 
-== Dynamic Links
+=== Dynamic Links
+
+Sometimes you want a link to be disabled based on dynamic criteria (the bar doesn't open until 8am) or maybe not even to appear at all (the portal entrance isn't visible if you're not wearing your x-ray specs).
+
+To make a dynamic link use the `dyn_link` template expression filter. Here's an example:
 
 ....
-[[*play_again]]
-....
+@card {
+  content: ```
+  ${card | dyn_link: "rest"}
+  ```
 
-Causes Rez to look for a script attribute `play_again` in the current card or scene and pass it a xref:jsapi#RezDynamicLink[RezDynamicLink] object that it can use to customise link presentation.
-
-....
-play_again: function(link) {
-  if(this.play_count > 9) {
-    link.deny("You have played too many times already!");
-  } else {
-    link.allow("Play Again", "play_again");
+  on_rest: function(dyn_link) {
+    if($player.is_fully_rested) {
+      dyn_link.deny("You are already rested");
+    } else {
+      dyn_link.allow("Rest", "player_rests");
+    }
   }
 }
 ....
 
-Once the player plays their 10th game this link becomes inactive. Alternatively you can use `link.hide()` and the link won't appear at all. Good for options which should be concealed until some gameplay condition is met.
+In this case, if the player is already rested they are shown a disabled option. In some cases it might be preferable to use `dyn_link.hide()` so that no choice is offered at all.
+
+The event handler is passed a xref:jsapi#RezDynamicLink[RezDynamicLink] object that it can use to customise link presentation.
 
 == Forms
 
