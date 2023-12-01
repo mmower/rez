@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.0.2"
+  @version "1.0.3"
 
   def project do
     case System.get_env("BUILD_MODE") do
@@ -46,7 +46,6 @@ defmodule Rez.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:earmark, "~> 1.4"},
       {:ergo, "~> 0.9"},
       # {:ergo, path: "/Users/matt/Projects/Elixir/ergo"},
       {:logical_file, "~> 1.0"},
@@ -62,8 +61,7 @@ defmodule Rez.MixProject do
       {:rename, "~> 0.1.0"},
       {:poison, "~> 5.0"},
       {:dialyxir, "~> 1.3", runtime: false},
-      {:apex, "~>1.2.1"},
-      {:calliope, "~> 0.4.2"}
+      {:apex, "~>1.2.1"}
     ]
   end
 

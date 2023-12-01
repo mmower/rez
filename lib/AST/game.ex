@@ -131,12 +131,11 @@ defmodule Rez.AST.Game do
       TemplateHelper.compile_template(
         "game",
         NodeHelper.get_attr_value(game, "layout"),
-        NodeHelper.get_attr_value(game, "layout_format", "markdown"),
         fn html ->
-          html = TemplateHelper.process_links(html)
           custom_css_class = NodeHelper.get_attr_value(game, "css_class", "")
           css_classes = add_css_class("game", custom_css_class)
-          ~s|<div id="game" class="#{css_classes}">#{html}</div>|
+
+          ~s|<div id="game" data-game=true class="#{css_classes}">#{html}</div>|
         end
       )
     )

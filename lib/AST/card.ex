@@ -24,9 +24,7 @@ defmodule Rez.AST.Card do
       TemplateHelper.compile_template(
         card_id,
         NodeHelper.get_attr_value(card, "content", ""),
-        NodeHelper.get_attr_value(card, "content_format", "markdown"),
         fn html ->
-          html = TemplateHelper.process_links(html)
           custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
           css_classes = Utils.add_css_class("card", custom_css_class)
 
@@ -43,12 +41,11 @@ defmodule Rez.AST.Card do
       TemplateHelper.compile_template(
         card_id,
         NodeHelper.get_attr_value(card, "flipped_content", ""),
-        NodeHelper.get_attr_value(card, "flipped_format", "markdown"),
         fn html ->
-          html = TemplateHelper.process_links(html)
           custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
           css_classes = Utils.add_css_class("flipped", custom_css_class)
-          ~s|<div class="#{css_classes}">#{html}</div>|
+
+          ~s|<div data-card="#{card_id}" data-card="#{card_id}" data-flipped=true class="#{css_classes}">#{html}</div>|
         end
       )
     )

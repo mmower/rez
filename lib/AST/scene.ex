@@ -29,11 +29,11 @@ defmodule Rez.AST.Scene do
       TemplateHelper.compile_template(
         id,
         NodeHelper.get_attr_value(scene, "layout"),
-        NodeHelper.get_attr_value(scene, "layout_format", "markdown"),
         fn content ->
           custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
           css_classes = Utils.add_css_class("scene", custom_css_class)
-          ~s|<div id="scene_#{id}" class="#{css_classes}">#{content}</div>|
+
+          ~s|<div id="scene_#{id}" data-scene="#{id}" class="#{css_classes}">#{content}</div>|
         end
       )
     )
@@ -72,7 +72,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
   def default_attributes(_scene),
     do: %{
       "layout_mode" => Attribute.keyword("layout_mode", "single"),
-      "layout" => Attribute.source_template("layout", "```${content}```"),
+      "layout" => Attribute.source_template("layout", "${content}"),
       "layout_reverse" => Attribute.boolean("layout_reverse", false)
     }
 

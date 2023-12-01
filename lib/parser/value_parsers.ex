@@ -110,7 +110,9 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("tempate", fn ->
       Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("```"), literal("```"))
       |> transform(&convert_doc_fragments_to_string/1)
-      |> transform(fn template_source -> {:source_template, template_source} end)
+      |> transform(fn template_source ->
+        {:source_template, template_source}
+      end)
     end)
   end
 

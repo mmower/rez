@@ -39,12 +39,11 @@ defmodule Rez.AST.Item do
       TemplateHelper.compile_template(
         item_id,
         NodeHelper.get_attr_value(item, "description", ""),
-        NodeHelper.get_attr_value(item, "format", "markdown"),
         fn html ->
-          html = TemplateHelper.process_links(html)
           custom_css_class = NodeHelper.get_attr_value(item, "css_class", "")
           css_classes = Utils.add_css_class("item", custom_css_class)
-          ~s|<div id="item_#{item_id}" class="#{css_classes}">#{html}</div>|
+
+          ~s|<div id="item_#{item_id}" data-item="#{item_id}" class="#{css_classes}">#{html}</div>|
         end
       )
     )
