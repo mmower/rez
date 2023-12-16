@@ -22,6 +22,7 @@ defmodule Rez.Parser.TemplateParser do
       iows: 0,
       colon: 0,
       comma: 0,
+      open_brace: 0,
       close_brace: 0,
       open_paren: 0,
       close_paren: 0
@@ -36,6 +37,7 @@ defmodule Rez.Parser.TemplateParser do
 
   def if_macro(), do: PC.get_parser("if_macro", fn -> literal("$if") end)
   def fe_macro(), do: PC.get_parser("fe_macro", fn -> literal("$foreach") end)
+  def do_macro(), do: PC.get_parser("do_macro", fn -> literal("$do") end)
   def open_body(), do: PC.get_parser("open_body", fn -> literal("{%") end)
   def close_body(), do: PC.get_parser("close_body", fn -> literal("%}") end)
   def open_interpolation(), do: PC.get_parser("open_interpolation", fn -> literal("${") end)
@@ -117,6 +119,21 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def doblock() do
+    sequence(
+      [
+        DP.text_delimited_by_prefix_and_nested_parsers(
+          ignore(do_macro()),
+          open_brace(),
+          close_brace()
+        )
+      ],
+      ast: fn [code] ->
+        {:do, code}
+      end
+    )
+  end
+
   def interpolation() do
     sequence(
       [
@@ -143,24 +160,8 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def open_helper(), do: PC.get_parser("open_helper", fn -> literal("{{") end)
-  def close_helper(), do: PC.get_parser("close_helper", fn -> literal("}}") end)
-
-  def helper() do
-    sequence([
-      ignore(open_helper()),
-      commit(),
-      many(
-        sequence([
-          not_lookahead(close_helper()),
-          any()
-        ])
-      ),
-      ignore(close_helper())
-    ])
-  end
-
   def la_open_conditional(), do: PC.get_parser("open_conditional", fn -> literal("$if(") end)
+  def la_open_doblock(), do: PC.get_parser("open_doblock", fn -> literal("$do{") end)
   def la_open_foreach(), do: PC.get_parser("open_foreach", fn -> literal("$foreach(") end)
   def escape_dollar(), do: PC.get_parser("escape_dollar", fn -> literal("\\$") end)
 
@@ -170,6 +171,7 @@ defmodule Rez.Parser.TemplateParser do
         not_lookahead(
           choice([
             la_open_conditional(),
+            la_open_doblock(),
             open_interpolation(),
             la_open_foreach(),
             escape_dollar()
@@ -191,10 +193,10 @@ defmodule Rez.Parser.TemplateParser do
     many(
       choice([
         cancel_interpolation_marker(),
-        interpolation(),
         conditional(),
+        doblock(),
+        interpolation(),
         foreach(),
-        helper(),
         string()
       ]),
       ast: fn ast -> {:source_template, ast} end

@@ -33,9 +33,9 @@
 %% ----------------------------------------------------------------------------
 
 @script {
-function isObject(obj) {
-  return obj !== null && typeof obj === "object" && Object.prototype.toString.call(obj) === "[object Object]";
-}
+  function isObject(obj) {
+    return obj !== null && typeof obj === "object" && Object.prototype.toString.call(obj) === "[object Object]";
+  }
 }
 
 @patch OBJECT_DEEP_COPY {
@@ -184,6 +184,18 @@ function isObject(obj) {
   method: "interpolate"
   impl: function(game) {
     return this;
+  }
+}
+
+@patch STRING_POSSESSIVE {
+  patch: "String"
+  method: "possessive"
+  impl: function() {
+    if(this.endsWith("s")) {
+      return this + "'";
+    } else {
+      return this + "'s";
+    }
   }
 }
 
@@ -609,6 +621,13 @@ function isObject(obj) {
 
   name: "pluralize"
   impl: (s) => {return pluralize(s);}
+}
+
+@filter STRING_POSSESSIVE_FILTER {
+  %% String -> String
+
+  name: "possessive"
+  impl: (s) => {return s.possessive();}
 }
 
 @filter STRING_SPLIT_FILTER {

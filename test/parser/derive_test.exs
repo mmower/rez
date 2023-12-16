@@ -11,14 +11,14 @@ defmodule Rez.Parser.DeriveTest do
 
   test "derive from multiple roots" do
     input = """
-    @game begin
+    @game {
       @derive :weapon :item
       @derive :sword :weapon
       @derive :long_sword :sword
       @derive :long_sword :one_handed
       @derive :great_sword :sword
       @derive :great_sword :two_handed
-    end
+    }
     """
 
     source = dummy_source(input)

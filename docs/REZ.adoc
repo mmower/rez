@@ -1,17 +1,17 @@
-= Rez: a tool for creating HTML-based interactive fiction games
+= Rez: a system for creating HTML choice-based games
 :toc:
 
 == Introduction
 
-Rez is a language for writing interactive fiction/RPG/simulation games using HTML and incorportating Javascript, CSS, and optionally graphics, audio, and movie files.
+Rez is a language, compiler, and runtime for writing choice-based interactive fiction/RPG/simulation games based on HTML, Javascript, CSS, and — optionally — graphics, audio, and movie files.
 
 Rez started as a **quick** alternative to https://twinery.org/[Twine] for an author who had become frustrated with Twine.
 
 Twine describes itself as an "open source tool for telling interactive, nonlinear stories." It makes it relatively easy for those with almost no development experience to get started and create a choice-based game.
 
-Rez, by contrast, is designed for making games whose complexity is not well suited to Twine and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable.
+Rez, by contrast, is designed for making games whose complexity is not well suited to Twine and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable. Obvious alternatives to Rez are probably https://www.inklestudios.com/ink/[Ink] or https://www.choiceofgames.com/make-your-own-games/choicescript-intro/[ChoiceScript].
 
-Rez's complexity sits somewhere between advanced Twine and Inform/TADS. It has a relatively simple, declarative, syntax but requires the author to be comfortable writing small Javascript functions to implement complex behaviours.
+Rez's complexity sits somewhere between advanced Twine and Inform/TADS. It has a relatively simple, declarative, syntax but requires the author to be comfortable writing small amounts of Javascript to implement more complex behaviours.
 
 Rez has a standard library including support for creating NPCs, item & inventory management, scenes, and maps and a behaviour tree system to introduce AI behaivour. Rez also features a simple, yet powerful, layout & templating system.
 
@@ -238,9 +238,17 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |an identifier referring to the unique id of an element
 |`#sauron`, `#gandalf`, `#the_ring`
 
+|Attribute Alias
+|References an attribute in another element
+|`&sauron.location`
+
 |Heredoc String
 |a text value that can span across multiple lines
 |`"""it's a plaster bust of a parrot"""`
+
+|File
+|a string value that is imported from a file
+|`+<<<FILE_NAME>>>+`
 
 |Template
 |a text value that can span multiple lines and content template expressions that are dynamically interpolated at runtime
@@ -258,10 +266,6 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |a collection of name: value pairs where the values can be of any Rez attribute type. Note that Rez tables do not use a `,` to separate name: value pairs.
 |`+{color: :red size: :large print: "Danger"}+`
 
-|Tracery Grammar
-|a text value whose contents should be a https://github.com/galaxykate/tracery[Tracery] grammar
-|`+G``{origin: ...}```+`
-
 |Script (Event)
 |a Javascript function for handling an event. Expected to be in arrow format and passed the object receiving the event and the event as parameters.
 |`(game, event) => {...}`
@@ -274,17 +278,17 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
 |`2d6+1`, `d4`, `3d6-1`, `2d10`
 
-|File
-|a string value that is imported from a file
-|`+<<<FILE_NAME>>>+`
-
-|Attribute Alias
-|References an attribute in another element
-|`&sauron.location`
-
 |Probability Table
 |A list of pairs wrapped in `\|` that becomes a generator property.
 |\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
+
+|Tracery Grammar
+|a text value whose contents should be a https://github.com/galaxykate/tracery[Tracery] grammar
+|`+G``{origin: ...}```+`
+
+|Binding Path
+|Used within `bindings` to specify an object via a property path.
+|``source.exits`
 
 |Dynamic Initializer
 |A Javascript expression that is evaluated when the game starts
@@ -297,9 +301,80 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |Dynamic Property
 |A Javascript function expression that is converted into an object property
 |`^p{return this.first_name + " " + this.last_name}`
+
 |===
 
-These last four dynamic attribute types are worth a special mention.
+=== Boolean
+
+A boolean value is either `true` or `false` (alternatively we can use `yes` and `no`) and is often used for flags.
+
+The underlying data representation is a Javascript boolean.
+
+=== Number
+
+A number value can represent either integers or floating point values.
+
+The underlying data representation is a Javascript number.
+
+=== String
+
+A string value is text enclosed with double-quote (`"`) characters used for descriptive properties. Typically single lines, where multiple lines need to be used the suggestion is to use the Heredoc string instead.
+
+The underlying data representation is a Javascript string.
+
+=== Keyword
+
+A keyword value is a special kind of string primarily used for identifier values. It is prefixed with a colon (`:`) and must obey Javascript identifier rules.
+
+The underlying data representation is a Javascript string.
+
+=== Element Reference
+
+An element reference is used to refer to the id of a game element. It is prefixed with a hash (`#`) and must obey Javascript identifier rules. Although it acts like a string part of the value of element references is that the compiler will attempt to verify that they refer to an existing object.
+
+The underlying data representation is a Javascript string.
+
+=== Attribute Alias (Deprecated)
+
+An attribute alias is used to refer to an attribute of a specific element. It is prefixed with an ampersand (`&`) and consists of `elem_id.attr_name` where `elem_id`` is an element id and `attr_name`` is the name of an attribute of that element.
+
+The underlying representation is a Javascript object `{elem_id: <elem_id> attr_name: <attr_name>}`.
+
+=== Heredoc String
+
+A heredoc string is a multi-line capable string that is whitespace aware.
+
+=== File String
+
+A file string is a string value whose content is stored and read in from an external file.
+
+=== Template
+
+A template is a kind of string value that supports dynamic content that is interpolated at run-time. This is controlled by the use of expressions such as `${...}`, `$if() {% ... %}`, and `$foreach(x: xs) {% %}`. See template expressions for more.
+
+=== List
+
+A list of whitespace separated values that can include any of the other attribute types. It is separate from a `@list` element.
+
+=== Set
+
+A set of whitespace separated values that can include any of the other attribute types.
+
+=== Table
+
+A series of `key:` `value` pairs where the key should be a Javascript id and the value can be any of the other attribute types including another table.
+
+However it is worth noting that using deeply nested tables is not advised. It does work, but the entire set of tables is the attribute making working with nested values more complicated.
+
+=== Event Script
+
+An event script is written as a Javascript arrow function `(args) => {...}` and therefore `this` will be `null` when it runs. Typically the object the event has been triggered for will be the first argument.
+
+=== Action Script
+
+An action script is written as a regular Javascript function `function (args) {...}` and `this` will refer to the object the script has been defined on.
+
+=== Dice
 
 === Probability Table
 
@@ -323,21 +398,44 @@ We can also use `#id`'s as the key:
 meet_on_the_road: |#ranger 15 #wizard 10 #traveller 45 #evil 30|
 ....
 
-At the moment, due to a lack of JSON support, it is not possible to use functions as keys. However you can use objects with an identically named function:
+At the moment, due to a lack of JSON support, it is not possible to use attribute refs or functions as entries. A work around looks like this:
 
 ....
-@object f1 { f: function() {...} }
-@object f2 { f: function() {...} }
-@object f3 { f: function() {...} }
+@card card1 {
+    content: ```
+    ${f}
+    ```
 
-@object f {
-  f: |#f1 50 #f2 25 #f3 25|
-}
+    func_table: |#o1 50 #o2 25 #o3 25|
 
-$("f").f.f()
+    choose_f: function() {
+      return $(this.func_table).f();
+    }
+  }
+
+  @object o1 {
+    f: function() {
+      return 1;
+    }
+  }
+
+  @object o2 {
+    f: function() {
+      return 2;
+    }
+  }
+
+  @object o3 {
+    f: function() {
+      return 3;
+    }
+  }
 ....
 
 It's not elegant but it's feasible. This will likely get cleaned up in a future version.
+
+=== Tracery Grammar
+
 
 === Dynamic Initializer
 
@@ -473,13 +571,97 @@ You can go quite a long way using only this subset of Rez's features.
 
 We should distinguish between two environments: The _author_time_ environment where we're dealing with `.rez` source files containg elements & attributes, and the _runtime_ environment where these have been compiled into JavaScript code that runs in the browser.
 
-In the runtime environment `@game` has been translated into a JS object with `RezGame` as its prototype, the scene into a JS object with `RezScene` as its prototype, and the cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object.
+=== runtime.js
+
+All of the functionality of the game is converted into Javascript objects and functions which end up in a file called `runtime.js`. You can see this in the `dist/assets` folder of your game. It's worth looking through runtime.js because you can see all of the library classes and functionality. Note that you should never modify `runtime.js`` as it will be overwritten the next time you compile your game. However, in practice, there should be no reason to modify this file as its contents are produced from your game.
+
+In the runtime environment, your `@game` element is translated into a JS object with `RezGame` as its prototype, the scenes into JS objects with `RezScene` as its prototype, and cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object defined in `runtime.js``.
 
 [Advanced Note]: If you want to use different objects you can use the `$js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
 
 The Game starts with a called to the game object `start` method which handles initialization and presenting the first scene & card.
 
-== The Rez Rendering Process
+=== The Rendering Process
+
+The HTML presented in the browser is generated from content template attributes defined (principally by your `@game`, `@scene`, and `@card` elements although there are others) glued together by markup provided by Rez.
+
+At a high level the rendered structure looks like this:
+
+`Game Layout`
+&nbsp;&nbsp;`Scene Layout`
+&nbsp;&nbsp;&nbsp;&nbsp;`Card(s)`
+
+The `RezGame` renders its layout, which must include the `RezScene`. The `RezScene` layout renders one or more `RezCards`. A `RezCard` renders its content.
+
+In practice it is a bit more complicated because each of these elements (including cards) can also render arbitrary other cards as part of their content. When a card is being included in this way it is refered to as a 'block' and is specified using the `blocks:` attribute of those elements. We'll come back to blocks in a moment.
+
+The actual generation of markup is performed by a number of JS objects: `RezSingleLayout`, `RezStackLayout`, and `RezBlock`. Generating markup for `@game` and `@scene` layout is doing by one of `RezSingleLayout` or `RezStackLayout`. Generating markup for @cards is done by `RezBlock.` There is a 1:1 relationship between `@game` and `RezSingleLayout` and `@scene` and (of one) `RezSingleLayout` or `RezStackLayout`, and for each @card with an instance of `RezBlock`.
+
+However the picture is slightly more complicated, because `@scene`'s and `@card`'s are considered to be templates and get copied before they are used. When you play a card such as `#fight_enemy` that card gets copied and it is the copy that is used. This allows for `@scene` and `@card` elements to be reused without having to worry about their condition. This is very important when a scene is used in stack mode.
+
+All cards are rendered by a `RezBlock`.
+
+=== What is a Block?
+
+When we talk about a "block" in the rendering proces we're actually talking about a `@card` but a card intended to be included within other content. A classic example would be a sidebar that is common across a set of scenes.
+
+....
+@card sidebar {
+  content: ```
+    sidebar content goes here
+  ```
+}
+
+@scene explore {
+  blocks: [#sidebar]
+  layout: ```
+    scene layout content goes here
+    ${sidebar}
+    and continues here
+  ```
+}
+....
+
+The `blocks` attribute contains a list of `#id`'s of cards that are intended to be used as a block.
+
+Note that when a card is used as in a block context it automatically gets a binding `$parent_block`. This allows the content of the block to easily reference attributes of the enclosing card.
+
+For example:
+
+....
+@card list_exit {
+  bindings: {
+    exits: `$parent_block.source.exits
+  }
+  content: ```
+    $foreach(exit: exits) {%
+      %% render an exit here
+    %}
+  ```
+}
+
+@card room_with_exits {
+  exits: [#exit_1 #exit_2 #exit_3]
+  blocks: [#list_exits]
+  content: ```
+    Room
+    ${exits}
+  ````
+}
+
+@card another_room_with_exits {
+  exits: [#exit_4 #exit_5 #exit_6]
+  blocks: [#list_exits]
+  content: ```
+    Another Room
+    ${exits}
+  ```
+}
+....
+
+In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block. The `#list_exits` block doesn't have to know anything about `#room_with_exits` only that it defines an `exits:` attribute. This means we can also use `#list_exits` from `#another_room_with_exits`.
+
+=== HTML Structure
 
 When the game layout gets rendered its content is embedded inside a built-in template:
 
@@ -496,37 +678,37 @@ The game `layout` is a good place to put fixed parts of the interface, for examp
 When the current scene gets rendered its content is embedded into a different template:
 
 ....
-<div id="scene_<scene-id>" class="scene">
-  ...scene layout...
+<div id="scene_<scene-id>" data-scene="<scene-id>" class="scene">
+  ...scene content...
 </div>
 ....
 
-In the same was as the game, the scene `layout` is expected to contain the template expression `${content}` which will include the contents of the current card or cards. You can style scenes by targetting the `scene` CSS class or customise styles for particular scenes by targetting the DOM id. In our example game that would be `scene_play_the_game`.
+In the same was as the game, the scene `layout` is expected to contain the template expression `${content}` which will include the contents of the current card or (in stack mode) cards. You can style scenes by targetting the `scene` CSS class or customise styles for particular scenes by targetting the DOM id. In our example game that would be `scene_play_the_game`.
 
-When a card gets rendered its content is embedded into yet another template:
+When a card gets rendered its `content` template is embedded within the following template:
 
 ....
-<div id="card_<render-id>" data-card="<card-id>" class="card <card-type>">
+<div id="card_<card-id>" data-card="<card-id>" class="card <card-type>">
    ...card content...
 </div>
 ....
 
-Here are introduce two new concepts the `render-id` and `card-type`. The `render-id` becomes important when using `layout_mode: :stack` for a scene. In this context the same card may be rendered multiple times. Each card gets its own render ID and preserves uniqueness of DOM ids.
+One thing to note is that the `scene_id` may not be what you expect. If the current scene was set to `#explore_office` you might expect that the rendered HTML would contain this id. However Rez treats your @scene and @card elements as a template and uses a copy when rendering a scene.
 
-The `card-type` will be one of `card_active`, `card_passive`, or `block`. We'll come back to active & passive blocks later when we talk about the stack layout.
+==
 
 Block content comes from cards that are being rendered inside another card. For example you might have a card `#sidebar` that we want to use to render sidebar content that should always be visible.
 
 In this case we would add it to (for example) the scenes `blocks:` attribute. To include it within the scene layout you would use the template expression `${sidebar}`.
 
-== Scene Layout Mode
+=== Scene Layout Mode
 
 A `@scene`` has a required attribute `layout_mode:` which can, as of v0.11, have two values:
 
 * `:single`
 * `:stack`
 
-In `:single` mode the `${content}` substituion embeds the content of the current card in the scene. When the card changes the content will change to match it. The effect is that the scene will jump from card to card.
+In `:single` mode the `${content}` substitution embeds the content of the current card in the scene. When the card changes the content will change to match it. The effect is that the scene will jump from card to card.
 
 In `:stack` mode the `${content}` substitution embeds the content of every card that has been played into the scene so far. Rather than jumping from card to card the cards will accumulate.
 
@@ -867,6 +1049,13 @@ You found ${coins} coins on the floor and put them in your pocket.
 ```
 ....
 
+=== Default Bindings
+
+In the context of a template there are usually default bindings:
+
+* `$block` - the current rendering block, the element it represents is usually in its `source` property
+* `$card` - when rendering a card, the card that is being rendered
+
 ==== Substitution Filters
 
 If all we could do was return the attribute values of functions then expressions wouldn't be very useful. Filters, inspired by Liquid, let us manipulate values into the content we want to display.
@@ -974,11 +1163,43 @@ $foreach(x: list) {%
 ```
 ....
 
+=== Do Blocks
+
+To setup attributes for rendering you can run code in an event handler. For example a `@card` can have an `on_start` hander:
+
+....
+@card test_card {
+  content: ```
+  $if(card.show_section) {%
+    stuff goes here
+  %}
+  ```
+  on_start: (card) => {
+    card.show_section = Math.random() < 0.5;
+  }
+}
+....
+
+However in many cases it might be easier to use a "do block" inline in the template:
+
+....
+@card test_card {
+  content: ```
+  $do{
+    $card.show_section = Math.random() < 0.5;
+  }
+  $if(card.show_section) {%
+    stuff goes here
+  %}
+  ```
+}
+....
+
 == Custom Scripts & Styles
 
 Rez supports the addition of custom Javascript & CSS in a number of different ways.
 
-=== Script & Style Directives
+=== Script & Stylesheet Directives
 
 The `@script` and `@style` directives allow embedding arbitrary Javascript or CSS classes into your game.
 
@@ -995,7 +1216,7 @@ The `@script` and `@style` directives allow embedding arbitrary Javascript or CS
 ....
 
 ....
-@style {
+@stylesheet {
   /* https://gist.github.com/JoeyBurzynski/617fb6201335779f8424ad9528b72c41 */
   .main {
     max-width: 38rem;

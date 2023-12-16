@@ -88,6 +88,15 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
+  def compile_chunk({:do, expr}) do
+    body = ~s|
+    evaluateExpression(`#{expr}`, bindings, false);
+    return "";
+    |
+
+    js_create_fn(body, false)
+  end
+
   def compile_chunk({:foreach, iter_name, binding_spec, content}) do
     compile_chunk({:foreach, iter_name, binding_spec, content, {:source_template, [""]}})
   end

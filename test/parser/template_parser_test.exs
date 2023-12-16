@@ -36,7 +36,7 @@ defmodule Rez.Parser.TemplateParserTest do
     assert {:source_template,
             [
               "Here is a string containing ",
-              {:interpolate, {:expression, {:attribute, "player", "name"}, []}},
+              {:interpolate, {:expression, {:bound_path, ["player", "name"]}, []}},
               " as an interpolation.\n"
             ]} = TP.parse(template)
   end
@@ -60,9 +60,9 @@ defmodule Rez.Parser.TemplateParserTest do
     assert {:source_template,
             [
               "Interpolate both ",
-              {:interpolate, {:expression, {:attribute, "player", "name"}, []}},
+              {:interpolate, {:expression, {:bound_path, ["player", "name"]}, []}},
               " and ",
-              {:interpolate, {:expression, {:attribute, "player", "age"}, []}},
+              {:interpolate, {:expression, {:bound_path, ["player", "age"]}, []}},
               " for completeness.\n"
             ]} = TP.parse(template)
   end
@@ -102,8 +102,8 @@ defmodule Rez.Parser.TemplateParserTest do
 
   # @tag :skip
   test "parses conditional from template" do
-    template = ~S"""
-    <div>$if{player.health < 50} {%
+    template = ~s"""
+    <div>$if(player.health < 50) {%
       <div>Wounded</div>
     %}</div>
     """
@@ -111,7 +111,8 @@ defmodule Rez.Parser.TemplateParserTest do
     assert {:source_template,
             [
               "<div>",
-              {:conditional, "player.health < 50", "\n  <div>Wounded</div>\n"},
+              {:conditional, "player.health < 50",
+               {:source_template, ["\n  <div>Wounded</div>\n"]}},
               "</div>\n"
             ]} = TP.parse(template)
   end
@@ -120,14 +121,14 @@ defmodule Rez.Parser.TemplateParserTest do
   test "parses base template expression" do
     expression = "player.name"
 
-    assert {:ok, {:expression, {:attribute, "player", "name"}, []}} = EP.parse(expression)
+    assert {:ok, {:expression, {:bound_path, ["player", "name"]}, []}} = EP.parse(expression)
   end
 
   # @tag :skip
   test "parses template expression with simple filter" do
     expression = "player.name | capitalize"
 
-    assert {:ok, {:expression, {:attribute, "player", "name"}, [{"capitalize", []}]}} =
+    assert {:ok, {:expression, {:bound_path, ["player", "name"]}, [{"capitalize", []}]}} =
              EP.parse(expression)
   end
 
@@ -135,7 +136,7 @@ defmodule Rez.Parser.TemplateParserTest do
   test "parses template expression with parameterised filter" do
     expression = "player.age | padleft: 2"
 
-    assert {:ok, {:expression, {:attribute, "player", "age"}, [{"padleft", [{:number, 2}]}]}} =
+    assert {:ok, {:expression, {:bound_path, ["player", "age"]}, [{"padleft", [{:number, 2}]}]}} =
              EP.parse(expression)
   end
 
@@ -144,7 +145,7 @@ defmodule Rez.Parser.TemplateParserTest do
     expression = "player.name | trim: 40 | capitalize | fooflify"
 
     assert {:ok,
-            {:expression, {:attribute, "player", "name"},
+            {:expression, {:bound_path, ["player", "name"]},
              [{"trim", [{:number, 40}]}, {"capitalize", []}, {"fooflify", []}]}} =
              EP.parse(expression)
   end
@@ -152,12 +153,12 @@ defmodule Rez.Parser.TemplateParserTest do
   # @tag :skip
   test "parses template expression with multiple filter parameters" do
     assert {:ok,
-            {:expression, {:attribute, "player", "name"},
+            {:expression, {:bound_path, ["player", "name"]},
              [{"truncate", [{:number, 40}, {:string, "..."}]}]}} =
              EP.parse("player.name | truncate: 40, \"...\"")
 
     assert {:ok,
-            {:expression, {:binding, "card"},
+            {:expression, {:bound_path, ["card"]},
              [
                {"scene_switch",
                 [{:string, "examine_player_scene"}, {:string, "Examine Yourself"}]}
@@ -167,14 +168,14 @@ defmodule Rez.Parser.TemplateParserTest do
   # @tag :skip
   test "parses template expression that starts with a value" do
     assert {:ok,
-            {:expression, {:string, "year"}, [{"pluralize", [{:attribute, "player", "age"}]}]}} =
+            {:expression, {:string, "year"}, [{"pluralize", [{:bound_path, ["player", "age"]}]}]}} =
              EP.parse("\"year\" | pluralize: player.age")
   end
 
   # @tag :skip
   test "parses expression containing JS array" do
     assert {:ok,
-            {:expression, {:attribute, "player", "age"},
+            {:expression, {:bound_path, ["player", "age"]},
              [{"gte", [number: 18]}, {"bsel", [list: [string: "adult", string: "child"]]}]}} =
              EP.parse("player.age | gte: 18 | bsel: [\"adult\", \"child\"]")
   end

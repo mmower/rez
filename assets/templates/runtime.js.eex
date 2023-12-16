@@ -21,10 +21,10 @@ window.Rez = window.Rez ?? {};
 // Initialise Game Objects
 <%= @init_game_objects %>
 
-window.$ = (id) => game.$(id);
+window.$ = (id, show_throw = false) => game.$(id, show_throw);
 window.$game = game;
 
-if($("player")) {
+if($("player", false)) {
   window.$player = $("player");
 }
 

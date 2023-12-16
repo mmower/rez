@@ -13,12 +13,12 @@ defmodule Rez.Parser.CommitTest do
   test "Catches error in structure" do
     source =
       string_to_source("""
-      @game begin
-        @actor random_person begin
-        end
+      @game {
+        @actor random_person {
+        }
 
-        @item first_item begin
-        @end
+        @item first_item {
+        )
       end
       """)
 
@@ -29,6 +29,6 @@ defmodule Rez.Parser.CommitTest do
 
     assert %{status: {:fatal, reasons}} = ctx
     error = List.last(reasons)
-    assert {:unexpected_char, {5, 3}, "Expected: |e| Actual: |@|"} = error
+    assert {:unexpected_char, {5, 3}, "Expected: |}| Actual: |)|"} = error
   end
 end

@@ -44,9 +44,9 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses script block" do
     input = """
-    @script begin
+    @script {
       // Javascript code goes here
-    end
+    }
     """
 
     %Context{status: status, ast: ast} =
@@ -61,9 +61,9 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses style block" do
     input = """
-    @style begin
+    @stylesheet {
       # CSS styles go here
-    end
+    }
     """
 
     %Context{status: status, ast: ast} =
@@ -78,10 +78,10 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses actor block" do
     input = """
-    @actor gandalf begin
+    @actor gandalf {
       name: "Gandalf"
       alt_name: "Mithrandir"
-    end
+    }
     """
 
     context = Ergo.parse(actor_block(), input, data: %{source: dummy_source(input), id_map: %{}})
@@ -103,10 +103,10 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses scene block" do
     input = """
-    @scene a1s1 begin
+    @scene a1s1 {
       title: "Act 1 - Scene 1"
       initial_card: #frob_card
-    end
+    }
     """
 
     context = Ergo.parse(scene_block(), input, data: %{source: dummy_source(input), id_map: %{}})
@@ -125,45 +125,11 @@ defmodule Rez.Parser.ParserTest do
            } = context.ast
   end
 
-  test "parses location block" do
-    input = """
-    @location loc_1 begin
-      name: "The last homely house"
-      description: \"\"\"
-      Elrond's refuge at Rivendell
-      \"\"\"
-    end
-    """
-
-    %{status: status, ast: ast} =
-      Ergo.parse(location_block(), input,
-        data: %{source: dummy_source(input), aliases: %{}, id_map: %{}}
-      )
-
-    assert :ok = status
-
-    assert %Rez.AST.Location{
-             id: "loc_1",
-             attributes: %{
-               "name" => %Rez.AST.Attribute{
-                 name: "name",
-                 type: :string,
-                 value: "The last homely house"
-               },
-               "description" => %Rez.AST.Attribute{
-                 name: "description",
-                 type: :string,
-                 value: "Elrond's refuge at Rivendell\n"
-               }
-             }
-           } = ast
-  end
-
   test "parses card block" do
     input = """
-    @card first_card begin
+    @card first_card {
       template: "This is some **Markdown** content for this card."
-    end
+    }
     """
 
     context = Ergo.parse(card_block(), input, data: %{source: dummy_source(input), id_map: %{}})
@@ -184,10 +150,10 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses slots" do
     input = """
-    @slot main_hand_slot begin
+    @slot main_hand_slot {
       name: "Main Hand"
       type: :1h_weapon
-    end
+    }
     """
 
     Telemetry.start()
@@ -198,11 +164,11 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses inventory block" do
     input = """
-    @inventory inv_1 begin
+    @inventory inv_1 {
       tags: #\{:shopping}
       owner: #player
       slots: #\{#main_hand_slot #off_hand_slot #two_handed_slot}
-    end
+    }
     """
 
     Telemetry.start()
@@ -258,11 +224,11 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses item block" do
     input = """
-    @item blue_cloak begin
+    @item blue_cloak {
       type: :equipment
       color: "blue"
       tags: #\{:wearable :cloak}
-    end
+    }
     """
 
     context = Ergo.parse(item_block(), input, data: %{source: dummy_source(input), id_map: %{}})

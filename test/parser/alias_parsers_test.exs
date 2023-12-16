@@ -55,9 +55,9 @@ defmodule Rez.Parser.AliasParsesTest do
 
   test "parse alias use" do
     input = """
-    @ring magic_ring begin
+    @ring magic_ring {
       magic: true
-    end
+    }
     """
 
     source = dummy_source(input)

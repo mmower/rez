@@ -1,120 +1,119 @@
-@game begin
+@game {
   name: "Twisty Maze Adventure"
   IFID: "051F7581-43EF-48A7-93C3-A84A70203917"
   initial_scene_id: #cards
 
-  @item sword begin
+  @item sword {
     $template: true
     category: :equipment
     slot: #sword_slot
-  end
+  }
 
   @alias sword = item<sword>
 
-  @actor player begin
+  @actor player {
     name: "The Adventurer"
-  end
+  }
 
-  @inventory player_inv begin
+  @inventory player_inv {
     title: "Player inventory"
     category: "equipment"
     slots: #{#sword_slot #ring_slot}
-  end
+  }
 
-  @slot sword_slot begin
+  @slot sword_slot {
     name: "sword"
     compatible: #sword
     size: 1
-  end
+  }
 
-  @slot ring_slot begin
+  @slot ring_slot {
     name: "ring"
     compatible: #ring
     size: 2
-  end
+  }
 
-  @item topic_the_ring begin
+  @item topic_the_ring {
     type: :topic
     memory: "You remember Gandalf mentioning the ring to you, a plain
     gold band of Bilbo's that he was often touching or playing with in his
     pocket but seemed quite secretive about."
-  end
+  }
 
-  @slot spell_slot begin
+  @slot spell_slot {
     name: "spell"
     compatible: #spell
     size: 5
-  end
+  }
 
-  @inventory player_spells begin
+  @inventory player_spells {
     title: "Player spells"
     category: "spells"
     slots: #{#spell_slot}
-  end
+  }
 
-  @scene cards begin
+  @scene cards {
     title: "The beginning"
     location: #foo
     initial_card: #psg1
     on_start: (game, evt) => {return game;}
-  end
+  }
 
-  @actor wizard begin
+  @actor wizard {
     name: "Wizard of Frobbz"
     race: #wizard
-  end
+  }
 
   %% This is a line comment, the next line is an include macro
   %(items.rez)
 
-  @sword elvish_sword begin
+  @sword elvish_sword {
     name: "elvish sword"
     bearing: #elvish
-  end
+  }
 
-  @list place_names begin
+  @list place_names {
     values: ["the white house" "the underground" "Festeron"]
-  end
+  }
 
-  @list magic_numbers begin
+  @list magic_numbers {
     values: [42]
-  end
+  }
 
-  @effect eff1 begin
+  @effect eff1 {
     type: #spell
     on_apply: (game, evt) => {return game;}
-  end
+  }
 
-  @card psg1 begin
+  @card psg1 {
     template: """
     Markdown here!
     """
-  end
+  }
 
-  @asset img1 begin
+  @asset img1 {
     type: #image
     tags: [#foo #bar #baz]
     path: "/path/to/asset.jpg"
     width: 340
     height: 280
-  end
+  }
 
-  @asset snd1 begin
+  @asset snd1 {
     type: #sound
     path: "/baz/sound.mp3"
-  end
+  }
 
-  @asset mov1 begin
+  @asset mov1 {
     type: #movie
     path: "/moo.mpg"
-  end
+  }
 
-  @script begin
+  @script {
     // Javascript code goes here
-  end
+  }
 
-  @style begin
+  @stylesheet {
     /* CSS goes here */
-  end
-
-end
+  }
+}

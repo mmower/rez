@@ -1,39 +1,23 @@
 = Rez
 :table-caption!:
 
-A language, compiler, and runtime system for creating choice-based HTML interaction fiction
+A system for creating choice-based HTML games & interactive fiction.
+
+Version 1.0 (03 Nov 2023)
 
 By Matt Mower &lt;self@mattmower.com&gt;
 
-.Version History
-[cols="2"]
-[%autowidth]
-|===
-|v1.0
-|03 Nov 2023
-|v0.13
-|14 Oct 2023
-|v0.12
-|25 Sep 2023
-|v0.11
-|01 Sep 2023
-|v0.10
-|25 Aug 2023
-|v0.9
-|13 Nov 2022
-|v0.8
-|24 Oct 2022
-|===
-
 == Introduction
 
-Rez is a tool for creating sophisticated choice-based HTML interactive fiction. These are games that use HTML/CSS, Javascript, images, movies, and sounds to present an interface and where players interact with the game through choices presented via HTML elements like links & form inputs.
+Rez is an open source system for creating choice-based HTML games & interactive fiction. It uses HTML/CSS, Javascript, images, movies, and sounds to present an interface, where players make choices by interactive HTML elements like links & forms.
 
-Rez has excellent support for good looking & usable interfaces. It also builds in asset management, actors & behaviours, item & inventory management, factions, relationships, scenes/card structure, plots, customisable systems, and more.
+An obvious comparison for Rez is https://twinery.org/[Twine]. The ideal Rez user is likely creating a game that is over-ambitious for Twine and is not afraid to write a bit of Javascript code for, e.g., handling events.
 
-Rez UI are built on top of the https://bulma.io/[Bulma] CSS framework and https://alpinejs.dev/[Alpine.JS] for modern layout and dynamic content.
+Rez has excellent support for making good looking interfaces. It includes a sophisticated layout system with a simple, yet compreshensive, template language. It is built upon the https://bulma.io/[Bulma] CSS framework and includes https://alpinejs.dev/[Alpine.JS] for simple dynamic layout.
 
-Rez is relatively deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/docs/REZ.html[online documentation] for tutorials, language reference, and runtime API documentation.
+Rez supports asset management, NPC actors & behaviours, item & inventory management, factions, relationships, plots, customisable systems, and much more.
+
+Rez can get deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/docs/REZ.html[online documentation] for tutorials, language reference, and runtime API documentation.
 
 == Getting Started
 
@@ -41,15 +25,11 @@ To write a game with Rez you write one or more `.rez` source files and then use 
 
 The Rez language is mostly declarative. You use attributes to specify what happens and Rez takes care of the details. Dynamic behaviours (for example procedural generation) are supported by through incorporating Javascript functions. It requires only a little Javascript knowledge to get productive.
 
-The most obvious comparison for Rez is https://twinery.org/[Twine]. Twine describes itself as an "open source tool for telling interactive, nonlinear stories." and it shines by making it relatively easy for non-developers to build this kind of story. Rez aims to be an "open source tool for playing interactive-fiction games".
-
-There are other tools that target game authors such as https://www.inklestudios.com/ink/[Ink], https://www.linusakesson.net/dialog/[Dialog], https://ganelson.github.io/inform-website/[Inform], and https://www.tads.org[TADS]. Each has advantages and compromises for example having a more complex language, depending on a Z-machine runtime, or being parser based. All these tools are good in their niche, Rez aims to fit into a different niche.
-
-The ideal Rez user is likely creating a game that is over-ambitious for Twine and is not afraid to learn to write simple Javascript functions.
-
 == Installation
 
-Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed. Rez currently targets Elixir v1.15 (OTP26) but should be compilable with previous versions back to 1.13.
+Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed.
+
+Rez targets Elixir v1.15/OTP-26 but should be compilable with previous versions back to 1.13/OTP-25.
 
 === macOS
 
@@ -74,6 +54,8 @@ Installation on macOS depends on https://git-scm.com/[git], https://brew.sh/[Hom
     ./rez --version # should report something like 1.0
     # Copy to somewhere in your ${path}
     cp rez ~/bin/
+
+The Node.js dependency is not for Node at runtime but to bring in some Javascript dependencies that get compiled into the resulting Rez applications.
 
 === Windows
 

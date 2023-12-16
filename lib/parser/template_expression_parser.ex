@@ -128,7 +128,7 @@ defmodule Rez.Parser.TemplateExpressionParser do
   @doc ~S"""
     iex> import Rez.Parser.TemplateExpressionParser, only: [expression: 0]
     iex> expr = "player.age | gte: 18 | bsel: [\"adult\", \"minor\"]"
-    iex> assert %{status: :ok, ast: {:expression, {:attribute, "player", "age"}, [{"gte", [{:number, 18}]}, {"bsel", [{:list, [{:string, "adult"}, {:string, "minor"}]}]}]}} = Ergo.parse(expression(), expr)
+    iex> assert %{status: :ok, ast: {:expression, {:bound_path, ["player", "age"]}, [{"gte", [{:number, 18}]}, {"bsel", [{:list, [{:string, "adult"}, {:string, "minor"}]}]}]}} = Ergo.parse(expression(), expr)
   """
   def expression() do
     sequence(

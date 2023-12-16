@@ -67,30 +67,34 @@ const basic_object = {
     this.initialised = true;
   },
 
+  createStaticProperty(attr_name) {
+    Object.defineProperty(this, attr_name, {
+      get: function () {
+        return this.getAttribute(attr_name);
+      },
+      set: function (value) {
+        this.setAttribute(attr_name, value);
+      },
+      configurable: true,
+    });
+
+    if (attr_name.endsWith("_id")) {
+      const direct_attr_name = attr_name.slice(0, -3);
+      Object.defineProperty(this, direct_attr_name, {
+        get: function () {
+          const ref_id = this.getAttribute(attr_name);
+          return $(ref_id);
+        },
+        set: function (ref) {
+          this.setAttribute(attr_name, ref.id);
+        },
+      });
+    }
+  },
+
   createStaticProperties() {
     for (let [attr_name, _] of Object.entries(this.attributes)) {
-      Object.defineProperty(this, attr_name, {
-        get: function () {
-          return this.getAttribute(attr_name);
-        },
-        set: function (value) {
-          this.setAttribute(attr_name, value);
-        },
-        configurable: true,
-      });
-
-      if (attr_name.endsWith("_id")) {
-        const direct_attr_name = attr_name.slice(0, -3);
-        Object.defineProperty(this, direct_attr_name, {
-          get: function () {
-            const ref_id = this.getAttribute(attr_name);
-            return $(ref_id);
-          },
-          set: function (ref) {
-            this.setAttribute(attr_name, ref.id);
-          },
-        });
-      }
+      this.createStaticProperty(attr_name);
     }
   },
 

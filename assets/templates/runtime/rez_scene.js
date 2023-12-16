@@ -66,8 +66,7 @@ let scene_proto = {
 
     this.finishCurrentCard();
 
-    const card_template = $(new_card_id);
-    const card = card_template.copyWithAutoId();
+    const card = $(new_card_id);
 
     Object.entries(params).forEach(([key, value]) => {
       card[key] = value;

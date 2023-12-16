@@ -273,11 +273,7 @@ let game_proto = {
       this.current_scene.finish();
     }
 
-    const scene_template = this.getGameObject(new_scene_id);
-
-    // We make a copy of the scene so that changes to scene attributes
-    // will not affect future scene runs
-    const scene = scene_template.copyWithAutoId();
+    const scene = this.getGameObject(new_scene_id);
 
     Object.entries(params).forEach(([key, value]) => {
       scene[key] = value;

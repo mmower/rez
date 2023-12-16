@@ -2,7 +2,7 @@
 // Templates use this for conditionals
 //-----------------------------------------------------------------------------
 
-function evaluateExpression(expression, bindings) {
+function evaluateExpression(expression, bindings, rval = true) {
   const proxy = new Proxy(
     {},
     {
@@ -19,7 +19,12 @@ function evaluateExpression(expression, bindings) {
   const argValues = argNames.map((name) => proxy[name]);
 
   // Create a new function with bindings as arguments and the expression as the body
-  const func = new Function(...argNames, `return ${expression};`);
+  let func;
+  if(rval) {
+    func = new Function(...argNames, `return ${expression};`);
+  } else {
+    func = new Function(...argNames, `${expression}`);
+  }
 
   // Invoke the function with the values from the bindings
   return func(...argValues);
@@ -30,6 +35,8 @@ function evaluateExpression(expression, bindings) {
 //-----------------------------------------------------------------------------
 
 let block_proto = {
+  __proto__: Rez.basic_object,
+
   instantiateIdBinding(id) {
     return this.source.$(id);
   },
@@ -94,8 +101,9 @@ let block_proto = {
   getBlocks() {
     const blocks = this.source.getAttributeValue("blocks", []);
     return blocks.reduce((block_mappings, block_id) => {
-      const block_card = this.source.$(block_id);
-      const block = new RezBlock("block", block_card);
+      const block_source = $(block_id);
+      block_source.$parent = this.source;
+      const block = new RezBlock("block", block_source);
       block.parent_block = this;
       block_mappings[block_id] = block;
       return block_mappings;
@@ -166,6 +174,8 @@ function RezBlock(block_type, source) {
   this.parent_block = null;
   this.block_type = block_type;
   this.source = source;
+  this.attributes = {};
+  this.changed_attributes = [];
 }
 
 RezBlock.prototype = block_proto;
