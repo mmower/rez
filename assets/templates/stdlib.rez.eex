@@ -171,6 +171,18 @@
   }
 }
 
+@patch ARRAY_TAKE {
+  patch: "Array"
+  method: "take"
+  impl: function(n) {
+    if(this.length < n) {
+      throw `Cannot take ${n} items from an array containing ${this.length} items!`;
+    }
+
+    return Number.range(1, n).map((_) => {return this.shift()});
+  }
+}
+
 @patch STRING_CAPITALIZE {
   patch: "String"
   method: "capitalize"
@@ -658,18 +670,32 @@
   impl: (s, search) => {return s.includes(search);}
 }
 
-@filter STRING_QUOTED {
+@filter STRING_QUOTED_FILTER {
   %% String -> String
 
   name: "quoted"
   impl: (s) => {return `'${s}'`;}
 }
 
-@filter STRING_DOUBLE_QUOTED {
+@filter STRING_DOUBLE_QUOTED_FILTER {
   %% String -> String
 
   name: "dquoted"
   impl: (s) => {return `"${s}"`;}
+}
+
+@filter ARRAY_LENGTH_FILTER {
+  %% Array -> Integer
+
+  name: "length"
+  impl: (arr) => {return arr.length;}
+}
+
+@filter ARRAY_TAKE_FILTER {
+  %% Array, n -> Array
+
+  name: "take"
+  impl: (arr, n) => {return arr.take(n);}
 }
 
 @filter EVENT_LINK_FILTER {

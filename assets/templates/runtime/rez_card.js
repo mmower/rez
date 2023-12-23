@@ -4,19 +4,20 @@
 
 let card_proto = {
   __proto__: basic_object,
+
   targetType: "card",
 
-  // Return the compiled template function that returns content for this card to the current view.
-  get viewTemplate() {
-    if (this.$flipped) {
+  bindAs() {
+    return "card";
+  },
+
+  getViewTemplate(flipped) {
+    if(flipped) {
       if (!this.$flipped_template) {
-        throw (
-          "Card |" +
-          this.id +
-          "| was asked for its flipped content template but does not define one."
-        );
+        throw `Card |${this.id}| was asked for its flipped_template but doesn't define one!`;
       }
       return this.$flipped_template;
+
     } else {
       return this.$content_template;
     }
@@ -38,8 +39,8 @@ function RezCard(id, attributes) {
   this.id = id;
   this.auto_id_idx = 0;
   this.game_object_type = "card";
+  this.current_block = null;
   this.attributes = attributes;
-  this.render_id = 0;
   this.properties_to_archive = [];
   this.changed_attributes = [];
 }

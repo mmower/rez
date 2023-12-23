@@ -45,8 +45,8 @@ const die_roll_proto = {
   },
 };
 
-function RezDieRoll(die, count, modifier, rounds = 1) {
-  this.die = die;
+function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {
+  this.die = new RezDie(sides);
   this.count = count;
   this.modifier = modifier;
   this.rounds = rounds;

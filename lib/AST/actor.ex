@@ -54,7 +54,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
         )
       ),
       attribute_if_present?(
-        "container",
+        "container_id",
         attribute_has_type?(
           :elem_ref,
           attribute_refers_to?("inventory")

@@ -67,11 +67,14 @@
   @actor player {
     name: "The adventurer"
 
+    container_id: #player_inventory
+
     fought_boss: false
 
-    strength: :d8
-    vigor: :d6
-    fighting: d8
+    initiative: 2
+    strength: 8
+    vigor: 6
+    fighting: 8
 
     gold: 0
 
@@ -129,10 +132,11 @@
     name: "Balrog"
     description: "A huge figure wreathed in fire and smoke, terrible to behold"
 
-    strength: :d12
-    vigor: :d12
-    fighting: :d12
-    damage: :d12
+    initiative: 6
+    strength: 12
+    vigor: 12
+    fighting: 12
+    damage: 12
   }
 
   @actor troll {
@@ -142,10 +146,11 @@
     name: "Troll"
     description: "A big ugly troll, wielding a club"
 
-    strength: :d12
-    vigor: :d10
-    fighting: d10
-    damage: :d4
+    initiative: 1
+    strength: 12
+    vigor: 10
+    fighting: 10
+    damage: 4
 
     treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 2|
   }
@@ -157,10 +162,11 @@
     name: ^i{"Chief " + $("troll_names").randomElement()}
     description: "A huge, formidable, troll wielding an iron shod club"
 
-    strength: :d12
-    vigor: :d12
-    fighting: d12
-    damage: :d6
+    initiative: 2
+    strength: 12
+    vigor: 12
+    fighting: 12
+    damage: 6
 
     treasure: |#amazing_treasure 1|
   }
@@ -187,10 +193,11 @@
     name: "Goblin"
     description: "A sneaky goblin, wielding a dagger"
 
-    strength: :d4
-    vigor: :d6
-    fighting: :d6
-    damage: :d4
+    initiative: 2
+    strength: 4
+    vigor: 6
+    fighting: 6
+    damage: 4
 
     treasure: |#poor_treasure 4 #average_treasure 2 #good_treasure 1|
   }
@@ -202,10 +209,11 @@
     name: ^i{"Chief " + $("goblin_names").randomElement()}
     description: "A large, tough, looking goblin wielding a flail"
 
-    strength: :d6
-    vigor: :d8
-    fighting: :d8
-    damage: :d6
+    initiative: 3
+    strength: 6
+    vigor: 8
+    fighting: 8
+    damage: 6
 
     treasure: |#average_treasure 1 #good_treasure 3 #excellent_treasure 1|
   }
@@ -232,9 +240,10 @@
     name: "Spider"
     description: "A dark and venmous spider"
 
-    strength: :d6
-    vigor: :d6
-    fighting: :d4
+    initiative: 3
+    strength: 6
+    vigor: 6
+    fighting: 4
 
     treasure: |#poor_treasure 1 #average_treasure 1 #good_treasure 1|
   }
@@ -246,9 +255,10 @@
     name: ^i{"Queen " + $("spider_names").randomElement()}
     description: "A huge spider with glowing eyes and terrible fangs"
 
-    strength: :d8
-    vigor: d8
-    fighting: :d6
+    initiative: 4
+    strength: 8
+    vigor: 8
+    fighting: 6
 
     treasure: |#average_treasure 1 #good_treasure 2 #excellent_treasure 2|
   }
@@ -275,10 +285,11 @@
     name: "Orc"
     description: "A large tusked humanoid with green skin, wielding a longsword"
 
-    strength: :d8
-    vigor: :d10
-    fighting: :d8
-    damage: :d8
+    initiative: 3
+    strength: 8
+    vigor: 10
+    fighting: 8
+    damage: 8
 
     treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 1|
   }
@@ -290,10 +301,11 @@
     name: ^i{"Chief " + $("orc_names").randomElement()}
     description: "A huge tusked humanoid with green skin, wielding a great sword"
 
-    strength: :d10
-    vigor: :d10
-    fighting: :d10
-    damage: :d10
+    initiative: 4
+    strength: 10
+    vigor: 10
+    fighting: 10
+    damage: 10
 
     treasure: |#good_treasure 1 #excellent_treasure 1 #amazing_treasure 1|
   }
@@ -483,20 +495,24 @@
   }
 
   @card c_dungeon_tunnel_1 {
+    exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2 }]
     location: [:dungeon :tunnel_1]
+    blocks: [#c_exits]
     content: ```
     A dark echo-ey tunnel. You can hear your heart beating fast.
 
-    From here you can go [[east to the entance|c_dungeon_entrance]] or [[south to the tunnels|c_dungeon_tunnel_2]].
+    ${c_exits}
     ```
   }
 
   @card c_dungeon_tunnel_2 {
+    exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_1} {alias: "chamber" dir: "south" to: #c_dungeon_chamber}]
     location: [:dungeon :tunnel_2]
+    blocks: [#c_exits]
     content: ```
     A narrow tunnel that smells foul, something horrible lurks nearby.
 
-    From here you can go [[into a tunnel to the north|c_dungeon_tunnel_1]] or [[south to a dank chamber|c_dungeon_chamber]].
+    ${c_exits}
     ```
   }
 
@@ -505,12 +521,16 @@
   }
 
   @card c_dungeon_chamber {
+    exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_2}]
     bindings: {location: #location}
+    blocks: [#c_exits]
     location: [:dungeon :chamber]
     monster_id: 0
     content: ```
     Clearly the lair of the beast. Bomes and small trinkets litter the filthy floor.
-    There is a ${location.monster.name} here!
+    There is a <a href="javascript:void(0)" data-event="switch" data-target="engage_in_battle" data-monster="${location.monster.id}">${location.monster.name}</a> here!
+
+    ${c_exits}
     ```
 
     on_start: () => {
@@ -529,8 +549,9 @@
   }
 
   @scene engage_in_battle {
+    layout_mode: :stack
     on_start: (scene) => {
-
+      console.log("Scene has started");
     }
 
     initial_card_id: #battle_card
@@ -539,7 +560,17 @@
   @card battle_card {
     content: ```
     Let battle commence!
+
+    <a href="javascript:void(0)" data-event="swing">Take a Swing</a>
     ```
+
+    on_swing: (card, evt) => {
+
+      console.log("Player took a swing");
+      return {
+        render: true
+      };
+    }
   }
 
   @scene end_game {

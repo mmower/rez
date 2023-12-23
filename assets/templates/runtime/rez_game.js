@@ -4,11 +4,20 @@
 
 let game_proto = {
   __proto__: basic_object,
+
   targetType: "game",
 
-  get viewTemplate() {
+  bindAs() {
+    return "game";
+  },
+
+  getViewTemplate() {
     return this.$layout_template;
   },
+
+  // get viewTemplate() {
+
+  // },
 
   $(id) {
     return this.getGameObject(id);
@@ -228,8 +237,13 @@ let game_proto = {
   },
 
   elementAttributeHasChanged(elem, attr_name, old_value, new_value) {
-    this.undoManager.recordChange(elem.id, attr_name, old_value);
-    this.view.updateBoundControls(elem.id, attr_name, new_value);
+    if(this.undoManager) {
+      this.undoManager.recordChange(elem.id, attr_name, old_value);
+    }
+
+    if(this.view) {
+      this.view.updateBoundControls(elem.id, attr_name, new_value);
+    }
   },
 
   /*
@@ -273,14 +287,12 @@ let game_proto = {
       this.current_scene.finish();
     }
 
-    const scene = this.getGameObject(new_scene_id);
-
-    Object.entries(params).forEach(([key, value]) => {
-      scene[key] = value;
-    });
-
+    const scene = $(new_scene_id);
     this.current_scene_id = scene.id;
     this.current_scene = scene;
+
+    const layout = scene.getViewLayout();
+    layout.assignParams(params);
 
     this.setViewContent(scene.getViewLayout());
     this.clearFlashMessages();
@@ -336,9 +348,8 @@ let game_proto = {
       this.current_scene.finish();
 
       this.popScene();
-      Object.entries(params).forEach(([key, value]) => {
-        this.currentScene[key] = value;
-      });
+
+      scene.getViewLayout().assignParams(params);
 
       this.updateView();
     }

@@ -35,8 +35,6 @@ function evaluateExpression(expression, bindings, rval = true) {
 //-----------------------------------------------------------------------------
 
 let block_proto = {
-  __proto__: Rez.basic_object,
-
   instantiateIdBinding(id) {
     return this.source.$(id);
   },
@@ -83,16 +81,14 @@ let block_proto = {
     });
   },
 
-  bindAs() {
-    return "card";
-  },
-
   bindValues() {
-    return {
+    const bindings = {
       $block: this,
-      [this.bindAs()]: this.source,
+      [this.source.bindAs()]: this.source,
       ...this.getBindings(),
     };
+
+    return bindings;
   },
 
   // blocks are a list of id's of other card elements that we
@@ -115,7 +111,7 @@ let block_proto = {
   },
 
   getViewTemplate() {
-    return this.source.viewTemplate;
+    return this.source.getViewTemplate(this.flipped);
   },
 
   parentBindings() {
@@ -142,24 +138,23 @@ let block_proto = {
     return template(bindings);
   },
 
-  getCSSClasses(block_type) {
-    if (block_type === "card") {
-    }
-
-    return ["card_wrapper", block_type, prefix + block_type].join(" ");
-  },
-
   css_classes() {
     if (this.block_type == "block") {
       return "block";
     } else if (this.block_type == "card") {
-      if (this.source.$flipped) {
+      if (this.flipped) {
         return "card flipped_card";
       } else {
         return "card active_card";
       }
     } else {
       throw "This shouldn't happen, right?";
+    }
+  },
+
+  assignParams(params) {
+    for(const [param, value] of Object.entries(params)) {
+      this[param] = value;
     }
   },
 
@@ -170,41 +165,41 @@ let block_proto = {
   },
 };
 
-function RezBlock(block_type, source) {
+function RezBlock(block_type, source, params = {}) {
   this.parent_block = null;
   this.block_type = block_type;
   this.source = source;
-  this.attributes = {};
-  this.changed_attributes = [];
+  this.flipped = false;
+  this.assignParams(params);
 }
 
 RezBlock.prototype = block_proto;
 RezBlock.prototype.constructor = RezBlock;
 window.Rez.block = RezBlock;
 
-//-----------------------------------------------------------------------------
-// Synthetic Source
-//-----------------------------------------------------------------------------
+// //-----------------------------------------------------------------------------
+// // Synthetic Source
+// //-----------------------------------------------------------------------------
 
-let synthetic_source_proto = {
-  __proto__: window.Rez.basic_object,
+// let synthetic_source_proto = {
+//   __proto__: window.Rez.basic_object,
 
-  get viewTemplate() {
-    return this.getAttribute("template");
-  },
-};
+//   get viewTemplate() {
+//     return this.getAttribute("template");
+//   },
+// };
 
-function RezSyntheticSource(template) {
-  this.id = String.randomId();
-  this.game_object_type = "synthetic_source";
-  this.attributes = {
-    template: template,
-  };
-}
+// function RezSyntheticSource(template) {
+//   this.id = String.randomId();
+//   this.game_object_type = "synthetic_source";
+//   this.attributes = {
+//     template: template,
+//   };
+// }
 
-RezSyntheticSource.prototype = synthetic_source_proto;
-RezSyntheticSource.prototype.constructor = RezSyntheticSource;
-window.Rez.synthetic_source = RezSyntheticSource;
+// RezSyntheticSource.prototype = synthetic_source_proto;
+// RezSyntheticSource.prototype.constructor = RezSyntheticSource;
+// window.Rez.synthetic_source = RezSyntheticSource;
 
 //-----------------------------------------------------------------------------
 // Layout

@@ -25,7 +25,11 @@ let inventory_proto = {
   },
 
   getContentsForSlot(slot_id) {
-    return this.contents[slot_id];
+    const contents = this.contents[slot_id];
+    if(typeof(contents) === "undefined") {
+      throw `Attempt to get unknown slot "${slot_id} from container ${this.id}!`;
+    }
+    return contents;
   },
 
   appendContentToSlot(slot_id, item_id) {

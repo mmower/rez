@@ -4,11 +4,20 @@
 
 let scene_proto = {
   __proto__: basic_object,
+
   targetType: "scene",
 
-  get viewTemplate() {
+  bindAs() {
+    return "scene";
+  },
+
+  getViewTemplate(flipped) {
     return this.$layout_template;
   },
+
+  // get viewTemplate() {
+
+  // },
 
   get currentCard() {
     this.current_card = this.current_card ?? $(this.current_card_id);
@@ -32,21 +41,20 @@ let scene_proto = {
       this.current_card.runEvent("finish", {});
       this.runEvent("finish_card", {});
       if (this.isStackLayout) {
-        this.current_card.$flipped = true;
+        this.current_card.current_block.flipped = true;
       }
     }
   },
 
-  startNewCard(card) {
+  startNewCard(card, params = {}) {
     card.scene = this;
     this.current_card = card;
+
     this.runEvent("start_card", {});
     card.runEvent("start", {});
-    const block = new RezBlock("card", card);
+    const block = new RezBlock("card", card, params);
+    card.current_block = block;
     this.getViewLayout().addContent(block);
-    if (this.isStackLayout) {
-      this.cards_played.push(card);
-    }
   },
 
   handleCustomEvent(event_name, evt) {
@@ -67,13 +75,7 @@ let scene_proto = {
     this.finishCurrentCard();
 
     const card = $(new_card_id);
-
-    Object.entries(params).forEach(([key, value]) => {
-      card[key] = value;
-    });
-
-    this.startNewCard(card);
-
+    this.startNewCard(card, params);
     this.game.updateView();
     this.currentCard.runEvent("ready", {});
   },

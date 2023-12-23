@@ -234,13 +234,16 @@ const basic_object = {
     return copy;
   },
 
+  getNextAutoId() {
+    this.auto_id_idx += 1;
+    return this.id + "_" + this.auto_id_idx;
+  },
+
   /*
    * Copies an object with an auto-generated ID
    */
   copyWithAutoId() {
-    this.auto_id_idx += 1;
-    const copy_id = this.id + "_" + this.auto_id_idx;
-    return this.copyAssigningId(copy_id);
+    return this.copyAssigningId(this.getNextAutoId());
   },
 
   isTemplateObject() {
@@ -325,10 +328,6 @@ const basic_object = {
     } else {
       return attr;
     }
-  },
-
-  $av(name, default_value) {
-    return this.getAttributeValue(name, default_value);
   },
 
   getObjectViaAttribute(name, default_value) {
@@ -450,16 +449,6 @@ const basic_object = {
         this.id +
         "|"
     );
-  },
-
-  /*
-   * Binding
-   */
-
-  addBinding(name, object) {
-    const bindings = this.getAttribute("bindings") || {};
-    bindings[name] = object.id;
-    this.setAttribute("bindings", bindings);
   },
 
   /*
