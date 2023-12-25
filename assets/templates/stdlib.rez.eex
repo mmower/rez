@@ -322,6 +322,25 @@
   }
 }
 
+@patch NUMBER_ORDINAL {
+  patch: "Number"
+  method: "ordinal"
+  impl: function() {
+    const lastDigit = this % 10;
+    const secondLastDigit = Math.floor((this % 100) / 10);
+
+    if (lastDigit === 1 && secondLastDigit !== 1) {
+      return this + 'st';
+    } else if (lastDigit === 2 && secondLastDigit !== 1) {
+      return this + 'nd';
+    } else if (lastDigit === 3 && secondLastDigit !== 1) {
+      return this + 'rd';
+    } else {
+      return this + 'th';
+    }
+  }
+}
+
 @patch NUMBER_RANGE {
   patch: "Number"
   function: "range"
@@ -395,6 +414,16 @@
   method: "dist_round"
   impl: function() {
     return Math.dist_round(this);
+  }
+}
+
+@patch MATH_DIVMOD {
+  patch: "Math"
+  function: "div_mod"
+  impl: function(n, d) {
+    const div = Math.floor(n/d);
+    const mod = n % d;
+    return [div, mod];
   }
 }
 

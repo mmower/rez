@@ -5,7 +5,7 @@
 const die_proto = {
   roll() {
     return Number.rand_between(1, this.sides);
-  },
+  }
 };
 
 function RezDie(sides = 6) {
@@ -43,6 +43,28 @@ const die_roll_proto = {
       return sum.cl_avg(this.rounds);
     }
   },
+
+  description() {
+    return `${this.desc_count()}d${this.die.sides}${this.desc_mod()}`;
+  },
+
+  desc_count() {
+    if(this.count > 0) {
+      return `${this.count}`;
+    } else {
+      return "";
+    }
+  },
+
+  desc_mod() {
+    if(this.modifier < 0) {
+      return `${this.modifier}`;
+    } else if(this.modifier > 0) {
+      return `+${this.modifier}`;
+    } else {
+      return "";
+    }
+  }
 };
 
 function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {

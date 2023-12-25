@@ -93,6 +93,10 @@ let scene_proto = {
     return this.$viewLayout;
   },
 
+  get current_block() {
+    return this.getViewLayout()
+  },
+
   reset() {
     this.cards_played = [];
     this.current_card_id = null;

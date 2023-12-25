@@ -16,8 +16,7 @@
   version: "<%= Rez.version %>"
   created: "<%= @created %>"
   initial_scene_id: #explore_dungeon
-
-  @stylesheet {
+@stylesheet {
     .disabled-link {
       color: #757575; /* Greyed out color */
       cursor: default; /* Change cursor to default to indicate it's not clickable */
@@ -149,8 +148,7 @@
     initiative: 1
     strength: 12
     vigor: 10
-    fighting: 10
-    damage: 4
+    fighting: 8
 
     treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 2|
   }
@@ -166,7 +164,7 @@
     strength: 12
     vigor: 12
     fighting: 12
-    damage: 6
+    damage: 10
 
     treasure: |#amazing_treasure 1|
   }
@@ -193,7 +191,7 @@
     name: "Goblin"
     description: "A sneaky goblin, wielding a dagger"
 
-    initiative: 2
+    initiative: 1
     strength: 4
     vigor: 6
     fighting: 6
@@ -209,11 +207,11 @@
     name: ^i{"Chief " + $("goblin_names").randomElement()}
     description: "A large, tough, looking goblin wielding a flail"
 
-    initiative: 3
+    initiative: 2
     strength: 6
     vigor: 8
     fighting: 8
-    damage: 6
+    damage: 8
 
     treasure: |#average_treasure 1 #good_treasure 3 #excellent_treasure 1|
   }
@@ -240,10 +238,11 @@
     name: "Spider"
     description: "A dark and venmous spider"
 
-    initiative: 3
+    initiative: 2
     strength: 6
     vigor: 6
     fighting: 4
+    deck: 6
 
     treasure: |#poor_treasure 1 #average_treasure 1 #good_treasure 1|
   }
@@ -255,10 +254,12 @@
     name: ^i{"Queen " + $("spider_names").randomElement()}
     description: "A huge spider with glowing eyes and terrible fangs"
 
-    initiative: 4
-    strength: 8
+    initiative: 3
+    strength: d8
     vigor: 8
     fighting: 6
+    damage: 8
+
 
     treasure: |#average_treasure 1 #good_treasure 2 #excellent_treasure 2|
   }
@@ -485,17 +486,17 @@
     ${c_exits}
     ```
 
-    can_leave: function(decision) {
+    can_leave: function(allow) {
       if($("player").fought_boss) {
-        decision.yes();
+        allow.yes();
       } else {
-        decision.no("You cannot escape the dungeon, the boss is exerting their evil will on you!");
+        allow.no("You cannot escape the dungeon, the boss is exerting their evil will on you!");
       }
     }
   }
 
   @card c_dungeon_tunnel_1 {
-    exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2 }]
+    exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2}]
     location: [:dungeon :tunnel_1]
     blocks: [#c_exits]
     content: ```
@@ -549,11 +550,11 @@
   }
 
   @scene engage_in_battle {
-    layout_mode: :stack
+    monster: _
     on_start: (scene) => {
-      console.log("Scene has started");
+      console.log("Starting battle scene with monster: " + scene.monster);
     }
-
+    layout_mode: :stack
     initial_card_id: #battle_card
   }
 
@@ -561,16 +562,42 @@
     content: ```
     Let battle commence!
 
-    <a href="javascript:void(0)" data-event="swing">Take a Swing</a>
+    <ul>
+      <li><a href="javascript:void(0)" data-event="swing">Take a Swing</a></li>
+      <li><a href="javascript:void(0)" data-event="flee">Attempt to Flee</a></li>
+    </ul>
     ```
 
     on_swing: (card, evt) => {
+      const initiative_deck = $("initiative_deck");
+      const monster = card.scene.monster;
+      const monster_initiative = initiative_deck.draw(monster.initiative);
+      const player_initiative = initiative_deck.draw($player.initiative);
 
-      console.log("Player took a swing");
+      console.log(card.current_block);
+
+      let fight = new RezDieRoll($player.fighting).roll();
+      const weapon = $player.container.getContentsForSlot("weapon_slot")[0];
+      if(weapon) {
+        const weapon_die = new RezDieRoll(weapon.die, 1, weapon.mod);
+        fight += weapon_die.roll();
+      } else {
+        fight += 1;
+      }
+
+      card.current_block.message = "We're fighting!";
+
       return {
-        render: true
+        card: "battle_card"
       };
     }
+
+    on_flee: (card, evt) => {
+    }
+
+    flipped_content: ```
+    Something happened: ${$block.message}
+    ```
   }
 
   @scene end_game {
@@ -583,5 +610,66 @@
     content: ```
     You have escaped the dungeon in ${clock.turns} turns. You killed ${player.kills} monsters, won ${player.gold} gold and ${player.xp} xp.
     ```
+  }
+
+  @object initiative_deck {
+    cards: _
+    draw_pile: _
+
+    on_init: (deck) => {
+      const suits = ["C", "D", "H", "S"];
+      const faces = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+
+      deck.cards = Number.range(0, 51).map((n) => {
+        let [suit, card] = Math.div_mod(n, 13);
+        card = card == 0 ? 13 : card;
+        return {
+          n: n,
+          suit: suit,
+          card: card,
+          face: `${faces[card-1]}${suits[suit]}`
+        }
+      });
+      deck.reset();
+    }
+
+    reset: function() {
+      this.draw_pile = [...this.cards].fy_shuffle();
+    }
+
+    card_sort: function(card_1, card_2) {
+      if(card_1.card == card_2.card) {
+        return card_2.suit - card_1.suit;
+      } else {
+        return card_2.card - card_1.card;
+      }
+    }
+
+    order: function(entities) {
+      this.reset();
+
+      const order = [];
+
+      for(const entity of entities) {
+        order.push({entity: entity, initiative: this.draw(entity.initiative)});
+      }
+
+      order.sort((i1, i2) => {
+        return this.card_sort(i1.initiative, i2.initiative);
+      });
+
+      return order;
+    }
+
+    draw_n: function(n) {
+      const cards = this.draw_pile.take(n);
+      cards.sort(this.card_sort);
+      return cards;
+    }
+
+    draw: function(n) {
+      const cards = this.draw_n(n);
+      return cards[0];
+    }
   }
 }

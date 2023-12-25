@@ -10,38 +10,46 @@
 let inventory_proto = {
   __proto__: basic_object,
 
-  addContentHolderForSlot(slot_id) {
-    this.contents[slot_id] = [];
+  addItemHolderForSlot(slot_id) {
+    this.items[slot_id] = [];
   },
 
   elementInitializer() {
     for (const slot_id of this.slots) {
-      this.addContentHolderForSlot(slot_id);
+      this.addItemHolderForSlot(slot_id);
     }
   },
 
   slotIsOccupied(slot_id) {
-    return this.getContentsForSlot(slot_id).length == 0;
+    return this.countItemsForSlot(slot_id) > 0;
   },
 
-  getContentsForSlot(slot_id) {
-    const contents = this.contents[slot_id];
-    if(typeof(contents) === "undefined") {
+  getItemForSlot(slot_id) {
+    return this.getItemsForSlot(slot_id)[0];
+  },
+
+  getItemsForSlot(slot_id) {
+    const items = this.items[slot_id];
+    if(typeof(items) === "undefined") {
       throw `Attempt to get unknown slot "${slot_id} from container ${this.id}!`;
     }
-    return contents;
+    return items;
   },
 
-  appendContentToSlot(slot_id, item_id) {
-    this.contents[slot_id].push(item_id);
+  appendItemToSlot(slot_id, item_id) {
+    this.items[slot_id].push(item_id);
   },
 
-  setContentsForSlot(slot_id, contents) {
-    this.contents[slot_id] = contents;
+  setItemForSlot(slot_id, item_id) {
+    this.items[slot_id] = [item_id];
+  },
+
+  setItemsForSlot(slot_id, items) {
+    this.items[slot_id] = items;
   },
 
   countItemsInSlot(slot_id) {
-    return this.getContentsForSlot(slot_id).length;
+    return this.getItemsForSlot(slot_id).length;
   },
 
   /*
@@ -50,10 +58,10 @@ let inventory_proto = {
    * Either returns the slot_id that contains the item, or null.
    */
   containsItem(item_id) {
-    for (const slot_id in this.contents) {
-      const contents = this.getContentsForSlot(slot_id);
+    for (const slot_id in this.items) {
+      const items = this.getItemsForSlot(slot_id);
       if (
-        contents.some((contained_item_id) => {
+        items.some((contained_item_id) => {
           return contained_item_id == item_id;
         })
       ) {
@@ -72,20 +80,24 @@ let inventory_proto = {
   },
 
   owner() {
-    return this.game.$(this.ownerId());
+    return $(this.ownerId());
   },
 
   itemFitsInSlot(slot_id, item_id) {
-    const capacity = this.game.$(slot_id).capacity();
-    const size = this.game.$(item_id).size();
+    const slot = $(slot_id);
+    const capacity = slot.capacity();
+    const item = $(item_id);
+    const size = item.size();
     const current_size = this.countItemsInSlot(slot_id);
 
     return current_size + size <= capacity;
   },
 
   slotAcceptsItem(slot_id, item_id) {
-    const accepts = this.game.$(slot_id).getAttributeValue("accepts");
-    const type = this.game.$(item_id).getAttributeValue("type");
+    const slot = $(slot_id);
+    const accepts = slot.getAttributeValue("accepts");
+    const item = $(item_id);
+    const type = item.getAttributeValue("type");
 
     return type == accepts;
   },
@@ -118,7 +130,7 @@ let inventory_proto = {
 
     this.runEvent("insert", { slot_id: slot_id, item_id: item_id });
 
-    const slot = this.game.$(slot_id);
+    const slot = $(slot_id);
     slot.runEvent("insert", { inventory_id: this.id, item_id: item_id });
 
     this.applyEffects(item_id);
@@ -198,9 +210,9 @@ let inventory_proto = {
 function RezInventory(id, attributes) {
   this.id = id;
   this.game_object_type = "inventory";
-  this.contents = {};
+  this.items = {};
   this.attributes = attributes;
-  this.properties_to_archive = ["contents"];
+  this.properties_to_archive = ["items"];
   this.changed_attributes = [];
 }
 

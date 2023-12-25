@@ -583,27 +583,27 @@ The Game starts with a called to the game object `start` method which handles in
 
 === The Rendering Process
 
-The HTML presented in the browser is generated from content template attributes defined (principally by your `@game`, `@scene`, and `@card` elements although there are others) glued together by markup provided by Rez.
+The HTML that is presented in the browser is generated as follows:
 
-At a high level the rendered structure looks like this:
+At the top level the `@game` element requires a `layout:` template attribute. It further requires that this template contains a `${content}` template expression. Internally the game uses a `RezSingleLayout` object to render the current scene, which it adds to the layout bindings as `content`. So the scene content is inserted into the game layout as `${content}`.
 
-`Game Layout`
-&nbsp;&nbsp;`Scene Layout`
-&nbsp;&nbsp;&nbsp;&nbsp;`Card(s)`
+At the next level down the `@scene` also requires a `layout:` template attribute and, it too, requires a `${content}` template expression to be present. The scene either uses a `RezSingleLayout` (`layout_mode: :single`) or a `RezStackLayout` (`layout_mode: :stack`) depending on whether the scene is based on one `@card` or many `@cards`. The layout renders the card content and places it in the layout binding `content`. So the card content is inserted into the scene layout as `${content}`.
 
-The `RezGame` renders its layout, which must include the `RezScene`. The `RezScene` layout renders one or more `RezCards`. A `RezCard` renders its content.
+At the next level down the `@card` provides a `content_template:` and, optionally, `flipped_template:` attribute. The flipped template is used in the stack layout which we'll discuss shortly.
 
-In practice it is a bit more complicated because each of these elements (including cards) can also render arbitrary other cards as part of their content. When a card is being included in this way it is refered to as a 'block' and is specified using the `blocks:` attribute of those elements. We'll come back to blocks in a moment.
+So in the simplest case the structure is:
 
-The actual generation of markup is performed by a number of JS objects: `RezSingleLayout`, `RezStackLayout`, and `RezBlock`. Generating markup for `@game` and `@scene` layout is doing by one of `RezSingleLayout` or `RezStackLayout`. Generating markup for @cards is done by `RezBlock.` There is a 1:1 relationship between `@game` and `RezSingleLayout` and `@scene` and (of one) `RezSingleLayout` or `RezStackLayout`, and for each @card with an instance of `RezBlock`.
+....
+Game Layout
+  Scene Layout
+    Card Template
+....
 
-However the picture is slightly more complicated, because `@scene`'s and `@card`'s are considered to be templates and get copied before they are used. When you play a card such as `#fight_enemy` that card gets copied and it is the copy that is used. This allows for `@scene` and `@card` elements to be reused without having to worry about their condition. This is very important when a scene is used in stack mode.
-
-All cards are rendered by a `RezBlock`.
+The actual picture can be a little more complicated because the scene layout and card can also include content from other cards by specifying the id of the cards in their `blocks:` attribute. But what is a block?
 
 === What is a Block?
 
-When we talk about a "block" in the rendering proces we're actually talking about a `@card` but a card intended to be included within other content. A classic example would be a sidebar that is common across a set of scenes.
+Using the `blocks:` attribute we can specify the attribute of cards that we want to include beyond the main content card. For example, to include a sidebar that is common across cards in a scene:
 
 ....
 @card sidebar {
@@ -614,22 +614,22 @@ When we talk about a "block" in the rendering proces we're actually talking abou
 
 @scene explore {
   blocks: [#sidebar]
+
   layout: ```
-    scene layout content goes here
-    ${sidebar}
-    and continues here
+  <div class="sidebar">${sidebar}</div>
+  <div class="main">${content}</div>
   ```
 }
 ....
 
-The `blocks` attribute contains a list of `#id`'s of cards that are intended to be used as a block.
+When the `explore` scene gets rendered it will render its current card and bind the rendered content to `content` and also render the card `#sidebar` and bind that content to `sidebar`. So using the `${sidebar}` template expression from the layout includes the sidebar content.
 
-Note that when a card is used as in a block context it automatically gets a binding `$parent_block`. This allows the content of the block to easily reference attributes of the enclosing card.
+Note that when a card is used as a block it automatically gets a `$parent_block` binding. This allows the content of the block to easily reference attributes of the enclosing card.
 
-For example:
+This is useful when you want to create a "parameterized" block. For example, to dynamically render a list of exits available in a card representing a location.
 
 ....
-@card list_exit {
+@card list_exits {
   bindings: {
     exits: `$parent_block.source.exits
   }
@@ -659,7 +659,73 @@ For example:
 }
 ....
 
-In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block. The `#list_exits` block doesn't have to know anything about `#room_with_exits` only that it defines an `exits:` attribute. This means we can also use `#list_exits` from `#another_room_with_exits`.
+In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block.
+
+The `#list_exits` block doesn't have to know anything about `#room_with_exits` only that it defines an `exits:` attribute. We use a `binding_path` binding to refer to the `exits:` attribute in the source block of the parent block (i.e. in the card). This means we can also use `#list_exits` from `#another_room_with_exits` or any card that defines an `exits:` attribute.
+
+=== Stack Layout, Flipped Cards, and Blocks
+
+By default a `@scene` specifies a `layout_mode:` of `:single` which means that the scene renders a single 'main' `@card` as its content. When a new card is played into the scene it replaces the previous card and the view gets re-rendered.
+
+However, there are times when when you might want to render more than one card into a scene. For example a dialogue scene might represent a number of interactions back and forth between characters with the player able to specify a response. In these, and similar examples, you don't want the "history" of the scene to disappear.
+
+To achieve this a `@scene` can specify `layout_mode: :stack` to use the `RezStackLayout`. When using the stack layout, playing new cards into the scene do not replace the exist card but are appended or pre-pended to the list of previous cards (based on the `layout_reverse:` attribute).
+
+When the `RezStackLayout` renders, it renders the list of cards played into the scene (separated by any content in the `layout_separator:` attribute).
+
+However, in fact, an author probably doesn't actually want to re-render previous cards. A card that presented a set of dialogue choices doesn't make sense when the player has already made their choice. It would make more sense to render a version of the card representing the choice the player has made.
+
+This is why cards support a `flipped_content:` attribute. When a new card is played into a scene with a stack layout the previous card gets 'flipped' and renders the `flipped_content:` template rather than the `content:` template.
+
+But what happens if we play the same card multiple times? How does it know which is flipped and which is 'face up'. What happens if an event wants to store data in the card? To answer these questions we need to go a little deeper.
+
+The rendering process doesn't directly render `@card`s, `@scene`s, or `@game`'s. Rendering is done via an object whose prototype is `RezBlock`. `RezSingleLayout` and `RezStackLayout` both have `RezBlock` as their prototype. For each `@card` that is being rendered there is an instance of `RezBlock`.
+
+So when a `RezCard` is added to a `RezStackLayout` it's actually the card wrapped in an instance of `RezBlock`. The same card can get added to the layout many times, it's always the same card, but different block instances.
+
+What this means is that when a card is being flipped it's actually the block that tracks flipped status and decided whether to render its cards `content:` or `flipped_content:` template.
+
+Further it means that when an event wants to track how this changes the cards content it can store those changes in the block.
+
+....
+@card next_move {
+  content: ```
+  <a href="javascript:void(0)" data-event="shoot">Take a shot</a> or <a href="javascript:void(0) data-event="flee">Flee</a>.
+  ```
+
+  flipped_content: ```
+  $if($block.action == "shoot") {%
+    You shoot and ${block.hit | alt: "hit", "miss"}.
+  %}, {%
+    You run for it.
+  %}
+  ```
+
+  on_shoot: (card, evt) => {
+    card.current_block.action = "shoot";
+    card.current_block.hit = $player.hits_with_primary_weapon();
+    return {
+      card: "next_move"
+    };
+  }
+
+  on_flee: (card, evt) => {
+    card.current_block.action = "flee";
+    return {
+      card: "run_away"
+    };
+  }
+}
+....
+
+The first time the `next_move` card is added to a scene it displays the options to shoot or flee. There are two event cards which set the choosen route into the block and in the case of shooting what the result was.
+
+When the card is re-rendered the `flipped_content:` template is rendered which uses the block properties `action` and `hit` to decide what should get rendered.
+
+
+=== A pack of cards
+
+
 
 === HTML Structure
 
