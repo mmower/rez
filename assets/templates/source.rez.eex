@@ -16,7 +16,8 @@
   version: "<%= Rez.version %>"
   created: "<%= @created %>"
   initial_scene_id: #explore_dungeon
-@stylesheet {
+
+  @stylesheet {
     .disabled-link {
       color: #757575; /* Greyed out color */
       cursor: default; /* Change cursor to default to indicate it's not clickable */
@@ -49,14 +50,86 @@
     }
   }
 
+  blocks: [#sidebar]
+  bindings: {messages: `game.$flash_messages}
+
   layout: ```
-  ${content}
+  <!-- Flash Messages -->
+  <div id="flash">
+    $foreach(message:messages) {%
+      <div class="notification">
+        <button class="delete"></button>
+        ${message}
+    %}
+  </div>
+  <!-- Main Content -->
+  <section class="main-content columns is-fullheight">
+    <aside class="column is-2 is-narrow-mobile is-fullheight section is-hidden-mobile">${sidebar}</aside>
+    <div class="container column is-10">${content}</div>
+  </section>
+  <!-- End -->
   ```
+
+  @script {
+    // Enable notication delete buttons
+    document.addEventListener('DOMContentLoaded', () => {
+      (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+        const $notification = $delete.parentNode;
+
+        $delete.addEventListener('click', () => {
+          $notification.parentNode.removeChild($notification);
+        });
+      });
+    });
+  }
 
   %(../lib/stdlib.rez)
 
-  @object clock {
+  @card sidebar {
+    bindings: {
+      clock: #clock
+      player: #player
+      weapon: &player.weapon
+    }
+    content: ```
+    <p class="menu-label is-hidden-touch">
+    Turn: ${clock.turns}
+    </p>
+
+    <ul>
+      <li>Wounds: ${player.wounds}</li>
+      <li>Initiative: ${player.initiative}</li>
+      <li>Strength: ${player.strength}</li>
+      <li>Toughness: ${player.toughness}</li>
+      <li>Fight: ${player.fighting}</li>
+      <li>Dodge: ${player.dodge}</li>
+      <li>Mana: ${player.mana}</li>
+      <li>Gold: ${player.gold}</li>
+      <li>XP: ${player.xp}</li>
+    </ul>
+
+    Current Weapon:
+    ${weapon.name} — ${weapon.damage | desc_roll}
+    ```
+  }
+
+  @filter f_die_roll {
+    name: "desc_roll"
+    impl: (d) => {return d.description();}
+  }
+
+  @system clock {
+    enabled: true
+    priority: 1
+
     turns: 0
+
+    after_event: (clock, evt, result) => {
+      if(evt.target.dataset.turn === "1") {
+        clock.advance();
+      }
+      return result;
+    }
 
     advance: function() {
       this.turns += 1;
@@ -65,6 +138,8 @@
 
   @actor player {
     name: "The adventurer"
+    description: "A bold adventurer"
+    class: :m
 
     container_id: #player_inventory
 
@@ -72,12 +147,25 @@
 
     initiative: 2
     strength: 8
-    vigor: 6
+    toughness: 6
     fighting: 8
+    dodge: 0
+    wounds: 0
+    mana: 10
 
     gold: 0
 
     kills: 0
+    xp: 0
+
+    weapon: ^p{
+      const weapon_id = $player.container.getItemForSlot("weapon_slot");
+      return $(weapon_id);
+    }
+
+    on_start: (player) => {
+      player.container.setItemForSlot("weapon_slot", "dagger");
+    }
   }
 
   @scene player_setup {
@@ -122,6 +210,23 @@
       </div>
     </div>
     ```
+
+    on_finish: (card) => {
+      if($player.class === "f") {
+        player.strength += 1;
+        player.toughness += 1;
+        player.fighting += 2;
+      } else if($player.class == "r") {
+        player.initiative += 2;
+        player.fighting += 1;
+        player.dodge += 1;
+      } else if($player.class == "m") {
+        player.strength -= 1;
+        player.toughness -= 1;
+        player.fighting -= 2;
+        player.mana += 10;
+      }
+    }
   }
 
   @actor balrog {
@@ -133,9 +238,12 @@
 
     initiative: 6
     strength: 12
-    vigor: 12
+    toughness: 12
     fighting: 12
+    dodge: -3
     damage: 12
+    wounds: 0
+    xp: 30
   }
 
   @actor troll {
@@ -147,8 +255,11 @@
 
     initiative: 1
     strength: 12
-    vigor: 10
+    toughness: 10
     fighting: 8
+    dodge: -2
+    wounds: 0
+    xp: 10
 
     treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 2|
   }
@@ -162,9 +273,12 @@
 
     initiative: 2
     strength: 12
-    vigor: 12
+    toughness: 12
     fighting: 12
+    dodge: -1
     damage: 10
+    wounds: 0
+    xp: 25
 
     treasure: |#amazing_treasure 1|
   }
@@ -193,9 +307,12 @@
 
     initiative: 1
     strength: 4
-    vigor: 6
+    toughness: 6
     fighting: 6
+    dodge: 1
     damage: 4
+    wounds: 0
+    xp: 1
 
     treasure: |#poor_treasure 4 #average_treasure 2 #good_treasure 1|
   }
@@ -209,9 +326,12 @@
 
     initiative: 2
     strength: 6
-    vigor: 8
+    toughness: 8
     fighting: 8
+    dodge: 1
     damage: 8
+    wounds: 0
+    xp: 5
 
     treasure: |#average_treasure 1 #good_treasure 3 #excellent_treasure 1|
   }
@@ -240,9 +360,11 @@
 
     initiative: 2
     strength: 6
-    vigor: 6
+    toughness: 6
     fighting: 4
     deck: 6
+    wounds: 0
+    xp: 3
 
     treasure: |#poor_treasure 1 #average_treasure 1 #good_treasure 1|
   }
@@ -256,10 +378,12 @@
 
     initiative: 3
     strength: d8
-    vigor: 8
+    toughness: 8
     fighting: 6
+    dodge: 1
     damage: 8
-
+    wounds: 0
+    xp: 9
 
     treasure: |#average_treasure 1 #good_treasure 2 #excellent_treasure 2|
   }
@@ -288,9 +412,11 @@
 
     initiative: 3
     strength: 8
-    vigor: 10
+    toughness: 10
     fighting: 8
     damage: 8
+    wounds: 0
+    xp: 5
 
     treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 1|
   }
@@ -304,9 +430,11 @@
 
     initiative: 4
     strength: 10
-    vigor: 10
+    toughness: 10
     fighting: 10
     damage: 10
+    wounds: 0
+    xp: 15
 
     treasure: |#good_treasure 1 #excellent_treasure 1 #amazing_treasure 1|
   }
@@ -435,7 +563,7 @@
     layout: ```
     ${content}
     ```
-    initial_card_id: #c_dungeon_entrance
+    initial_card_id: #c_dungeon_chamber %%#c_dungeon_entrance
   }
 
   @filter exit_link {
@@ -469,10 +597,12 @@
   @card c_exits {
     bindings: {location: function(block) {return block.parent_block.source;}}
     content: ```
+    <div class="block">
     From here you can:<br /><ul>
     $foreach(exit: location.exits) {%
       ${exit | exit_link: location}
     %}</ul>
+    </div>
     ```
   }
 
@@ -490,7 +620,7 @@
       if($("player").fought_boss) {
         allow.yes();
       } else {
-        allow.no("You cannot escape the dungeon, the boss is exerting their evil will on you!");
+        allow.no("You cannot escape the dungeon, something has placed a terrible spell upon the entrance and you cannot pass!");
       }
     }
   }
@@ -518,7 +648,7 @@
   }
 
   @object location {
-    monster: _
+    monster_id: _
   }
 
   @card c_dungeon_chamber {
@@ -528,10 +658,17 @@
     location: [:dungeon :chamber]
     monster_id: 0
     content: ```
+    <div class="box">
+    <div class="block">
     Clearly the lair of the beast. Bomes and small trinkets litter the filthy floor.
-    There is a <a href="javascript:void(0)" data-event="switch" data-target="engage_in_battle" data-monster="${location.monster.id}">${location.monster.name}</a> here!
-
+    </div>
+    $if(location.monster) {%
+    <div class="block">
+    There is a <a data-event="interlude" data-target="engage_in_battle" data-monster_id="${location.monster.id}">${location.monster.name}</a> here!
+    </div>
+    %}
     ${c_exits}
+    </div>
     ```
 
     on_start: () => {
@@ -545,59 +682,263 @@
     content: ```
     The clear daylight of the outside!
 
-    You have [[made it|>end_game]].
+    You have <a data-event="switch" data-target="end_game">made it</a>.
     ```
   }
 
   @scene engage_in_battle {
     monster: _
     on_start: (scene) => {
-      console.log("Starting battle scene with monster: " + scene.monster);
+      scene.monster = $(scene.current_block.monster_id);
+      console.log("Starting battle scene with monster: " + scene.monster.name);
     }
     layout_mode: :stack
     initial_card_id: #battle_card
   }
 
-  @card battle_card {
-    content: ```
-    Let battle commence!
+  @object spell_fireball {
+    name: "Fireball"
+    cost: 2
+    damage: 5d6
+  }
 
-    <ul>
-      <li><a href="javascript:void(0)" data-event="swing">Take a Swing</a></li>
-      <li><a href="javascript:void(0)" data-event="flee">Attempt to Flee</a></li>
-    </ul>
+  @object spell_missile {
+    name: "Magic Missile"
+    cost: 1
+    damage: 2d4
+  }
+
+  @filter cast_spell {
+    name: "cast_spell"
+    impl: (spell) => {
+      if($player.class === "m") {
+        if($player.mana >= spell.cost) {
+          return `<li><a data-event="cast_spell" data-spell="${spell.id}">Cast ${spell.name}</a></li>`;
+        } else {
+          return `<li><a href="#" class="disabled_link">Cast ${spell.name}</a></li>`;
+        }
+      } else {
+        return "";
+      }
+    }
+  }
+
+  @card battle_card {
+    bindings: {
+      monster: `scene.monster
+      fireball: #spell_fireball
+      weapon: &player.weapon
+    }
+    content: ```
+    <div class="box">
+      <div class="block">You face off against the ${monster.name}.</div>
+      <div class="block">
+        <ul>
+          <li>Wounds: ${monster.wounds}</li>
+          <li>Initiative: ${monster.initiative}</li>
+          <li>Strength: ${monster.strength}</li>
+          <li>Toughness: ${monster.toughness}</li>
+          <li>Fight: ${monster.fighting}</li>
+          <li>Damage: ${monster.damage}</li>
+        </ul>
+      </div>
+      <div class="block">
+        <ul>
+          <li><a data-event="fight" data-turn="1">Attack with ${weapon.name}</a></li>
+          ${fireball | cast_spell}
+          <li><a data-event="flee">Attempt to Flee</a></li>
+        </ul>
+      </div>
+    </div>
     ```
 
-    on_swing: (card, evt) => {
-      const initiative_deck = $("initiative_deck");
+    on_cast_spell: (card, params) => {
+      const block = card.current_block;
+
+      const spell = $(params.spell);
+      block.messages = [];
+
+      $player.mana -= spell.cost;
+      const damage = spell.damage.roll();
+
+      block.messages.push(`Casts ${spell.name} for ${damage} damage`);
+
       const monster = card.scene.monster;
-      const monster_initiative = initiative_deck.draw(monster.initiative);
-      const player_initiative = initiative_deck.draw($player.initiative);
+      const [wounds, _] = Math.div_mod(damage, monster.toughness)
 
-      console.log(card.current_block);
-
-      let fight = new RezDieRoll($player.fighting).roll();
-      const weapon = $player.container.getContentsForSlot("weapon_slot")[0];
-      if(weapon) {
-        const weapon_die = new RezDieRoll(weapon.die, 1, weapon.mod);
-        fight += weapon_die.roll();
+      if(wounds === 0) {
+        block.messages.push(`Grazes the ${monster.name}`);
       } else {
-        fight += 1;
+        block.messages.push(`Causes ${wounds} wounds to the ${monster.name}`);
       }
 
-      card.current_block.message = "We're fighting!";
+      monster.wounds += wounds;
+      if(monster.wounds>3) {
+        block.messages.push("Killing it!");
+        return {
+          card: "monster_dies"
+        };
+      } else {
+        return {
+          card: "battle_card"
+        };
+      }
+    }
+
+    on_fight: (card, evt) => {
+      const monster = card.scene.monster;
+      const order = $("initiative_deck").order([$player, monster]);
+      console.dir(order);
+
+      const block = card.current_block;
+      block.messages = [];
+
+      let attacker = order[0].entity;
+      let defender = order[1].entity;
+
+      block.messages.push(`${attacker.name} goes 1st with ${order[0].initiative.face}.`);
+      const first_attack = card.attack(attacker, defender);
+      block.messages.push(first_attack.a_desc);
+      if(first_attack.hit) {
+        block.messages.push(first_attack.w_desc);
+        if(first_attack.dies) {
+          return {card: first_attack.defender == $player ? "player_dies" : "monster_dies"};
+        }
+      }
+
+      block.messages.push(`${defender.name} goes 2nd with ${order[1].initiative.face}.`);
+      const second_attack = card.attack(defender, attacker);
+      block.messages.push(second_attack.a_desc);
+      if(second_attack.hit) {
+        block.messages.push(second_attack.w_desc);
+        if(second_attack.dies) {
+          return {card: second_attack.defender == $player ? "player_dies" : "monster_dies"};
+        }
+      }
 
       return {
         card: "battle_card"
       };
     }
 
+    attack_roll: function(sides, mod) {
+      const die = new RezDieRoll(sides, 1, mod);
+
+      let total_roll = 0;
+      let roll = 0;
+      let aces = 0;
+
+      do {
+        roll = die.roll();
+        console.log(`${die.description()} => ${roll}`);
+        total_roll += roll;
+        if(roll == sides) {
+          aces += 1;
+          console.log(`Ace: ${aces}`);
+        }
+      } while(roll == sides);
+
+      return [total_roll, aces];
+    }
+
+    attack: function(attacker, defender) {
+      const result = {};
+      result.attacker = attacker;
+      result.defender = defender;
+
+      const [attack_roll, aces] = this.attack_roll(attacker.fighting, attacker.wounds);
+
+      result.attack = attack_roll;
+      result.aces = aces;
+      result.parry = 2 + Math.floor(defender.fighting / 2) + (defender.dodge ?? 0);
+      result.hit = result.attack >= result.parry;
+
+      result.a_desc = `${result.hit ? "Hits" : "Misses"} (${result.attack} vs ${result.parry})`;
+
+      if(result.hit) {
+        result.damage = new RezDieRoll(attacker.strength).roll();
+
+        if(result.aces > 0) {
+          let ace_damage = 0;
+          let ace_roll;
+          do {
+            ace_roll = Rez.D6.roll();
+            ace_damage += ace_roll;
+          } while(ace_roll == 6);
+          result.damage += ace_damage;
+        }
+
+        if(attacker.container) {
+          const weapon = $(attacker.container.getItemForSlot("weapon_slot"));
+          result.damage += weapon.damage.roll();
+        } else {
+          result.damage += new RezDieRoll(attacker.damage).roll();
+        }
+
+        const [wounds, _] = Math.div_mod(result.damage, defender.toughness)
+        result.wounds = wounds;
+
+        if(result.wounds > 0) {
+          result.w_desc = `Causes ${result.wounds} wounds! (${result.damage} vs ${defender.toughness})`;
+        } else {
+          result.w_desc = `Graze, causing no damage (${result.damage} vs ${defender.toughness})`;
+        }
+
+        defender.wounds += result.wounds;
+        result.dies = defender.wounds > 3;
+      }
+
+      return result;
+    }
+
     on_flee: (card, evt) => {
     }
 
     flipped_content: ```
-    Something happened: ${$block.message}
+    <div class="box">
+      <ul>
+      $foreach(message: $block.messages) {%
+        <li>${message}</li>
+      %}
+      </ul>
+    </div>
     ```
+  }
+
+  @card player_dies {
+    content: ```
+    Player is dead!
+    ```
+  }
+
+  @card monster_dies {
+    bindings: {monster: `scene.monster}
+    content: ```
+    <div class="box">
+     ${monster.name} is dead! <a data-event="card" data-target="loot_the_room">Loot the room</a>.
+    </div>
+    ```
+
+    on_start: (card) => {
+      $("location").monster_id = "";
+      $player.xp += card.scene.monster.xp;
+    }
+  }
+
+  @card loot_the_room {
+    gold: _
+
+    content: ```
+    <div class="box">
+    You find ${card.gold} gold. <a data-event="resume">Continue</a>
+    </div>
+    ```
+
+    on_start: (card) => {
+      const treasure = $(card.scene.monster.treasure);
+      card.gold = treasure.gold.roll();
+      $player.gold += card.gold;
+    }
   }
 
   @scene end_game {

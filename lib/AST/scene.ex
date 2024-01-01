@@ -71,6 +71,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def default_attributes(_scene),
     do: %{
+      "current_card_id" => Attribute.string("current_card_id", ""),
       "layout_mode" => Attribute.keyword("layout_mode", "single"),
       "layout" => Attribute.source_template("layout", "${content}"),
       "layout_reverse" => Attribute.boolean("layout_reverse", false),

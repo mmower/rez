@@ -308,6 +308,9 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   def default_attributes(_game) do
     %{
+      "current_scene_id" => Attribute.string("current_scene_id", ""),
+      "$scene_stack" => Attribute.list("$scene_stack", []),
+      "$flash_messages" => Attribute.list("$flash_messages", []),
       "layout" => Attribute.source_template("layout", "${content}")
     }
   end

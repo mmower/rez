@@ -5,7 +5,7 @@ defmodule Rez.Parser.TemplateExpressionParser do
       sequence: 2,
       many: 1,
       many: 2,
-      choice: 1,
+      choice: 2,
       ignore: 1,
       optional: 1,
       lazy: 1
@@ -20,11 +20,14 @@ defmodule Rez.Parser.TemplateExpressionParser do
   import Rez.Parser.ParserCache, only: [get_parser: 2]
 
   def js_value() do
-    choice([
-      string_value(),
-      number_value(),
-      bool_value()
-    ])
+    choice(
+      [
+        string_value(),
+        number_value(),
+        bool_value()
+      ],
+      label: "tep-js-value"
+    )
   end
 
   @doc ~S"""
@@ -59,19 +62,25 @@ defmodule Rez.Parser.TemplateExpressionParser do
   end
 
   def js_value_or_array() do
-    choice([
-      js_value(),
-      js_array()
-    ])
+    choice(
+      [
+        js_value(),
+        js_array()
+      ],
+      label: "tep-value-or-array"
+    )
   end
 
   import Rez.Parser.JSBindingParser, only: [binding_path: 0]
 
   def expression_value() do
-    choice([
-      binding_path(),
-      js_value_or_array()
-    ])
+    choice(
+      [
+        binding_path(),
+        js_value_or_array()
+      ],
+      label: "tep-expression-value"
+    )
   end
 
   def filter_params() do
@@ -151,8 +160,8 @@ defmodule Rez.Parser.TemplateExpressionParser do
       %{status: :ok, ast: ast} ->
         {:ok, ast}
 
-      ctx ->
-        {:error, ctx.status}
+      %{status: {:error, errors}} ->
+        {:error, errors}
     end
   end
 end

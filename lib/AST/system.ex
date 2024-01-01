@@ -61,12 +61,16 @@ defimpl Rez.AST.Node, for: Rez.AST.System do
           value_passes?(fn prio -> prio > 0 end, "greater than zero")
         )
       ),
-      attribute_present?(
-        "on_tick",
-        attribute_has_type?(
-          :function,
-          validate_has_params?(1)
-        )
+      attribute_one_of_present?(["before_event", "after_event"], false),
+      attribute_if_present?(
+        "before_event",
+        # (system, evt)
+        attribute_has_type?(:function, validate_has_params?(2))
+      ),
+      attribute_if_present?(
+        "after_event",
+        # (system, evt, result)
+        attribute_has_type?(:function, validate_has_params?(3))
       ),
       attribute_if_present?(
         "$js_ctor",

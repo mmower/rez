@@ -274,10 +274,6 @@ let game_proto = {
     );
   },
 
-  get currentScene() {
-    return this.current_scene;
-  },
-
   startSceneWithId(new_scene_id, params = {}) {
     if (new_scene_id == null) {
       throw "new_scene_id cannot be null!";
@@ -288,7 +284,6 @@ let game_proto = {
     }
 
     const scene = $(new_scene_id);
-    this.current_scene_id = scene.id;
     this.current_scene = scene;
 
     const layout = scene.getViewLayout();
@@ -300,8 +295,41 @@ let game_proto = {
     scene.ready();
   },
 
+  interludeSceneWithId(scene_id, params = {}) {
+    console.log(`Interlude from |${this.current_scene_id}| to |${scene_id}|`);
+
+    // Save the state of the current scene
+    this.pushScene();
+
+    const scene = $(scene_id);
+    this.current_scene = scene;
+
+    const layout = scene.getViewLayout();
+    layout.assignParams(params);
+
+    this.setViewContent(scene.getViewLayout());
+    this.clearFlashMessages();
+
+    scene.start();
+    scene.ready();
+  },
+
+  resumePrevScene(params = {}) {
+    console.log(`Resume from |${this.current_scene_id}|`);
+    if (!this.canResume()) {
+      throw "Cannot resume without a scene on the stack!";
+    } else {
+      // Let the interlude know we're done
+      this.current_scene.finish();
+      this.popScene();
+      this.current_scene.getViewLayout().assignParams(params);
+      debugger;
+      this.updateView();
+    }
+  },
+
   playCard(card_id) {
-    this.currentScene.playCardWithId(card_id);
+    this.current_scene.playCardWithId(card_id);
   },
 
   setViewContent(content) {
@@ -321,50 +349,20 @@ let game_proto = {
     this.view.update();
   },
 
-  interludeWithScene(interlude_scene_id, params = {}) {
-    if (interlude_scene_id == null) {
-      throw "interlude_scene_id cannot be null!";
-    } else if (this.currentScene == null) {
-      throw "cannot interlude without a current scene!";
-    }
-
-    console.log(
-      "Interlude from " + this.current_scene_id + " to " + interlude_scene_id
-    );
-
-    // Save the state of the current scene
-    this.pushScene();
-
-    this.startSceneWithId(interlude_scene_id, params);
-    // this.updateView();
-  },
-
-  resumePrevScene(params = {}) {
-    console.log("Resume from " + this.current_scene_id);
-    if (this.scene_stack.length < 1) {
-      throw "Cannot resume without a scene on the stack!";
-    } else {
-      // Let the interlude know we're done
-      this.current_scene.finish();
-
-      this.popScene();
-
-      scene.getViewLayout().assignParams(params);
-
-      this.updateView();
-    }
+  canResume() {
+    return this.$scene_stack.length > 0;
   },
 
   pushScene() {
-    this.currentScene.interrupt();
-    this.scene_stack.push(this.current_scene_id);
+    this.current_scene.interrupt();
+    this.$scene_stack.push(this.current_scene_id);
     this.view.pushLayout(new RezSingleLayout("scene", this));
   },
 
   popScene() {
     this.view.popLayout();
-    this.current_scene_id = this.scene_stack.pop();
-    this.currentScene.resume();
+    this.current_scene_id = this.$scene_stack.pop();
+    this.current_scene.resume();
   },
 
   setViewLayout(layout) {
@@ -390,9 +388,11 @@ let game_proto = {
 
     this.runEvent("start", {});
 
+    this.getAll("actor").forEach((actor) => actor.runEvent("start", {}));
+
     this.view = new RezView(
       container_id,
-      this,
+      this.event_processor,
       new RezSingleLayout("game", this)
     );
 
@@ -409,125 +409,12 @@ let game_proto = {
       );
   },
 
-  // Handle events coming from the browser
-
-  handleBrowserEvent(evt) {
-    if (evt.type == "click") {
-      return this.handleBrowserClickEvent(evt);
-    } else if (evt.type == "input") {
-      return this.handleBrowserInputEvent(evt);
-    } else if (evt.type == "submit") {
-      return this.handleBrowserSubmitEvent(evt);
-    } else {
-      return false;
-    }
-  },
-
-  handleBrowserClickEvent(evt) {
-    if (!evt.target.dataset.event) {
-      return false;
-    }
-
-    const event_name = evt.target.dataset.event.toLowerCase();
-    if (event_name == "card") {
-      return this.handleCardEvent(evt);
-    } else if (event_name == "switch") {
-      return this.handleSwitchEvent(evt);
-    } else if (event_name == "interlude") {
-      return this.handleInterludeEvent(evt);
-    } else if (event_name == "resume") {
-      return this.handleResumeEvent(evt);
-    } else {
-      return this.handleCustomEvent(event_name, evt);
-    }
-  },
-
-  handleCustomEvent(event_name, evt) {
-    const handler = this.eventHandler(event_name);
-    if (handler && typeof handler == "function") {
-      return handler(this, evt);
-    } else {
-      return this.currentScene.handleCustomEvent(event_name, evt);
-    }
-  },
-
-  handleCardEvent(evt) {
-    console.log("Handle card event");
-    const card_id = evt.target.dataset.target;
-    const { event, target, ...params } = evt.target.dataset;
-    this.currentScene.playCardWithId(card_id, params);
-    return true;
-  },
-
-  handleSwitchEvent(evt) {
-    console.log("Handle switch event");
-    const scene_id = evt.target.dataset.target;
-    const { event, target, ...params } = evt.target.dataset;
-    this.startSceneWithId(scene_id, params);
-    return true;
-  },
-
-  handleInterludeEvent(evt) {
-    console.log("Handle interlude event");
-    const scene_id = evt.target.dataset.target;
-    const { event, target, ...params } = evt.target.dataset;
-    this.interludeWithScene(scene_id, params);
-    return true;
-  },
-
-  handleResumeEvent(evt) {
-    console.log("Handle resume event");
-    this.resumePrevScene(evt.target.dataset);
-    return true;
-  },
-
-  handleBrowserInputEvent(evt) {
-    console.log("Handle input event");
-    const card_div = evt.target.closest("div.card");
-    if (!card_div) {
-      throw "Cannot find div for input " + evt.target.id + "!";
-    }
-
-    const card_id = card_div.dataset.card;
-    if (!card_id) {
-      throw "Cannot get card id for input" + evt.target.id + "!";
-    }
-
-    const card = $(card_id);
-    return card.runEvent("input", { evt: evt });
-  },
-
-  handleBrowserSubmitEvent(evt) {
-    console.log("Handle submit event");
-
-    const form_name = evt.target.getAttribute("name");
-    if (!form_name) {
-      throw "Cannot get form name!";
-    }
-
-    const card_div = evt.target.closest("div.card");
-    if (!card_div) {
-      throw "Cannot find div for form: " + form_name + "!";
-    }
-
-    const card_id = card_div.dataset.card;
-    const card = $(card_id);
-
-    return card.runEvent(form_name, { form: evt.target });
-  },
-
-  runTick() {
-    this.getEnabledSystems().forEach(function (system) {
-      system.runEvent("tick", this.wmem);
-    });
-  },
-
   addFlashMessage(message) {
-    this.flash.push(message);
+    this.$flash_messages.push(message);
   },
 
   clearFlashMessages() {
-    this.flash = [];
+    this.$flash_messages = [];
   },
 
   get undoManager() {
@@ -538,17 +425,13 @@ let game_proto = {
 function RezGame(id, attributes) {
   this.id = id;
   this.undo_manager = new RezUndoManager();
+  this.event_processor = new RezEventProcessor(this);
   this.game_object_type = "game";
   this.attributes = attributes;
   this.tag_index = {};
-  this.scene_stack = [];
-  this.current_scene_id = null;
-  this.flash = [];
   this.wmem = { game: this };
   this.game_objects = new Map();
   this.properties_to_archive = [
-    "scene_stack",
-    "current_scene_id",
     "wmem",
     "tag_index",
     "renderer",

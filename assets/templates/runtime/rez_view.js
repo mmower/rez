@@ -361,32 +361,6 @@ let event_transformer_proto = {
     return this.event;
   },
 
-  dispatchResponse(response) {
-    if (typeof response == "object") {
-      if (response.scene) {
-        this.receiver.startSceneWithId(response.scene);
-      }
-
-      if (response.card) {
-        this.receiver.playCard(response.card);
-      }
-
-      if (response.flash) {
-        this.receiver.addFlashMessage(response.flash);
-      }
-
-      if (response.render) {
-        this.receiver.updateView();
-      }
-
-      if (response.error) {
-        console.log(`Error: ${response.error}`);
-      }
-    } else if (typeof response == "undefined") {
-      throw "Event handlers must return an object with at least one key from: [scene, card, flash, render, error, nop]!";
-    }
-  },
-
   addEventListener(elem, event) {
     const transformer = this;
     const receiver = this.getReceiver();
@@ -405,7 +379,7 @@ let event_transformer_proto = {
       // Trigger a re-render of the view
       // {error: "Error Message"}
       // Log an error message
-      transformer.dispatchResponse(receiver.handleBrowserEvent(evt));
+      receiver.dispatchResponse(receiver.handleBrowserEvent(evt));
     });
   },
 

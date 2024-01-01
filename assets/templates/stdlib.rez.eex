@@ -898,17 +898,20 @@
 %% ----------------------------------------------------------------------------
 
 @system actor_behaviours {
-  enabled: true
+  enabled: false
   priority: 10
-  on_tick: (event) => {
-    console.log("Running actor_behaviours system");
-    const game = event.game;
-    const actors = game.getAll("actor").filter((actor) => {return actor.hasAttribute("behaviours")});
-    const wmem = {};
-    actors.forEach((actor) => {
-      const btree = actor.getAttributeValue("behaviours");
-      btree.execute(wmem);
-    });
+  after_event: (system, evt, result) => {
+    if(evt.target.dataset.event === "behaviours") {
+      console.log("Running actor_behaviours system");
+      const game = event.game;
+      const actors = game.getAll("actor").filter((actor) => {return actor.hasAttribute("behaviours")});
+      const wmem = {};
+      actors.forEach((actor) => {
+        const btree = actor.getAttributeValue("behaviours");
+        btree.execute(wmem);
+      });
+    }
+    return result;
   }
 }
 
