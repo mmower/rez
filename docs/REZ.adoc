@@ -445,11 +445,11 @@ A dynamic initializer uses the form `^i{...}` to run an expression once at the t
 
 A dynamic value uses the form `^v{...}` to create an expression that gets evaluated each time it is referenced. This should be mostly superceded by the use of `^p{...}` to create properties.
 
-We use the caret symbol `^` to create different kinds of dynamic attribute value. There are three kinds:
+....
+class_name: ^v{class == "g" ? "Gunslinger" : class =="s" ? "Sleuth" : "Crook"}
+....
 
-* dynamic initializers
-* dynamic values
-* properties
+Note that there is an implicit `return` statement to which this value code is appended.
 
 == What's in a Game?
 
@@ -663,6 +663,87 @@ In this example `#room_with_exits` has an `exits:` attribute and renders the car
 
 The `#list_exits` block doesn't have to know anything about `#room_with_exits` only that it defines an `exits:` attribute. We use a `binding_path` binding to refer to the `exits:` attribute in the source block of the parent block (i.e. in the card). This means we can also use `#list_exits` from `#another_room_with_exits` or any card that defines an `exits:` attribute.
 
+=== What are Bindings?
+
+By default the code being rendered in a block doesn't have access to all of your game objects.
+
+The following bindings are always available:
+
+[cols="1,2"]
+|===
+|`$block`
+|the current renderer block object
+
+|`card`
+|the card that is being rendered
+
+|`scene`
+|if a scene layout is being rendered, the current scene object
+
+|`game`
+|if a game layout is being rendered, the game object
+|===
+
+In the previous example we used a `bindings:` attribute to make an `exits` value available to the template by referring to where the exits are defined. Bindings are powerful but complex and have some sharp edges.
+
+There are several ways to make a binding:
+
+==== ID Bindings
+
+The simplest form of binding is to use an element id:
+
+....
+weapon: #colt45
+....
+
+In this kind of binding we pass an element-id and the value `weapon` then gets bound to a reference to the object `#colt45`
+
+==== Function Bindings
+
+A function binding binds the value to the return value of an inline Javascript function:
+
+....
+weapon: () => {return $("colt45")}
+random: () => {return Math.rand_int(10)}
+....
+
+The value (`weapon` or `random`) is bound to the return value of the function. These bindings will be re-bound each time the block is rendered so `weapon` will always have the same value but `random` would have a different value each time.
+
+==== Attribute Bindings
+
+An attribute binding binds to a specific attribute of an element:
+
+....
+weapon: &player.weapon
+....
+
+==== Path Bindings
+
+A path binding is used to refer an object by a key-path from the $block object. This is mainly useful when implement cards intended to be used as bound blocks, that want to refer to their parent card context.
+
+....
+exits: `$parent_block.source.exits
+....
+
+All path-references implictly begin with the `$block` variable (that refers to the card currently being rendered). So ``$parent_block` refers to the `$parent_block` attribute of the current `$block`.
+
+Using a path binding we can get to the parent card which may be one of many cards (why we can't use an element reference) and its attributes.
+
+==== Sharp Edges
+
+Path bindings are often used to get at the internal mechanics (parent blocks, sources and so on) which are already a little complicated.
+
+Also it is not possible to make one binding that refers to another, so, while
+
+....
+weapon: &player.weapon
+rounds: &weapon.rounds
+....
+
+seems like it should work, it doesn't because the `weapon` binding isn't available when the `rounds` binding is made.
+
+We hope to fix this in a future version. In the meantime you can usually use a function binding to get at what you need.
+
 === Stack Layout, Flipped Cards, and Blocks
 
 By default a `@scene` specifies a `layout_mode:` of `:single` which means that the scene renders a single 'main' `@card` as its content. When a new card is played into the scene it replaces the previous card and the view gets re-rendered.
@@ -721,11 +802,6 @@ Further it means that when an event wants to track how this changes the cards co
 The first time the `next_move` card is added to a scene it displays the options to shoot or flee. There are two event cards which set the choosen route into the block and in the case of shooting what the result was.
 
 When the card is re-rendered the `flipped_content:` template is rendered which uses the block properties `action` and `hit` to decide what should get rendered.
-
-
-=== A pack of cards
-
-
 
 === HTML Structure
 
@@ -823,7 +899,7 @@ It is possible to have an interlude within an interlude but may get confusing if
 From an interlude we can resume the previous scene using a resume link.
 
 ....
-<a href="javascript:void(0)" data-event="resume">Leave the store</a>
+<a data-event="resume">Leave the store</a>
 ....
 
 This will end the interluded scene and resume the previous scene where it left off.
@@ -835,7 +911,7 @@ There may be situations where you only want links to appear under specific circu
 A link can trigger a custom event.
 
 ....
-<a href="javascript:void(0)" data-event="reload">Reload gat</a>
+<a data-event="reload">Reload gat</a>
 ....
 
 This will create a link titled "Reload gat" that when clicked will run an event `on_reload` on the game, scene, or card (in that order).
@@ -848,8 +924,8 @@ Any of the previous types of link can be amended to pass arbitrary data values. 
 
 ....
 <ul>
-  <li><a href="javascript:void(0)" data-event="switch" data-target="conversation" data-actor_id="gutman">Speak with Gutman</a></li>
-  <li><a href="javascript:void(0)" data-event="switch" data-target="conversation" data-actor_id="wilmer">Speak with Wilmer</a></li>
+  <li><a data-event="switch" data-target="conversation" data-actor_id="gutman">Speak with Gutman</a></li>
+  <li><a data-event="switch" data-target="conversation" data-actor_id="wilmer">Speak with Wilmer</a></li>
 </ul>
 ....
 

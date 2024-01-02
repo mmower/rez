@@ -14,6 +14,10 @@ defmodule Rez.Generator do
   @external_resource "node_modules/bulma/css/bulma.min.css"
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
 
+  EEx.function_from_file(:def, :render_hello, Path.expand("assets/templates/hello.rez.eex"), [
+    :assigns
+  ])
+
   EEx.function_from_file(:def, :render_game, Path.expand("assets/templates/source.rez.eex"), [
     :assigns
   ])
@@ -35,6 +39,8 @@ defmodule Rez.Generator do
     game_title = Map.get(options, :game_title, "Twisty Maze Adventure")
     game_homepage = Map.get(options, :game_homepage, "https://rez-lang.com/")
 
+    sample_game = Map.get(options, :sample, false)
+
     [name | _args] = args
 
     # Create the main game directory in the current directory
@@ -55,17 +61,32 @@ defmodule Rez.Generator do
       ifid = UUID.uuid1() |> String.upcase()
       created = DateTime.utc_now() |> DateTime.to_string()
 
+      source =
+        if sample_game do
+          render_game(
+            name: name,
+            author_name: author_name,
+            author_email: author_email,
+            game_title: game_title,
+            game_homepage: game_homepage,
+            ifid: ifid,
+            created: created
+          )
+        else
+          render_hello(
+            name: name,
+            author_name: author_name,
+            author_email: author_email,
+            game_title: game_title,
+            game_homepage: game_homepage,
+            ifid: ifid,
+            created: created
+          )
+        end
+
       File.write!(
         game_source_path,
-        render_game(
-          name: name,
-          author_name: author_name,
-          author_email: author_email,
-          game_title: game_title,
-          game_homepage: game_homepage,
-          ifid: ifid,
-          created: created
-        )
+        source
       )
     else
       Debug.v_log("Skipping game source write")

@@ -259,7 +259,7 @@ defmodule Rez.Parser.ValueParsers do
         [
           ignore(caret()),
           ignore(char(?v)),
-          text_delimited_by_parsers(open_brace(), close_brace())
+          text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:dynamic_value, f} end
       )
@@ -274,7 +274,7 @@ defmodule Rez.Parser.ValueParsers do
         [
           ignore(caret()),
           ignore(char(?i)),
-          text_delimited_by_parsers(open_brace(), close_brace())
+          text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:dynamic_initializer, f} end
       )

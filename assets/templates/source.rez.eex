@@ -2,7 +2,7 @@
 %% Game created with Rez <%= Rez.version %>
 %% http://rez-lang.com/
 %% By Matt Mower <self@mattmower.com>
-%% Released 2022, 2023 under the GPLv3 license
+%% Released 2022-2024 under the GPLv3 license
 %%
 
 @game {
@@ -92,24 +92,34 @@
       weapon: &player.weapon
     }
     content: ```
-    <p class="menu-label is-hidden-touch">
-    Turn: ${clock.turns}
-    </p>
+    <div class="block">${player.name}</div>
+    <div class="block">${player.class_name}</div>
+    <div class="block">
+      <p class="menu-label is-hidden-touch">
+      Turn: ${clock.turns}
+      </p>
+    </div>
 
-    <ul>
-      <li>Wounds: ${player.wounds}</li>
-      <li>Initiative: ${player.initiative}</li>
-      <li>Strength: ${player.strength}</li>
-      <li>Toughness: ${player.toughness}</li>
-      <li>Fight: ${player.fighting}</li>
-      <li>Dodge: ${player.dodge}</li>
-      <li>Mana: ${player.mana}</li>
-      <li>Gold: ${player.gold}</li>
-      <li>XP: ${player.xp}</li>
-    </ul>
+    <div class="block">
+      <ul>
+        <li>Wounds: ${player.wounds}</li>
+        <li>Initiative: ${player.initiative}</li>
+        <li>Strength: ${player.strength}</li>
+        <li>Toughness: ${player.toughness}</li>
+        <li>Fight: ${player.fighting}</li>
+        <li>Dodge: ${player.dodge}</li>
+        <li>Mana: ${player.mana}</li>
+        <li>Gold: ${player.gold}</li>
+        <li>XP: ${player.xp}</li>
+      </ul>
+    </div>
 
+    $if(weapon) {%
+    <div class="block">
     Current Weapon:
     ${weapon.name} — ${weapon.damage | desc_roll}
+    </div>
+    %}
     ```
   }
 
@@ -151,12 +161,16 @@
     fighting: 8
     dodge: 0
     wounds: 0
-    mana: 10
+    mana: 0
 
     gold: 0
 
     kills: 0
     xp: 0
+
+    spells: []
+
+    class_name: ^v{this.class == "m" ? "Mage" : this.class == "r" ? "Rogue" : "Fighter"}
 
     weapon: ^p{
       const weapon_id = $player.container.getItemForSlot("weapon_slot");
@@ -164,7 +178,7 @@
     }
 
     on_start: (player) => {
-      player.container.setItemForSlot("weapon_slot", "dagger");
+      //player.container.setItemForSlot("weapon_slot", "dagger");
     }
   }
 
@@ -179,7 +193,7 @@
   @card player_set_name {
     bindings: {player: #player}
     content: ```
-    <div x-data="{player_name: ${player.name | quoted}}">
+    <div class="box" x-data="{player_name: ${player.name | quoted}}">
       <div class="field">
         <label class="label">What is your name adventurer?</label>
         <div class="control">
@@ -212,19 +226,24 @@
     ```
 
     on_finish: (card) => {
+      console.log("on_finish");
       if($player.class === "f") {
-        player.strength += 1;
-        player.toughness += 1;
-        player.fighting += 2;
+        $player.strength += 2;
+        $player.toughness += 2;
+        $player.fighting += 2;
+        $player.container.setItemForSlot("weapon_slot", "long_sword");
       } else if($player.class == "r") {
-        player.initiative += 2;
-        player.fighting += 1;
-        player.dodge += 1;
+        $player.initiative += 2;
+        $player.fighting += 2;
+        $player.dodge += 2;
+        $player.container.setItemForSlot("weapon_slot", "short_sword");
       } else if($player.class == "m") {
-        player.strength -= 1;
-        player.toughness -= 1;
-        player.fighting -= 2;
-        player.mana += 10;
+        $player.strength -= 1;
+        $player.toughness -= 1;
+        $player.fighting -= 2;
+        $player.mana += 12;
+        $player.spells = ["spell_fireball", "spell_missile"];
+        $player.container.setItemForSlot("weapon_slot", "dagger");
       }
     }
   }
@@ -710,15 +729,12 @@
 
   @filter cast_spell {
     name: "cast_spell"
-    impl: (spell) => {
-      if($player.class === "m") {
-        if($player.mana >= spell.cost) {
-          return `<li><a data-event="cast_spell" data-spell="${spell.id}">Cast ${spell.name}</a></li>`;
-        } else {
-          return `<li><a href="#" class="disabled_link">Cast ${spell.name}</a></li>`;
-        }
+    impl: (spell_id) => {
+      const spell = $(spell_id);
+      if($player.mana >= spell.cost) {
+        return `<li><a data-event="cast_spell" data-spell="${spell.id}">Cast ${spell.name} (${spell.cost})</a></li>`;
       } else {
-        return "";
+        return `<li class="tooltip"><a href="javascript:void(0)" class="disabled-link">Cast ${spell.name}</a><span class="tooltiptext">Cannot cast due to insufficient mana!</span></li>`;
       }
     }
   }
@@ -726,7 +742,7 @@
   @card battle_card {
     bindings: {
       monster: `scene.monster
-      fireball: #spell_fireball
+      player: #player
       weapon: &player.weapon
     }
     content: ```
@@ -745,7 +761,9 @@
       <div class="block">
         <ul>
           <li><a data-event="fight" data-turn="1">Attack with ${weapon.name}</a></li>
-          ${fireball | cast_spell}
+          $foreach(spell_id: player.spells) {%
+            ${spell_id | cast_spell}
+          %}
           <li><a data-event="flee">Attempt to Flee</a></li>
         </ul>
       </div>

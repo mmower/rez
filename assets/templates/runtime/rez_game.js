@@ -437,6 +437,7 @@ function RezGame(id, attributes) {
   ];
   this.changed_attributes = [];
   this.$ = this.getGameObject;
+  this.addGameObject(this);
 }
 
 RezGame.prototype = game_proto;

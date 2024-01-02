@@ -1,0 +1,44 @@
+%%
+%% Game created with Rez <%= Rez.version %>
+%% http://rez-lang.com/
+%% By Matt Mower <self@mattmower.com>
+%% Released 2022-2024 under the GPLv3 license
+%%
+
+@game {
+  name: "<%= @name %>"
+  archive_format: 1
+  title: "<%= @game_title %>"
+  author: "<%= @author_name %>"
+  author_email: "<%= @author_email %>"
+  game_homepage: "<%= @game_homepage %>"
+  IFID: "<%= @ifid %>"
+  version: "<%= Rez.version %>"
+  created: "<%= @created %>"
+  initial_scene_id: #hello_scene
+  layout: ```
+  <!-- Main Content -->
+  <section class="main-content is-fullheight">
+    <div class="container">${content}</div>
+  </section>
+  <!-- End -->
+  ```
+
+  %(../lib/stdlib.rez)
+
+  @scene hello_scene {
+    initial_card_id: #hello_card
+  }
+
+  @card hello_card {
+    bindings: {game: #game}
+    content: ```
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">Hello Game!</p>
+        <p class="subtitle">From <span class="has-text-primary">${game.author}</span></p>
+      </div>
+    </section>
+    ```
+  }
+}

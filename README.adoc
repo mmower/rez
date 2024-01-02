@@ -3,7 +3,7 @@
 
 A system for creating choice-based HTML games & interactive fiction.
 
-Version 1.0 (03 Nov 2023)
+Version 1.1 (02 Jan 2024)
 
 By Matt Mower &lt;self@mattmower.com&gt;
 
