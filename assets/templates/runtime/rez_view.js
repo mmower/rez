@@ -401,7 +401,7 @@ let event_link_transformer_proto = {
 };
 
 function RezEventLinkTransformer(receiver) {
-  this.selector = "div.card a:not(.inactive)";
+  this.selector = "div.card a[data-event]";
   this.event = "click";
   this.receiver = receiver;
 }

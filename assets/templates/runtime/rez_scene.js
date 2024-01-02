@@ -49,12 +49,14 @@ let scene_proto = {
   },
 
   finishCurrentCard() {
+    console.log("> finishCurrentCard");
     if (this.current_card) {
       this.current_card.runEvent("finish", {});
       this.runEvent("finish_card", {});
       if (this.isStackLayout) {
         this.current_card.current_block.flipped = true;
       }
+      this.current_card_id = "";
     }
   },
 
@@ -95,6 +97,7 @@ let scene_proto = {
   },
 
   finish() {
+    this.finishCurrentCard();
     this.runEvent("finish", {});
     this.reset();
   },

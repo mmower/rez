@@ -323,7 +323,6 @@ let game_proto = {
       this.current_scene.finish();
       this.popScene();
       this.current_scene.getViewLayout().assignParams(params);
-      debugger;
       this.updateView();
     }
   },
