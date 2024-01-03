@@ -321,7 +321,7 @@ let game_proto = {
     } else {
       // Let the interlude know we're done
       this.current_scene.finish();
-      this.popScene();
+      this.popScene(params);
       this.current_scene.getViewLayout().assignParams(params);
       this.updateView();
     }
@@ -345,7 +345,9 @@ let game_proto = {
 
   updateView() {
     console.log("Updating the view");
+    this.runEvent("before_render", {});
     this.view.update();
+    this.runEvent("after_render", {});
   },
 
   canResume() {
@@ -358,10 +360,10 @@ let game_proto = {
     this.view.pushLayout(new RezSingleLayout("scene", this));
   },
 
-  popScene() {
+  popScene(params = {}) {
     this.view.popLayout();
     this.current_scene_id = this.$scene_stack.pop();
-    this.current_scene.resume();
+    this.current_scene.resume(params);
   },
 
   setViewLayout(layout) {

@@ -32,7 +32,7 @@ let decision_proto = {
     return this;
   },
 
-  no_list(reason = "none given") {
+  no_and_hide(reason = "none given") {
     this.made = true;
     this.result = false;
     this.reason = reason;

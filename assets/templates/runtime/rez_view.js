@@ -159,9 +159,11 @@ let block_proto = {
   },
 
   html() {
-    return (
-      `<div class='${this.css_classes()}'>` + this.renderBlock() + "</div>"
-    );
+    if(this.source.$suppress_wrapper) {
+      return this.renderBlock();
+    } else {
+      return `<div class="${this.css_classes()}">${this.renderBlock()}</div>`;
+    }
   },
 };
 

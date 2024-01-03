@@ -81,9 +81,9 @@ let scene_proto = {
     this.runEvent("interrupt", {});
   },
 
-  resume() {
+  resume(params = {}) {
     console.log(`Resuming scene |${this.id}|`);
-    this.runEvent("resume", {});
+    this.runEvent("resume", params);
   },
 
   start() {

@@ -126,7 +126,7 @@ let inventory_proto = {
   },
 
   addItemToSlot(slot_id, item_id) {
-    this.appendContentToSlot(slot_id, item_id);
+    this.appendItemToSlot(slot_id, item_id);
 
     this.runEvent("insert", { slot_id: slot_id, item_id: item_id });
 

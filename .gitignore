@@ -32,3 +32,4 @@ burrito_out
 internal
 cache
 install
+docs/*.html

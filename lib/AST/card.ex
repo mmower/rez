@@ -25,10 +25,14 @@ defmodule Rez.AST.Card do
         card_id,
         NodeHelper.get_attr_value(card, "content", ""),
         fn html ->
-          custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
-          css_classes = Utils.add_css_class("card", custom_css_class)
+          if NodeHelper.get_attr_value(card, "$suppress_wrapper", false) do
+            html
+          else
+            custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
+            css_classes = Utils.add_css_class("card", custom_css_class)
 
-          ~s|<div id="card_#{card_id}" data-card="#{card_id}" class="#{css_classes}">#{html}</div>|
+            ~s|<div id="card_#{card_id}" data-card="#{card_id}" class="#{css_classes}">#{html}</div>|
+          end
         end
       )
     )
@@ -42,10 +46,14 @@ defmodule Rez.AST.Card do
         card_id,
         NodeHelper.get_attr_value(card, "flipped_content", ""),
         fn html ->
-          custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
-          css_classes = Utils.add_css_class("flipped", custom_css_class)
+          if NodeHelper.get_attr_value(card, "$suppress_wrapper", false) do
+            html
+          else
+            custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
+            css_classes = Utils.add_css_class("flipped", custom_css_class)
 
-          ~s|<div data-card="#{card_id}" data-card="#{card_id}" data-flipped=true class="#{css_classes}">#{html}</div>|
+            ~s|<div data-card="#{card_id}" data-card="#{card_id}" data-flipped=true class="#{css_classes}">#{html}</div>|
+          end
         end
       )
     )
@@ -77,7 +85,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
 
   def default_attributes(_card),
     do: %{
-      "$flipped" => Attribute.boolean("$flipped", false)
+      "$flipped" => Attribute.boolean("$flipped", false),
+      "$suppress_wrapper" => Attribute.boolean("$suppress_wrapper", false)
     }
 
   def pre_process(card), do: card
