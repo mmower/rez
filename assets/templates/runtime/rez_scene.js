@@ -16,7 +16,7 @@ let scene_proto = {
   targetType: "scene",
 
   bindAs() {
-    return "scene";
+    return "$scene";
   },
 
   getViewTemplate(flipped) {

@@ -8,7 +8,7 @@ let card_proto = {
   targetType: "card",
 
   bindAs() {
-    return "card";
+    return "$card";
   },
 
   getViewTemplate(flipped) {

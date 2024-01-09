@@ -7,27 +7,53 @@ let game_proto = {
 
   targetType: "game",
 
-  bindAs() {
-    return "game";
+  /**
+   * @memberof RezGame
+   * @property {RezUndoManager} undoManager the game undo manager
+   */
+  get undoManager() {
+    return this.undo_manager;
   },
 
+  /**
+   * @function bindAs
+   * @memberof RezGame
+   * @returns {string} default binding name for this object
+   */
+  bindAs() {
+    return "$game";
+  },
+
+  /**
+   * @function getViewTemplate
+   * @memberof RezGame
+   * @returns {*} the layout template object, need to check what type that is
+   */
   getViewTemplate() {
     return this.$layout_template;
   },
 
-  // get viewTemplate() {
-
-  // },
-
-  $(id) {
-    return this.getGameObject(id);
-  },
-
+  /**
+   * @function initLevels
+   * @memberof RezGame
+   * @returns {Array} array of init levels to run (e.g. [0, 1, 2, 3])
+   */
   initLevels() {
     return [0, 1, 2, 3];
   },
 
+  /**
+   * @function saveFileName
+   * @memberof RezGame
+   * @param {string} prefix (defaults to game name)
+   * @returns {string} file name
+   * @description generates a save file name using a prefix & a date-time with
+   * a .json extension.
+   */
   saveFileName(prefix) {
+    if(typeof(prefix) === "undefined") {
+      prefix = this.name;
+    }
     const now = new Date();
     const formatter = (num) => {
       return String(num).padStart(2, "0");
@@ -45,6 +71,12 @@ let game_proto = {
     return prefix.toSnakeCase() + "_" + date_joined + ".json";
   },
 
+  /**
+   * @function dataWithArchivedObjects
+   * @memberof RezGame
+   * @param {object} data data archive to append objects to
+   * @returns {object} modified data archive
+   */
   dataWithArchivedObjects(data) {
     console.dir(this);
     console.log("Checking " + this.game_objects.size + " objects.");
@@ -59,6 +91,11 @@ let game_proto = {
     return data;
   },
 
+  /**
+   * @function toJSON
+   * @memberof RezGame
+   * @returns {object} a versioned JSON archive
+   */
   toJSON() {
     let data = this.archiveDataContainer();
     data = this.dataWithArchivedAttributes(data);
@@ -71,6 +108,11 @@ let game_proto = {
     };
   },
 
+  /**
+   * @function archive
+   * @memberof RezGame
+   * @returns {string} JSON formatted archive string
+   */
   archive() {
     const archived = {};
 
@@ -125,6 +167,15 @@ let game_proto = {
     });
   },
 
+  /**
+   * @function save
+   * @memberof RezGame
+   * @description triggers a download of the game archive
+   *
+   * This uses a hidden link with a 'download' attribute. The link is "clicked"
+   * triggering the download of the JSON file. A timeout is used to remove the
+   * link.
+   */
   save() {
     this.runEvent("save", {});
 
@@ -145,8 +196,14 @@ let game_proto = {
     }, 0);
   },
 
-  load(json) {
-    const wrapper = JSON.parse(json);
+  /**
+   * @function load
+   * @memberof RezGame
+   * @param {string} source JSON format source archive
+   * @description given a JSON source archive restore the game state to what was archived.
+   */
+  load(source) {
+    const wrapper = JSON.parse(source);
 
     const archive_version = wrapper["rez_archive"];
     if (typeof archive_version == "undefined") {
@@ -180,16 +237,46 @@ let game_proto = {
     this.runEvent("load", {});
   },
 
+  /**
+   * @function getTaggedWith
+   * @memberof RezGame
+   * @param {string} tag
+   * @returns {array} array of indexed game-objects that have the specified tag
+   * @description returns all game-objects tagged with the specified tag
+   */
+  getTaggedWith(tag) {
+    const objects = this.tag_index[tag];
+    if (objects) {
+      return Array.from(objects);
+    } else {
+      return [];
+    }
+  },
+
+  /**
+   * @function indexObjectForTag
+   * @memberof RezGame
+   * @param {object} obj reference to a game-object
+   * @param {string} tag
+   * @description applies the specified tag to the spectified game-object
+   */
   indexObjectForTag(obj, tag) {
     let objects = this.tag_index[tag];
     if (!objects) {
       objects = new Set([obj.id]);
       this.tag_index[tag] = objects;
     } else {
-      objects.add(obj.id);
+      objects.add(obj.id)
     }
   },
 
+  /**
+   * @function unindexObjectForTag
+   * @memberof RezGame
+   * @param {object} obj reference to a game-object
+   * @param {string} tag a tag to remove
+   * @description removes the specified tag from the specified game-object
+   */
   unindexObjectForTag(obj, tag) {
     let objects = this.tag_index[tag];
     if (objects) {
@@ -197,22 +284,33 @@ let game_proto = {
     }
   },
 
+  /**
+   * @function addToTagIndex
+   * @memberof RezGame
+   * @param {object} obj game-object
+   * @description indexes the specified game-object for all tags in it's tags attribute
+   */
   addToTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
     tags.forEach((tag) => this.indexObjectForTag(obj, tag));
   },
 
+  /**
+   * @function removeFromTagIndex
+   * @memberof RezGame
+   * @param {object} obj game-object
+   * @description unindexes the specified object from all tags in its tags attribute
+   */
   removeFromTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
     tags.forEach((tag) => this.unindexObjectForTag(obj, tag));
   },
 
-  /*
-  Adds an object representing a game element to the game data.
-
-  The static objects defined in the game files will appear in the games
-  $init_order attribute. Dynamically generated objects should be init'd
-  separately.
+  /**
+   * @function addGameObject
+   * @memberof RezGame
+   * @param {object} obj game-object
+   * @description adds an object representing a game element to the game world and automatically tagging it by its attributes
   */
   addGameObject(obj) {
     if (!isGameObject(obj)) {
@@ -225,6 +323,17 @@ let game_proto = {
     this.addToTagIndex(obj);
   },
 
+  /**
+   * @function getGameObject
+   * @memberof RezGame
+   * @param {string} id id of game-object
+   * @param {boolean} should_throw (default: true)
+   * @returns {basic_object|null} game-object or null
+   * @description given an element id returns the appropriate game-object reference
+   *
+   * If should_throw is true an exception will be thrown if the element id
+   * is not valid. Otherwise null is returned.
+   */
   getGameObject(id, should_throw = true) {
     if (!this.game_objects.has(id)) {
       if (should_throw) {
@@ -232,10 +341,43 @@ let game_proto = {
       } else {
         return null;
       }
+    } else {
+      return this.game_objects.get(id);
     }
-    return this.game_objects.get(id);
   },
 
+  /**
+   * @function getTypedGameObject
+   * @memberof RezGame
+   * @param {string} id id of game-object
+   * @param {string} type game object type (e.g. 'actor' or 'item')
+   * @param {boolean} should_throw (default: true)
+   * @returns {basic_object|null} game-object or null
+   */
+  getTypedGameObject(id, type, should_throw = true) {
+    const obj = this.getGameObject(id, type, should_throw);
+    if(obj.game_object_type !== type) {
+      if(should_throw) {
+        throw `Game object |${id}| was expected to have type |${type}| but found |${obj.game_object_type}|!`
+      } else {
+        return null;
+      }
+    } else {
+      return obj;
+    }
+  },
+
+  /**
+   * @function elementAttributeHasChanged
+   * @memberof RezGame
+   * @param {object} elem reference to game-object
+   * @param {string} attr_name name of the attribute whose value has changed
+   * @param {*} old_value value of the attribute before the change
+   * @param {*} new_value value of the attribute after the change
+   * @description should be called whenever an attribute value is changed
+   *
+   * Currently this function notifies the undo manager and the view
+   */
   elementAttributeHasChanged(elem, attr_name, old_value, new_value) {
     if(this.undoManager) {
       this.undoManager.recordChange(elem.id, attr_name, old_value);
@@ -246,36 +388,55 @@ let game_proto = {
     }
   },
 
-  /*
-   * We can cheat looking up a relationship because we know how their IDs
+  /**
+   * @function getRelationship
+   * @memberof RezGame
+   * @param {string} source_id id of game-object that holds the relationship
+   * @param {string} target_id id of game-object to which the relationship refers
+   * @returns {RezRelationship|null} the relationship object for this relationship
+   * @description we can cheat looking up a relationship because we know how their IDs
    * are constructed.
+   *
+   * Note that in Rez relationships are unidirectional so that getRelationship("a", "b")
+   * and getRelationship("b", "a") are different RezRelationship objects.
    */
   getRelationship(source_id, target_id) {
     const rel_id = "rel_" + source_id + "_" + target_id;
     return this.getGameObject(rel_id, false);
   },
 
-  getTaggedWith(tag) {
-    const objects = this.tag_index[tag];
-    if (objects) {
-      return Array.from(objects);
-    } else {
-      return [];
-    }
-  },
-
+  /**
+   * @function filterObjects
+   * @memberof RezGame
+   * @param {function} pred predicate to filter with
+   * @returns {array} game-objects passing the filter
+   * @description filters all game-objects returning those for which the pred filter returns true
+   */
   filterObjects(pred) {
     return Array.from(this.game_objects.values()).filter(pred);
   },
 
+  /**
+   * @function getAll
+   * @memberof RezGame
+   * @param {string} target_type game object type (e.g. 'actor', 'item')
+   * @returns {array} game-objects with the specified type
+   * @description filters all game-objects returning those with the specified type
+   */
   getAll(target_type) {
-    return Array.from(this.game_objects.values()).filter(
-      (obj) => obj.game_object_type == target_type
-    );
+    return this.filterObjects((obj) => obj.game_object_type == target_type);
   },
 
-  startSceneWithId(new_scene_id, params = {}) {
-    if (new_scene_id == null) {
+  /**
+   * @function startSceneWithId
+   * @memberof RezGame
+   * @param {string} scene_id id of scene game-object
+   * @param {object} params data to pass to the new scene
+   * @description finish the current scene and start the new scene with the given id
+   */
+
+  startSceneWithId(scene_id, params = {}) {
+    if (scene_id == null) {
       throw "new_scene_id cannot be null!";
     }
 
@@ -283,7 +444,11 @@ let game_proto = {
       this.current_scene.finish();
     }
 
-    const scene = $(new_scene_id);
+    const scene = $(scene_id);
+    if(scene.game_object_type !== "scene") {
+      throw `Attempt to switch scene to game object |${scene_id}| which is a |${scene.game_object_type}|!`;
+    }
+
     this.current_scene = scene;
 
     const layout = scene.getViewLayout();
@@ -295,6 +460,13 @@ let game_proto = {
     scene.ready();
   },
 
+  /**
+   * @function interludeSceneWithId
+   * @memberof RezGame
+   * @param {string} scene_id
+   * @param {object} params data to pass to the new scene
+   * @description interrupts the current scene, pushing it to the scene stack, and then starts the new scene with the given id
+   */
   interludeSceneWithId(scene_id, params = {}) {
     console.log(`Interlude from |${this.current_scene_id}| to |${scene_id}|`);
 
@@ -302,6 +474,10 @@ let game_proto = {
     this.pushScene();
 
     const scene = $(scene_id);
+    if(scene.game_object_type !== "scene") {
+      throw `Attempt to interlude to game object |${new_scene_id}| which is a |${scene.game_object_type}|!`;
+    }
+
     this.current_scene = scene;
 
     const layout = scene.getViewLayout();
@@ -314,6 +490,12 @@ let game_proto = {
     scene.ready();
   },
 
+  /**
+   * @function resumePrevScene
+   * @memberof RezGame
+   * @param {object} params data to pass back to the previous scene
+   * @description finishes the current scene, then pops the previous scene from the scene stack and resumes it
+   */
   resumePrevScene(params = {}) {
     console.log(`Resume from |${this.current_scene_id}|`);
     if (!this.canResume()) {
@@ -327,14 +509,26 @@ let game_proto = {
     }
   },
 
-  playCard(card_id) {
-    this.current_scene.playCardWithId(card_id);
-  },
-
+  /**
+   * Informs the view of new content to be rendered. It is left up to the view
+   * & its layout to determine how this affects any existing content of the view.
+   *
+   * @memberof RezGame
+   * @param {Object} content block to be added to the view
+   */
   setViewContent(content) {
     this.view.getLayout().addContent(content);
   },
 
+  /**
+   * @function getTarget
+   * @memberof RezGame
+   * @param {string} target_id
+   * @returns {object}
+   * @description it looks like this was a holdover from when we didn't add the game
+   * object to itself under the "game" id.
+   * @deprecated
+   */
   getTarget(target_id) {
     if (target_id == this.id) {
       return this;
@@ -343,6 +537,12 @@ let game_proto = {
     }
   },
 
+  /**
+   * @function updateView
+   * @memberof RezGame
+   * @description re-renders the view calling the 'before_render' and 'after_render'
+   * game event handlers
+   */
   updateView() {
     console.log("Updating the view");
     this.runEvent("before_render", {});
@@ -350,26 +550,56 @@ let game_proto = {
     this.runEvent("after_render", {});
   },
 
+  /**
+   * @function canResume
+   * @memberof RezGame
+   * @returns {boolean}
+   * @description returns true if there is at least one scene in the scene stack
+   */
   canResume() {
     return this.$scene_stack.length > 0;
   },
 
+  /**
+   * @function pushScene
+   * @memberof RezGame
+   * @description interrupts the current scene and puts it on the scene stack
+   */
   pushScene() {
     this.current_scene.interrupt();
     this.$scene_stack.push(this.current_scene_id);
     this.view.pushLayout(new RezSingleLayout("scene", this));
   },
 
+  /**
+   * @function popScene
+   * @memberof RezGame
+   * @param {object} params data to be passed to the scene being resumed
+   * @description removes the top object of the scene stack and makes it the current scene
+   */
   popScene(params = {}) {
     this.view.popLayout();
     this.current_scene_id = this.$scene_stack.pop();
     this.current_scene.resume(params);
   },
 
+  /**
+   * @function setViewLayout
+   * @memberof RezGame
+   * @param {*} layout ???
+   * @description ???
+   */
   setViewLayout(layout) {
     this.view.setLayout(layout);
   },
 
+  /**
+   * @function start
+   * @memberof RezGame
+   * @param {string} container_id id of the HTML element into which game content is rendered
+   * @description called automatically from the index.html this runs init on the registered game
+   * objects then starts the view and starts the initial scene
+   */
   start(container_id) {
     console.log("> Game.start");
 
@@ -400,29 +630,43 @@ let game_proto = {
     this.startSceneWithId(this.initial_scene_id);
   },
 
+  /**
+   * @function getEnabledSystems
+   * @memberof RezGame
+   * @returns {array} all 'system' game-objects with attribute enabled=true
+   */
   getEnabledSystems() {
-    return this.getAll("system")
-      .filter((system) => system.getAttribute("enabled") == true)
-      .sort(
-        (sys1, sys2) =>
-          sys1.getAttributeValue("priority") >
-          sys2.getAttributeValue("priority")
-      );
+    const filter = (o) => o.game_object_type === "system" && o.getAttributeValue("enabled");
+    const order = (sys1, sys2) => sys1.getAttributeValue("priority") > sys2.getAttributeValue("priority");
+    return this.filterObjects(filter).sort(order);
   },
 
+  /**
+   * @function addFlashMessage
+   * @memberof RezGame
+   * @param {string} message
+   * @description adds the given message to the flash to be displayed on the next render
+   */
   addFlashMessage(message) {
     this.$flash_messages.push(message);
   },
 
+  /**
+   * @function clearFlashMessages
+   * @memberof RezGame
+   * @description empties the flash messages
+   */
   clearFlashMessages() {
     this.$flash_messages = [];
   },
-
-  get undoManager() {
-    return this.undo_manager;
-  },
 };
 
+/**
+ * @class
+ * @param {string} id
+ * @param {object} attributes
+ * @description Represents the singleton @game instance
+ */
 function RezGame(id, attributes) {
   this.id = id;
   this.undo_manager = new RezUndoManager();
@@ -435,7 +679,6 @@ function RezGame(id, attributes) {
   this.properties_to_archive = [
     "wmem",
     "tag_index",
-    "renderer",
   ];
   this.changed_attributes = [];
   this.$ = this.getGameObject;

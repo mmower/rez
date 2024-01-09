@@ -7,15 +7,19 @@
 
 @game {
   name: "<%= @name %>"
-  archive_format: 1
   title: "<%= @game_title %>"
   author: "<%= @author_name %>"
   author_email: "<%= @author_email %>"
   game_homepage: "<%= @game_homepage %>"
+
   IFID: "<%= @ifid %>"
-  version: "<%= Rez.version %>"
+  archive_format: 1
+
+  version: "1.0"
   created: "<%= @created %>"
-  initial_scene_id: #hello_scene
+
+  initial_scene_id: #s_hello
+
   layout: ```
   <!-- Main Content -->
   <section class="main-content is-fullheight">
@@ -26,17 +30,38 @@
 
   %(../lib/stdlib.rez)
 
-  @scene hello_scene {
-    initial_card_id: #hello_card
+  @filter filter_random {
+    name: "random"
+    impl: (sides) => {return Math.rand_int(sides)+1;}
   }
 
-  @card hello_card {
-    bindings: {game: #game}
+  @scene s_hello {
+    initial_card_id: #c_hello
+  }
+
+  @card c_hello {
     content: ```
     <section class="hero">
       <div class="hero-body">
-        <p class="title">Hello Game!</p>
-        <p class="subtitle">From <span class="has-text-primary">${game.author}</span></p>
+        <p class="title">Hello</p>
+        <p class="subtitle">From <span class="has-text-primary">${$card.game.author}</span></p>
+      </div>
+      <div class="box">
+        <a data-event="card" data-target="c_game" data-random="${100 | random}">Game?</a>
+      </div>
+    </section>
+    ```
+  }
+
+  @card c_game {
+    content: ```
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">Game!</p>
+        <p class="subtitle has-text-primary">${$card.game.title} (${$block.random})</p>
+      </div>
+      <div class="box">
+        <a data-event="card" data-target="c_hello">Hello?</a>
       </div>
     </section>
     ```

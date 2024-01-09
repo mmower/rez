@@ -36,7 +36,7 @@ function evaluateExpression(expression, bindings, rval = true) {
 
 let block_proto = {
   instantiateIdBinding(id) {
-    return this.source.$(id);
+    return $(id);
   },
 
   instantiatPropertyBinding(ref) {

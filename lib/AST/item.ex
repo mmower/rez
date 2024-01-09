@@ -27,11 +27,6 @@ defmodule Rez.AST.Item do
             position: {nil, 0, 0},
             attributes: %{}
 
-  def set_defaults(%Item{} = item) do
-    item
-    |> NodeHelper.set_default_attr_value("size", 1, &NodeHelper.set_number_attr/3)
-  end
-
   def build_template(%Item{id: item_id} = item) do
     NodeHelper.set_compiled_template_attr(
       item,
@@ -98,14 +93,16 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
     NodeHelper.get_attr_value(item, "$js_ctor", "RezItem")
   end
 
-  def default_attributes(_item), do: %{}
+  def default_attributes(_item),
+    do: %{
+      "size" => Attribute.number("size", 0)
+    }
 
   def pre_process(item), do: item
 
   def process(item, node_map) do
     item
     |> NodeHelper.copy_attributes(node_map)
-    |> Item.set_defaults()
     |> Item.build_template()
     |> TemplateHelper.compile_template_attributes()
   end

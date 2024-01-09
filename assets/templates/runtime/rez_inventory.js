@@ -2,106 +2,214 @@
 // Inventory
 //-----------------------------------------------------------------------------
 
-/*
- * A RezInventory is an object that holds RezItems in separate containers
- * designated by RezSlots.
- */
-
 let inventory_proto = {
   __proto__: basic_object,
 
-  addItemHolderForSlot(slot_id) {
-    this.items[slot_id] = [];
+  /**
+   * @function addItemHolderForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @description adds an empty array to hold items for the given slot.
+   */
+  addSlot(slot_id) {
+    const items = this.getAttribute("items");
+    items[slot_id] = [];
   },
 
+  /**
+   * @function elementInitializer
+   * @memberof RezInventory
+   * @description called as part of the init process this creates the inital inventory slots
+   */
   elementInitializer() {
-    for (const slot_id of this.slots) {
-      this.addItemHolderForSlot(slot_id);
+    const slots = this.getAttribute("slots");
+    for (const slot_id of slots) {
+      this.addSlot(slot_id);
     }
   },
 
+  /**
+   * @function getItemsForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {array} contents of the specified slot
+   */
+  getItemsForSlot(slot_id) {
+    this.validateSlot(slot_id);
+    return this.getAttribute("items")[slot_id];
+  },
+
+  /**
+   * @function slotIsOccupied
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {boolean} true if there is at least one item in the slot
+   */
   slotIsOccupied(slot_id) {
     return this.countItemsForSlot(slot_id) > 0;
   },
 
+  /**
+   * @function getItemForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {string} id of first item in the slot
+   */
   getItemForSlot(slot_id) {
     return this.getItemsForSlot(slot_id)[0];
   },
 
-  getItemsForSlot(slot_id) {
-    const items = this.items[slot_id];
-    if(typeof(items) === "undefined") {
-      throw `Attempt to get unknown slot "${slot_id} from container ${this.id}!`;
-    }
-    return items;
+  /**
+   * @function validateSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {boolean} true if the given slot_id is part of this inventory
+   */
+  validateSlot(slot_id) {
+    if(!this.getAttribute("slots").has(slot_id)) {
+      throw `Inventory |${this.id}| does not have slot |${slot_id}|!`;
+    };
   },
 
+  /**
+   * @function setSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {array} items array of item id's
+   */
+  setSlot(slot_id, item_ids) {
+    this.validateSlot(slot_id);
+    const items = this.getAttribute("items");
+    items[slot_id] = item_ids;
+  },
+
+  /**
+   * @function appendItemToSlot
+   * @member RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @description appends the given item to the given slot
+   */
   appendItemToSlot(slot_id, item_id) {
-    this.items[slot_id].push(item_id);
+    this.getItemsForSlot(slot_id).push(item_id);
   },
 
+  /**
+   * @function appendItemsToSlot
+   * @memberof RezInventory
+   * @param {string|array} item_or_items either an item_id or array of item_id's to append to the slot
+   * @description add either a single item_id or an array of item_ids to the slot
+   */
+  appendToSlot(slot_id, item_or_items) {
+    if(typeof(item_or_items) === "string") {
+      this.appendItemToSlot(slot_id, item_or_items);
+    } else if(typeof(item_or_items) === "array") {
+      item_or_items.forEach((item_id) => this.appendItemToSlot(slot_id, item_id));
+    }
+  },
+
+  /**
+   * @function setItemForSlot
+   * @memberof RezInventory
+   * @param {string} item_id
+   * @description replaces any existing item content for the slot with this item
+   */
   setItemForSlot(slot_id, item_id) {
-    this.items[slot_id] = [item_id];
+    this.setSlot(slot_id, [item_id]);
   },
 
+  /**
+   * @function setItemsForSlot
+   * @memberof RezInventory
+   * @param {array} items array of item ids
+   * @description replaces any existing item content for the slot with these items
+   */
   setItemsForSlot(slot_id, items) {
-    this.items[slot_id] = items;
+    this.setSlot(slot_id, items);
   },
 
+  /**
+   * @function countItemsInSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {integer} number of items in the given slot
+   */
   countItemsInSlot(slot_id) {
     return this.getItemsForSlot(slot_id).length;
   },
 
-  /*
-   * Determines whether the specified item is contained in any slot in this inventory.
-   *
-   * Either returns the slot_id that contains the item, or null.
+  /**
+   * @function slotContainsItem
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {boolean} true if the item_id is in the slot
+   */
+  slotContainsItem(slot_id, item_id) {
+    return this.getItemsForSlot(slot_id).some((an_item_id) => item_id === an_item_id);
+  },
+
+  /**
+   * @function containsItem
+   * @memberof RezInventory
+   * @param {string} item_id
+   * @returns {string|null} slot_id of the slot containing the item, or null if no slot contains it
    */
   containsItem(item_id) {
-    for (const slot_id in this.items) {
-      const items = this.getItemsForSlot(slot_id);
-      if (
-        items.some((contained_item_id) => {
-          return contained_item_id == item_id;
-        })
-      ) {
+    for(const slot_id of this.getAttribute("slots")) {
+      if(this.slotContainsItem(slot_id, item_id)) {
         return slot_id;
       }
     }
     return null;
   },
 
-  isOwned() {
-    return this.hasAttribute("owner");
-  },
-
-  ownerId() {
-    return this.getAttributeValue("owner");
-  },
-
-  owner() {
-    return $(this.ownerId());
-  },
-
+  /**
+   * @function itemFitsInSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {boolean} true if the item will fit with any other contents of the slot
+   */
   itemFitsInSlot(slot_id, item_id) {
     const slot = $(slot_id);
-    const capacity = slot.capacity();
-    const item = $(item_id);
-    const size = item.size();
-    const current_size = this.countItemsInSlot(slot_id);
+    if(slot.has_capacity) {
+      const used_capacity = this.getItemsForSlot(slot_id).reduce((amount, item_id) => {
+        const item = $(item_id);
+        return amount + item.size;
+      });
 
-    return current_size + size <= capacity;
+      return used_capacity + item.size <= slot.capacity;
+    } else {
+      return true;
+    }
   },
 
+  /**
+   * @function slotAcceptsItem
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {boolean} true if the given item has a type that this slot accepts
+   */
   slotAcceptsItem(slot_id, item_id) {
+    this.validateSlot(slot_id);
+
     const slot = $(slot_id);
     const accepts = slot.getAttributeValue("accepts");
     const item = $(item_id);
     const type = item.getAttributeValue("type");
 
-    return type == accepts;
+    return type === accepts;
   },
 
+  /**
+   * @function canAddItemForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {boolean} true if the slot accepts the item
+   */
   canAddItemForSlot(slot_id, item_id) {
     const decision = new RezDecision("canItemForSlot");
 
@@ -110,9 +218,9 @@ let inventory_proto = {
         .no("slot doesn't take this kind of item")
         .setData("failed_on", "accepts");
     } else if (!this.itemFitsInSlot(slot_id, item_id)) {
-      decision.no("does not fit").setData("failed_on", "fits");
-    } else if (this.isOwned()) {
-      const actor_decision = this.owner().checkItem(this.id, slot_id, item_id);
+      decision.no("does not fit").setData("failed_on", "capacity");
+    } else if (this.owner != null) {
+      const actor_decision = this.owner.checkItem(this.id, slot_id, item_id);
       if (actor_decision.result()) {
         decision.yes();
       } else {
@@ -125,7 +233,43 @@ let inventory_proto = {
     return decision;
   },
 
+  /**
+   * @function canRemoveItemFromSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {object} RezDecision containing the result whether the item can be removed from the slot
+   */
+  canRemoveItemFromSlot(slot_id, item_id) {
+    const decision = new RezDecision("canRemoveItemFromSlot");
+    decision.default_yes();
+
+    const item = $(item);
+    decision.setData("inventory_id", this.id);
+    decision.setData("slot_id", slot_id);
+    item.canBeRemoved(item_decision);
+    if(!item_decision.result) {
+      return item_decision;
+    }
+
+    if(this.owner == null) {
+      return decision;
+    }
+
+    this.owner.canRemoveItem(decision);
+    return decision;
+  },
+
+  /**
+   * @function addItemToSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @description adds the given item to the given slot, notifying inventory, slot & item and applying effects
+   */
   addItemToSlot(slot_id, item_id) {
+    const item = $t(item_id, "item");
+
     this.appendItemToSlot(slot_id, item_id);
 
     this.runEvent("insert", { slot_id: slot_id, item_id: item_id });
@@ -133,33 +277,67 @@ let inventory_proto = {
     const slot = $(slot_id);
     slot.runEvent("insert", { inventory_id: this.id, item_id: item_id });
 
-    this.applyEffects(item_id);
+    item.runEvent("insert", { inventory_id: this.id, slot_id: slot_id});
+
+    this.applyEffects(slot_id, item_id);
   },
 
-  applyEffects(item_id) {
-    if (!this.getAttributeValue("apply_effects", false)) {
-      return;
+  /**
+   * Determine whether effects should be applied to this inventory and the specified slot.
+   *
+   * @function shouldApplyEffects
+   * @memberof RezInventory
+   * @param {string} slot_id
+   */
+  shouldApplyEffects(slot_id) {
+    if (this.owner) {
+      if (this.apply_effects) {
+        const slot = $(slot_id);
+        return slot.apply_effects;
+      } else {
+        return false;
+      }
+    } else {
+      // No owner object to apply the effect to
+      return false;
+    }
+  },
+
+  /**
+   * @function applyEffects
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @returns {boolean} whether the effect was applied
+   */
+  applyEffects(slot_id, item_id) {
+    if(!this.shouldApplyEffects(slot_id)) {
+      return false;
     }
 
-    const item = this.game.$(item_id);
+    const item = $(item_id);
     if (!item.hasAttribute("effects")) {
-      return;
+      // This item doesn't have any effects
+      return false;
     }
 
-    if (!this.hasAttribute("owner")) {
-      return;
+    for (const effect_id of item.effects) {
+      const effect = $t(effect_id, "effect");
+      effect.apply(this.owner_id, slot_id, item_id);
     }
 
-    const effects = item.getAttributeValue("effects");
-    const owner = this.getAttributeValue("owner");
-
-    for (const effect_id of effects) {
-      owner.applyEffect(effect_id, item_id);
-    }
+    return true;
   },
 
+  /**
+   * @function removeItemForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   * @description removes the specified item from the specified inventory slot
+   */
   removeItemFromSlot(slot_id, item_id) {
-    const contents = this.getContentsForSlot(slot_id);
+    const contents = this.getItemsForSlot(slot_id);
     if (!contents.includes(item_id)) {
       throw (
         "Attempt to remove item |" +
@@ -172,47 +350,64 @@ let inventory_proto = {
       );
     }
 
-    const remaining_contents = contents.filter((id) => {
+    this.setItemsForSlot(slot_id, contents.filter((id) => {
       return id != item_id;
-    });
-    this.setContentsForSlot(slot_id, new_contents);
+    }));
 
-    const slot = this.game.$(slot_id);
+    const slot = $(slot_id);
     slot.runEvent("remove", { inventory: this.id, item: item_id });
+
     this.runEvent("remove", { slot: slot_id, item: item_id });
 
-    this.removeEffects(item_id);
+    this.removeEffects(slot_id, item_id);
   },
 
-  removeEffects(item_id) {
-    if (!this.getAttributeValue("apply_effects", false)) {
-      return;
+  /**
+   * @function removeEffects
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @param {string} item_id
+   */
+  removeEffects(slot_id, item_id) {
+    if(!this.shouldApplyEffects(slot_id)) {
+      return false;
     }
 
-    const item = this.game.$(item_id);
+    const item = $(item_id);
     if (!item.hasAttribute("effects")) {
-      return;
+      return false;
     }
 
-    if (!this.hasAttribute("owner")) {
-      return;
-    }
-
-    const effects = item.getAttributeValue("effects");
-    const owner = this.getAttributeValue("owner");
-
-    for (const effect_id of effects) {
-      owner.removeEffect(effect_id, item_id);
+    for (const effect_id of item.effects) {
+      const effect = $t(effect_id, "effect");
+      effect.remove(this.owner_id, slot_id, item_id);
     }
   },
+
+  /**
+   * @function clearSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @description remove all items from give slot, removes any effects granted by those items
+   */
+  clearSlot(slot_id) {
+    const items = this.getItemsForSlot(slot_id);
+    items.forEach((item_id) => this.removeItemFromSlot(slot_id, item_id));
+  }
 };
 
+/**
+ * Creates a new RezInventory
+ * @class
+ * @param {string} id assigned id
+ * @param {object} attributes initial attributes
+ * @description constructs @inventory game-objects
+ */
 function RezInventory(id, attributes) {
   this.id = id;
   this.game_object_type = "inventory";
-  this.items = {};
   this.attributes = attributes;
-  this.properties_to_archive = ["items"];
+  this.properties_to_archive = [];
   this.changed_attributes = [];
 }
 

@@ -29,6 +29,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:elem_ref, value}), do: elem_ref(name, value)
   def create(name, {:keyword, value}), do: keyword(name, value)
   def create(name, {:list, values}), do: list(name, values)
+  def create(name, {:table, values}), do: table(name, values)
   def create(name, {:set, values}), do: set(name, values)
   def create(name, {:compiled_template, value}), do: compiled_template(name, value)
 
@@ -62,6 +63,10 @@ defmodule Rez.AST.Attribute do
 
   def list(name, values) when is_list(values) do
     %Attribute{name: name, type: :list, value: values}
+  end
+
+  def table(name, values) when is_map(values) do
+    %Attribute{name: name, type: :table, value: values}
   end
 
   def set(name, values) when is_list(values) do

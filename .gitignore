@@ -33,3 +33,5 @@ internal
 cache
 install
 docs/*.html
+settings.json
+out

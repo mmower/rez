@@ -4,28 +4,30 @@
 (function() {
   "use strict";
 
-window.Rez = window.Rez ?? {};
+  window.Rez = window.Rez ?? {};
 
-// Patch JS objects
-<%= @patch_js_objects %>
+  // Patch JS objects
+  <%= @patch_js_objects %>
 
-// JS stdlib
-<%= @js_stdlib %>
+  // JS stdlib
+  <%= @js_stdlib %>
 
-// JS userlib
-<%= @js_userlib %>
+  // JS userlib
+  <%= @js_userlib %>
 
-// Expression Filters
-<%= @register_expression_filters %>
+  // Expression Filters
+  <%= @register_expression_filters %>
 
-// Initialise Game Objects
-<%= @init_game_objects %>
+  // Initialise Game Objects
+  <%= @init_game_objects %>
 
-window.$ = (id, show_throw = false) => game.$(id, show_throw);
-window.$game = game;
+  window.$ = (id, show_throw = false) => game.getGameObject(id, show_throw);
+  window.$t = (id, type, should_throw = false) => game.getTypedGameObject(id, type, should_throw);
 
-if($("player", false)) {
-  window.$player = $("player");
-}
+  window.$game = game;
 
+  const player = $("player", false);
+  if(player) {
+    window.$player = player;
+  }
 })();

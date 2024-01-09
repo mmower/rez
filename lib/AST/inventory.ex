@@ -15,6 +15,7 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   import Rez.AST.NodeValidator
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -26,12 +27,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     NodeHelper.get_attr_value(inventory, "$js_ctor", "RezInventory")
   end
 
-  def default_attributes(_inventory), do: %{}
+  def default_attributes(_inventory),
+    do: %{
+      "items" => Attribute.table("items", %{}),
+      "apply_effects" => Attribute.boolean("apply_effects", true)
+    }
 
-  def pre_process(inventory) do
-    inventory
-    |> NodeHelper.set_boolean_attr("apply_effects", false)
-  end
+  def pre_process(inventory), do: inventory
 
   def process(inventory, node_map) do
     inventory

@@ -5,9 +5,10 @@
 let slot_proto = {
   __proto__: basic_object,
 
-  capacity() {
-    return this.getAttributeValue("capacity");
+  get has_capacity() {
+    return this.getAttribute("capacity") !== undefined;
   },
+
 };
 
 function RezSlot(id, attributes) {

@@ -49,10 +49,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
 
   def validators(_effect) do
     [
-      attribute_present?(
-        "type",
-        attribute_has_type?(:keyword)
-      ),
       attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
@@ -67,10 +63,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
       ),
       attribute_if_present?(
         "on_remove",
-        attribute_has_type?(:function)
-      ),
-      attribute_if_present?(
-        "on_turn",
         attribute_has_type?(:function)
       )
     ]

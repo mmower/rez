@@ -2,8 +2,20 @@
 // Effect
 //-----------------------------------------------------------------------------
 
+/**
+ * @namespace effect_proto
+ */
 let effect_proto = {
-  __proto__: basic_object
+  __proto__: basic_object,
+
+  apply(owner_id, slot_id, item_id) {
+    this.runEvent("apply", {owner_id: owner_id, slot_id: slot_id, item_id: item_id});
+
+  },
+
+  remove(owner_id, slot_id, item_id) {
+    this.runEvent("remove", {owner_id: owner_id, slot_id: slot_id, item_id: item_id});
+  }
 };
 
 function RezEffect(id, attributes) {

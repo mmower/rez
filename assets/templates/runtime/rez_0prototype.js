@@ -1,11 +1,6 @@
-//-----------------------------------------------------------------------------
-// Basic Object Prototype
-//-----------------------------------------------------------------------------
-
-/*
-  Basic Object
-
-  The basic_object is the common prototype of all in-game objects.
+/**
+ * @namespace basic_object
+ * @description The basic_object is the common prototype of all in-game objects.
 
   It keeps a reference to the singleton Game object allowing that to be looked
   up from any other object.
@@ -19,17 +14,12 @@ const basic_object = {
   game: null,
   initialised: false,
 
-  /*
-   * Object ref lookup shortcut
+  /**
+   * @function init
+   * @memberof basic_object
+   * @param {number} level - the initialization level (0+) to perform
+   * @description performs the specified initialization level. This is called automatically by the framework when the game is starting.
    */
-  $(id) {
-    return this.game.getGameObject(id);
-  },
-
-  /*
-   * Intialization
-   */
-
   init(level) {
     const init_method = "init_" + level;
     if (typeof this[init_method] == "function") {
@@ -37,21 +27,41 @@ const basic_object = {
     }
   },
 
+  /**
+   * @function init_all
+   * @memberof basic_object
+   * @description performs all initialization levels, in turn, on this object. This is intended for the author to call on a dynamically created object to ensure it is properly initialized before use.
+   */
   init_all() {
     for (let init_level of this.game.initLevels()) {
       this.init(init_level);
     }
   },
 
+  /**
+   * @function init_0
+   * @memberof basic_object
+   * @description initializes static and dynamic properties
+   */
   init_0() {
     this.createStaticProperties();
     this.createDynamicProperties();
   },
 
+  /**
+   * @function init_1
+   * @memberof basic_object
+   * @description initializes dynamic attributes
+   */
   init_1() {
     this.initDynamicAttributes();
   },
 
+  /**
+   * @function init_2
+   * @memberof basic_object
+   * @description if the object is not a template object ($template: false) runs the element initializer and the on_init event handler
+   */
   init_2() {
     if (!this.initialised) {
       if (!this.isTemplateObject()) {
@@ -63,10 +73,21 @@ const basic_object = {
     }
   },
 
+  /**
+   * @function init_3
+   * @memberof basic_object
+   * @description the final level of initialization, records that the object is now fully initialized.
+   */
   init_3() {
     this.initialised = true;
   },
 
+  /**
+   * @function createStaticProperty
+   * @memberof basic_object
+   * @param {string} attr_name - name of the attribute to create a corresponding property for
+   * @description use this to create a JS property backed by a Rez attribute
+   */
   createStaticProperty(attr_name) {
     Object.defineProperty(this, attr_name, {
       get: function () {
@@ -92,12 +113,22 @@ const basic_object = {
     }
   },
 
+  /**
+   * @function createStaticProperties
+   * @memberof basic_object
+   * @description uses basic_object.createStaticProperty to create static properties for all of the objects declared Rez attributes
+   */
   createStaticProperties() {
     for (let [attr_name, _] of Object.entries(this.attributes)) {
       this.createStaticProperty(attr_name);
     }
   },
 
+  /**
+   * @function createDynamicProperties
+   * @memberof basic_object
+   * @description creates synthetic properties to represent dynamic attributes types such as `ptable` and `tracery_grammar`.
+   */
   createDynamicProperties() {
     if (this.getAttributeValue("$template", false)) {
       return;
@@ -219,94 +250,132 @@ const basic_object = {
     });
   },
 
+  /**
+   * @function elementInitializer
+   * @memberof basic_object
+   * @description objects using basic_object as a prototype should define their own elementInitializer function to handle any element-specific initialization
+   */
   elementInitializer() {},
 
-  /*
-   * Copies an object assigning it an ID
+  /**
+   * @function copyAssigningId
+   * @memberof basic_object
+   * @param {string} id the id to assign to the copy
+   * @description creates a copy of this object. If this object has `$template: true` the copy will have `$template: false`. The copy will also be assigned a new attribute `$original_id` containing the id of this object.
+   * @returns {object} copy of the current object
    */
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
     copy.setAttribute("$template", false, false);
-    copy.setAttribute("$original", this.id, false);
+    copy.setAttribute("$original_id", this.id, false);
     copy.init_all();
     copy.runEvent("copy", { original: this });
     return copy;
   },
 
+  /**
+   * @function getNextAutoId
+   * @memberof basic_object
+   * @description returns the next auto id in the sequence
+   */
   getNextAutoId() {
     this.auto_id_idx += 1;
     return this.id + "_" + this.auto_id_idx;
   },
 
-  /*
+  /**
+   * @function copyWithAutoId
+   * @memberof basic_object
+   * @description creates a copy of this object that is assigned an ID automatically. In all other respects its behaviour is identical to `copyAssigningId`
    * Copies an object with an auto-generated ID
    */
   copyWithAutoId() {
     return this.copyAssigningId(this.getNextAutoId());
   },
 
+  /**
+   * @function isTemplateObject
+   * @memberof basic_object
+   * @description returns the value of the `$template` attribute
+   * @returns {boolean} true if this object has a $template attribute with value true
+   */
   isTemplateObject() {
     return this.getAttributeValue("$template", false);
   },
 
-  /*
-   * Event Handling
+  /**
+   * @function eventHandler
+   * @memberof basic_object
+   * @param {string} event_name name of the event whose handler should be returned
+   * @returns {function|undefined} event handle function or undefined
+   * @description Returns the event handler function stored in attribute "on_<event_name>" or undefined if no handler is present
    */
-
   eventHandler(event_name) {
-    return this.getAttribute("on_" + event_name);
+    return this.getAttribute(`on_${event_name}`);
   },
 
+  /**
+   * @function willHandleEvent
+   * @memberof basic_object
+   * @param {string} event_name name of the event to check for a handler, e.g. "speak"
+   * @returns {boolean} true if this object handles the specified event
+   * @description Returns `true` if this object defines an event handler function for the given event_name
+   */
   willHandleEvent(event_name) {
     const handler = this.eventHandler(event_name);
     const does_handle_event = handler != null && typeof handler == "function";
     return does_handle_event;
   },
 
-  runEvent(event_name, event_info) {
+  /**
+   * @function runEvent
+   * @memberof basic_object
+   * @param {string} event_name name of the event to run, e.g. "speak"
+   * @param {object} params object containing event params
+   * @returns {*|boolean} returns a response object, or false if the event was not handled
+   * @description attempts to run the event handler function for the event name, passing the specified params to the handler
+   */
+  runEvent(event_name, params) {
     console.log("Run on_" + event_name + " handler on " + this.id);
     let handler = this.eventHandler(event_name);
     if (handler != null && typeof handler == "function") {
-      return handler(this, event_info);
+      return handler(this, params);
     } else {
       return false;
     }
   },
 
-  /*
-   * Attribute query/get/set
+  /**
+   * @function hasAttribute
+   * @memberof basic_object
+   * @param {string} name name of the attribute
+   * @returns {boolean} true if the object defines the specified attribute
    */
-
-  getIn(path) {
-    const segments = path.split(".");
-    const first = segments[0];
-    const rest = segments.slice(1);
-    const value = this.attributes[first];
-
-    if (null == value) {
-      return null;
-    } else {
-      return rest.reduce((attr, segment) => {
-        let next_value = attr[segment];
-        if (typeof next_value == "undefined") {
-          return null;
-        } else {
-          return next_value;
-        }
-      }, value);
-    }
-  },
-
   hasAttribute(name) {
     return !!this.attributes[name];
   },
 
+  /**
+   * @function getAttribute
+   * @memberof basic_object
+   * @param {string} name name of the attribute
+   * @returns {*} attribute value
+   * @description returns the value of the attribute with the given name. If no such attribute is present returns `undefined`
+   */
   getAttribute(name) {
     const attr = this.attributes[name];
     return attr;
   },
 
+  /**
+   * @function getAttributeValue
+   * @memberof basic_object
+   * @param {string} name name of the attribute
+   * @param {*} default_value value to return if no such attribute is present
+   * @returns {*} attribute value
+   * @description returns the value of the attribute with the given name. If no such value is present it returns the default value. If no default value is given it throws an exception.
+   */
   getAttributeValue(name, default_value) {
     const attr = this.getAttribute(name);
     if (typeof attr == "undefined") {
@@ -330,11 +399,24 @@ const basic_object = {
     }
   },
 
+  /**
+   * @function getObjectViaAttribute
+   * @memberof basic_object
+   * @param {string} name attribute name
+   * @param {*} default_value
+   */
   getObjectViaAttribute(name, default_value) {
     const id = this.getAttributeValue(name, default_value);
     return $(id);
   },
 
+  /**
+   * @function setAttribute
+   * @memberof basic_object
+   * @param {string} attr_name name of attribute to set
+   * @param {*} new_value value for attribute
+   * @param {boolean} notify_observers whether observers should be notified that the value has changed
+   */
   setAttribute(attr_name, new_value, notify_observers = true) {
     if (typeof new_value == "undefined") {
       throw "Call to setAttribute with undefined value!";
@@ -377,6 +459,11 @@ const basic_object = {
     this.game.unindexObjectForTag(this, tag);
   },
 
+  /**
+   * @function setTags
+   * @memberof basic_object
+   * @param {set} tags tags the object should have after the call
+   */
   setTags(new_tags) {
     new_tags = new Set(new_tags); // Just in case they are passed as an array
     const old_tags = this.getAttributeValue("tags", new Set());
@@ -388,46 +475,14 @@ const basic_object = {
     to_add.forEach((tag) => this.addTag(tag));
   },
 
-  putIn(path, value) {
-    const selectors = path.split(".");
-    const first_selector = selectors[0];
-    if (selectors.length == 1) {
-      this.setAttribute(first_selector, value);
-    } else {
-      const lookup_selectors = selectors.slice(1, -1);
-      let target = lookup_selectors.reduce((target, selector) => {
-        return target[selector];
-      }, this.getAttribute(first_selector));
-
-      if (typeof target == "undefined") {
-        throw "Attempt to putIn invalid path: " + path + " on " + this.id;
-      } else {
-        const final_selector = selectors.slice(-1);
-        target[final_selector] = value;
-        this.changedAttribute(first_selector);
-      }
-    }
-
-    return this;
-  },
-
-  incAttribute(name, amount = 1) {
-    let value = this.getAttribute(name);
-    if (typeof value == "number") {
-      this.setAttribute(name, value + amount);
-    } else {
-      throw "Attempt to inc/dec non-numeric attribute: " + name;
-    }
-  },
-
-  decAttribute(name, amount = 1) {
-    this.incAttribute(name, -amount);
-  },
-
-  /*
-   * Effect Management
+  /**
+   * @function applyEffect
+   * @memberof basic_object
+   * @param {string} effect_id
+   * @param {string} slot_id
+   * @param {string} item_id
    */
-  applyEffect(effect_id, item_id) {
+  applyEffect(effect_id, slot_id, item_id) {
     console.log(
       "Been asked to apply effect |" +
         effect_id +
@@ -439,7 +494,14 @@ const basic_object = {
     );
   },
 
-  removeEffect(effect_id, item_id) {
+  /**
+   * @function removeEffect
+   * @memberof basic_object
+   * @param {string} effect_id
+   * @param {string} slot_id
+   * @param {string} item_id
+   */
+  removeEffect(effect_id, slot_id, item_id) {
     console.log(
       "Been asked to remove effect |" +
         effect_id +
@@ -451,10 +513,11 @@ const basic_object = {
     );
   },
 
-  /*
-   * Archiving
+  /**
+   * @function needsArchiving
+   * @memberof basic_object
+   * @returns {boolean} true if this object requires archiving
    */
-
   needsArchiving() {
     return (
       this.changed_attributes.length > 0 ||
