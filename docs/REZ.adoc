@@ -631,11 +631,13 @@ This is useful when you want to create a "parameterized" block. For example, to 
 ....
 @card list_exits {
   bindings: {
-    exits: `$parent_block.source.exits
+    location: {function(block) {return block.parent_block.source;}}
   }
   content: ```
-    $foreach(exit: exits) {%
-      %% render an exit here
+    $if(location.exits) {%
+      $foreach(exit: location.exits) {%
+        %% render an exit here
+      %}
     %}
   ```
 }
@@ -659,32 +661,25 @@ This is useful when you want to create a "parameterized" block. For example, to 
 }
 ....
 
-In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block.
+In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block. Similarly `#another_room_with_exits` has an `exits:` attribute and renders `#list_exits`.
 
-The `#list_exits` block doesn't have to know anything about `#room_with_exits` only that it defines an `exits:` attribute. We use a `binding_path` binding to refer to the `exits:` attribute in the source block of the parent block (i.e. in the card). This means we can also use `#list_exits` from `#another_room_with_exits` or any card that defines an `exits:` attribute.
+However the `#list_exits` card doesn't have to know anything about the card that is rendering it, only that it
+
+The `#list_exits` card doesn't have to know which card is rendering it, only that it defines an `exits:` attribute. We use a function binding to reach up to the parent that defines `exits:` (i.e. the main card being rendered).
+
+This means we can use `#list_exits` from any card that defines an `exits:` attribute.
 
 === What are Bindings?
 
-By default the code being rendered in a block doesn't have access to all of your game objects.
+By default the template being rendered in a block doesn't have access to all of your game objects. However there are some bindings that are made automatically, and you can make your own.
 
-The following bindings are always available:
+Any time anything is being rendered, Rez automatically binds `block` to the `RezBlock` instance that actually does the rendering.
 
-[cols="1,2"]
-|===
-|`$block`
-|the current renderer block object
+When a card is being rendered `card` will be bound to the instance of `RezCard`, when a scene layout is being rendered `scene` will be bound to the `RezScene`, likewise for game layout, `game` is bound to the `RezGame`.
 
-|`card`
-|the card that is being rendered
+Furter, as in the previous example, you can use a `bindings:` attribute to make additional bindings. In the example `exits` is bound. The value here may appear a little complex because we use a function binding to reach up the block hierarchy.
 
-|`scene`
-|if a scene layout is being rendered, the current scene object
-
-|`game`
-|if a game layout is being rendered, the game object
-|===
-
-In the previous example we used a `bindings:` attribute to make an `exits` value available to the template by referring to where the exits are defined. Bindings are powerful but complex and have some sharp edges.
+Bindings are powerful but can be complicated and have some sharp edges.
 
 There are several ways to make a binding:
 
@@ -761,6 +756,8 @@ This is why cards support a `flipped_content:` attribute. When a new card is pla
 But what happens if we play the same card multiple times? How does it know which is flipped and which is 'face up'. What happens if an event wants to store data in the card? To answer these questions we need to go a little deeper.
 
 The rendering process doesn't directly render `@card`s, `@scene`s, or `@game`'s. Rendering is done via an object whose prototype is `RezBlock`. `RezSingleLayout` and `RezStackLayout` both have `RezBlock` as their prototype. For each `@card` that is being rendered there is an instance of `RezBlock`.
+
+A `RezBlock` handles generating HTML to output to the view by calling executing it's template with appropriate bindings. Where appropriate a block also has a `parent_block` reference that allows walking back up the content tree. (See the example above related to bindings).
 
 So when a `RezCard` is added to a `RezStackLayout` it's actually the card wrapped in an instance of `RezBlock`. The same card can get added to the layout many times, it's always the same card, but different block instances.
 

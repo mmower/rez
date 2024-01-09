@@ -2,7 +2,16 @@
 // DynamicLink
 //-----------------------------------------------------------------------------
 
-let dynamic_link_proto = {
+function RezDynamicLink(card) {
+  this.game_object_type = "dynamic_link";
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+  this.card = card;
+}
+
+RezDynamicLink.prototype = {
+  constructor: RezDynamicLink,
+
   inactive_class: "inactive",
   choosen: false,
   display: true,
@@ -39,13 +48,4 @@ let dynamic_link_proto = {
   },
 };
 
-function RezDynamicLink(card) {
-  this.game_object_type = "dynamic_link";
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-  this.card = card;
-}
-
-RezDynamicLink.prototype = dynamic_link_proto;
-RezDynamicLink.prototype.constructor = RezDynamicLink;
-window.Rez.DynamicLink = RezDynamicLink;
+window.RezDynamicLink = RezDynamicLink;

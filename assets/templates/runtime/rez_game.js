@@ -2,8 +2,33 @@
 // Game
 //-----------------------------------------------------------------------------
 
-let game_proto = {
+/**
+ * @class
+ * @param {string} id
+ * @param {object} attributes
+ * @description Represents the singleton @game instance
+ */
+function RezGame(id, attributes) {
+  this.id = id;
+  this.undo_manager = new RezUndoManager();
+  this.event_processor = new RezEventProcessor(this);
+  this.game_object_type = "game";
+  this.attributes = attributes;
+  this.tag_index = {};
+  this.wmem = { game: this };
+  this.game_objects = new Map();
+  this.properties_to_archive = [
+    "wmem",
+    "tag_index",
+  ];
+  this.changed_attributes = [];
+  this.$ = this.getGameObject;
+  this.addGameObject(this);
+}
+
+RezGame.prototype = {
   __proto__: basic_object,
+  constructor: RezGame,
 
   targetType: "game",
 
@@ -21,7 +46,7 @@ let game_proto = {
    * @returns {string} default binding name for this object
    */
   bindAs() {
-    return "$game";
+    return "game";
   },
 
   /**
@@ -661,30 +686,4 @@ let game_proto = {
   },
 };
 
-/**
- * @class
- * @param {string} id
- * @param {object} attributes
- * @description Represents the singleton @game instance
- */
-function RezGame(id, attributes) {
-  this.id = id;
-  this.undo_manager = new RezUndoManager();
-  this.event_processor = new RezEventProcessor(this);
-  this.game_object_type = "game";
-  this.attributes = attributes;
-  this.tag_index = {};
-  this.wmem = { game: this };
-  this.game_objects = new Map();
-  this.properties_to_archive = [
-    "wmem",
-    "tag_index",
-  ];
-  this.changed_attributes = [];
-  this.$ = this.getGameObject;
-  this.addGameObject(this);
-}
-
-RezGame.prototype = game_proto;
-RezGame.prototype.constructor = RezGame;
-window.Rez.Game = RezGame;
+window.RezGame = RezGame;

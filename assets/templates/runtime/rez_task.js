@@ -2,8 +2,20 @@
 // Task
 //-----------------------------------------------------------------------------
 
-let task_proto = {
+function RezTask(id, attributes) {
+  this.id = id;
+  this.game_object_type = "task";
+  this.auto_id_idx = 0;
+  this.options = {};
+  this.children = [];
+  this.attributes = attributes;
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+}
+
+RezTask.prototype = {
   __proto__: basic_object,
+  constructor: RezTask,
 
   configure() {
     const config_fn = this.getAttribute("configure");
@@ -80,17 +92,4 @@ let task_proto = {
   }
 };
 
-function RezTask(id, attributes) {
-  this.id = id;
-  this.game_object_type = "task";
-  this.auto_id_idx = 0;
-  this.options = {};
-  this.children = [];
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezTask.prototype = task_proto;
-RezTask.prototype.constructor = RezTask;
-window.Rez.Task = RezTask;
+window.RezTask = RezTask;

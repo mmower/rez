@@ -5,8 +5,18 @@
 // include_tag and exclude_tag attributes.
 //-----------------------------------------------------------------------------
 
-let group_proto = {
+function RezGroup(id, attributes) {
+  this.id = id;
+  this.game_object_type = "group";
+  this.attributes = attributes;
+  this.assets = [];
+  this.properties_to_archive = ["assets"];
+  this.changed_attributes = [];
+}
+
+RezGroup.prototype = {
   __proto__: basic_object,
+  constructor: RezGroup,
 
   elementInitializer() {
     this.filterAssets();
@@ -62,15 +72,4 @@ let group_proto = {
   }
 };
 
-function RezGroup(id, attributes) {
-  this.id = id;
-  this.game_object_type = "group";
-  this.attributes = attributes;
-  this.assets = [];
-  this.properties_to_archive = ["assets"];
-  this.changed_attributes = [];
-}
-
-RezGroup.prototype = group_proto;
-RezGroup.prototype.constructor = RezGroup;
-window.Rez.Group = RezGroup;
+window.RezGroup = RezGroup;

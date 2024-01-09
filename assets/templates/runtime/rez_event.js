@@ -2,7 +2,13 @@
 // Event Handling SubSystem
 //-----------------------------------------------------------------------------
 
-const event_processor_proto = {
+function RezEventProcessor(game) {
+  this.game = game;
+}
+
+RezEventProcessor.prototype = {
+  constructor: RezEventProcessor,
+
   get scene() {
     return this.game.current_scene;
   },
@@ -197,10 +203,4 @@ const event_processor_proto = {
 
 };
 
-function RezEventProcessor(game) {
-  this.game = game;
-}
-
-RezEventProcessor.prototype = event_processor_proto;
-RezEventProcessor.prototype.constructor = RezEventProcessor;
-window.Rez.EventProcessor = RezEventProcessor;
+window.RezEventProcessor = RezEventProcessor;

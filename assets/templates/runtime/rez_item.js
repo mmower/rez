@@ -1,9 +1,18 @@
-//-----------------------------------------------------------------------------
-// Item
-//-----------------------------------------------------------------------------
+/**
+ * Creates a new object with RezItem as its prototype.
+ */
+function RezItem(id, attributes) {
+  this.id = id;
+  this.auto_id_idx = 0;
+  this.game_object_type = "item";
+  this.attributes = attributes;
+  this.properties_to_archive = ["auto_id_idx"];
+  this.changed_attributes = [];
+}
 
-let item_proto = {
+RezItem.prototype = {
   __proto__: basic_object,
+  constructor: RezItem,
 
   get template() {
     return this.getAttribute("description_template");
@@ -14,15 +23,4 @@ let item_proto = {
   },
 };
 
-function RezItem(id, attributes) {
-  this.id = id;
-  this.auto_id_idx = 0;
-  this.game_object_type = "item";
-  this.attributes = attributes;
-  this.properties_to_archive = ["auto_id_idx"];
-  this.changed_attributes = [];
-}
-
-RezItem.prototype = item_proto;
-RezItem.prototype.constructor = RezItem;
-window.Rez.Item = RezItem;
+window.RezItem = RezItem;

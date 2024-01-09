@@ -2,8 +2,24 @@
 // Inventory
 //-----------------------------------------------------------------------------
 
-let inventory_proto = {
+/**
+ * Creates a new RezInventory
+ * @class
+ * @param {string} id assigned id
+ * @param {object} attributes initial attributes
+ * @description constructs @inventory game-objects
+ */
+function RezInventory(id, attributes) {
+  this.id = id;
+  this.game_object_type = "inventory";
+  this.attributes = attributes;
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+}
+
+RezInventory.prototype = {
   __proto__: basic_object,
+  constructor: RezInventory,
 
   /**
    * @function addItemHolderForSlot
@@ -396,21 +412,4 @@ let inventory_proto = {
   }
 };
 
-/**
- * Creates a new RezInventory
- * @class
- * @param {string} id assigned id
- * @param {object} attributes initial attributes
- * @description constructs @inventory game-objects
- */
-function RezInventory(id, attributes) {
-  this.id = id;
-  this.game_object_type = "inventory";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezInventory.prototype = inventory_proto;
-RezInventory.prototype.constructor = RezInventory;
-window.Rez.Inventory = RezInventory;
+window.RezInventory = RezInventory;

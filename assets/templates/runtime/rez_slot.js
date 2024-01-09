@@ -2,15 +2,6 @@
 // Slot
 //-----------------------------------------------------------------------------
 
-let slot_proto = {
-  __proto__: basic_object,
-
-  get has_capacity() {
-    return this.getAttribute("capacity") !== undefined;
-  },
-
-};
-
 function RezSlot(id, attributes) {
   this.id = id;
   this.game_object_type = "slot";
@@ -19,6 +10,14 @@ function RezSlot(id, attributes) {
   this.changed_attributes = [];
 }
 
-RezSlot.prototype = slot_proto;
-RezSlot.prototype.constructor = RezSlot;
+RezSlot.prototype = {
+  __proto__: basic_object,
+  constructor: RezSlot,
+
+  get has_capacity() {
+    return this.getAttribute("capacity") !== undefined;
+  },
+
+};
+
 window.Rez.Slot = RezSlot;

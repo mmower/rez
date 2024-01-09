@@ -10,7 +10,19 @@
  * `no(reason)` to instruct the calling code about what to do.
  */
 
-let decision_proto = {
+function RezDecision(purpose, data = {}) {
+  this.purpose = purpose;
+  this.made = false;
+  this.decision = false;
+  this.hidden = false;
+  this.reason = "";
+  this.data = data;
+  this.used_default = false;
+}
+
+RezDecision.prototype = {
+  constructor: RezDecision,
+
   yes() {
     this.made = true;
     this.result = true;
@@ -82,16 +94,4 @@ let decision_proto = {
   },
 };
 
-function RezDecision(purpose, data = {}) {
-  this.purpose = purpose;
-  this.made = false;
-  this.decision = false;
-  this.hidden = false;
-  this.reason = "";
-  this.data = data;
-  this.used_default = false;
-}
-
-RezDecision.prototype = decision_proto;
-RezDecision.prototype.constructor = RezDecision;
-window.Rez.Decision = RezDecision;
+window.RezDecision = RezDecision;

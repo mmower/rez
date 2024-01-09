@@ -2,29 +2,38 @@
 // Dice
 //-----------------------------------------------------------------------------
 
-const die_proto = {
+function RezDie(sides = 6) {
+  this.sides = sides;
+}
+
+RezDie.prototype = {
+  constructor: RezDie,
+
   roll() {
     return Number.rand_between(1, this.sides);
   }
 };
 
-function RezDie(sides = 6) {
-  this.sides = sides;
+window.RezDie = RezDie;
+
+window.RezDie.D4 = new RezDie(4);
+window.RezDie.D6 = new RezDie(6);
+window.RezDie.D8 = new RezDie(8);
+window.RezDie.D10 = new RezDie(10);
+window.RezDie.D12 = new RezDie(12);
+window.RezDie.D20 = new RezDie(20);
+window.RezDie.D100 = new RezDie(100);
+
+function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {
+  this.die = new RezDie(sides);
+  this.count = count;
+  this.modifier = modifier;
+  this.rounds = rounds;
 }
 
-RezDie.prototype = die_proto;
-RezDie.prototype.constructor = RezDie;
-window.Rez.Die = RezDie;
+RezDieRoll.prototype = {
+  constructor: RezDieRoll,
 
-window.Rez.D4 = new RezDie(4);
-window.Rez.D6 = new RezDie(6);
-window.Rez.D8 = new RezDie(8);
-window.Rez.D10 = new RezDie(10);
-window.Rez.D12 = new RezDie(12);
-window.Rez.D20 = new RezDie(20);
-window.Rez.D100 = new RezDie(100);
-
-const die_roll_proto = {
   rollRound() {
     let sum = this.modifier;
     for (let i = 0; i < this.count; i++) {
@@ -67,13 +76,4 @@ const die_roll_proto = {
   }
 };
 
-function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {
-  this.die = new RezDie(sides);
-  this.count = count;
-  this.modifier = modifier;
-  this.rounds = rounds;
-}
-
-RezDieRoll.prototype = die_roll_proto;
-RezDieRoll.prototype.constructor = RezDieRoll;
-window.Rez.DieRoll = RezDieRoll;
+window.RezDieRoll = RezDieRoll;

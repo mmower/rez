@@ -2,10 +2,6 @@
 // System
 //-----------------------------------------------------------------------------
 
-let system_proto = {
-  __proto__: basic_object
-};
-
 function RezSystem(id, attributes) {
   this.id = id;
   this.game_object_type = "system";
@@ -14,6 +10,9 @@ function RezSystem(id, attributes) {
   this.changed_attributes = [];
 }
 
-RezSystem.prototype = system_proto;
-RezSystem.prototype.constructor = RezSystem;
+RezSystem.prototype = {
+  __proto__: basic_object,
+  constructor: RezSystem
+};
+
 window.Rez.System = RezSystem;

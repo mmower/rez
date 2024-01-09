@@ -2,13 +2,24 @@
 // Card
 //-----------------------------------------------------------------------------
 
-let card_proto = {
+function RezCard(id, attributes) {
+  this.id = id;
+  this.auto_id_idx = 0;
+  this.game_object_type = "card";
+  this.current_block = null;
+  this.attributes = attributes;
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+}
+
+RezCard.prototype = {
   __proto__: basic_object,
+  constructor: RezCard,
 
   targetType: "card",
 
   bindAs() {
-    return "$card";
+    return "card";
   },
 
   getViewTemplate(flipped) {
@@ -35,16 +46,4 @@ let card_proto = {
   },
 };
 
-function RezCard(id, attributes) {
-  this.id = id;
-  this.auto_id_idx = 0;
-  this.game_object_type = "card";
-  this.current_block = null;
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezCard.prototype = card_proto;
-RezCard.prototype.constructor = RezCard;
-window.Rez.Card = RezCard;
+window.RezCard = RezCard;

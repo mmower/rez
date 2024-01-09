@@ -8,10 +8,6 @@
 // or behaviour tasks.
 //-----------------------------------------------------------------------------
 
-let object_proto = {
-  __proto__: basic_object
-};
-
 function RezObject(id, attributes) {
   this.id = id;
   this.game_object_type = "object";
@@ -20,6 +16,9 @@ function RezObject(id, attributes) {
   this.changed_attributes = [];
 }
 
-RezObject.prototype = object_proto;
-RezObject.prototype.constructor = RezObject;
-window.Rez.Object = RezObject;
+RezObject.prototype = {
+  __proto__: basic_object,
+  constructor: RezObject
+};
+
+window.RezObject = RezObject;

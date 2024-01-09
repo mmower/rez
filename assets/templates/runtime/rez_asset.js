@@ -2,8 +2,20 @@
 // Asset
 //-----------------------------------------------------------------------------
 
-let asset_proto = {
+function RezAsset(id, attributes) {
+  this.id = id;
+  this.game_object_type = "asset";
+  this.attributes = attributes;
+  this.properties_to_archive = []; // ["type"];
+  this.changed_attributes = [];
+  if (!this.isTemplateObject()) {
+    this.setAttribute("$type", this.assetType(), false);
+  }
+}
+
+RezAsset.prototype = {
   __proto__: basic_object,
+  constructor: RezAsset,
 
   elementInitializer() {},
 
@@ -110,17 +122,4 @@ let asset_proto = {
   },
 };
 
-function RezAsset(id, attributes) {
-  this.id = id;
-  this.game_object_type = "asset";
-  this.attributes = attributes;
-  this.properties_to_archive = []; // ["type"];
-  this.changed_attributes = [];
-  if (!this.isTemplateObject()) {
-    this.setAttribute("$type", this.assetType(), false);
-  }
-}
-
-RezAsset.prototype = asset_proto;
-RezAsset.prototype.constructor = RezAsset;
-window.Rez.Asset = RezAsset;
+window.RezAsset = RezAsset;

@@ -2,8 +2,20 @@
 // List
 //-----------------------------------------------------------------------------
 
-let list_proto = {
+function RezList(id, attributes) {
+  this.id = id;
+  this.game_object_type = "list";
+  this.attributes = attributes;
+  this.cycles = {};
+  this.walks = {};
+  this.bags = {};
+  this.properties_to_archive = ["cycles", "walks"];
+  this.changed_attributes = [];
+}
+
+RezList.prototype = {
   __proto__: basic_object,
+  constructor: RezList,
 
   //---------------------------------------------------------------------------
   // List
@@ -131,17 +143,4 @@ let list_proto = {
   },
 };
 
-function RezList(id, attributes) {
-  this.id = id;
-  this.game_object_type = "list";
-  this.attributes = attributes;
-  this.cycles = {};
-  this.walks = {};
-  this.bags = {};
-  this.properties_to_archive = ["cycles", "walks"];
-  this.changed_attributes = [];
-}
-
-RezList.prototype = list_proto;
-RezList.prototype.constructor = RezList;
-window.Rez.List = RezList;
+window.RezList = RezList;

@@ -2,8 +2,18 @@
 // Plot
 //-----------------------------------------------------------------------------
 
-let plot_proto = {
+function RezPlot(id, attributes) {
+  this.id = id;
+  this.game_object_type = "plot";
+  this.status = 0;
+  this.attributes = attributes;
+  this.properties_to_archive = [];
+  this.changed_attributes = [];
+}
+
+RezPlot.prototype = {
   __proto__: basic_object,
+  constructor: RezPlot,
 
   isActive() {
     return this.stage > 0;
@@ -21,15 +31,4 @@ let plot_proto = {
   },
 };
 
-function RezPlot(id, attributes) {
-  this.id = id;
-  this.game_object_type = "plot";
-  this.status = 0;
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezPlot.prototype = plot_proto;
-RezPlot.prototype.constructor = RezPlot;
-window.Rez.Plot = RezPlot;
+window.RezPlot = RezPlot;

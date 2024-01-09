@@ -34,7 +34,17 @@ function evaluateExpression(expression, bindings, rval = true) {
 // View
 //-----------------------------------------------------------------------------
 
-let block_proto = {
+function RezBlock(block_type, source, params = {}) {
+  this.parent_block = null;
+  this.block_type = block_type;
+  this.source = source;
+  this.flipped = false;
+  this.assignParams(params);
+}
+
+RezBlock.prototype = {
+  constructor: RezBlock,
+
   instantiateIdBinding(id) {
     return $(id);
   },
@@ -83,7 +93,7 @@ let block_proto = {
 
   bindValues() {
     const bindings = {
-      $block: this,
+      block: this,
       [this.source.bindAs()]: this.source,
       ...this.getBindings(),
     };
@@ -167,48 +177,14 @@ let block_proto = {
   },
 };
 
-function RezBlock(block_type, source, params = {}) {
-  this.parent_block = null;
-  this.block_type = block_type;
-  this.source = source;
-  this.flipped = false;
-  this.assignParams(params);
-}
-
-RezBlock.prototype = block_proto;
-RezBlock.prototype.constructor = RezBlock;
-window.Rez.block = RezBlock;
-
-// //-----------------------------------------------------------------------------
-// // Synthetic Source
-// //-----------------------------------------------------------------------------
-
-// let synthetic_source_proto = {
-//   __proto__: window.Rez.basic_object,
-
-//   get viewTemplate() {
-//     return this.getAttribute("template");
-//   },
-// };
-
-// function RezSyntheticSource(template) {
-//   this.id = String.randomId();
-//   this.game_object_type = "synthetic_source";
-//   this.attributes = {
-//     template: template,
-//   };
-// }
-
-// RezSyntheticSource.prototype = synthetic_source_proto;
-// RezSyntheticSource.prototype.constructor = RezSyntheticSource;
-// window.Rez.synthetic_source = RezSyntheticSource;
+window.Rezblock = RezBlock;
 
 //-----------------------------------------------------------------------------
 // Layout
 //-----------------------------------------------------------------------------
 
 let layout_proto = {
-  __proto__: block_proto,
+  __proto__: RezBlock.prototype,
 
   addContent(block) {
     throw "Must implement addContent(block)";
@@ -241,8 +217,15 @@ let layout_proto = {
 // This Layout holds a single block as it's content
 //-----------------------------------------------------------------------------
 
-let single_layout_proto = {
+function RezSingleLayout(source_name, source) {
+  RezBlock.call(this, "scene", source);
+  this.source_name = source_name;
+  this.content = null;
+}
+
+RezSingleLayout.prototype = {
   __proto__: layout_proto,
+  constructor: RezSingleLayout,
 
   addContent(block) {
     block.parent_block = this;
@@ -258,15 +241,7 @@ let single_layout_proto = {
   },
 };
 
-function RezSingleLayout(source_name, source) {
-  RezBlock.call(this, "scene", source);
-  this.source_name = source_name;
-  this.content = null;
-}
-
-RezSingleLayout.prototype = single_layout_proto;
-RezSingleLayout.prototype.constructor = RezSingleLayout;
-window.Rez.single_layout = RezSingleLayout;
+window.RezSingleLayout = RezSingleLayout;
 
 //-----------------------------------------------------------------------------
 // Stack Layout
@@ -274,8 +249,15 @@ window.Rez.single_layout = RezSingleLayout;
 // This layout holds a list of blocks that are composed to form its content
 //-----------------------------------------------------------------------------
 
-let stack_layout_proto = {
+function RezStackLayout(source_name, source) {
+  RezBlock.call(this, "scene", source);
+  this.source_name = source_name;
+  this.contents = [];
+}
+
+RezStackLayout.prototype = {
   __proto__: layout_proto,
+  constructor: RezStackLayout,
 
   get reversed() {
     return this.source.layout_reverse;
@@ -305,15 +287,7 @@ let stack_layout_proto = {
   },
 };
 
-function RezStackLayout(source_name, source) {
-  RezBlock.call(this, "scene", source);
-  this.source_name = source_name;
-  this.contents = [];
-}
-
-RezStackLayout.prototype = stack_layout_proto;
-RezStackLayout.prototype.constructor = RezStackLayout;
-window.Rez.stack_layout = RezStackLayout;
+window.RezStackLayout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers
@@ -394,33 +368,26 @@ let event_transformer_proto = {
 // Link Transformers
 //-----------------------------------------------------------------------------
 
-let event_link_transformer_proto = {
-  __proto__: event_transformer_proto,
-
-  transformElement(elem) {
-    this.addEventListener(elem, this.getEventName());
-  },
-};
-
 function RezEventLinkTransformer(receiver) {
   this.selector = "div.card a[data-event]";
   this.event = "click";
   this.receiver = receiver;
 }
 
-RezEventLinkTransformer.prototype = event_link_transformer_proto;
-
-//-----------------------------------------------------------------------------
-// Button Transformer
-//-----------------------------------------------------------------------------
-
-const button_transformer_proto = {
+RezEventLinkTransformer.prototype = {
   __proto__: event_transformer_proto,
+  constructor: RezEventLinkTransformer,
 
   transformElement(elem) {
     this.addEventListener(elem, this.getEventName());
   },
 };
+
+window.RezEventLinkTransformer = RezEventLinkTransformer;
+
+//-----------------------------------------------------------------------------
+// Button Transformer
+//-----------------------------------------------------------------------------
 
 function RezButtonTransformer(receiver) {
   this.selector = "div.card button[data-event]:not(.inactive)";
@@ -428,7 +395,16 @@ function RezButtonTransformer(receiver) {
   this.receiver = receiver;
 }
 
-RezButtonTransformer.prototype = button_transformer_proto;
+RezButtonTransformer.prototype = {
+  __proto__: event_transformer_proto,
+  constructor: RezButtonTransformer,
+
+  transformElement(elem) {
+    this.addEventListener(elem, this.getEventName());
+  },
+};
+
+Window.RezButtonTransformer = RezButtonTransformer;
 
 //-----------------------------------------------------------------------------
 // FormTransformer
@@ -440,7 +416,12 @@ function RezFormTransformer(receiver) {
   this.receiver = receiver;
 }
 
-RezFormTransformer.prototype = event_transformer_proto;
+RezFormTransformer.prototype = {
+  __proto__: event_transformer_proto,
+  constructor: RezFormTransformer
+};
+
+Window.RezFormTransformer = RezFormTransformer;
 
 //-----------------------------------------------------------------------------
 // InputTransformer
@@ -454,12 +435,21 @@ function RezInputTransformer(receiver) {
 
 RezInputTransformer.prototype = event_transformer_proto;
 
+Window.RezInputTransformer = RezInputTransformer;
+
 //-----------------------------------------------------------------------------
 // BindingTransformer
 //-----------------------------------------------------------------------------
 
-const binding_transformer_proto = {
+function RezBindingTransformer(receiver) {
+  this.selector =
+    "div.card input[rez-bind], select[rez-bind], textarea[rez-bind]";
+  this.receiver = receiver;
+}
+
+RezBindingTransformer.prototype = {
   __proto__: event_transformer_proto,
+  constructor: RezBindingTransformer,
 
   decodeBinding(binding_expr) {
     const [binding_id, binding_attr] = binding_expr.split(".");
@@ -557,19 +547,28 @@ const binding_transformer_proto = {
   },
 };
 
-function RezBindingTransformer(receiver) {
-  this.selector =
-    "div.card input[rez-bind], select[rez-bind], textarea[rez-bind]";
-  this.receiver = receiver;
-}
-
-RezBindingTransformer.prototype = binding_transformer_proto;
+window.RezBindingTransformer = RezBindingTransformer;
 
 //-----------------------------------------------------------------------------
 // View
 //-----------------------------------------------------------------------------
 
-let view_proto = {
+function RezView(container_id, receiver, layout, transformers) {
+  this.container = document.getElementById(container_id);
+  if (!this.container) {
+    throw "Cannot get container |" + container_id + "|";
+  }
+
+  this.layout = layout;
+  this.layout_stack = [];
+  this.bindings = new Map();
+  this.receiver = receiver;
+  this.transformers = transformers ?? this.defaultTransformers();
+}
+
+RezView.prototype = {
+  constructor: RezView,
+
   getLayout() {
     return this.layout;
   },
@@ -634,18 +633,4 @@ let view_proto = {
   },
 };
 
-function RezView(container_id, receiver, layout, transformers) {
-  this.container = document.getElementById(container_id);
-  if (!this.container) {
-    throw "Cannot get container |" + container_id + "|";
-  }
-
-  this.layout = layout;
-  this.layout_stack = [];
-  this.bindings = new Map();
-  this.receiver = receiver;
-  this.transformers = transformers ?? this.defaultTransformers();
-}
-
-RezView.prototype = view_proto;
-RezView.prototype.constructor = RezView;
+window.RezView = RezView;
