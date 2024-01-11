@@ -85,6 +85,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
 
   def default_attributes(_card),
     do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
       "$flipped" => Attribute.boolean("$flipped", false),
       "$suppress_wrapper" => Attribute.boolean("$suppress_wrapper", false)
     }

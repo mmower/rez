@@ -6,7 +6,7 @@ function RezAsset(id, attributes) {
   this.id = id;
   this.game_object_type = "asset";
   this.attributes = attributes;
-  this.properties_to_archive = []; // ["type"];
+  this.properties_to_archive = [];
   this.changed_attributes = [];
   if (!this.isTemplateObject()) {
     this.setAttribute("$type", this.assetType(), false);

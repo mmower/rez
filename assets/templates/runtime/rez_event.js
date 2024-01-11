@@ -73,17 +73,24 @@ RezEventProcessor.prototype = {
     }, result);
   },
 
+  raiseTimerEvent(timer) {
+    const evt = new CustomEvent('timer', {detail: {timer: timer}});
+    return this.handleBrowserEvent(evt);
+  },
+
   handleBrowserEvent(evt) {
     evt = this.beforeEventProcessing(evt);
 
     let result;
 
-    if (evt.type == "click") {
+    if (evt.type === "click") {
       result = this.handleBrowserClickEvent(evt);
-    } else if (evt.type == "input") {
+    } else if (evt.type === "input") {
       result = this.handleBrowserInputEvent(evt);
-    } else if (evt.type == "submit") {
+    } else if (evt.type === "submit") {
       result = this.handleBrowserSubmitEvent(evt);
+    } else if(evt.type === "timer") {
+      result = this.handleTimerEvent(evt);
     } else {
       result = {unhandled: true};
     }
@@ -96,21 +103,31 @@ RezEventProcessor.prototype = {
     return [event.toLowerCase(), target, params];
   },
 
+  handleTimerEvent(evt) {
+    const timer = evt.detail.timer;
+    const result = this.handleCustomEvent(timer.event, {timer: timer.id});
+    if(!typeof(result) === "object") {
+      return {handled: true}
+    } else {
+      return result;
+    }
+  },
+
   handleBrowserClickEvent(evt) {
     const [event_name, target, params] = this.decodeEvent(evt);
 
-    if(typeof(event_name) == "undefined") {
+    if(typeof(event_name) === "undefined") {
       console.log("Received click event without an event name!");
       return false;
     }
 
-    if (event_name == "card") {
+    if (event_name === "card") {
       return this.handleCardEvent(target, params);
-    } else if (event_name == "switch") {
+    } else if (event_name === "switch") {
       return this.handleSwitchEvent(target, params);
-    } else if (event_name == "interlude") {
+    } else if (event_name === "interlude") {
       return this.handleInterludeEvent(target, params);
-    } else if (event_name == "resume") {
+    } else if (event_name === "resume") {
       return this.handleResumeEvent(params);
     } else {
       return this.handleCustomEvent(event_name, params);

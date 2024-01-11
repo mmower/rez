@@ -102,6 +102,8 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Asset do
   import Rez.AST.NodeValidator
+
+  alias Rez.AST.Attribute
   alias Rez.AST.Asset
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
@@ -114,7 +116,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     NodeHelper.get_attr_value(asset, "$js_ctor", "RezAsset")
   end
 
-  def default_attributes(_asset), do: %{}
+  def default_attributes(_asset),
+    do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+    }
 
   def pre_process(asset) do
     # Template assets should not define a path or be searched for

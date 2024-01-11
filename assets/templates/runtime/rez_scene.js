@@ -4,7 +4,6 @@
 
 function RezScene(id, attributes) {
   this.id = id;
-  this.auto_id_idx = 0;
   this.game_object_type = "scene";
   this.attributes = attributes;
   this.properties_to_archive = [];

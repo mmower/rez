@@ -95,6 +95,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
 
   def default_attributes(_item),
     do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
       "size" => Attribute.number("size", 0)
     }
 

@@ -5,7 +5,6 @@
 function RezTask(id, attributes) {
   this.id = id;
   this.game_object_type = "task";
-  this.auto_id_idx = 0;
   this.options = {};
   this.children = [];
   this.attributes = attributes;

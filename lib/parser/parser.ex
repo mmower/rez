@@ -102,6 +102,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("task", Rez.AST.Task)
   end
 
+  def timer_block() do
+    block_with_id("timer", Rez.AST.Timer)
+  end
+
   def game_content() do
     choice(
       [
@@ -132,6 +136,7 @@ defmodule Rez.Parser.Parser do
         style_block(),
         system_block(),
         task_block(),
+        timer_block(),
         # Now user defined aliases
         alias_block()
       ],

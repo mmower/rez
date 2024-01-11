@@ -16,6 +16,7 @@ end
 defimpl Rez.AST.Node, for: Rez.AST.List do
   import Rez.AST.NodeValidator
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -27,7 +28,10 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
     NodeHelper.get_attr_value(list, "$js_ctor", "RezList")
   end
 
-  def default_attributes(_list), do: %{}
+  def default_attributes(_list),
+    do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+    }
 
   def pre_process(list), do: list
 

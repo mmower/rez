@@ -50,7 +50,8 @@ defmodule Rez.AST.Game do
             slots: %{},
             styles: [],
             systems: %{},
-            tasks: %{}
+            tasks: %{},
+            timers: %{}
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: append_list(scripts, script)}
@@ -166,6 +167,7 @@ defmodule Rez.AST.Game do
     :scenes,
     :slots,
     :systems,
+    :timers,
     :objects
   ]
 
@@ -341,6 +343,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:relationships, node_map)
     |> NodeHelper.process_collection(:scenes, node_map)
     |> NodeHelper.process_collection(:systems, node_map)
+    |> NodeHelper.process_collection(:timers, node_map)
     |> Game.set_init_order()
   end
 
@@ -371,6 +374,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.relationships))
     |> Utils.append_list(Map.values(game.scenes))
     |> Utils.append_list(Map.values(game.systems))
+    |> Utils.append_list(Map.values(game.timers))
     |> Utils.append_list(game.patches)
     |> Utils.append_list(game.scripts)
     |> Utils.append_list(game.styles)

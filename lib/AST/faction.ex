@@ -13,6 +13,8 @@ end
 
 defimpl Rez.AST.Node, for: Rez.AST.Faction do
   import Rez.AST.NodeValidator
+
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -24,7 +26,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
     NodeHelper.get_attr_value(faction, "$js_ctor", "RezEffect")
   end
 
-  def default_attributes(_faction), do: %{}
+  def default_attributes(_faction),
+    do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+    }
 
   def pre_process(faction), do: faction
 

@@ -55,7 +55,9 @@ RezGroup.prototype = {
       console.log("Attempt to create group that matches 0 assets!");
     }
 
-    this.assets = assets.map((asset) => {return asset.id}).fy_shuffle();
+    assets = assets.map((asset) => {return asset.id}).fy_shuffle();
+
+    this.setAttribute("assets", assets);
   },
 
   randomAssetId() {

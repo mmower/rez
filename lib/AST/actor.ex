@@ -12,9 +12,11 @@ defmodule Rez.AST.Actor do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Actor do
-  alias Rez.AST.TemplateHelper
-  alias Rez.AST.NodeHelper
   import Rez.AST.NodeValidator
+
+  alias Rez.AST.Attribute
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.TemplateHelper
 
   defdelegate js_initializer(actor), to: NodeHelper
 
@@ -24,7 +26,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
     NodeHelper.get_attr_value(actor, "$js_ctor", "RezActor")
   end
 
-  def default_attributes(_actor), do: %{}
+  def default_attributes(_actor),
+    do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+    }
 
   def pre_process(actor), do: actor
 

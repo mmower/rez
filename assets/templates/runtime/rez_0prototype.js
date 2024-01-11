@@ -267,6 +267,7 @@ const basic_object = {
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
     const copy = new this.constructor(id, attributes);
+    copy.setAttribute("$auto_id_idx", 0, false);
     copy.setAttribute("$template", false, false);
     copy.setAttribute("$original_id", this.id, false);
     copy.init_all();
@@ -280,8 +281,8 @@ const basic_object = {
    * @description returns the next auto id in the sequence
    */
   getNextAutoId() {
-    this.auto_id_idx += 1;
-    return this.id + "_" + this.auto_id_idx;
+    this.$auto_id_idx += 1;
+    return this.id + "_" + this.$auto_id_idx;
   },
 
   /**

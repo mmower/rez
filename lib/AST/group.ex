@@ -21,6 +21,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   alias Rez.AST.Group
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
@@ -32,7 +33,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
     NodeHelper.get_attr_value(group, "$js_ctor", "RezGroup")
   end
 
-  def default_attributes(_group), do: %{}
+  def default_attributes(_group),
+    do: %{
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+    }
 
   def pre_process(group), do: group
 

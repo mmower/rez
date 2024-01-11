@@ -9,7 +9,6 @@
  */
 function RezActor(id, attributes) {
   this.id = id;
-  this.auto_id_idx = 0;
   this.game_object_type = "actor";
   this.attributes = attributes;
   this.properties_to_archive = [];

@@ -30,11 +30,6 @@
 
   %(../lib/stdlib.rez)
 
-  @filter filter_random {
-    name: "random"
-    impl: (sides) => {return Math.rand_int(sides)+1;}
-  }
-
   @scene s_hello {
     initial_card_id: #c_hello
   }
@@ -43,25 +38,33 @@
     content: ```
     <section class="hero">
       <div class="hero-body">
-        <p class="title">Hello</p>
-        <p class="subtitle">From <span class="has-text-primary">${$card.game.author}</span></p>
+        <p class="title">${card.game.title}</p>
+        <p class="subtitle">From <span class="has-text-primary">${card.game.author}</span></p>
       </div>
       <div class="box">
-        <a data-event="card" data-target="c_game" data-random="${100 | random}">Game?</a>
+        <ul>
+          <li><a data-event="card" data-target="c_ending" data-ending="good">Good Ending</a></li>
+          <li><a data-event="card" data-target="c_ending" data-ending="bad">Bad Ending</a></li>
+        </ul>
       </div>
     </section>
     ```
   }
 
-  @card c_game {
+  @filter filter_ending_style {
+    name: "ending_style"
+    impl: (ending) => {return ending === "good" ? "has-background-success" : "has-background-danger";}
+  }
+
+  @card c_ending {
     content: ```
     <section class="hero">
       <div class="hero-body">
-        <p class="title">Game!</p>
-        <p class="subtitle has-text-primary">${$card.game.title} (${$block.random})</p>
+        <p class="title ${block.ending | ending_style}">Game Over!</p>
+        <p class="subtitle has-text-primary">You got the ${block.ending} ending!</p>
       </div>
       <div class="box">
-        <a data-event="card" data-target="c_hello">Hello?</a>
+        <a data-event="card" data-target="c_hello">Play Again</a>
       </div>
     </section>
     ```

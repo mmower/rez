@@ -4,7 +4,6 @@
 
 function RezCard(id, attributes) {
   this.id = id;
-  this.auto_id_idx = 0;
   this.game_object_type = "card";
   this.current_block = null;
   this.attributes = attributes;

@@ -202,7 +202,7 @@ RezGame.prototype = {
    * link.
    */
   save() {
-    this.runEvent("save", {});
+    this.getAll().forEach((obj) => {obj.runEvent("save_game")});
 
     const file = new File(
       [this.archive()],
@@ -259,7 +259,7 @@ RezGame.prototype = {
       }
     }
 
-    this.runEvent("load", {});
+    this.getAll().forEach((obj) => obj.runEvent("game_loaded"));
   },
 
   /**
@@ -444,12 +444,16 @@ RezGame.prototype = {
   /**
    * @function getAll
    * @memberof RezGame
-   * @param {string} target_type game object type (e.g. 'actor', 'item')
+   * @param {string} target_type (optional) a specific game object type (e.g. 'actor', 'item')
    * @returns {array} game-objects with the specified type
    * @description filters all game-objects returning those with the specified type
    */
   getAll(target_type) {
-    return this.filterObjects((obj) => obj.game_object_type == target_type);
+    if(target_type === undefined) {
+      return Array.from(this.game_objects.values());
+    } else {
+      return this.filterObjects((obj) => obj.game_object_type == target_type);
+    }
   },
 
   /**
@@ -642,9 +646,9 @@ RezGame.prototype = {
       }, this);
     }
 
-    this.runEvent("start", {});
-
-    this.getAll("actor").forEach((actor) => actor.runEvent("start", {}));
+    this.getAll().forEach((obj) => {
+      obj.runEvent("game_started", {})
+    });
 
     this.view = new RezView(
       container_id,
