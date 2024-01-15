@@ -14,22 +14,23 @@ not.
 
 Elements describe in-game concepts.
 
-* <<Actor>>
-* <<Asset>>
-* <<Card>>
-* <<Effect>>
-* <<Faction>>
-* <<Game>>
-* <<Group>>
-* <<Inventory>>
-* <<Item>>
-* <<List>>
-* <<Object>>
-* <<Plot>>
-* <<Relationship>>
-* <<Scene>>
-* <<Slot>>
-* <<System>>
+* <<Actor (Element), Actor>>
+* <<Asset (Element), Asset>>
+* <<Card (Element), Card>>
+* <<Effect (Element), Effect>>
+* <<Faction (Element), Faction>>
+* <<Game (Element), Game>>
+* <<Group (Element), Group>>
+* <<Inventory (Element), Inventory>>
+* <<Item (Element), Item>>
+* <<List (Element), List>>
+* <<Object (Element), Object>>
+* <<Plot (Element), Plot>>
+* <<Relationship (Element), Relationship>>
+* <<Scene (Element), Scene>>
+* <<Slot (Element), Slot>>
+* <<System (Element), System>>
+* <<Timer (Element), Timer>>
 
 == Directives
 
@@ -89,7 +90,7 @@ In this example we have made an alias, `@hat` for `@item` specifying a parent id
 
 Note that an alias can specify multiple parents.
 
-== Actor
+== Actor (Element)
 
 An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element. In-game actors are represented by the xref:jsapi#RezActor[RezActor] object.
 
@@ -262,7 +263,7 @@ on_turn: (actor, event = {}) => {...}
 
 If the game turn mechanism is being used this callback will be received on each game turn. This is intended for simple cases and if you need to coordinate behaviours across multiple elements it may be better to use a system instead.
 
-== Asset
+== Asset (Element)
 
 An `@asset` element refers to a file on disk, typically an image, audio, or video file, that will be presented in game.
 
@@ -304,7 +305,7 @@ on_init: (asset, event = {}) => {...}
 
 This script will be called during game initialization and before the game has started.
 
-== Card
+== Card (Element)
 
 Cards are the basic unit of content & interaction in a Rez game. Cards are "played" into a scene to present what is happening to the user and offer them choices about what to do next. In this they serve a similar role to Twine passages.
 
@@ -466,7 +467,7 @@ The result is that an item with `type: :sword`, `type: :mace`, or `type: :potion
 
 An item hierarchy can be as simple of complex as you need. At run-time all of the item type information is converted into tags. For example an item with `type: :sword` would have tags as if we had written `tags: #{:sword :weapon :item}`.
 
-== Effect
+== Effect (Element)
 
 Effects are modifiers to aspects of the game that can be applied and removed dynamically as the game progresses.
 
@@ -516,7 +517,7 @@ started.
 If the game turn mechanism is being used this callback will be received on each
 game turn. This allows an effect to, for example, grow or decline over time.
 
-== Faction
+== Faction (Element)
 
 Factions represent in-game groups with their own agenda, reputation, and views
 of others. Define a faction using a `@faction` element.
@@ -607,7 +608,7 @@ As of v0.11.0 the Rez stdlib defines a number of filters and you can see how the
 
 See also the filter_catalog.
 
-== Game
+== Game (Element)
 
 The game element is the top-level specification of the game and its metadata. It also defines the scebe entry point of the game.
 
@@ -684,7 +685,7 @@ current scene.
 The callback happens between the `on_leave` and `on_enter` scripts of the card
 that is being played.
 
-== Group
+== Group (Element)
 
 A group specifies a collection of assets that can be selected from. Groups can be static by defining the id of member assets, or dynamic by specifying a set of tags. In the latter case the group will collect together all assets with any of the specified tags.
 
@@ -719,7 +720,7 @@ on_init: (group, event = {}) => {...}
 This script will be called during game initialization and before the game has
 started.
 
-== Inventory
+== Inventory (Element)
 
 The `@inventory` element creates a container that can hold `@item`s through the use of `@slot`s. Rez inventories are deliberately flexible to handle a range of use cases for example working memory (where items are thoughts) or spell books (where items are spells).
 
@@ -777,7 +778,7 @@ on_remove: (inventory, event) => {...}
 
 This script will be called after an item has been removed from the specified slot of this inventory.
 
-== Item
+== Item (Element)
 
 The `@item` element defines a conceptual item the player the player (or potentially an NPC) can acquire and add to an inventory. Items don't have to represent physical objects but anything a player has for example a spell could be an item or even a memory.
 
@@ -876,7 +877,7 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 This script will be called during game initialization and before the game has
 started.
 
-== List
+== List (Element)
 
 A list is a named collection of values that can be used by other in-game elements, for example lists of names, locations, actors, and so on. Lists are defined using the `@list` element.
 
@@ -911,7 +912,7 @@ The run-time API supports selecting randomly from lists including with & without
 
 This script will be called during game initialization and before the game has started.
 
-== Object
+== Object (Element)
 
 An `@object` element describes an author-driven concept. Isn't everything in Rez an object of some kind? Yes, but elements like `@author`, `@item`, and `@plot` have built-in meaning and functionality. By contrast `@object` is a blank canvas that an author can use for anything they think of.
 
@@ -995,7 +996,7 @@ In a real-game we'd expect to see more definition of what skills & perks do but 
 
 Extra care should be taken here that they are well-formed.
 
-== Plot
+== Plot (Element)
 
 === Example
 
@@ -1019,7 +1020,7 @@ Extra care should be taken here that they are well-formed.
 This script will be called during game initialization and before the game has
 started.
 
-== Relationship
+== Relationship (Element)
 
 The `@rel` directive describes the relationship between two game elements called the `source` (the element which has the relationship) and the `target` (the element the relationship is about).
 
@@ -1105,7 +1106,7 @@ When we want to add more context to a relationship we can use tags:
 
 This event handler will be called whenever the relationship affinity changes and will be passed the prior & new affinity values.
 
-== Scene
+== Scene (Element)
 
 A Game in Rez is authored in terms of `@scene`s and `@card`s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which `@card`s to represent and how to respond to player input.
 
@@ -1263,7 +1264,7 @@ The code defined in the game's `@script` directives will be automatically includ
 }
 ....
 
-== Slot
+== Slot (Element)
 
 A `@slot` describes a component of an `@inventory` so that an inventory can hold different types of things.
 
@@ -1362,7 +1363,7 @@ The styles defined in the game's `@style` directives will be automatically inclu
 === Event Handlers
 === API
 
-== System
+== System (Element)
 
 The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world. In-game a system is represented by a xref:jsapi#RezSystem[RezSystem] object.
 
@@ -1418,6 +1419,47 @@ This script will be called during game initialization and before the game has st
 : `(system, event = {}) => {...}
 
 As long as the system `enabled` attribute is `true` this script will be called every time the `RezGame` method `runTick` is called.
+
+== Timer (Element)
+
+The `@timer` element describes a game component that generates events after specific
+time interval has passed, either once or repeatedly.
+
+Use a timer element when you want something to happen irrespective of player input.
+
+For example a timer could be used to create a proper "wandering monster" scenario,
+where every minute the player is at risk of a monster wandering into their location.
+
+=== Example
+...
+@timer wandering_monsters {
+  auto_start: true
+  repeat: true
+  interval: 60000
+  event: :wandering_monster
+}
+...
+
+=== Pre-Defined Attributes
+[cols="2,1,4"]
+|===
+|`auto_start`
+|Boolean
+|If true, this timer will start when the game starts.
+
+|`repeat`
+|Boolean
+|If true this timer will keep sending events until it stops, otherwise it will only
+|send one event.
+
+|`count` (optional)
+|With a repeated timer this specifies the number of times it should repeat.
+
+|`event`
+|Keyword
+|Specifies the name of the event that will be sent when the timer runs down. The
+|event follows the normal rules for custom events.
+|===
 
 == Task (Directive)
 

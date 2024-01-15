@@ -15,10 +15,12 @@ const basic_object = {
   initialised: false,
 
   /**
-   * @function init
+   * Performs the specified level of initialization on this game object.
+   *
+   * This is called automatically by the framework when the game is starting.
+   *
    * @memberof basic_object
    * @param {number} level - the initialization level (0+) to perform
-   * @description performs the specified initialization level. This is called automatically by the framework when the game is starting.
    */
   init(level) {
     const init_method = "init_" + level;
@@ -28,9 +30,11 @@ const basic_object = {
   },
 
   /**
-   * @function init_all
+   * Perform all initialization levels from 0..max_level as defined by RezGame.
+   *
+   * This is intended for the author to call on a dynamically created object to ensure it is properly initialized before use.
+   *
    * @memberof basic_object
-   * @description performs all initialization levels, in turn, on this object. This is intended for the author to call on a dynamically created object to ensure it is properly initialized before use.
    */
   init_all() {
     for (let init_level of this.game.initLevels()) {
@@ -39,9 +43,9 @@ const basic_object = {
   },
 
   /**
-   * @function init_0
+   * Initialize all static and dynamic properties
+   *
    * @memberof basic_object
-   * @description initializes static and dynamic properties
    */
   init_0() {
     this.createStaticProperties();
@@ -49,18 +53,19 @@ const basic_object = {
   },
 
   /**
-   * @function init_1
+   * Initialize all dynamic attributes.
+   *
    * @memberof basic_object
-   * @description initializes dynamic attributes
    */
   init_1() {
     this.initDynamicAttributes();
   },
 
   /**
-   * @function init_2
+   * For game objects that do not define $template: true run the element initializer
+   * and the per-object init event.
+   *
    * @memberof basic_object
-   * @description if the object is not a template object ($template: false) runs the element initializer and the on_init event handler
    */
   init_2() {
     if (!this.initialised) {
@@ -74,9 +79,9 @@ const basic_object = {
   },
 
   /**
-   * @function init_3
+   * Mark the object has having been fully initialized.
+   *
    * @memberof basic_object
-   * @description the final level of initialization, records that the object is now fully initialized.
    */
   init_3() {
     this.initialised = true;

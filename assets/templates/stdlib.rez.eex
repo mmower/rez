@@ -183,6 +183,14 @@
   }
 }
 
+@patch ARRAY_REFS {
+  patch: "Array"
+  method: "refs"
+  impl: function() {
+    return this.map((id) => $(id));
+  }
+}
+
 @patch STRING_CAPITALIZE {
   patch: "String"
   method: "capitalize"

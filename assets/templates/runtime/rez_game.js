@@ -15,11 +15,13 @@ function RezGame(id, attributes) {
   this.game_object_type = "game";
   this.attributes = attributes;
   this.tag_index = {};
+  this.attr_index = {};
   this.wmem = { game: this };
   this.game_objects = new Map();
   this.properties_to_archive = [
     "wmem",
     "tag_index",
+    "attr_index"
   ];
   this.changed_attributes = [];
   this.$ = this.getGameObject;
@@ -61,7 +63,7 @@ RezGame.prototype = {
   /**
    * @function initLevels
    * @memberof RezGame
-   * @returns {Array} array of init levels to run (e.g. [0, 1, 2, 3])
+   * @returns {Array} array of init levels to run (e.g. [0, 1, ..])
    */
   initLevels() {
     return [0, 1, 2, 3];
@@ -279,6 +281,41 @@ RezGame.prototype = {
   },
 
   /**
+   * For each attribute defined on this game object, add it to the game-wide
+   * index for that attribute.
+   *
+   * @param {basic_object} elem element whose attributes are to be indexed
+   */
+  addToAttrIndex(elem) {
+    Object.entries(elem.attributes).forEach(([k, v]) => {
+      this.indexAttribute(elem.id, k);
+    });
+  },
+
+  /**
+   * Adds the element to the per-attribute index.
+   *
+   * @param {string} elem_id id of element to add to the per-attr index
+   * @param {string} attr_name
+   */
+  indexAttribute(elem_id, attr_name) {
+    let index = this.attr_index[attr_name] ?? new Set();
+    index.add(elem_id);
+    this.attr_index[attr_name] = index;
+  },
+
+  /**
+   * Return the ids of all game elements having the specified attribute.
+   *
+   * @param {string} attr_name
+   * @returns {Array} matching element ids
+   */
+  getObjectsWith(attr_name) {
+    const index = this.attr_index[attr_name] ?? new Set();
+    return Array.from(index);
+  },
+
+  /**
    * @function indexObjectForTag
    * @memberof RezGame
    * @param {object} obj reference to a game-object
@@ -346,6 +383,7 @@ RezGame.prototype = {
     obj.game = this;
     this.game_objects.set(obj.id, obj);
     this.addToTagIndex(obj);
+    this.addToAttrIndex(obj);
   },
 
   /**
