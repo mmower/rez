@@ -15,6 +15,7 @@ defmodule Rez.Parser.Parser do
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
   import Rez.Parser.RelationshipParsers
+  import Rez.Parser.DirectiveParsers
 
   import Rez.Utils, only: [random_str: 0]
 
@@ -109,9 +110,9 @@ defmodule Rez.Parser.Parser do
   def game_content() do
     choice(
       [
-        alias_define(),
-        derive_define(),
-        enum_define(),
+        alias_directive(),
+        derive_directive(),
+        enum_directive(),
         # Now the pre-defined blocks
         actor_block(),
         asset_block(),
@@ -125,11 +126,11 @@ defmodule Rez.Parser.Parser do
         inventory_block(),
         item_block(),
         list_block(),
-        declare_define(),
+        declare_directive(),
         object_block(),
         patch_block(),
         plot_block(),
-        relationship_define(),
+        relationship_directive(),
         scene_block(),
         script_block(),
         slot_block(),
@@ -137,6 +138,7 @@ defmodule Rez.Parser.Parser do
         system_block(),
         task_block(),
         timer_block(),
+        keybinding_directive(),
         # Now user defined aliases
         alias_block()
       ],

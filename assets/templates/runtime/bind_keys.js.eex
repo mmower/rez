@@ -1,0 +1,15 @@
+// Bind keyboard event generators
+function rez_keybinding_listener(event) {
+  let ep = $game.event_processor;
+  let pred;
+
+<%= for {:keybinding, _, _, {:keyword, event_name}} = binding <- @game.keybindings do %>
+  pred = <%= Rez.Compiler.JsUtils.key_test_fn(binding) %>;
+  if(pred(event)) {
+    console.log("Dispatching: <%= event_name %>");
+    ep.dispatchResponse(ep.raiseKeyBindingEvent("<%= event_name %>"));
+  }
+<% end %>
+}
+
+document.addEventListener("keydown", rez_keybinding_listener);

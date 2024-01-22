@@ -42,6 +42,7 @@ Directives modify in-game concepts.
 * <<Enum (Directive), Enum>>
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
+* <<Keybinding (Directive), Keybinding>>
 * <<Script (Directive), Script>>
 * <<Style (Directive), Style>>
 * <<Task (Directive), Task>>
@@ -876,6 +877,35 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 
 This script will be called during game initialization and before the game has
 started.
+
+== Keybinding (Directive)
+
+Use the `@keybinding` directive to generate custom events from the user pressing a specific key, optionally with modifiers.
+
+The syntax is:
+
+(modifiers)? + keyName
+
+=== Example
+
+....
+@keybinding ctrl+shift+C :show_character_sheet
+....
+
+=== Notes
+
+Available modifiers are:
+
+* shift
+* ctrl
+* meta (the Command key on Mac computers)
+* alt (the Option key on Mac computers)
+
+Modifiers are optional. Where the shift modifier is used the keyName should be in upper case.
+
+KeyNames follow the https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values[Javascript KeyboardEvent rules].
+
+Event processing follows the usual custom event processing rules (card -> scene -> game) allowing for processing events in different places.
 
 == List (Element)
 

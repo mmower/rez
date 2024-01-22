@@ -10,6 +10,8 @@ defmodule Rez.Parser.UtilityParsers do
   require Rez.Parser.ParserCache, as: PC
   alias Rez.Parser.ParserCache
 
+  def upcase_alpha, do: PC.cached_parser(char([?A..?Z], label: "uppercase_alpha"))
+
   def iws(), do: PC.cached_parser(ignore(many(ws())))
 
   def iows(), do: PC.cached_parser(optional(iws()))

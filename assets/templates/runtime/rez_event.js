@@ -25,10 +25,10 @@ RezEventProcessor.prototype = {
 
       if (response.scene) {
         this.game.startSceneWithId(response.scene, response.params ?? {});
-      }
-
-      if(response.interlude) {
+      } else if(response.interlude) {
         this.game.interludeSceneWithId(response.interlude, response.params ?? {});
+      } else if(response.resume) {
+        this.game.resumePrevScene();
       }
 
       if (response.card) {
@@ -78,6 +78,11 @@ RezEventProcessor.prototype = {
     return this.handleBrowserEvent(evt);
   },
 
+  raiseKeyBindingEvent(event_name) {
+    const evt = new CustomEvent("key_binding", {detail: {event_name: event_name}});
+    return this.handleBrowserEvent(evt);
+  },
+
   handleBrowserEvent(evt) {
     evt = this.beforeEventProcessing(evt);
 
@@ -91,6 +96,8 @@ RezEventProcessor.prototype = {
       result = this.handleBrowserSubmitEvent(evt);
     } else if(evt.type === "timer") {
       result = this.handleTimerEvent(evt);
+    } else if(evt.type === "key_binding") {
+      result = this.handleKeyBindingEvent(evt);
     } else {
       result = {unhandled: true};
     }
@@ -106,6 +113,15 @@ RezEventProcessor.prototype = {
   handleTimerEvent(evt) {
     const timer = evt.detail.timer;
     const result = this.handleCustomEvent(timer.event, {timer: timer.id});
+    if(!typeof(result) === "object") {
+      return {handled: true}
+    } else {
+      return result;
+    }
+  },
+
+  handleKeyBindingEvent(evt) {
+    const result = this.handleCustomEvent(evt.detail.event_name, {});
     if(!typeof(result) === "object") {
       return {handled: true}
     } else {

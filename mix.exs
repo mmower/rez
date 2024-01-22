@@ -1,11 +1,12 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.1.5"
+  @version "1.1.6"
 
   def project do
     case System.get_env("BUILD_MODE") do
       "burrito" ->
+        IO.puts("BURRITO PROJECT")
         [
           app: :rez,
           version: @version,
@@ -16,6 +17,7 @@ defmodule Rez.MixProject do
         ]
 
       _ ->
+        IO.puts("ESCRIPT PROJECT")
         [
           app: :rez,
           version: @version,
@@ -27,16 +29,17 @@ defmodule Rez.MixProject do
     end
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     case System.get_env("BUILD_MODE") do
       "burrito" ->
+        IO.puts("COMPILING FOR BURRITO")
         [
           mod: {Rez, []},
           extra_applications: [:logger, :eex, :crypto, :iex, :tools]
         ]
 
       _ ->
+        IO.puts("COMPILING FOR ESCRIPT")
         [
           extra_applications: [:logger, :eex, :crypto, :iex, :tools]
         ]
@@ -56,7 +59,7 @@ defmodule Rez.MixProject do
       {:temp, "~> 0.4"},
       {:ex_image_info, "~> 0.2.4"},
       {:inflectorex, "~> 0.1.2"},
-      {:burrito, github: "burrito-elixir/burrito", branch: "digit/epmd-shim"},
+      {:burrito, "~> 1.0"},
       {:mime, "~> 2.0"},
       {:rename, "~> 0.1.0"},
       {:poison, "~> 5.0"},

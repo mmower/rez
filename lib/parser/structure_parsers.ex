@@ -15,7 +15,6 @@ defmodule Rez.Parser.StructureParsers do
   alias Rez.AST.NodeHelper
 
   import Rez.Parser.{UtilityParsers, AttributeParser, DelimitedParser}
-  import Rez.Parser.ValueParsers, only: [keyword_value: 0]
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Parser.DefaultParser, only: [default: 2]
 
@@ -200,64 +199,6 @@ defmodule Rez.Parser.StructureParsers do
       )
     )
     |> default({:parent_objects, []})
-  end
-
-  def declare_define() do
-    sequence(
-      [
-        iliteral("@declare"),
-        iws(),
-        commit(),
-        js_identifier("declare")
-      ],
-      label: "declare",
-      ctx: fn %Context{
-                entry_points: [{line, col} | _],
-                ast: [id],
-                data: %{source: source}
-              } = ctx ->
-        {source_file, source_line} = LogicalFile.resolve_line(source, line)
-
-        block =
-          create_block(
-            Rez.AST.Object,
-            id,
-            [],
-            %{},
-            source_file,
-            source_line,
-            col
-          )
-
-        ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
-      end
-    )
-  end
-
-  def enum_define() do
-    sequence(
-      [
-        iliteral("@enum"),
-        iws(),
-        commit(),
-        js_identifier("enum"),
-        iws(),
-        ignore(open_bracket()),
-        keyword_value() |> transform(fn {:keyword, keyword} -> keyword end),
-        many(
-          sequence([
-            iws(),
-            keyword_value() |> transform(fn {:keyword, keyword} -> keyword end)
-          ])
-        ),
-        iows(),
-        ignore(close_bracket())
-      ],
-      label: "enum",
-      ast: fn [id, first_kw, other_kws] ->
-        {:enum, id, [first_kw | List.flatten(other_kws)]}
-      end
-    )
   end
 
   def block_with_id(label, block_struct) do
@@ -465,22 +406,6 @@ defmodule Rez.Parser.StructureParsers do
           :block_not_matched,
           "#{to_string(block_struct)}/#{label}"
         )
-      end
-    )
-  end
-
-  def derive_define() do
-    sequence(
-      [
-        iliteral("@derive"),
-        iws(),
-        keyword_value(),
-        iws(),
-        keyword_value()
-      ],
-      label: "derive",
-      ast: fn [{:keyword, tag}, {:keyword, parent}] ->
-        {:derive, tag, parent}
       end
     )
   end

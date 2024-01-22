@@ -32,7 +32,7 @@ defmodule Rez.Parser.AliasParsers do
     NodeHelper.tag_defined?(name)
   end
 
-  def alias_define() do
+  def alias_directive() do
     sequence(
       [
         iliteral("@alias"),

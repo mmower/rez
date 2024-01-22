@@ -84,6 +84,7 @@ RezScene.prototype = {
   reset() {
     this.current_card_id = "";
     this.$viewLayout = null;
+    this.$running = false;
   },
 
   interrupt() {
@@ -99,6 +100,7 @@ RezScene.prototype = {
   start() {
     this.init();
     this.runEvent("start", {});
+    this.$running = true;
     this.playCard(this.initial_card);
   },
 

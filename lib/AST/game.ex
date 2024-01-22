@@ -40,6 +40,7 @@ defmodule Rez.AST.Game do
             groups: %{},
             inventories: %{},
             items: %{},
+            keybindings: [],
             lists: %{},
             objects: %{},
             patches: [],
@@ -87,6 +88,10 @@ defmodule Rez.AST.Game do
 
   def add_child({:enum, id, values}, %Game{enums: enums} = game) do
     %{game | enums: Map.put(enums, id, values)}
+  end
+
+  def add_child({:keybinding, _, _, _} = key_binding, %Game{keybindings: bindings} = game) do
+    %{game | keybindings: [key_binding | bindings]}
   end
 
   def add_child(%{} = child, %Game{} = game) do

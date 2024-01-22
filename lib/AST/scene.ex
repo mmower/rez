@@ -76,7 +76,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
       "layout_mode" => Attribute.keyword("layout_mode", "single"),
       "layout" => Attribute.source_template("layout", "${content}"),
       "layout_reverse" => Attribute.boolean("layout_reverse", false),
-      "layout_separator" => Attribute.string("layout_separator", "")
+      "layout_separator" => Attribute.string("layout_separator", ""),
+      "$running" => Attribute.boolean("$running", false)
     }
 
   def pre_process(scene), do: scene

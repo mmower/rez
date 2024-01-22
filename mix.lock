@@ -1,7 +1,7 @@
 %{
   "apex": {:hex, :apex, "1.2.1", "297f5dac23fa2a32648b890a0838fce2772114010e0b9ec975cae6021cc5a092", [:mix], [], "hexpm", "379e2515fa5da7a5ac91ecceba782169d1a734e7e09e5f473e4e85576728b65f"},
   "bunt": {:hex, :bunt, "0.2.1", "e2d4792f7bc0ced7583ab54922808919518d0e57ee162901a16a1b6664ef3b14", [:mix], [], "hexpm", "a330bfb4245239787b15005e66ae6845c9cd524a288f0d141c148b02603777a5"},
-  "burrito": {:git, "https://github.com/burrito-elixir/burrito.git", "1610620ecb8bf5861b92982e72b731eb91c2ec90", [branch: "digit/epmd-shim"]},
+  "burrito": {:hex, :burrito, "1.0.1", "22087aa0fc3698b42fd6362705560e9853a1275344595f7422cecf86730c7ca5", [:mix], [{:jason, "~> 1.2", [hex: :jason, repo: "hexpm", optional: false]}, {:req, "~> 0.2.0 or ~> 0.3.0", [hex: :req, repo: "hexpm", optional: false]}, {:typed_struct, "~> 0.2.0 or ~> 0.3.0", [hex: :typed_struct, repo: "hexpm", optional: false]}], "hexpm", "dfccc79b055aee6642c6d3edae5defc3cd7733668a7b58be96a2d3dcce5775bd"},
   "calliope": {:hex, :calliope, "0.4.2", "29d8585331f3c04f95d6e2f7c8367d660cfb6c2dc031bd3d22afb7e7201eb5c6", [:mix], [], "hexpm", "3e355b0057ce52e402172e3f37f739765450b9c7ec18bf84c56c12007363283c"},
   "castore": {:hex, :castore, "0.1.22", "4127549e411bedd012ca3a308dede574f43819fe9394254ca55ab4895abfa1a2", [:mix], [], "hexpm", "c17576df47eb5aa1ee40cc4134316a99f5cad3e215d5c77b8dd3cfef12a22cac"},
   "credo": {:hex, :credo, "1.7.1", "6e26bbcc9e22eefbff7e43188e69924e78818e2fe6282487d0703652bc20fd62", [:mix], [{:bunt, "~> 0.2.1", [hex: :bunt, repo: "hexpm", optional: false]}, {:file_system, "~> 0.2.8", [hex: :file_system, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "e9871c6095a4c0381c89b6aa98bc6260a8ba6addccf7f6a53da8849c748a58a2"},

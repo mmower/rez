@@ -501,7 +501,6 @@ RezGame.prototype = {
    * @param {object} params data to pass to the new scene
    * @description finish the current scene and start the new scene with the given id
    */
-
   startSceneWithId(scene_id, params = {}) {
     if (scene_id == null) {
       throw "new_scene_id cannot be null!";

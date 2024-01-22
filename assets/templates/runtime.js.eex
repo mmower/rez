@@ -21,6 +21,9 @@
   // Initialise Game Objects
   <%= @init_game_objects %>
 
+  // Bind Keys
+  <%= @bind_keys %>
+
   window.$ = (id, show_throw = false) => game.getGameObject(id, show_throw);
   window.$t = (id, type, should_throw = false) => game.getTypedGameObject(id, type, should_throw);
 

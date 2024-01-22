@@ -60,7 +60,7 @@ defmodule Rez.Parser.RelationshipParsers do
     |> Map.put(:position, {source_file, source_line, col})
   end
 
-  def relationship_define() do
+  def relationship_directive() do
     sequence(
       [
         iliteral("@rel"),
