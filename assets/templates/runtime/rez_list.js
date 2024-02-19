@@ -17,6 +17,10 @@ RezList.prototype = {
   __proto__: basic_object,
   constructor: RezList,
 
+  get length() {
+    return this.getAttribute("values").lengh;
+  },
+
   //---------------------------------------------------------------------------
   // List
   //---------------------------------------------------------------------------
@@ -44,6 +48,32 @@ RezList.prototype = {
   },
 
   //---------------------------------------------------------------------------
+  // Random without starvation (as per jkj yuio from intfiction.org)
+  //---------------------------------------------------------------------------
+
+  warmStarvationPool(pool_id) {
+    for(let i = 0; i<this.values.length; i++ ) {
+      this.randomWithoutStarvation(pool_id);
+    }
+  },
+
+  randomWithoutStarvation(pool_id) {
+    let stats = this.getAttributeValue(`$pool_${pool_id}`, Array.n_of(this.values.length, 0));
+    const len = stats.length;
+    const max = Math.floor(len + (len+2)/3);
+    let choice = stats.findIndex((element) => element+1 >= max);
+    if(choice == -1) {
+      choice = stats.randomIndex();
+    }
+
+    stats = stats.map((element) => element+1);
+    stats[choice] = 0;
+
+    this.setAttribute(`$pool_${pool_id}`, stats);
+    return this.values[choice];
+  },
+
+  //---------------------------------------------------------------------------
   // Cycle
   //---------------------------------------------------------------------------
 
@@ -52,17 +82,12 @@ RezList.prototype = {
    * is separate.
    */
   nextForCycle(cycle_id) {
-    let cycle = this.cycles[cycle_id];
-    if (typeof cycle == "undefined") {
-      cycle = 0;
-    }
-
+    const cycles = this.getAttribute("$cycles");
+    const cycle_idx = cycles[cycle_id] ?? 0;
     const values = this.getAttribute("values");
-    const value = values.at(cycle);
-
-    cycle += 1;
-    this.cycles[cycle_id] = cycle;
-
+    const value = values.at(cycle_idx);
+    cycles[cycle_id] = (cycle+1) % values.length;
+    this.setAttribute("$cycles", cycles);
     return value;
   },
 
@@ -141,6 +166,8 @@ RezList.prototype = {
     this.walks[walk_id] = walk;
     return walk;
   },
+
+
 };
 
 window.RezList = RezList;

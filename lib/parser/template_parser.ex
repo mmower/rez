@@ -40,6 +40,7 @@ defmodule Rez.Parser.TemplateParser do
   def do_macro(), do: PC.get_parser("do_macro", fn -> literal("$do") end)
   def open_body(), do: PC.get_parser("open_body", fn -> literal("{%") end)
   def close_body(), do: PC.get_parser("close_body", fn -> literal("%}") end)
+  def entails(), do: PC.get_parser("entails", fn -> literal("->") end)
   def open_interpolation(), do: PC.get_parser("open_interpolation", fn -> literal("${") end)
 
   def cancel_interpolation_marker() do
@@ -53,32 +54,50 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def conditional_expr() do
+    sequence(
+      [
+        DP.text_delimited_by_nested_parsers(open_paren(), close_paren()),
+        iows(),
+        ignore(entails()),
+        iows(),
+        macro_body()
+      ],
+      ast: fn [expr, body] ->
+        case TemplateParser.parse(body) do
+          {:error, errors} ->
+            IO.puts("Error compiling subtemplate for condition: #{inspect(expr)}")
+            IO.puts(body)
+            Enum.each(errors, fn error -> IO.inspect(error) end)
+            {:error, "Cannot compile sub-template"}
+
+          source_template ->
+            if expr == "" do
+              {"true", source_template}
+            else
+              {expr, source_template}
+            end
+        end
+      end
+    )
+  end
+
   def conditional() do
     sequence(
       [
-        DP.text_delimited_by_prefix_and_nested_parsers(
-          ignore(if_macro()),
-          open_paren(),
-          close_paren()
-        ),
+        ignore(if_macro()),
+        commit(),
         iows(),
-        macro_body(),
-        optional(
+        conditional_expr(),
+        many(
           sequence([
             iows(),
-            ignore(comma()),
-            iows(),
-            macro_body()
+            conditional_expr()
           ])
         )
       ],
-      ast: fn
-        [[expr], true_content] ->
-          {:conditional, expr, TemplateParser.parse(true_content)}
-
-        [[expr], true_content, [false_content]] ->
-          {:conditional, expr, TemplateParser.parse(true_content),
-           TemplateParser.parse(false_content)}
+      ast: fn ast ->
+        {:conditional, List.flatten(ast)}
       end
     )
   end
@@ -160,7 +179,10 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def la_open_conditional(), do: PC.get_parser("open_conditional", fn -> literal("$if(") end)
+  def la_open_conditional(),
+    do:
+      PC.get_parser("open_conditional", fn -> sequence([literal("$if"), iows(), literal("(")]) end)
+
   def la_open_doblock(), do: PC.get_parser("open_doblock", fn -> literal("$do{") end)
   def la_open_foreach(), do: PC.get_parser("open_foreach", fn -> literal("$foreach(") end)
   def escape_dollar(), do: PC.get_parser("escape_dollar", fn -> literal("\\$") end)

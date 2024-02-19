@@ -1,0 +1,6 @@
+13c13
+<       escript: [main_module: Rez]
+---
+>       releases: releases()
+18a19
+>       mod: {Rez, []},

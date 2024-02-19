@@ -1,49 +1,23 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.1.6"
+  @version "1.1.7"
 
   def project do
-    case System.get_env("BUILD_MODE") do
-      "burrito" ->
-        IO.puts("BURRITO PROJECT")
-        [
-          app: :rez,
-          version: @version,
-          elixir: "~> 1.13",
-          start_permanent: Mix.env() == :prod,
-          deps: deps(),
-          releases: releases()
-        ]
-
-      _ ->
-        IO.puts("ESCRIPT PROJECT")
-        [
-          app: :rez,
-          version: @version,
-          elixir: "~> 1.13",
-          start_permanent: Mix.env() == :prod,
-          deps: deps(),
-          escript: [main_module: Rez]
-        ]
-    end
+    [
+      app: :rez,
+      version: @version,
+      elixir: "~> 1.13",
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      escript: [main_module: Rez]
+    ]
   end
 
   def application do
-    case System.get_env("BUILD_MODE") do
-      "burrito" ->
-        IO.puts("COMPILING FOR BURRITO")
-        [
-          mod: {Rez, []},
-          extra_applications: [:logger, :eex, :crypto, :iex, :tools]
-        ]
-
-      _ ->
-        IO.puts("COMPILING FOR ESCRIPT")
-        [
-          extra_applications: [:logger, :eex, :crypto, :iex, :tools]
-        ]
-    end
+    [
+      extra_applications: [:logger, :eex, :crypto, :iex, :tools]
+    ]
   end
 
   # Run "mix help deps" to learn about dependencies.

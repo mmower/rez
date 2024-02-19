@@ -191,6 +191,14 @@
   }
 }
 
+@patch ARRAY_N_OF {
+  patch: "Array"
+  function: "n_of"
+  impl: function(length, def_value) {
+    return Array.from({length: length}, () => def_value);
+  }
+}
+
 @patch STRING_CAPITALIZE {
   patch: "String"
   method: "capitalize"

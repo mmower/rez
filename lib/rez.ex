@@ -36,14 +36,6 @@ defmodule Rez do
     ]
   ]
 
-  def real_args(["rez_macos" | rest]) do
-    rest
-  end
-
-  def real_args([_arg | rest]) do
-    real_args(rest)
-  end
-
   @dialyzer {:no_return, quit_fn: 1}
   def quit_fn(:halt) do
     fn code ->
@@ -83,6 +75,10 @@ defmodule Rez do
           Rez.Generator.generate(args, options)
           quit.(0)
 
+        "version" ->
+          IO.puts("rez v#{version()}")
+          quit.(0)
+
         "compile" ->
           case Rez.Compiler.compile(args, options) do
             :ok -> quit.(0)
@@ -110,7 +106,6 @@ defmodule Rez do
   @dialyzer {:no_return, start: 2}
   def start(_, _) do
     Burrito.Util.Args.get_arguments()
-    |> real_args()
     |> run_command(:halt)
   end
 

@@ -35,3 +35,4 @@ install
 docs/*.html
 settings.json
 out
+docs/api

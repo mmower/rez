@@ -671,45 +671,54 @@ This means we can use `#list_exits` from any card that defines an `exits:` attri
 
 === What are Bindings?
 
-By default the template being rendered in a block doesn't have access to all of your game objects. However there are some bindings that are made automatically, and you can make your own.
+Bindings are how we make data from our game elements available to the rendering process. By itself the template doesn't know anything about your game world and the elements you have populated it with. You may have an `@actor` element with id `#player` that has a `name:` attribute, but the renderer doesn't know about that. It doesn't have a variable that refers to it. Bindings are how you give it one.
 
-Any time anything is being rendered, Rez automatically binds `block` to the `RezBlock` instance that actually does the rendering.
+Rez tries to be helpful and creates some useful bindings automatically. For example it binds `card` to the `RezCard` object representing the `@card` that is currently being rendered and, likewise, `scene` to the current `RezScene` and `game` is always available. So, in your template, you can refer to attributes of the game, card, & scene using `game.` `card.` or `scene.`. There is also a binding `block` which we'll come back to later.
 
-When a card is being rendered `card` will be bound to the instance of `RezCard`, when a scene layout is being rendered `scene` will be bound to the `RezScene`, likewise for game layout, `game` is bound to the `RezGame`.
+But if you want to write:
 
-Furter, as in the previous example, you can use a `bindings:` attribute to make additional bindings. In the example `exits` is bound. The value here may appear a little complex because we use a function binding to reach up the block hierarchy.
+```
+${player.name}
+```
 
-Bindings are powerful but can be complicated and have some sharp edges.
+In your template. How could you make that work?
 
-There are several ways to make a binding:
+==== Element Bindings
 
-==== ID Bindings
+The simplest form of binding is to bind a variable name to the game object representing an element. In the example above we're looking for the `name:` attribute of some element with the id `#player`. We can make this work by binding the `player` variable as follows:
 
-The simplest form of binding is to use an element id:
+```
+bindings: {player: #player}
+```
 
-....
-weapon: #colt45
-....
-
-In this kind of binding we pass an element-id and the value `weapon` then gets bound to a reference to the object `#colt45`
+Here we're teaching Rez to make a binding to the Javascript reference (`player``) representing the given element id (`#player`). With this binding in place we can refer to `player` in our templates.
 
 ==== Function Bindings
 
-A function binding binds the value to the return value of an inline Javascript function:
+Sometimes we want to be able to refer to something that isn't an element with a a _fixed_ id. Two common reasons are:
+
+* we want to refer to a dynamic value
+* we want to refer to a dynamically choosen element (i.e. we don't know the id at authoring time)
+* we want to refer to something that doesn't have an id, such as a collection of objects
+
+For these situations we have function bindings. Here we bind a variable name to the return value of a function written inline in the bindings. Here are some examples:
 
 ....
-weapon: () => {return $("colt45")}
-random: () => {return Math.rand_int(10)}
+random_number: () => {return Math.rand_int(10)}
+weapon: () => {return game.get_weapon($player.favourite_weapon_id);}
+exits: () => {return $player.location.exits(true);}
 ....
 
-The value (`weapon` or `random`) is bound to the return value of the function. These bindings will be re-bound each time the block is rendered so `weapon` will always have the same value but `random` would have a different value each time.
+In each case the variable will be bound to the return value of the function.
+
+Note that these bindings are re-created each time the template is rendered so while `weapon` and `exits` might have the same values, `random` is going to have a different value each time.
 
 ==== Attribute Bindings
 
-An attribute binding binds to a specific attribute of an element:
+Attribute bindings are a convenience when you want to refer to a specific element attribute.
 
 ....
-weapon: &player.weapon
+name: &player.name
 ....
 
 ==== Path Bindings

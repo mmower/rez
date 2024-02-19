@@ -1,2 +1,3 @@
-mix compile
-BUILD_MODE=burrito BURRITO_TARGET=macos MIX_ENV=prod mix release --overwrite
+patch mix.exs patch_burrito
+MIX_ENV=prod mix release --overwrite
+patch -R mix.exs patch_burrito

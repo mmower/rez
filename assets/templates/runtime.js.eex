@@ -29,6 +29,13 @@
 
   window.$game = game;
 
+  if(window.$game.getAttributeValue("$warn_before_reload", false)) {
+    window.addEventListener("beforeunload", function(evt) {
+      evt.preventDefault();
+      evt.returnValue = "";
+    });
+  }
+
   const player = $("player", false);
   if(player) {
     window.$player = player;

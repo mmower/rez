@@ -58,34 +58,25 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(applied_filters, true)
   end
 
-  def compile_chunk({:conditional, expr, content}) do
-    {:compiled_template, sub_template} = compile(content)
-
-    body = ~s|
-    if(evaluateExpression(`#{expr}`, bindings)) {
-      const sub_template = #{sub_template};
-      return sub_template(bindings);
-    } else {
-      return "";
-    }|
-
-    js_create_fn(body, false)
-  end
-
-  def compile_chunk({:conditional, expr, true_content, false_content}) do
-    {:compiled_template, true_template} = compile(true_content)
-    {:compiled_template, false_template} = compile(false_content)
-
-    body = ~s|
-    if(evaluateExpression(`#{expr}`, bindings)) {
-      const true_template = #{true_template};
-      return true_template(bindings);
-    } else {
-      const false_template = #{false_template};
-      return false_template(bindings);
-    }|
-
-    js_create_fn(body, false)
+  def compile_chunk({:conditional, cond_exprs}) when is_list(cond_exprs) do
+    cond_exprs
+    |> Enum.map(fn {expr, template} ->
+      {:compiled_template, compiled_template} = compile(template)
+      {expr, compiled_template}
+    end)
+    |> Enum.reduce({:if, ""}, fn {expr, sub_template}, {test, out} ->
+      {:else_if, out <> conditional_expr(test, expr, sub_template)}
+    end)
+    |> then(fn {_, expr} ->
+      expr <> ~s|
+      else {
+        return "";
+      }
+      |
+    end)
+    |> then(fn body ->
+      js_create_fn(body, false)
+    end)
   end
 
   def compile_chunk({:do, expr}) do
@@ -134,6 +125,22 @@ defmodule Rez.Compiler.TemplateCompiler do
     return iter_output;|
 
     js_create_fn(body, false)
+  end
+
+  def conditional_expr(:if, expr, sub_template) do
+    ~s|
+    if(evaluateExpression(`#{expr}`, bindings)) {
+      const sub_template = #{sub_template};
+      return sub_template(bindings);
+    }|
+  end
+
+  def conditional_expr(:else_if, expr, sub_template) do
+    ~s|
+    else if(evaluateExpression(`#{expr}`, bindings)) {
+      const sub_template = #{sub_template};
+      return sub_template(bindings);
+    }|
   end
 
   defmodule Values do

@@ -5,9 +5,16 @@ defmodule Rez.Parser.Trace do
     end)
   end
 
+  def trace_input() do
+    Ergo.Parser.combinator(:trace_input, "s_trace_input", fn %Ergo.Context{input: input} = ctx ->
+      IO.puts("L#{ctx.line}:#{ctx.col}>" <> Rez.Utils.ellipsize(input))
+      ctx
+    end)
+  end
+
   def trace_out(s) when is_binary(s) do
     Ergo.Parser.combinator(:trace_out, "s_trace_out", fn %Ergo.Context{} = ctx ->
-      IO.puts(s)
+      IO.puts("L#{ctx.line}:#{ctx.col}>#{s}")
       ctx
     end)
   end

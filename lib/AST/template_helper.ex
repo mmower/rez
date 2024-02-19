@@ -27,7 +27,7 @@ defmodule Rez.AST.TemplateHelper do
     |> Enum.map_join("\n", &String.trim/1)
   end
 
-  def compile_template(id, template_source, html_processor \\ &Function.identity/1) do
+  def ready_template(id, template_source, html_processor) do
     template_source
     |> then(fn src ->
       if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.src", src)
@@ -40,11 +40,21 @@ defmodule Rez.AST.TemplateHelper do
       html
     end)
     |> TemplateParser.parse()
-    |> TemplateCompiler.compile()
-    |> then(fn {:compiled_template, js} = template ->
-      if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.js", js)
-      template
-    end)
+  end
+
+  def compile_template(id, template_source, html_processor \\ &Function.identity/1) do
+    case ready_template(id, template_source, html_processor) do
+      {:error, errors} ->
+        {:error, errors}
+
+      template ->
+        template
+        |> TemplateCompiler.compile()
+        |> then(fn {:compiled_template, js} = template ->
+          if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.js", js)
+          template
+        end)
+    end
   end
 
   def compile_template_attribute(
