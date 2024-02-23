@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Task
+// Behaviour
 //-----------------------------------------------------------------------------
 
-function RezTask(id, attributes) {
+function RezBehaviour(id, attributes) {
   this.id = id;
   this.game_object_type = "task";
   this.options = {};
@@ -12,21 +12,21 @@ function RezTask(id, attributes) {
   this.changed_attributes = [];
 }
 
-RezTask.prototype = {
+RezBehaviour.prototype = {
   __proto__: basic_object,
-  constructor: RezTask,
+  constructor: RezBehaviour,
 
   configure() {
     const config_fn = this.getAttribute("configure");
-    if(typeof(config_fn) == "function") {
+    if(typeof(config_fn) === "function") {
       config_fn(this);
     }
   },
 
   option(name) {
     const value = this.options[name];
-    if(typeof(value) == "undefined") {
-      throw "Task " + this.id + " does not define option '" + name + "'";
+    if(typeof(value) === "undefined") {
+      throw `Behaviour ${this.id} does not define option '${name}'!`;
     }
     return value;
   },
@@ -34,7 +34,7 @@ RezTask.prototype = {
   numberOption(name) {
     const value = this.option(name);
     if(typeof(value) != "number") {
-      throw "Task " + this.id + " option '" + name + "' is not a number (" + typeof(value) + ")";
+      throw `Behaviour ${this.id} option '${name}' is not a number (${typeof(value)})!`;
     }
     return value;
   },
@@ -75,20 +75,29 @@ RezTask.prototype = {
     };
   },
 
-  execute(wmem) {
+  executeBehaviour(wmem) {
     // By definition this is a function of two attributes
     // (task, wmem)
-    const handler = this.getAttributes("execute");
-    return handler(this, wmem);
+    const handler = this.getAttribute("execute");
+    if(typeof(handler) === "function") {
+      return handler(this, wmem);
+    } else {
+      return {
+        id: this.id,
+        wmem: wmem,
+        success: false,
+        error: "No execute handler found."
+      }
+    }
   },
 
   instantiate(options, children = []) {
-    const task = this.copyWithAutoId();
-    task.options = options;
-    task.children = children;
-    task.configure();
-    return task;
+    const behaviour = this.copyWithAutoId();
+    behaviour.options = options;
+    behaviour.children = children;
+    behaviour.configure();
+    return behaviour;
   }
 };
 
-window.RezTask = RezTask;
+window.RezBehaviour = RezBehaviour;

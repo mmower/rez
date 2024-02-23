@@ -1,0 +1,117 @@
+= Behaviour Catalog
+:toc:
+:toc-title: Built-in behaviours
+
+== $sequence
+
+The `$sequence` task takes two or more children and when executed will execute its children in turn. If any child fails then `$sequence` will stop at that point and fail. If all the children suceeed then `$sequence` will succeed.
+
+== $select
+
+The `$select` task takes two or more children and when executed will execute its hildren in turn. If a child succeeds then `$select` will immediately stop executing and succeed. If all the children fail then `$select` will fail.
+
+== $select_p
+
+The `$select_p` task is a variant on `$select`. It takes a probability option `p` and before executing any child will test `p`. If the test succeeds it will execute that child and task similar to `$select`. If no children get executed or all the children fail then `$select_p` will fail.
+
+=== Options
+
+[cols="1,1,1"]
+|===
+|`p`
+|1-100
+|probability of any given child getting executed
+|===
+
+== $loop
+
+The `$loop` task takes one child and executes it a number of times specified by the option `count`. If the child should fail then `$loop` fails. If the child succeeds each time then `$loop` succeeds.
+
+=== Options
+
+[cols="1,1,1"]
+|===
+|`count`
+|positive integer
+|number of times to execute the child
+|===
+
+== $loop_until
+
+The `$loop_until` task takes one child and attempts to execute it a number of times specified by the option `attempts`. If the child succeeds then `$loop_until` succeeds. If the child never succeeds then `$loop_until` fails.
+
+=== Options
+
+[cols="1,1,1"]
+|===
+|`attempts`
+|positive integer
+|number of attempts to execute the child
+|===
+
+== $maybe
+
+The `$maybe` task takes one child and based on a probability option `p` decides whether to attempt to execute it or not. If the `p` test succeeds the child gets executed and `$maybe` will succeed or fail based on whether the child succeeds or fails. If the `p` test fails then `$maybe` fails.
+
+=== Options
+
+[cols="1,1,1"]
+|===
+|`p`
+|1-100
+|probability of the child being executed
+|===
+
+== $either
+
+The `$either` task takes two children and based on the probability option `p` decides whether to execute the first or the second child. If the `p` test succeeds then the first child is executed, otherwise the second child is executed. `$either` succeeds or fails based on whether the child it executes succeeds or fails.
+
+=== Options
+
+[cols="1,1,1"]
+|===
+|`p`
+|1-100
+|probability of the first child getting executed
+|===
+
+== $random_choice
+
+The `$random_choice` task takes at least two children and executes one child at
+random. If the child succeeds then `$random_choice` succeeds, otherwise it
+fails.
+
+== $random_each
+
+The `$random_each` task takes at least two children and executes one child at
+random. `$random_each` succeeds or fails based on the selected child succeeding
+or failing.
+
+Once a child has been executed it is not eligible to be selected again until
+all the other children of `$random_each` have, likewise, been executed. When all
+the children have been executed `$random_each` will begin again with a new
+random order of children.
+
+== $invert
+
+The `$invert` task takes one child and executes it. If the child succeeds then
+`$invert` fails, likewise if the child fails then `$invert` will succeed.
+
+== $always
+
+The `$always` task takes one child and executes it. It ignores whether the child
+succeeds or fails and always suceeds itself.
+
+== $never
+
+The `$never` task takes one child and executes it. It ignores whether the child
+succeeds or fails, always failing itself. It's a shorthand for
+`[$invert [$always ...]]`.
+
+== $succeed
+
+The `$succeed` task takes no chilren and when executed it always succeeds.
+
+== $fail
+
+The `$fail` task takes no children and when executed it always fails.

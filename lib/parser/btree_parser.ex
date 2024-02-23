@@ -5,11 +5,9 @@ defmodule Rez.Parser.BTreeParser do
 
   import Ergo.Combinators,
     only: [
-      choice: 1,
       ignore: 1,
       lazy: 1,
       lookahead: 1,
-      many: 1,
       many: 2,
       optional: 1,
       sequence: 1,
@@ -19,6 +17,7 @@ defmodule Rez.Parser.BTreeParser do
   import Rez.Parser.UtilityParsers,
     only: [
       caret: 0,
+      iws: 0,
       iows: 0,
       equals: 0,
       open_bracket: 0,
@@ -28,31 +27,19 @@ defmodule Rez.Parser.BTreeParser do
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
   import Rez.Parser.ValueParsers, only: [value: 0]
 
+  # import Rez.Parser.Trace
+
   def bt_parser() do
     sequence(
       [
         lookahead(sequence([caret(), open_bracket()])),
         ignore(caret()),
-        choice([
-          bt_empty_node(),
-          bt_node()
-        ])
+        bt_node()
       ],
       label: "btree",
       ast: fn [node] ->
-        {:btree, node}
+        {:bht, node}
       end
-    )
-  end
-
-  def bt_empty_node() do
-    sequence(
-      [
-        open_bracket(),
-        iows(),
-        close_bracket()
-      ],
-      ast: fn _ -> [] end
     )
   end
 
@@ -62,24 +49,24 @@ defmodule Rez.Parser.BTreeParser do
         ignore(open_bracket()),
         iows(),
         js_identifier(),
-        bt_options(),
+        optional(bt_options()),
         optional(bt_children()),
         iows(),
         ignore(close_bracket())
       ],
       ast: fn ast ->
         case ast do
-          [selector] ->
-            {:node, selector, %{}, []}
+          [node_type] ->
+            {node_type, %{}, []}
 
-          [selector, %{} = options] ->
-            {:node, selector, options, []}
+          [node_type, options] when is_map(options) ->
+            {node_type, options, []}
 
-          [selector, children] when is_list(children) ->
-            {:node, selector, %{}, children}
+          [node_type, children] when is_list(children) ->
+            {node_type, %{}, children}
 
-          [selector, %{} = options, children] when is_list(children) ->
-            {:node, selector, options, children}
+          [node_type, options, children] when is_map(options) and is_list(children) ->
+            {node_type, options, children}
         end
       end
     )
@@ -88,39 +75,28 @@ defmodule Rez.Parser.BTreeParser do
   def bt_options() do
     many(
       sequence([
-        iows(),
+        iws(),
         js_identifier(),
         iows(),
         ignore(equals()),
         iows(),
         value()
       ]),
-      ast: fn options ->
-        Enum.reduce(options, %{}, fn [option, value], acc ->
-          Map.put(acc, option, value)
+      ast: fn name_value_pairs ->
+        Enum.reduce(name_value_pairs, %{}, fn [name, value], options ->
+          Map.put(options, name, value)
         end)
       end
     )
   end
 
   def bt_children() do
-    sequence(
-      [
-        iows(),
-        ignore(open_bracket()),
-        many(
-          sequence([
-            iows(),
-            lazy(bt_node())
-          ])
-        ),
-        iows(),
-        ignore(close_bracket())
-      ],
-      debug: true,
-      ast: fn ast ->
-        List.flatten(ast)
-      end
+    many(
+      sequence([
+        iws(),
+        lazy(bt_node())
+      ]),
+      ast: fn ast -> List.flatten(ast) end
     )
   end
 end

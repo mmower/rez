@@ -119,8 +119,8 @@ defmodule Rez.AST.ValueEncoder do
     |> then(fn encoded_list -> "new Set(" <> encoded_list <> ")" end)
   end
 
-  def encode_value({:btree, t}) do
-    encode_btree(t)
+  def encode_value({:bht, t}) do
+    ~s|{bht: #{encode_bht(t)}}|
   end
 
   def encode_value({:table, t}) do
@@ -168,33 +168,13 @@ defmodule Rez.AST.ValueEncoder do
     s |> encode_newlines() |> encode_dquotes()
   end
 
-  def encode_btree([]) do
-    "[]"
-  end
-
-  def encode_btree({:node, behaviour_id, options, children}) when is_list(children) do
+  def encode_bht({behaviour_id, options, children}) when is_map(options) and is_list(children) do
     child_nodes =
       children
-      |> Enum.map_join(", ", &encode_btree/1)
+      |> Enum.map_join(", ", &encode_bht/1)
       |> wrap_with("[", "]")
 
-    ~s"""
-    (function() {
-      const behaviour_template = game.getGameObject("#{behaviour_id}");
-      const options = #{encode_map(options)};
-      return behaviour_template.instantiate(options, #{child_nodes});
-    })()
-    """
-  end
-
-  def encode_btree({:node, behaviour_id, options, []}) do
-    ~s"""
-    (function() {
-      const behaviour_template = game.getGameObject("#{behaviour_id}");
-      const options = #{encode_map(options)};
-      return behaviour_template.instantiate(options);
-    })()
-    """
+    ~s|{behaviour: "#{behaviour_id}", options: #{encode_map(options)}, children: #{child_nodes}}|
   end
 
   def encode_map(map) when is_map(map) do

@@ -27,6 +27,10 @@ defmodule Rez.Parser.Parser do
     block_with_id("asset", Rez.AST.Asset)
   end
 
+  def behaviour_block() do
+    block_with_id("behaviour", Rez.AST.Behaviour)
+  end
+
   def card_block() do
     block_with_id("card", Rez.AST.Card)
   end
@@ -99,10 +103,6 @@ defmodule Rez.Parser.Parser do
     block_with_id("system", Rez.AST.System)
   end
 
-  def task_block() do
-    block_with_id("task", Rez.AST.Task)
-  end
-
   def timer_block() do
     block_with_id("timer", Rez.AST.Timer)
   end
@@ -116,6 +116,7 @@ defmodule Rez.Parser.Parser do
         # Now the pre-defined blocks
         actor_block(),
         asset_block(),
+        behaviour_block(),
         card_block(),
         effect_block(),
         faction_block(),
@@ -136,7 +137,6 @@ defmodule Rez.Parser.Parser do
         slot_block(),
         style_block(),
         system_block(),
-        task_block(),
         timer_block(),
         keybinding_directive(),
         # Now user defined aliases

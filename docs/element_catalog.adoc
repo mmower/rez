@@ -16,6 +16,7 @@ Elements describe in-game concepts.
 
 * <<Actor (Element), Actor>>
 * <<Asset (Element), Asset>>
+* <<Behaviour (Element), Behaviour>>
 * <<Card (Element), Card>>
 * <<Effect (Element), Effect>>
 * <<Faction (Element), Faction>>
@@ -45,7 +46,6 @@ Directives modify in-game concepts.
 * <<Keybinding (Directive), Keybinding>>
 * <<Script (Directive), Script>>
 * <<Style (Directive), Style>>
-* <<Task (Directive), Task>>
 
 == Alias (Directive)
 
@@ -305,6 +305,81 @@ on_init: (asset, event = {}) => {...}
 ....
 
 This script will be called during game initialization and before the game has started.
+
+== Behaviour (Element)
+
+Behaviours are elements that describe components of a behaviour tree. There are four types of behaviour:
+
+* condition — these test some property of the game world
+* action — these modify the game world
+* composite — these act on a group of 'child' behaviours
+* decorators — these modify other behaviours
+
+While the difference between conditions and actions are fairly intuitive, the difference between composites and decorators is more subtle. Composites are about coordinating between a series of other behaviours, while a decorator typically modifies the results of another behaviour.
+
+For example the `$sequence` core behaviour executes its children in turn and succeeds or fails based on them, while the `$invert` core behaviour turns its childs succees into failure (or vice verca).
+
+When a behaviour is executed it either succeeds or fails.
+
+As we have seen from the examples above, a composite behaviour usually succeeds or fails based on the success or failure of its children. A decorator typically modifies the success or failure of another behaviour. Conditional behaviours succeed or fail based on a test and action behaviours succeed based on whether their implied action is successful.
+
+From these four simple concepts some very powerful behaviours can be built.
+
+Rez defines a number of 'core' behaviours. By convention these have `$` prefix to their id to separate them from author written behaviours. The core behaviours are mostly composites and decorators that are intended to be building blocks for author written behaviours.
+
+The core of a behaviour element is its `execute:` script attribute. This is intended to implement the functionality of the behaviour and return a value whether it succeeds or fails.
+
+Each behaviour can, optionally, receive options and, again optionally, a list of child behaviours. Conditions and actions are not expected to have children while composites and decorators don't make sense without at least one child.
+
+When a behaviour tree is run it gets passed an empty object `{}` as "working memory" to allow different behaviours to communicate state required to run the tree. As a new working memory is used each time the tree is run, any persistent state changes should be in the world model.
+
+Let's look at an example. We want a condition that tests whether a given actor is in a certain location. Here's how we could implement it.
+
+=== Example
+
+....
+@task actor_in {
+  options: [:actor :location]
+
+  execute: (behaviour, wmem) => {
+    const actor_id = behaviour.option("actor");
+    const actor = $(actor_id);
+    const location_id = behaviour.option("location");
+    if(actor.location == location_id) {
+      return {success: true, wmem: wmem};
+    } else {
+      return {success: false, error: "Actor is not in location", wmem: wmem};
+    }
+  }
+}
+....
+
+Here we define the `actor_in` condition behaviour that tests whether a specified actors is in a specifed location. We might use it like this:
+
+In this example we have defined a condition behaviour to test whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
+
+....
+^[$sequence
+  [actor_in actor=sam_spade location=sams_office]
+  ...
+]
+....
+
+The rest of the behaviours in this sequence will only be run if Sam is in his office, otherwise the sequence will fail.
+
+=== Required Attributes
+[cols="2,1,4"]
+|===
+|`options`
+|List
+|keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
+
+|`execute`
+|Script
+|script that takes two parameters `behaviour` (a reference to the `RezBehaviour` itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between behaviours. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+|===
+
+=== Optional Attributes
 
 == Card (Element)
 
@@ -1490,54 +1565,3 @@ where every minute the player is at risk of a monster wandering into their locat
 |Specifies the name of the event that will be sent when the timer runs down. The
 |event follows the normal rules for custom events.
 |===
-
-== Task (Directive)
-
-Tasks are elements that describe components of a behaviour tree. Author defined tasks are usually **conditions** (that test the state of the game) and **actions** (that change the state of the game). The built in tasks provided in the stdlib are **composites** (that work on groups of tasks) and **decorators** (that modify the meaning of other tasks)
-
-Note that, by convention, we use UPPER CASE ids for task elements.
-
-The core of the task is the execute attribute which implements the functionality of the task and returns a value indicating success or failure.
-
-Optionally a task can update the working memory that is passed through the tree as it gets executed.
-
-=== Example
-
-....
-@task ACTOR_IN {
-  options: [:actor :location]
-
-  execute: (task, wmem) => {
-    const actor_id = task.option("actor");
-    const actor = task.$(actor_id);
-    const location_id = task.option("location");
-    if(actor.location == location_id) {
-      return {success: true, wmem: wmem};
-    } else {
-      return {success: false, error: "Actor is not in location", wmem: wmem};
-    }
-  }
-}
-....
-
-In this example we have defined a condition task to test whether a specified actor is in a given location. This could be used in a sequence to ensure that an action only gets performed if in the correct location.
-
-....
-^[SEQUENCE [
-  [ACTOR_IN actor=sam_spade location=sams_office]
-  [ACTOR_RELOADS item=sams_gun]]]
-....
-
-=== Required Attributes
-[cols="2,1,4"]
-|===
-|`options`
-|List
-|keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
-
-|`execute`
-|Script
-|script that takes two parameters `task` (a reference to the task itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between tasks. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
-|===
-
-=== Optional Attributes

@@ -152,6 +152,8 @@ const basic_object = {
           this.createDynamicValueAttribute(attr_name, value);
         } else if (value.hasOwnProperty("tracery_grammar")) {
           this.createTraceryGrammarAttribute(attr_name, value);
+        } else if (value.hasOwnProperty("bht")) {
+          this.createBehaviourTreeAttribute(attr_name, value);
         }
       }
     }
@@ -242,6 +244,25 @@ const basic_object = {
     });
   },
 
+  createBehaviourTreeAttribute(attr_name, value) {
+    delete this[attr_name];
+
+    const tree = this.instantiateBehaviourTree(value["bht"]);
+    Object.defineProperty(this, attr_name, {
+      get: function() {
+        return tree;
+      }
+    });
+  },
+
+  instantiateBehaviourTree(tree_spec) {
+    const behaviour_template = $(tree_spec["behaviour"], true);
+    const options = tree_spec["options"];
+    const children = tree_spec["children"].map((spec) => this.instantiateBehaviourTree(spec));
+
+    return behaviour_template.instantiate(options, children);
+  },
+
   createTraceryGrammarAttribute(attr_name, value) {
     delete this[attr_name];
 
@@ -286,8 +307,10 @@ const basic_object = {
    * @description returns the next auto id in the sequence
    */
   getNextAutoId() {
-    this.$auto_id_idx += 1;
-    return this.id + "_" + this.$auto_id_idx;
+    const last_id = this.getAttribute("$auto_id_idx");
+    const next_id = last_id + 1;
+    this.setAttribute("$auto_id_idx", next_id);
+    return this.id + "_" + next_id;
   },
 
   /**

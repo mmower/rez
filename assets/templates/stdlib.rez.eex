@@ -910,10 +910,10 @@
 }
 
 %% ----------------------------------------------------------------------------
-%% Default Behaviour Tasks
+%% Default Behaviour Conditions & Actions
 %% ----------------------------------------------------------------------------
 
-@system actor_behaviours {
+@system $actor_behaviours {
   enabled: false
   priority: 10
   after_event: (system, evt, result) => {
@@ -924,23 +924,25 @@
       const wmem = {};
       actors.forEach((actor) => {
         const btree = actor.getAttributeValue("behaviours");
-        btree.execute(wmem);
+        btree.executeBehaviour(wmem);
       });
     }
     return result;
   }
 }
 
-%% Standard behaviours
-%% By convention we give behaviours an UPPER CASE id to make it less likely
-%% they will clash with author generated id's. The core of these behaviours
-%% model the 'generic' behaviours implemented in the Crysis engine:
+%% Core behaviours
+%% These behaviours model the 'generic' behaviours implemented in the
+%% Crysis engine:
 %% https://docs.cryengine.com/display/CEPROG/Modular+Behavior+Tree+Nodes
 %% See the Behaviour Tree part of the user guide for more information.
+%%
+%% Core behaviours use an id beginning with a dollar to avoid conflict
+%% with author generated id's.
 
-@task SELECT {
-  %% The SELECT task executes it's children in turn until one of them
-  %% succeeds, then SELECT succeeds. If no child succeeeds then SELECT fails.
+@behaviour $select {
+  %% The $select behaviour executes it's children in turn until one of them
+  %% succeeds, then $select succeeds. If no child succeeeds then $select fails.
 
   $template: true
   options: []
@@ -949,7 +951,7 @@
   execute: (task, wmem) => {
     let result = {success: true, wmem: wmem};
     for(const child of task.children) {
-      result = child.execute(result.wmem);
+      result = child.executeBehaviour(result.wmem);
       if(result.success) {
         break;
       }
@@ -958,11 +960,11 @@
   }
 }
 
-@task SELECT_P {
-  %% The SELECT_P task is similar to SELECT except that before ticking any
+@behaviour $select_p {
+  %% The $select_p behaviour is similar to SELECT except that before ticking any
   %% child it does a probability check using the "p" option. If the check passes
   %% it ticks the child, otherwise it moves on to the next child. If a child
-  %% succeeds SELECT_P succeeds. If no child succeeds, SELECT_P fails.
+  %% succeeds $select_p succeeds. If no child succeeds, $select_p fails.
 
   $template: true
   options: [:p]
@@ -971,7 +973,7 @@
   configure: (task) => {
     const p = task.intOption("p");
     if(p < 0 || p > 100) {
-      throw "Task: " + task.id + " invalid 'p' option specified.";
+      throw "Behaviour: " + task.id + " invalid 'p' option specified.";
     }
   }
 
@@ -981,7 +983,7 @@
     let result = {success: false, id: task.id, wmem};
     for(const child of task.children) {
       if(die.roll() < p) {
-        result = child.execute(result.wmem);
+        result = child.executeBehaviour(result.wmem);
         if(result.success) {
           break;
         }
@@ -991,9 +993,9 @@
   }
 }
 
-@task SEQUENCE {
-  %% The SEQUENCE task executes its children in turn. If they all succeed
-  %% then the SEQUENCE succeeds. If a child fails the SEQUENCE fails and does
+@behaviour $sequence {
+  %% The $sequence behaviour executes its children in turn. If they all succeed
+  %% then the $sequence succeeds. If a child fails the $sequence fails and does
   %% not execute any further children.
 
   $template: true
@@ -1003,7 +1005,7 @@
   execute: (task, wmem) => {
     let result = {success: true, wmem: wmem};
     for(const child of task.children) {
-      result = child.tick(result.wmem);
+      result = child.executeBehaviour(result.wmem);
       if(result.success) {
         break;
       }
@@ -1013,10 +1015,10 @@
   }
 }
 
-@task LOOP {
-  %% The LOOP task takes one child and executes it 'count' times. If it
-  %% succeeds on every repetition the LOOP succeeds. If the child ever fails
-  %% the LOOP fails.
+@behaviour $loop {
+  %% The $loop behaviour takes one child and executes it 'count' times. If it
+  %% succeeds on every repetition the $loop succeeds. If the child ever fails
+  %% the $loop fails.
 
   $template: true
   options: [:count]
@@ -1027,7 +1029,7 @@
     const count = task.option("count");
     let result = {success: false, wmem: wmem};
     for(let i=0; i<count; i++) {
-      result = this.firstChild().tick(result.wmem);
+      result = this.firstChild().executeBehaviour(result.wmem);
       if(!result.success) {
         return result;
       }
@@ -1037,11 +1039,11 @@
   }
 }
 
-@task LOOP_UNTIL {
-  %% The LOOP_UNTIL task takes one child and executes it until it
+@behaviour $loop_until {
+  %% The $loop_until behaviour takes one child and executes it until it
   %% succeeds. The 'attempts' option specifies how many times it will
-  %% executed. If the child ever succeeds, LOOP_UNTIL succeeds. If the
-  %% child doesn't succeed in the number of attempts then LOOP_UNTIL fails.
+  %% executed. If the child ever succeeds, $loop_until succeeds. If the
+  %% child doesn't succeed in the number of attempts then $loop_until fails.
 
   $template: true
   options: [:attempts]
@@ -1051,7 +1053,7 @@
   execute: (task, wmem) => {
     let result = {success: false, wmem: wmem};
     for(let i=0; i<this.count(); i++) {
-      result = this.firstChild().tick(result.db);
+      result = this.firstChild().executeBehaviour(result.db);
       if(result.success) {
         break;
       }
@@ -1061,11 +1063,11 @@
   }
 }
 
-@task MAYBE {
-  %% The MAYBE task takes one child and based on the option "p" determines
-  %% whether to execute it or not. If it executes the child then MAYBE succeeds
+@behaviour $maybe {
+  %% The $maybe behaviour takes one child and based on the option "p" determines
+  %% whether to execute it or not. If it executes the child then $maybe succeeds
   %% if the child succeeds or fails if the child fails. If it doesn't execute
-  %% the child then MAYBE fails.
+  %% the child then $maybe fails.
 
   $template: true
   options: [:p]
@@ -1077,17 +1079,17 @@
     const die = new RezDie(1, 100, 0);
 
     if(die.roll() < p) {
-      return task.firstChild().execute(wmem);
+      return task.firstChild().executeBehaviour(wmem);
     } else {
       return {success: false, id: task.id, error: "Didn't execute"};
     }
   }
 }
 
-@task EITHER {
-  %% The EITHER task takes two children and based on the probability
+@behaviour $either {
+  %% The $either task takes two children and based on the probability
   %% option "p" determines whether to execute the first or second child.
-  %% Having decided which child to execute EITHER succeeds or fails based
+  %% Having decided which child to execute $either succeeds or fails based
   %% on whether the selected child succeeds or fails.
 
   $template: true
@@ -1101,17 +1103,17 @@
     const roll = die.roll();
 
     if(roll < p) {
-      return task.firstChild().execute(wmem);
+      return task.firstChild().executeBehaviour(wmem);
     } else {
-      return task.secondChild().execute(wmem);
+      return task.secondChild().executeBehaviour(wmem);
     }
   }
 }
 
-@task RANDOM_CHOICE {
-  %% The RANDOM_CHOICE task takes two or more children. When RANDOM_CHOICE
+@behaviour $random_choice {
+  %% The $random_choice task takes two or more children. When $random_choice
   %% executes it selects a child at random and executes it. If that child
-  %% succeeds then RANDOM_CHOICE succeeds, otherwise it fails.
+  %% succeeds then $random_choice succeeds, otherwise it fails.
 
   $template: true
   options: []
@@ -1120,14 +1122,14 @@
   execute: (task, wmem) => {
     const die = new RezDie(1, task.childCount(), 0);
     const child = task.getChild(die.roll());
-    return child.execute(wmem);
+    return child.executeBehaviour(wmem);
   }
 }
 
-@task RANDOM_EACH {
-  %% The RANDOM_EACH task takes two or more children. When RANDOM_EACH
+@behaviour $random_each {
+  %% The $random_each task takes two or more children. When $random_each
   %% executes it selects a child, without replacement, and executes it. If
-  %% the selected child succeeds then RANDOM_EACH succeeds, otherwise it
+  %% the selected child succeeds then $random_each succeeds, otherwise it
   %% fails. Without replacement means that no child can be selected twice
   %% until all children have been selected at least once.
 
@@ -1145,12 +1147,12 @@
     const child = child_walk.shift();
     wmem[this] = child_walk;
 
-    return child.execute(wmem);
+    return child.executeBehaviour(wmem);
   }
 }
 
-@task ALWAYS {
-  %% The ALWAYS task takes one child and executes it, ALWAYS succeeds
+@behaviour $always {
+  %% The $always task takes one child and executes it, $always succeeds
   %% regardless of whether the child succeeds.
 
   $template: true
@@ -1159,14 +1161,14 @@
   max_children: 1
 
   execute: (task, wmem) => {
-    const result = this.firstChild().execute(wmem);
+    const result = this.firstChild().executeBehaviour(wmem);
     result.success = true;
     return result;
   }
 }
 
-@task NEVER {
-  %% The NEVER task takes one child and executes it, NEVER fails regardless
+@behaviour $never {
+  %% The $never task takes one child and executes it, $never fails regardless
   %% of whether the child fails.
 
   $template: true
@@ -1175,15 +1177,15 @@
   max_children: 1
 
   execute: (task, wmem) => {
-    const result = task.firstChild().execute(wmem);
+    const result = task.firstChild().executeBehaviour(wmem);
     result.success = false;
     return result;
   }
 }
 
-@task INVERT {
-  %% The INVERT task takes one child and executes it. If the child succeeds
-  %% then INVERT will fail. If the child fails then INVERT will succeed.
+@behaviour $invert {
+  %% The $invert task takes one child and executes it. If the child succeeds
+  %% then $invert will fail. If the child fails then $invert will succeed.
 
   $template: true
   options: []
@@ -1191,7 +1193,7 @@
   max_children: 1
 
   execute: (task, wmem) => {
-    const result = this.firstChild().execute(wmem);
+    const result = this.firstChild().executeBehaviour(wmem);
     if(result.success) {
       result.success = false;
       result.error = "Inversion";
@@ -1202,8 +1204,8 @@
   }
 }
 
-@task FAIL {
-  %% The FAIL task automatically fails.
+@behaviour $fail {
+  %% The $fail task automatically fails.
 
   $template: true
   options: []
@@ -1214,8 +1216,8 @@
   }
 }
 
-@task SUCCEED {
-  %% The SUCCEED task automatically succeeds.
+@behaviour $succeed {
+  %% The $succeed task automatically succeeds.
 
   $template: true
   options: []

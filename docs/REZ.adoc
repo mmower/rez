@@ -103,6 +103,7 @@ Elements are generally described using a set of named attributes. For example an
 Rez uses Javascript functions to supply dynamic behaviour. For the most part you can ignore this but, as your game becomes more complex and you want to incorporate dynamic behaviours, you may need to familiarize yourself with writing small Javascript functions.
 
 Here is an example of a Rez element that includes a dynamic attribute:
+
 ....
 @item magic_ring {
   is_a: :ring
@@ -127,13 +128,14 @@ There's a lot going on here but we'll unpack it piece by piece.
 === Introduction to Elements
 
 In the first place is the element itself:
+
 ....
 @item magic_ring {
   ....attributes....
 }
 ....
 
-With the exception of xref:element_catalog#Relationship[@rel], element declarations follow a common pattern:
+There is a common pattern for writing elements:
 
 * element specifier with `@` prefix, e.g. `@item`
 * a unique ID of the element, e.g. `magic_ring`
@@ -141,13 +143,17 @@ With the exception of xref:element_catalog#Relationship[@rel], element declarati
 * attributes
 * close brace `}`
 
+xref:element_catalog.adoc[Directives], by contrast, may look a little bit different, e.g. they don't have a unique id.
+
 Elements are used to describe in-game concepts. The xref:element_catalog.adoc[Element Catalog] describes each element in detail.
 
 The `id` of an element must be unique and follow the rules for Javascript identifiers. In JavaScript, identifiers are case-sensitive and can contain Unicode letters, `$`, `_`, and digits (`0`-`9`), but may not start with a digit.
 
+In some situations you may want to use similar ids for different kinds of elements, in this case a helpful protocol is to prefix the id with the type, e.g. instead of `#emergency_exit` you might use `#s_emergency_exit` for a scene or `#c_emergency_exit` for a card.
+
 === Introduction to Attributes
 
-The element declares itself to be an item but what about the attributes? These describe the item (or any element) and how it behaves. In our example there are 7 attributes that demonstrate many of the built-in types:
+The most important thing when you are writing an element is its attributes. These describe the element and how it behaves in the game. In our `@item` example there are 7 attributes that demonstrate many of the built-in types:
 
 ....
 is_a: :ring
@@ -212,9 +218,9 @@ Attribute names follow the rule for Javascript identifiers:
 
 Note that attribute names with a leading underscore (`_`) are considered to be 'internal' to the Rez compiler. These attributes are not converted into runtime attributes and are, therefore, not available.
 
-Attribute names with a leading dollar (`$`) are considered to be 'special' and it is not advised to use them yourself unless you know what you are doing.
+Attribute names with a leading dollar (`$`) are considered to be 'special' and it is not advised to use them yourself unless you know what you are doing. Rez itself makes use of attributes with the `$` prefix for housekeeping and you could, inadvertently, trample these.
 
-Rez defines a number of attribute types, some simple and some more complicated requiring some Javascript knowledge:
+Rez defines many attribute types, some simple and some more complicated. The more complicated types are generally related to creating dynamic behaviour and may require additional Javascript knowledge:
 
 [cols="1,2,2"]
 |===
@@ -231,7 +237,7 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |`"it's a plaster bust of a parrot"`
 
 |Keyword
-|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[`@derive`]
+|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[`@derive`] directive
 |`:single`\|`:multiple`, `:red`\|`:green`\|`:blue`
 
 |Element Reference
@@ -273,6 +279,10 @@ Rez defines a number of attribute types, some simple and some more complicated r
 |Script (Action)
 |a Javascript function expected to be called, e.g. in an event handler. Expected to be in traditional function style and where `this` is the object in question.
 |`function() {...}`
+
+|Behaviour Tree
+|A behaviour tree is an alternative to Javascript for creating dynamic behaviours. See <<behaviours>> for more information about using behaviour trees.
+|`^[behaviour {options} children]`
 
 |Dice
 |a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
@@ -1342,6 +1352,217 @@ However in many cases it might be easier to use a "do block" inline in the templ
   ```
 }
 ....
+
+== Behaviour Trees
+
+Creating dynamic behaviour in Rez can be achieved by writing Javascript actions and event handlers. But there is another way, behaviour trees. Behaviour trees are a form of AI and have been widely used in video games but, perhaps, less often in other forms of game.
+
+Let's start with an example of the syntax and main concepts:
+
+....
+@actor sam_spade {
+  behaviours: ^[$sequence
+    [actor_in actor=#sam_spade location=#sams_office]
+    [item_in item=#whisky_bottle location=#sams_office]
+    [actor_drinks actor=#sam_space item=#whisky_bottle]]
+}
+....
+
+Let's look at the syntax first. A behaviour tree is a kind of attribute, so it is specified as part of an element with a name (in this example `behaviours`), and its written in the form of a list `[...]` with a `^` prefix, i.e. `^[...]`.
+
+Each individual behaviour conforms to the following:
+
+....
+[behaviour_id options* children*]
+....
+
+The `behaviour_id` is the id of a `@behaviour` element implementing the required behaviour. The use of a `$` prefix to the behaviour id indicates its a _core behaviour_ from the Rez stdlib. The `options` are zero or more key-value pairs separated with `=`, and `children` are zero or more other behaviours.
+
+In our example then we have four behaviours: `$sequence`, `actor_in`, `item_in`, and `actor_drinks`. `$sequence` takes no options but has three children (`actor_in`, `item_in`, and `actor_drinks`), while `actor_in` takes 2 options (`actor` and `location`) but has no children.
+
+Now let's talk about what all of this means.
+
+A behaviour tree is a "tree of behaviours" which is to say it is a _root_ behaviour that probably has children, each of whom may also have children, and so, and so on. Even though we write it as a list, the nested lists form a branching tree structure.
+
+And this tree structure has meaning when we run it. But, before we can understand that, there are some other concepts we need to understand.
+
+=== Success and Failure
+
+When we talk about _executing_ a behaviour tree what we are really saying is: does the behaviour at the root of this tree succeed or fail?
+
+In our example above the `$sequence` is the _root behaviour_ so when we execute sams `behaviours:`` tree we are asking if the root `$sequence` succeeds or fails.
+
+The xref:behaviour_catalog.adoc:$sequence[`$sequence`] core behaviour succeeds or fails based on whether its children succeed or fail, so when it is asked to execute, it executes its children and succeeds or fails based on their own success or failure.
+
+`$sequence` is an example of a _composite_ behaviour.
+
+=== Behaviour Types
+
+There are four different types of behaviour:
+
+* composite
+* decorator
+* condition
+* action
+
+=== Composite Behaviours
+
+A composite behaviour always has at least one child and can be thought of as a kind of coordinator. Its own success or failure is based on what happens when it executes some, or all, of its children.
+
+Two of the most important composite behaviours are xref:behaviour_catalog.adoc:$sequence[`$sequence`] and xref:behaviour_catalog.adoc:$select[`$select`].
+
+As you've seen, `$sequence` executes its children in turn until either they have all succeeded (in which case `$sequence` succeeds) or until one of them fails (at which point `$sequence` fails). So a sequence general consists of a set of conditions and then the actions that should arise if they are met.
+
+The `$select` behaviour executes its children in turn until one of them succeeds (at which point `$select` succeeds) or they have all failed (at which point `$select` fails). This means that `$select` is a good way of choosing between a set of alternatives, for example different ways to achieve a goal where the AI can have fall back tactics should any particular behaviour fail or not be available.
+
+You may have observed that `$select` implements OR-logic while `$sequence` implements AND-logic. By combining them we can create any logical structure we need.
+
+=== Decorator Behaviours
+
+A decorator behaviour usually has a single child and its purpose is to modify the result of running its child behaviour.
+
+For example the xref:behaviour_catalog.adoc:$invert[`$invert`] decorator executes its child and flips the result making success into failure (and vice verca).
+
+=== Condition Behaviours
+
+A condition behaviour tests the state of the game world and succeeds or fails based upon that test. For example we defined two conditions in the example above `actor_in` and `item_in` which test whether an actor, or item, are in a given location.
+
+We can imagine that `actor_in` succeeds when the specified actor is in the specified location and fails otherwise.
+
+As an author you will create condition behaviours that test things that are meaningful to your game and these behaviours become available to your behaviour trees.
+
+=== Action Behaviours
+
+An action behaviour modifies the state of the game world. Actions are usually expected to succeed (because, typically, they are placed after conditions that gate whether they should happen or not).
+
+Typically an action will succeed (because the conditions for success should already have been met) although this is not a hard and fast rule.
+
+However be careful about making changes to world state and then failing. This could have unintended consequences.
+
+=== Putting It All Together
+
+Our first example of a simple behaviour tree uses one composite behaviour (`$sequence`), two conditions (`actor_in`, `item_in`), and one action (`actor_drinks`).
+
+Let's make a more complex example:
+
+....
+@actor sam_spade {
+  behaviours: ^[
+    [$select
+      [$sequence
+        [actor_sense_danger]
+        [$select
+          [$sequence
+            [actor_is_armed]
+            [actor_draws_gun]]
+          [$sequence
+            [actor_sees_item type=:weapon]
+            [actor_equips_item]]
+          [$sequence
+            [actor_sees_exit]
+            [actor_escapes]]]]
+      [$sequence
+        [actor_thirsty]
+        [$select
+          [$sequence
+            [actor_sees_item type=:drink]
+            [actor_equips_item]
+            [actor_drinks]]
+          [$sequence
+            [actor_says msg="Boy I could use a drink!"]]]]]]
+}
+....
+
+In this example we're using `$select` to choose between 2 high level behaviours (respond to threat, respond to thirst) with each of those behaviours being composed of further `$sequence` and `$select` based behaviours.
+
+For example if the player senses danger, do they have a gun? Is there a weapon in their environment? Can they escape?
+
+We've made up a bunch of condition and action behaviours like `actor_is_armed` and `actor_says` and hand waved over the detail of their implementation.
+
+As an author most of your work will be creating meaningful conditions and actions that represent the state and actions available in your game world.
+
+=== Core Behaviours
+
+The Rez stdlib defines a range of 'core' behaviours whose id has a `$` prefix to distinguish them from author written behaviours. Take a look for the `@behaviour` elements in `stdlib.rez`.
+
+The core behaviours are intended to provide an overall structure for creating different kinds of behaviour. In particular look at behaviours like `$either`, `$random_choice` and `$random_each` which can introduce variability into behaviour patterns.
+
+=== Using Behaviour Trees
+
+Having defined a behaviour tree, how do you use it? The authors are still experimenting but a broad approach suggests itself:
+
+Behaviours are likely to fall into broad categories that form a response to an event. An example might be "new day" or "player enters location".
+
+You could then define, e.g., a `new_day_behaviours:` attribute any element that should respond to the `:new_day` event. Then use a `@system` to reponds to the event, running the behaviours for all relevant elements.
+
+....
+@system new_day_system {
+  after_event: (system, event, result) => {
+    if(event === "new_day") {
+      const wmem = {};
+      $game.getObjectsWith("new_day_behaviours").forEach((el) => {
+        el.new_day_behaviours.executeBehaviour(wmem);
+      });
+    }
+    return result;
+  }
+}
+....
+
+Another approach is to define a behaviour tree to cover all events and use `$select` to decide which branch to follow. For example:
+
+....
+@actor sam_spade {
+  behaviours: ^[select
+    [$sequence
+      [event is=:new_day]
+      [...]]
+    [$sequence
+      [event is=<some other event>]
+      ...]]
+}
+....
+
+Now you could define a system for running all behaviours in response to any event:
+
+....
+@system event_behaviours {
+  after_event: (system, event, result) => {
+    const wmem = {event: event};
+    $game.getObjectsWith("behaviours").forEach((el) => {
+      el.behaviours.executeBehaviour(wmem);
+    })
+  }
+}
+....
+
+The behaviour system is quite flexible and can be made to work in a number of different ways to suit the needs of your game and ease of authorship.
+
+=== Differences To Other Systems
+
+Much of the writing on behaviour trees comes from a real-time video game perspective where the trees are used to power enemy-AI. This introduces a number of constraints for example that the behaviour AI must run within one frame (i.e. <0.04s). The "running" status can be used to "break up" a behaviour.
+
+In the Rez context this is less relevant so we do not support the "running" status. However it may be implemented later if it proves useful.
+
+From a terminology perspective we use "executing" instead of the more common "ticking" language. We think it's more natural to say you are executing a behaviour than ticking one.
+
+We use the term "behaviour" to refer to our behaviour types while you may see them referred to as "nodes" elsewhere. Node is a more mathematical term, we think behaviour is more natural.
+
+Also where you see `fallback` as a type of behaviour we call it `$select`. The behaviour is ultimately the same.
+
+=== Further reading
+
+* http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter06_The_Behavior_Tree_Starter_Kit.pdf[The Behaviour Tree Start Kit] by Alex J. Champandard and Philip Dunstan
+
+* https://docs.unrealengine.com/4.27/en-US/InteractiveExperiences/ArtificialIntelligence/BehaviorTrees/BehaviorTreesOverview/[Unreal 4 Behaviour Tree Overview]
+
+https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/[Chris Simpson's Behaviour trees for AI: How they work]
+
+https://www.kth.se/profile/petter/page/video-lectures-on-behavior-trees[Video lectures on behaviour trees]
+
+especially:
+
+https://www.youtube.com/watch?v=KeShMInMjro[5 minute Behaviour Tree tutorial]
 
 == Custom Scripts & Styles
 

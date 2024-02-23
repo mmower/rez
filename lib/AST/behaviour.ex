@@ -1,8 +1,8 @@
-defmodule Rez.AST.Task do
+defmodule Rez.AST.Behaviour do
   @moduledoc """
-  `Rez.AST.Task` contains the `Task` struct and its `Node` implementation.
+  `Rez.AST.Behaviour` contains the `Behaviour` struct and its `Node` implementation.
 
-  A `Task` is used to represent an action or condition used in a behaviour tree.
+  A `Behaviour` is used to represent an action or condition used in a behaviour tree.
   """
 
   defstruct status: :ok,
@@ -12,37 +12,37 @@ defmodule Rez.AST.Task do
             attributes: %{}
 end
 
-defimpl Rez.AST.Node, for: Rez.AST.Task do
+defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
   import Rez.AST.NodeValidator
 
   alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
 
-  defdelegate js_initializer(task), to: NodeHelper
+  defdelegate js_initializer(behaviour), to: NodeHelper
 
-  def node_type(_task), do: "task"
+  def node_type(_behaviour), do: "behaviour"
 
-  def js_ctor(task) do
-    NodeHelper.get_attr_value(task, "$js_ctor", "RezTask")
+  def js_ctor(behaviour) do
+    NodeHelper.get_attr_value(behaviour, "$js_ctor", "RezBehaviour")
   end
 
-  def default_attributes(_task),
+  def default_attributes(_behaviour),
     do: %{
       "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
     }
 
-  def pre_process(task), do: task
+  def pre_process(behaviour), do: behaviour
 
-  def process(task, node_map) do
-    task
+  def process(behaviour, node_map) do
+    behaviour
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()
   end
 
-  def children(_task), do: []
+  def children(_behaviour), do: []
 
-  def validators(_task) do
+  def validators(_behaviour) do
     [
       attribute_present?(
         "options",
@@ -59,7 +59,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Task do
         "execute",
         attribute_has_type?(
           :function,
-          validate_expects_params?(["task", "wmem"])
+          validate_expects_params?(["behaviour", "wmem"])
         )
       ),
       attribute_if_present?(
