@@ -1355,7 +1355,9 @@ However in many cases it might be easier to use a "do block" inline in the templ
 
 == Behaviour Trees
 
-Creating dynamic behaviour in Rez can be achieved by writing Javascript actions and event handlers. But there is another way, behaviour trees. Behaviour trees are a form of AI and have been widely used in video games but, perhaps, less often in other forms of game.
+Creating dynamic behaviour in Rez can be achieved by writing Javascript actions and event handlers. But this can become quite complex and Rez offers another way: behaviour trees.
+
+Behaviour trees are a form of artificial intelligence that have been widely used to create realistic NPC behaviour in video games, starting with Halo 2 in 2004. They represent a more modular, flexible, and scalable approach to something like a finite state machine.
 
 Let's start with an example of the syntax and main concepts:
 
@@ -1368,33 +1370,39 @@ Let's start with an example of the syntax and main concepts:
 }
 ....
 
-Let's look at the syntax first. A behaviour tree is a kind of attribute, so it is specified as part of an element with a name (in this example `behaviours`), and its written in the form of a list `[...]` with a `^` prefix, i.e. `^[...]`.
+A behaviour tree is a kind of attribute, so it is specified as part of an element definition with a name (in this example `behaviours`), and is written in the form of a list `[...]` with a `^` prefix, i.e. `^[...]`.
 
-Each individual behaviour conforms to the following:
+Each individual behaviour has the form:
 
 ....
-[behaviour_id options* children*]
+[element_id options* children*]
 ....
 
-The `behaviour_id` is the id of a `@behaviour` element implementing the required behaviour. The use of a `$` prefix to the behaviour id indicates its a _core behaviour_ from the Rez stdlib. The `options` are zero or more key-value pairs separated with `=`, and `children` are zero or more other behaviours.
+The `element_id` is the id of a `@behaviour` element implementing the required behaviour, for example `$sequence` or `actor_in`.
 
-In our example then we have four behaviours: `$sequence`, `actor_in`, `item_in`, and `actor_drinks`. `$sequence` takes no options but has three children (`actor_in`, `item_in`, and `actor_drinks`), while `actor_in` takes 2 options (`actor` and `location`) but has no children.
+The use of a `$` prefix to the `element_id` indicates that it is one of the _core behaviours_ defined in the Rez stdlib. The `options` are zero or more key-value pairs separated with `=` (e.g. `actor = #sam_spade`), and `children` are zero or more other behaviours (specified as a list `[]` but without the `^` prefix).
+
+In the example above there are four behaviours used: `$sequence`, `actor_in`, `item_in`, and `actor_drinks`. `$sequence` takes no options but has three children (`actor_in`, `item_in`, and `actor_drinks`), while `actor_in` takes 2 options (`actor` and `location`) but has no children.
+
+The behaviours `actor_in`, `item_in`, and `actor_drinks` are not core behaviours so must be defined by the game author using the `@behaviour` element. As an author your job is to create behaviours that are meaningful for your game.
 
 Now let's talk about what all of this means.
 
-A behaviour tree is a "tree of behaviours" which is to say it is a _root_ behaviour that probably has children, each of whom may also have children, and so, and so on. Even though we write it as a list, the nested lists form a branching tree structure.
+Although behaviour trees are syntactically written as a list, they form a branching tree structure as each behaviour can nest other behaviours in its child list, to an arbitrary depth. The first behaviour is the _root behaviour_ of the tree.
 
-And this tree structure has meaning when we run it. But, before we can understand that, there are some other concepts we need to understand.
+When we "execute the tree" it means excuting the root behaviour which in turn may execute some or all of its children until execution reaches the leaves of the tree. But, before we can understand all that, there are some other concepts we need to be aware of.
 
 === Success and Failure
 
 When we talk about _executing_ a behaviour tree what we are really saying is: does the behaviour at the root of this tree succeed or fail?
 
-In our example above the `$sequence` is the _root behaviour_ so when we execute sams `behaviours:` tree we are asking if the root `$sequence` succeeds or fails.
+In our example above the `$sequence` is the _root behaviour_ so when we execute sam's `behaviours:` tree we are asking if the root `$sequence` succeeds or fails.
 
-The xref:behaviour_catalog.adoc#_sequence[$sequence] core behaviour succeeds or fails based on whether its children succeed or fail, so when it is asked to execute, it executes its children and succeeds or fails based on their own success or failure.
+The xref:behaviour_catalog.adoc#_sequence[$sequence] behaviour succeeds or fails based on whether its children succeed or fail, so when it is asked to execute, it executes its children and succeeds or fails based on their own success or failure.
 
-`$sequence` is an example of a _composite_ behaviour.
+By contrast the xref:behaviour_catalog.adoc#_select[$select] behaviour executes its children until one succeeds, then it succeeds. It only fails if all of its children fail.
+
+`$sequence` and `$select` are examples of _composite_ behaviours.
 
 === Behaviour Types
 
@@ -1407,7 +1415,7 @@ There are four different types of behaviour:
 
 === Composite Behaviours
 
-A composite behaviour always has at least one child and can be thought of as a kind of coordinator. Its own success or failure is based on what happens when it executes some, or all, of its children.
+A composite behaviour always has at least one child and can be thought of as a kind of coordinator where its success or failure is based on what happens when it executes some, or all, of its children.
 
 Two of the most important composite behaviours are xref:behaviour_catalog.adoc#_sequence[$sequence] and xref:behaviour_catalog.adoc#_select[$select].
 
@@ -1415,7 +1423,7 @@ As you've seen, `$sequence` executes its children in turn until either they have
 
 The `$select` behaviour executes its children in turn until one of them succeeds (at which point `$select` succeeds) or they have all failed (at which point `$select` fails). This means that `$select` is a good way of choosing between a set of alternatives, for example different ways to achieve a goal where the AI can have fall back tactics should any particular behaviour fail or not be available.
 
-You may have observed that `$select` implements OR-logic while `$sequence` implements AND-logic. By combining them we can create any logical structure we need.
+You may have observed that `$select` implements OR-logic while `$sequence` implements AND-logic. Just these two behaviours allow us to create any complexity of decision-making structure we want.
 
 === Decorator Behaviours
 
