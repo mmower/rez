@@ -237,7 +237,7 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |`"it's a plaster bust of a parrot"`
 
 |Keyword
-|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[`@derive`] directive
+|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[@derive] directive
 |`:single`\|`:multiple`, `:red`\|`:green`\|`:blue`
 
 |Element Reference
@@ -553,7 +553,7 @@ image::test_game_2.png[]
 
 This is a terrible game but it illuminates some of the basic principles of how you create a game using Rez.
 
-It uses 3 types of element: xref:element_catalog#Game[`@game`], xref:element_catalog#Scene[`@scene`], and xref:element_catalog#Card[`@card`]. The scene has some attributes to keep track of the game state and two actions, the cards use an event handler and some template links.
+It uses 3 types of element: xref:element_catalog#Game[@game], xref:element_catalog#Scene[@scene], and xref:element_catalog#Card[@card]. The scene has some attributes to keep track of the game state and two actions, the cards use an event handler and some template links.
 
 The `@game` is a required top-level element that contains the definintion of the game and holds the master layout into which scene content is inserted, and the reference to the scene that starts the game.
 
@@ -1043,7 +1043,7 @@ To make a dynamic link use the `dyn_link` template expression filter. Here's an 
 
 In this case, if the player is already rested they are shown a disabled option. In some cases it might be preferable to use `dyn_link.hide()` so that no choice is offered at all.
 
-The event handler is passed a xref:jsapi#RezDynamicLink[RezDynamicLink] object that it can use to customise link presentation.
+The event handler is passed a RezDynamicLink object that it can use to customise link presentation.
 
 == Forms
 
@@ -1230,7 +1230,7 @@ Would render as:
 Your name is Matt. It is a good name.
 ....
 
-When using a filter you put a pipe symbol `|` followed by the filter expression which is sometimes just the name of the filter (See the xref:filter_catalog[Filter Catalog] for a complete list of built-in filters) but can also include parameters.
+When using a filter you put a pipe symbol `|` followed by the filter expression which is sometimes just the name of the filter (See the xref:filter_catalog.adoc[Filter Catalog] for a complete list of built-in filters) but can also include parameters.
 
 ....
 content: ```The item has the inscription "${item.inscription | trunc: 40}"```
@@ -1390,9 +1390,9 @@ And this tree structure has meaning when we run it. But, before we can understan
 
 When we talk about _executing_ a behaviour tree what we are really saying is: does the behaviour at the root of this tree succeed or fail?
 
-In our example above the `$sequence` is the _root behaviour_ so when we execute sams `behaviours:`` tree we are asking if the root `$sequence` succeeds or fails.
+In our example above the `$sequence` is the _root behaviour_ so when we execute sams `behaviours:` tree we are asking if the root `$sequence` succeeds or fails.
 
-The xref:behaviour_catalog.adoc:$sequence[`$sequence`] core behaviour succeeds or fails based on whether its children succeed or fail, so when it is asked to execute, it executes its children and succeeds or fails based on their own success or failure.
+The xref:behaviour_catalog.adoc#_sequence[$sequence] core behaviour succeeds or fails based on whether its children succeed or fail, so when it is asked to execute, it executes its children and succeeds or fails based on their own success or failure.
 
 `$sequence` is an example of a _composite_ behaviour.
 
@@ -1409,7 +1409,7 @@ There are four different types of behaviour:
 
 A composite behaviour always has at least one child and can be thought of as a kind of coordinator. Its own success or failure is based on what happens when it executes some, or all, of its children.
 
-Two of the most important composite behaviours are xref:behaviour_catalog.adoc:$sequence[`$sequence`] and xref:behaviour_catalog.adoc:$select[`$select`].
+Two of the most important composite behaviours are xref:behaviour_catalog.adoc#_sequence[$sequence] and xref:behaviour_catalog.adoc#_select[$select].
 
 As you've seen, `$sequence` executes its children in turn until either they have all succeeded (in which case `$sequence` succeeds) or until one of them fails (at which point `$sequence` fails). So a sequence general consists of a set of conditions and then the actions that should arise if they are met.
 
@@ -1421,7 +1421,7 @@ You may have observed that `$select` implements OR-logic while `$sequence` imple
 
 A decorator behaviour usually has a single child and its purpose is to modify the result of running its child behaviour.
 
-For example the xref:behaviour_catalog.adoc:$invert[`$invert`] decorator executes its child and flips the result making success into failure (and vice verca).
+For example the xref:behaviour_catalog.adoc#_invert[$invert] decorator executes its child and flips the result making success into failure (and vice verca).
 
 === Condition Behaviours
 
@@ -1483,9 +1483,9 @@ As an author most of your work will be creating meaningful conditions and action
 
 === Core Behaviours
 
-The Rez stdlib defines a range of 'core' behaviours whose id has a `$` prefix to distinguish them from author written behaviours. Take a look for the `@behaviour` elements in `stdlib.rez`.
+The Rez stdlib defines a range of xref:behaviour_catalog.adoc[core behaviours] whose id have a `$` prefix to distinguish them from author written behaviours. The implementation of the core behaviours is in `stdlib.rez`.
 
-The core behaviours are intended to provide an overall structure for creating different kinds of behaviour. In particular look at behaviours like `$either`, `$random_choice` and `$random_each` which can introduce variability into behaviour patterns.
+The core behaviours are intended to provide an overall structure for creating different kinds of behaviour. In particular look at behaviours like xref:behaviour_catalog.adoc#_either[$either], xref:behaviour_catalog.adoc#_random_choice[$random_choice] and xref:behaviour_catalog:[$random_each] which can introduce variability into behaviour patterns.
 
 === Using Behaviour Trees
 

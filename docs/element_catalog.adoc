@@ -93,7 +93,7 @@ Note that an alias can specify multiple parents.
 
 == Actor (Element)
 
-An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element. In-game actors are represented by the xref:jsapi#RezActor[RezActor] object.
+An actor represents an in-game character which could be the player avatar or a non-playable character that the player interacts with. Define an actor with the `@actor` element. In-game actors are represented by the RezActor object.
 
 Actors are an optional concept and a simple game might not need them, choosing instead to represent any actors via attributes of the game or scene. But in more complex games it's useful to be able to model actors separately.
 
@@ -1470,11 +1470,11 @@ The styles defined in the game's `@style` directives will be automatically inclu
 
 == System (Element)
 
-The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world. In-game a system is represented by a xref:jsapi#RezSystem[RezSystem] object.
+The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world. In-game a system is represented by a RezSystem object.
 
 For example we might want to model weather in our game so we could create a "weather system" that would update the in-game weather.
 
-Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the xref:jsapi#RezGame[RezGame] `runTick()` API.
+Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the RezGame `runTick()` API.
 
 === Example
 
