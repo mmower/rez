@@ -1556,9 +1556,9 @@ https://opsive.com/support/documentation/behavior-designer/what-is-a-behavior-tr
 
 https://towardsdatascience.com/designing-ai-agents-behaviors-with-behavior-trees-b28aa1c3cf8a[Designing AI Agent's Behaviours with Behavior Trees]
 
-* http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter06_The_Behavior_Tree_Starter_Kit.pdf[The Behaviour Tree Start Kit] by Alex J. Champandard and Philip Dunstan
+http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter06_The_Behavior_Tree_Starter_Kit.pdf[The Behaviour Tree Start Kit] by Alex J. Champandard and Philip Dunstan
 
-* https://docs.unrealengine.com/4.27/en-US/InteractiveExperiences/ArtificialIntelligence/BehaviorTrees/BehaviorTreesOverview/[Unreal 4 Behaviour Tree Overview]
+https://docs.unrealengine.com/4.27/en-US/InteractiveExperiences/ArtificialIntelligence/BehaviorTrees/BehaviorTreesOverview/[Unreal 4 Behaviour Tree Overview]
 
 https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/[Chris Simpson's Behaviour trees for AI: How they work]
 
