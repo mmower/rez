@@ -338,7 +338,7 @@ Let's look at an example. We want a condition that tests whether a given actor i
 === Example
 
 ....
-@task actor_in {
+@behaviour actor_in {
   options: [:actor :location]
 
   execute: (behaviour, wmem) => {
@@ -376,7 +376,7 @@ The rest of the behaviours in this sequence will only be run if Sam is in his of
 
 |`execute`
 |Script
-|script that takes two parameters `behaviour` (a reference to the `RezBehaviour` itself) and `wmem` which is a reference to a map of "working memory" that can be used to record task state or pass state between behaviours. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+|script that takes two parameters `behaviour` (a reference to the `RezBehaviour` itself) and `wmem` which is a reference to a map of "working memory" that can be used to record behaviour state or pass state between behaviours. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
 |===
 
 === Optional Attributes

@@ -4,7 +4,7 @@
 
 function RezBehaviour(id, attributes) {
   this.id = id;
-  this.game_object_type = "task";
+  this.game_object_type = "behaviour";
   this.options = {};
   this.children = [];
   this.attributes = attributes;
@@ -77,7 +77,7 @@ RezBehaviour.prototype = {
 
   executeBehaviour(wmem) {
     // By definition this is a function of two attributes
-    // (task, wmem)
+    // (behaviour, wmem)
     const handler = this.getAttribute("execute");
     if(typeof(handler) === "function") {
       return handler(this, wmem);

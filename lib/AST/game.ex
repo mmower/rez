@@ -31,6 +31,7 @@ defmodule Rez.AST.Game do
             enums: %{},
             actors: %{},
             assets: %{},
+            behaviours: %{},
             cards: %{},
             effects: %{},
             factions: %{},
@@ -51,7 +52,6 @@ defmodule Rez.AST.Game do
             slots: %{},
             styles: [],
             systems: %{},
-            tasks: %{},
             timers: %{}
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
@@ -100,7 +100,14 @@ defmodule Rez.AST.Game do
 
   defp add_dynamic_child(%Game{by_id: by_id} = game, %{id: child_id} = child) do
     content_key = struct_key(child)
-    nodes = game |> Map.get(content_key) |> Map.put(child_id, child)
+
+    content = Map.get(game, content_key)
+
+    if is_nil(content) do
+      IO.puts("Failed to get content: #{content_key}. Did you rename and not change all uses?")
+    end
+
+    nodes = Map.put(content, child_id, child)
 
     game
     |> Map.put(content_key, nodes)
@@ -157,7 +164,7 @@ defmodule Rez.AST.Game do
 
   # Due to their dependency locations & zones are init'd separately
   @js_classes_to_init [
-    :tasks,
+    :behaviours,
     :actors,
     :assets,
     :cards,
@@ -331,7 +338,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> TemplateHelper.compile_template_attributes()
     |> NodeHelper.process_collection(:actors, node_map)
     |> NodeHelper.process_collection(:assets, node_map)
-    |> NodeHelper.process_collection(:tasks, node_map)
+    |> NodeHelper.process_collection(:behaviours, node_map)
     |> NodeHelper.process_collection(:cards, node_map)
     |> NodeHelper.process_collection(:effects, node_map)
     |> NodeHelper.process_collection(:factions, node_map)
@@ -362,7 +369,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     []
     |> Utils.append_list(Map.values(game.actors))
     |> Utils.append_list(Map.values(game.assets))
-    |> Utils.append_list(Map.values(game.tasks))
+    |> Utils.append_list(Map.values(game.behaviours))
     |> Utils.append_list(Map.values(game.cards))
     |> Utils.append_list(Map.values(game.effects))
     |> Utils.append_list(Map.values(game.factions))

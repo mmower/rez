@@ -879,15 +879,15 @@
 %% A scene that handles loading a game
 %% ----------------------------------------------------------------------------
 
-@scene default_load_game {
-    initial_card_id: #default_load_game_form
+@scene $load_game {
+    initial_card_id: #$load_game_form
     layout: ```
     ${content}
     ```
     layout_mode: :single
   }
 
-@card default_load_game_form {
+@card $load_game_form {
   content: ```
   <form name="load_form">
     <input type="file" name="data"/>
@@ -948,9 +948,9 @@
   options: []
   min_children: 2
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
     let result = {success: true, wmem: wmem};
-    for(const child of task.children) {
+    for(const child of behaviour.children) {
       result = child.executeBehaviour(result.wmem);
       if(result.success) {
         break;
@@ -970,18 +970,18 @@
   options: [:p]
   min_children: 2
 
-  configure: (task) => {
-    const p = task.intOption("p");
+  configure: (behaviour) => {
+    const p = behaviour.intOption("p");
     if(p < 0 || p > 100) {
-      throw "Behaviour: " + task.id + " invalid 'p' option specified.";
+      throw "Behaviour: " + behaviour.id + " invalid 'p' option specified.";
     }
   }
 
-  execute: (task, wmem) => {
-    const p = task.intOption("p");
+  execute: (behaviour, wmem) => {
+    const p = behaviour.intOption("p");
     const die = new RezDie(1, 100, 0);
-    let result = {success: false, id: task.id, wmem};
-    for(const child of task.children) {
+    let result = {success: false, id: behaviour.id, wmem};
+    for(const child of behaviour.children) {
       if(die.roll() < p) {
         result = child.executeBehaviour(result.wmem);
         if(result.success) {
@@ -1002,9 +1002,9 @@
   options: []
   min_children: 2
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
     let result = {success: true, wmem: wmem};
-    for(const child of task.children) {
+    for(const child of behaviour.children) {
       result = child.executeBehaviour(result.wmem);
       if(result.success) {
         break;
@@ -1025,8 +1025,8 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
-    const count = task.option("count");
+  execute: (behaviour, wmem) => {
+    const count = behaviour.option("count");
     let result = {success: false, wmem: wmem};
     for(let i=0; i<count; i++) {
       result = this.firstChild().executeBehaviour(result.wmem);
@@ -1050,10 +1050,11 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
+    const attempts = behaviour.option("attempts");
     let result = {success: false, wmem: wmem};
-    for(let i=0; i<this.count(); i++) {
-      result = this.firstChild().executeBehaviour(result.db);
+    for(let i=0; i<attempts; i++) {
+      result = behaviour.firstChild().executeBehaviour(result.db);
       if(result.success) {
         break;
       }
@@ -1074,20 +1075,20 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
-    const p = task.option("p");
+  execute: (behaviour, wmem) => {
+    const p = behaviour.option("p");
     const die = new RezDie(1, 100, 0);
 
     if(die.roll() < p) {
-      return task.firstChild().executeBehaviour(wmem);
+      return behaviour.firstChild().executeBehaviour(wmem);
     } else {
-      return {success: false, id: task.id, error: "Didn't execute"};
+      return {success: false, id: behaviour.id, error: "Didn't execute"};
     }
   }
 }
 
 @behaviour $either {
-  %% The $either task takes two children and based on the probability
+  %% The $either behaviour takes two children and based on the probability
   %% option "p" determines whether to execute the first or second child.
   %% Having decided which child to execute $either succeeds or fails based
   %% on whether the selected child succeeds or fails.
@@ -1097,21 +1098,21 @@
   min_children: 2
   max_children: 2
 
-  execute: (task, wmem) => {
-    const p = task.option("p");
+  execute: (behaviour, wmem) => {
+    const p = behaviour.option("p");
     const die = new RezDie(1, 100, 0);
     const roll = die.roll();
 
     if(roll < p) {
-      return task.firstChild().executeBehaviour(wmem);
+      return behaviour.firstChild().executeBehaviour(wmem);
     } else {
-      return task.secondChild().executeBehaviour(wmem);
+      return behaviour.secondChild().executeBehaviour(wmem);
     }
   }
 }
 
 @behaviour $random_choice {
-  %% The $random_choice task takes two or more children. When $random_choice
+  %% The $random_choice behaviour takes two or more children. When $random_choice
   %% executes it selects a child at random and executes it. If that child
   %% succeeds then $random_choice succeeds, otherwise it fails.
 
@@ -1119,15 +1120,15 @@
   options: []
   min_children: 2
 
-  execute: (task, wmem) => {
-    const die = new RezDie(1, task.childCount(), 0);
-    const child = task.getChild(die.roll());
+  execute: (behaviour, wmem) => {
+    const die = new RezDie(1, behaviour.childCount(), 0);
+    const child = behaviour.getChild(die.roll());
     return child.executeBehaviour(wmem);
   }
 }
 
 @behaviour $random_each {
-  %% The $random_each task takes two or more children. When $random_each
+  %% The $random_each behaviour takes two or more children. When $random_each
   %% executes it selects a child, without replacement, and executes it. If
   %% the selected child succeeds then $random_each succeeds, otherwise it
   %% fails. Without replacement means that no child can be selected twice
@@ -1137,11 +1138,11 @@
   options: []
   min_children: 2
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
     let child_walk = wmem[this];
 
     if(typeof(child_walk) == "undefined" || child_walk.length == 0) {
-      child_walk = Array.from(Array(task.childCount()).keys()).shuffle();
+      child_walk = Array.from(Array(behaviour.childCount()).keys()).shuffle();
     }
 
     const child = child_walk.shift();
@@ -1152,7 +1153,7 @@
 }
 
 @behaviour $always {
-  %% The $always task takes one child and executes it, $always succeeds
+  %% The $always behaviour takes one child and executes it, $always succeeds
   %% regardless of whether the child succeeds.
 
   $template: true
@@ -1160,15 +1161,15 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
-    const result = this.firstChild().executeBehaviour(wmem);
+  execute: (behaviour, wmem) => {
+    const result = behaviour.firstChild().executeBehaviour(wmem);
     result.success = true;
     return result;
   }
 }
 
 @behaviour $never {
-  %% The $never task takes one child and executes it, $never fails regardless
+  %% The $never behaviour takes one child and executes it, $never fails regardless
   %% of whether the child fails.
 
   $template: true
@@ -1176,15 +1177,15 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
-    const result = task.firstChild().executeBehaviour(wmem);
+  execute: (behaviour, wmem) => {
+    const result = behaviour.firstChild().executeBehaviour(wmem);
     result.success = false;
     return result;
   }
 }
 
 @behaviour $invert {
-  %% The $invert task takes one child and executes it. If the child succeeds
+  %% The $invert behaviour takes one child and executes it. If the child succeeds
   %% then $invert will fail. If the child fails then $invert will succeed.
 
   $template: true
@@ -1192,12 +1193,12 @@
   min_children: 1
   max_children: 1
 
-  execute: (task, wmem) => {
-    const result = this.firstChild().executeBehaviour(wmem);
+  execute: (behaviour, wmem) => {
+    const result = behaviour.firstChild().executeBehaviour(wmem);
     if(result.success) {
       result.success = false;
       result.error = "Inversion";
-      result.id = task.id;
+      result.id = behaviour.id;
     } else {
       result.success = true;
     }
@@ -1205,25 +1206,25 @@
 }
 
 @behaviour $fail {
-  %% The $fail task automatically fails.
+  %% The $fail behaviour automatically fails.
 
   $template: true
   options: []
   max_children: 0
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
     return {success: false, wmem: wmem};
   }
 }
 
 @behaviour $succeed {
-  %% The $succeed task automatically succeeds.
+  %% The $succeed behaviour automatically succeeds.
 
   $template: true
   options: []
   max_children: 0
 
-  execute: (task, wmem) => {
+  execute: (behaviour, wmem) => {
     return {success: true, wmem: wmem};
   }
 }

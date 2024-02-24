@@ -72,7 +72,7 @@ Let's look at an example:
 }
 ....
 
-How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviour tasks that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
+How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviours that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
 
 == Avoiding Duplication with Aliases
 
