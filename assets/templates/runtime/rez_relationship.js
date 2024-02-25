@@ -21,6 +21,10 @@ RezRelationship.prototype = {
   get target() {
     return this.getAttributeValue("target");
   },
+
+  get inverse() {
+    return this.game.getRelationship(this.target, this.source);
+  }
 };
 
 window.RezRelationship = RezRelationship;

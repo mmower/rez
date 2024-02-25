@@ -504,6 +504,10 @@ const basic_object = {
     to_add.forEach((tag) => this.addTag(tag));
   },
 
+  getRelationshipWith(target_id) {
+    return this.game.getRelationship(this.id, target_id);
+  },
+
   /**
    * @function applyEffect
    * @memberof basic_object
