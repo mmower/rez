@@ -1581,7 +1581,7 @@ The `executeBehaviour()` method returns an object:
 ....
 {
   success: true|false,
-  wmem:
+  wmem: <modified working memory>
 
 }
 if(result.success) {
@@ -1589,10 +1589,9 @@ if(result.success) {
 } else {
 
 }
+....
 
-
-
- The authors are still experimenting but a broad approach suggests itself:
+The authors are still experimenting but a broad approach suggests itself:
 
 Behaviours are likely to fall into broad categories that form a response to an event. An example might be "new day" or "player enters location".
 

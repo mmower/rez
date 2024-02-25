@@ -1127,39 +1127,27 @@ started.
 
 == Relationship (Element)
 
-The `@rel` directive describes the relationship between two game elements called the `source` (the element which has the relationship) and the `target` (the element the relationship is about).
+The `@rel` directive describes the relationship between two game elements called the `source` (the element which has the relationship) and the `target` (the element the source has relationship with).
 
 A relationship is unidirectional from source to target. Where applicable use a second `@rel` to describe the relationship in the opposite direction.
 
-Each relationship has an `affinity` which is a value from -5 (maximum negative) to +5 (maximum positive).
-
-A relationship may, optionally, carry a set of tags to add flavour.
-
-A relationship can be specified between any two elements with an id.
-
-To keep the number of relationships manageable it may be preferable to setup relationships between <<Faction, Factions>> rather than specific actors as demonstrated in the examples below. However you can setup relationships in any combination you like.
+A relationship can be specified between any two elements with an id. The most obvious example being between one actor and another, but you could equally define relationships between actors and factions, factions and factions, or — if it makes sense in your game — factions and items (the holy grail anyone?).
 
 === Example
 
 The `@rel` element does not follow the usual element syntax. Instead it looks like this:
 
 ....
-@rel source_id target_id affinity_value #{optional tags}
+@rel source_id target_id {
+  <attributes>
+}
+
+@rel #player #gutman_faction {
+  affinity: -1.0
+}
 ....
 
-You'll notice there's no id and no `{` & `}` and, consequently, no attributes. Here are a couple of examples:
-
-....
-@rel #player_faction #gutman_faction -2
-@rel #gutman_faction #player_faction 0
-....
-
-The id of a relationship is auto-generated:
-
-....
-rel_<source id>_<target id>
-rel_player_gutman
-....
+A relationship element isn't assigned an id but automatically derives its id from the source and target id, in the example above the id would be `rel_player_gutman_faction`.
 
 The `getRelationship(source, target)` API on the `RezGame` object is a short-
 hand for doing this lookup manually.
@@ -1169,29 +1157,36 @@ We can use `@rel` to define all kinds of relationships:
 ....
 %% the Gutman faction loves the Falcon
 @declare falcon
-@rel #gutman_faction #falcton 5
+@rel #gutman_faction #falcon {
+  affinity: 1.0
+}
 
 %% the player hates brocolli
 @declare brocolli
-@rel #player #brocolli -5
+@rel #player #brocolli {
+  affinity: -1.0
+}
 ....
 
-When we want to add more context to a relationship we can use tags:
+In these examples we have used an `affinity:` attribute (range: -1.0 to +1.0) to define the strength of the relationship but you can use any attributes you like. The following would be equally valid:
 
 ....
-@rel #player #miss_wannalee 5 #{:lover :suspicious}
+@rel #player #miss_wannalee {
+  love: 65
+  suspicion: 25
+}
+....
+
+An alternative approach is to use tags:
+
+....
+@rel #player #miss_wannalee {
+  tags: #{:lover :suspicious}
+}
 ....
 
 === Required Attributes
-
-* `source` [Element Ref]: element that holds the relationship
-* `target` [Element Ref]: element to which the relationship refers
-* `affinity` [Number]: from -5.0 to +5.0 indicating the strength of the relationship positive or negative
-
 === Optional Attributes
-
-* `tags` [Set]: keywords
-
 === Event Handlers
 
 ==== on_init
@@ -1201,15 +1196,6 @@ When we want to add more context to a relationship we can use tags:
     event = {}
 
 ==== on_change_affinity
-
-    on_change_affinity: (relationship, event) => {...}
-
-    event = {
-      prior: previous affinity value,
-      current: updated affinity value
-    }
-
-This event handler will be called whenever the relationship affinity changes and will be passed the prior & new affinity values.
 
 == Scene (Element)
 

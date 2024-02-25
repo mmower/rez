@@ -141,10 +141,10 @@ defmodule Rez.Parser.StructureParsers do
         iliteral("@#{label}"),
         iws(),
         commit(),
-        block_begin(label),
+        block_begin(),
         attribute_list(),
         iws(),
-        block_end(label)
+        block_end()
       ],
       label: "#{label}-block",
       debug: true,
@@ -210,10 +210,10 @@ defmodule Rez.Parser.StructureParsers do
         js_identifier("#{label}_id"),
         parent_objects(),
         iws(),
-        block_begin(label),
+        block_begin(),
         attribute_list(),
         iws(),
-        block_end(label)
+        block_end()
       ],
       label: "#{label}-block",
       debug: true,
@@ -260,10 +260,10 @@ defmodule Rez.Parser.StructureParsers do
           sequence(
             [
               iws(),
-              block_begin(label),
+              block_begin(),
               attribute_list(),
               iws(),
-              block_end(label)
+              block_end()
             ],
             ast: &List.first/1
           )
@@ -315,10 +315,10 @@ defmodule Rez.Parser.StructureParsers do
         iliteral("@#{label}"),
         iws(),
         commit(),
-        block_begin(label),
+        block_begin(),
         attribute_and_child_list(child_parser),
         iws(),
-        block_end(label)
+        block_end()
       ],
       label: "#{label}-block",
       debug: true,
@@ -369,10 +369,10 @@ defmodule Rez.Parser.StructureParsers do
         js_identifier("#{label}_id"),
         parent_objects(),
         iws(),
-        block_begin(label),
+        block_begin(),
         attribute_and_child_list(child_parser),
         iws(),
-        block_end(label)
+        block_end()
       ],
       label: "#{label}-block",
       debug: true,

@@ -1,66 +1,18 @@
 defmodule Rez.Parser.RelationshipParsers do
-  alias Rez.Parser.ParserCache
-
-  alias Rez.AST.Relationship
-
+  alias Rez.AST.Attribute
   alias Ergo.Context
 
-  import Ergo.Combinators,
-    only: [ignore: 1, sequence: 1, sequence: 2, choice: 2, many: 1, optional: 1]
+  import Ergo.Combinators
 
   import Ergo.Meta, only: [commit: 0]
 
-  alias Rez.Parser.ValueParsers
+  import Rez.Utils, only: [attr_list_to_map: 1]
+
+  import Rez.Parser.UtilityParsers
   alias Rez.Parser.StructureParsers
+  alias Rez.Parser.ValueParsers
 
-  import Rez.Parser.ValueParsers, only: [keyword_value: 0]
-
-  import Rez.Parser.UtilityParsers,
-    only: [iliteral: 1, iws: 0, iows: 0, hash: 0, open_brace: 0, close_brace: 0]
-
-  def tagset() do
-    ParserCache.get_parser("tagset_value", fn ->
-      sequence(
-        [
-          ignore(hash()),
-          ignore(open_brace()),
-          many(
-            sequence([
-              iows(),
-              keyword_value()
-            ])
-          ),
-          iows(),
-          ignore(close_brace())
-        ],
-        label: "tagset-value",
-        debug: true,
-        ast: fn ast -> {:set, MapSet.new(List.flatten(ast))} end
-      )
-    end)
-  end
-
-  def rel_affinity() do
-    ParserCache.get_parser("rel_value", fn ->
-      choice(
-        [
-          ValueParsers.dice_value(),
-          ValueParsers.number_value(),
-          ValueParsers.function_value(),
-          ValueParsers.dynamic_initializer_value()
-        ],
-        label: "value",
-        debug: true
-      )
-    end)
-  end
-
-  def make_relationship(source_file, source_line, col, source_id, target_id, affinity, tags) do
-    Relationship.make(source_id, target_id, affinity, tags)
-    |> Map.put(:position, {source_file, source_line, col})
-  end
-
-  def relationship_directive() do
+  def relationship_elem() do
     sequence(
       [
         iliteral("@rel"),
@@ -70,45 +22,35 @@ defmodule Rez.Parser.RelationshipParsers do
         iws(),
         ValueParsers.elem_ref_value(),
         iws(),
-        rel_affinity(),
-        optional(
-          sequence([
-            iws(),
-            tagset()
-          ])
-        )
+        block_begin(),
+        StructureParsers.attribute_list(),
+        iows(),
+        block_end()
       ],
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
-                ast: ast,
+                ast: [{:elem_ref, source_id}, {:elem_ref, target_id}, attr_list],
                 data: %{source: source}
               } = ctx ->
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-        block =
-          case ast do
-            [{:elem_ref, source_id}, {:elem_ref, target_id}, affinity, [{:set, tags}]] ->
-              make_relationship(
-                source_file,
-                source_line,
-                col,
-                source_id,
-                target_id,
-                affinity,
-                tags
-              )
+        rel_id = "rel_#{source_id}_#{target_id}"
 
-            [{:elem_ref, source_id}, {:elem_ref, target_id}, affinity] ->
-              make_relationship(
-                source_file,
-                source_line,
-                col,
-                source_id,
-                target_id,
-                affinity,
-                MapSet.new()
-              )
-          end
+        attributes =
+          attr_list_to_map(attr_list)
+          |> Map.put("source", Attribute.elem_ref("source", source_id))
+          |> Map.put("target", Attribute.elem_ref("target", target_id))
+
+        block =
+          StructureParsers.create_block(
+            Rez.AST.Relationship,
+            rel_id,
+            [],
+            attributes,
+            source_file,
+            source_line,
+            col
+          )
 
         StructureParsers.ctx_with_block_and_id_mapped(
           ctx,

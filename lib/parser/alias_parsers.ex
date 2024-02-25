@@ -6,11 +6,9 @@ defmodule Rez.Parser.AliasParsers do
 
   alias Ergo.Context
   import Ergo.Combinators, only: [ignore: 1, sequence: 2]
-  # import Ergo.Terminals, only: [char: 1, literal: 1]
 
   alias Rez.AST.NodeHelper
 
-  # import Rez.Parser.AttributeParser
   import Rez.Parser.StructureParsers
 
   import Rez.Parser.UtilityParsers,
@@ -21,8 +19,8 @@ defmodule Rez.Parser.AliasParsers do
       equals: 0,
       elem_tag: 0,
       iliteral: 1,
-      block_begin: 1,
-      block_end: 1
+      block_begin: 0,
+      block_end: 0
     ]
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
@@ -89,10 +87,10 @@ defmodule Rez.Parser.AliasParsers do
         iws(),
         js_identifier("alias_id"),
         iws(),
-        block_begin("alias"),
+        block_begin(),
         attribute_list(),
         iws(),
-        block_end("alias")
+        block_end()
       ],
       label: "alias-block",
       debug: true,

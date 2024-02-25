@@ -1,23 +1,9 @@
 defmodule Rez.AST.Relationship do
-  alias __MODULE__
-  alias Rez.AST.Attribute
-  alias Rez.AST.NodeHelper
-
   defstruct status: :ok,
             game_element: true,
             position: {nil, 0, 0},
             id: nil,
             attributes: %{}
-
-  def make(source_id, target_id, affinity, tags \\ MapSet.new()) do
-    auto_id = "rel_#{source_id}_#{target_id}"
-
-    %Relationship{id: auto_id}
-    |> NodeHelper.set_elem_ref_attr("source", source_id)
-    |> NodeHelper.set_elem_ref_attr("target", target_id)
-    |> NodeHelper.set_attr(Attribute.create("affinity", affinity))
-    |> NodeHelper.set_set_attr("tags", tags)
-  end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Relationship do
@@ -60,16 +46,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
         attribute_has_type?(
           :elem_ref,
           validate_is_elem?()
-        )
-      ),
-      attribute_present?(
-        "affinity",
-        attribute_has_type?(
-          :number,
-          value_passes?(
-            fn value -> value >= -5.0 and value <= 5.0 end,
-            "Affinity values must be between -5.0 .. +5.0"
-          )
         )
       ),
       attribute_if_present?(

@@ -131,7 +131,7 @@ defmodule Rez.Parser.Parser do
         object_block(),
         patch_block(),
         plot_block(),
-        relationship_directive(),
+        relationship_elem(),
         scene_block(),
         script_block(),
         slot_block(),
