@@ -51,13 +51,14 @@ RezList.prototype = {
   // Random without starvation (as per jkj yuio from intfiction.org)
   //---------------------------------------------------------------------------
 
-  warmStarvationPool(pool_id) {
-    for(let i = 0; i<this.values.length; i++ ) {
+  warmStarvationPool(pool_id = "$default") {
+    const warming_count = 2*this.values.length;
+    for(let i = 0; i<warming_count; i++ ) {
       this.randomWithoutStarvation(pool_id);
     }
   },
 
-  randomWithoutStarvation(pool_id) {
+  randomWithoutStarvation(pool_id = "$default") {
     let stats = this.getAttributeValue(`$pool_${pool_id}`, Array.n_of(this.values.length, 0));
     const len = stats.length;
     const max = Math.floor(len + (len+2)/3);

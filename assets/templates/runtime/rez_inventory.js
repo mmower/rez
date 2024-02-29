@@ -30,6 +30,12 @@ RezInventory.prototype = {
   addSlot(slot_id) {
     const items = this.getAttribute("items");
     items[slot_id] = [];
+
+    Object.defineProperty(this, `${slot_id}_contents`, {
+      get: function () {
+        return this.getAttribute("items")[slot_id];
+      },
+    });
   },
 
   /**
@@ -41,6 +47,15 @@ RezInventory.prototype = {
     const slots = this.getAttribute("slots");
     for (const slot_id of slots) {
       this.addSlot(slot_id);
+    }
+
+    const initial_contents = this.getAttribute("initial_contents");
+    if(typeof(initial_contents) === "object") {
+      for(const [slot_id, contents] of Object.entries(initial_contents)) {
+        for(const item_id of contents) {
+          this.addItemToSlot(slot_id, item_id);
+        }
+      }
     }
   },
 

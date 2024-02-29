@@ -47,7 +47,7 @@ RezScene.prototype = {
   },
 
   playCardWithId(card_id, params = {}) {
-    this.playCard($(card_id), params);
+    this.playCard($(card_id, true), params);
   },
 
   playCard(new_card, params = {}) {

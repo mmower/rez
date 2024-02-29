@@ -64,6 +64,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def amp(), do: ParserCache.get_parser("ampersand", fn -> char(?&) end)
 
+  def percent(), do: ParserCache.get_parser("percent", fn -> char(?%) end)
+
   def caret(), do: ParserCache.get_parser("caret", fn -> char(?^) end)
 
   def forward_slash(), do: ParserCache.get_parser("forward_slash", fn -> char(?/) end)

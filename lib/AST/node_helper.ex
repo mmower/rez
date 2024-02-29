@@ -222,6 +222,9 @@ defmodule Rez.AST.NodeHelper do
         String.starts_with?(attribute.name, "_") ->
           node
 
+        String.starts_with?(attribute.name, "$") ->
+          node
+
         has_attr?(node, attribute.name) ->
           node
 

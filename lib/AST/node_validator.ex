@@ -52,10 +52,44 @@ defmodule Rez.AST.NodeValidator do
 
   def validate(%Validation{} = validation) do
     validation
+    |> validate_parents()
     |> validate_specification()
     |> validate_enums()
     |> validate_children()
     |> record_validation()
+  end
+
+  def validate_parents(%Validation{errors: [_head | _tail]} = validation) do
+    validation
+  end
+
+  def validate_parents(%Validation{game: %Game{} = game, node: node} = validation) do
+    case NodeHelper.get_attr_value(node, "_parents", []) do
+      [] ->
+        validation
+
+      parents ->
+        unknown_parents =
+          parents
+          |> Enum.map(fn {:keyword, parent_id} -> parent_id end)
+          |> Enum.filter(fn parent_id -> !Game.recognises_id?(game, parent_id) end)
+
+        case unknown_parents do
+          [] ->
+            validation
+
+          unknown_parents ->
+            Validation.add_error(
+              validation,
+              node,
+              "#{NodeHelper.description(node)} references unknown parents: #{Enum.join(unknown_parents, ", ")}"
+            )
+        end
+    end
+  end
+
+  def validate_specification(%Validation{errors: [_head | _tail]} = validation) do
+    validation
   end
 
   def validate_specification(%Validation{game: game, node: node} = pre_validation) do
@@ -70,6 +104,10 @@ defmodule Rez.AST.NodeValidator do
         end
       end
     )
+  end
+
+  def validate_enums(%Validation{errors: [_head | _tail]} = validation) do
+    validation
   end
 
   def validate_enums(
@@ -98,6 +136,10 @@ defmodule Rez.AST.NodeValidator do
     end)
   end
 
+  def validate_children(%Validation{errors: [_head | _tail]} = validation) do
+    validation
+  end
+
   def validate_children(%Validation{game: game, node: node} = parent_validation) do
     Enum.reduce(
       Node.children(node),
@@ -106,6 +148,10 @@ defmodule Rez.AST.NodeValidator do
         Validation.merge(validation, validate(child, game))
       end
     )
+  end
+
+  def record_validation(%Validation{errors: [_head | _tail]} = validation) do
+    validation
   end
 
   def record_validation(%Validation{node: node, validated: validated} = validation) do
@@ -153,10 +199,8 @@ defmodule Rez.AST.NodeValidator do
 
   def get_parents_of_node(node_map) do
     fn %{attributes: attributes} = _node ->
-      default_no_parents = Attribute.list("_parents", [])
-
       attributes
-      |> Map.get("_parents", default_no_parents)
+      |> Map.get("_parents", Attribute.list("_parents", []))
       |> Map.get(:value)
       |> Enum.map(fn {:keyword, parent_id} ->
         Map.get(node_map, to_string(parent_id))
@@ -164,8 +208,8 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  def find_attribute(%Game{by_id: node_map}, node, attr_key)
-      when not is_nil(node) and is_binary(attr_key) do
+  def find_attribute(%Game{by_id: node_map}, %{} = node, attr_key)
+      when is_binary(attr_key) do
     Search.search(
       node,
       find_attribute_in_node(attr_key),
@@ -194,12 +238,16 @@ defmodule Rez.AST.NodeValidator do
 
   def attribute_if_present?(attr_key, chained_validator) when not is_nil(chained_validator) do
     fn node, game ->
-      case find_attribute(game, node, attr_key) do
-        nil ->
-          :ok
+      if is_nil(game) do
+        {:error, "Game is null in attribute_if_present!"}
+      else
+        case find_attribute(game, node, attr_key) do
+          nil ->
+            :ok
 
-        %Attribute{} = attr ->
-          chained_validator.(attr, node, game)
+          %Attribute{} = attr ->
+            chained_validator.(attr, node, game)
+        end
       end
     end
   end

@@ -289,7 +289,7 @@ defmodule Rez.Parser.ValueParsers do
         [
           ignore(caret()),
           ignore(char(?p)),
-          text_delimited_by_parsers(open_brace(), close_brace())
+          text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:property, f} end
       )

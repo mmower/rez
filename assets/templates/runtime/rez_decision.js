@@ -13,7 +13,7 @@
 function RezDecision(purpose, data = {}) {
   this.purpose = purpose;
   this.made = false;
-  this.decision = false;
+  this.result = false;
   this.hidden = false;
   this.reason = "";
   this.data = data;

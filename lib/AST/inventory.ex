@@ -60,6 +60,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
         )
       ),
       attribute_if_present?(
+        "initial_contents",
+        attribute_has_type?(:table)
+      ),
+      attribute_if_present?(
         "apply_effects",
         attribute_has_type?(:boolean)
       ),

@@ -137,7 +137,7 @@ defmodule Rez.Utils do
     The search_fn/1 takes a node and determines whether it matches the search
     critera. If so it returns {:found, result} otherwise :not_found
     """
-    def search(node, search_fn, child_fn) when not is_nil(node) do
+    def search(%{} = node, search_fn, child_fn) do
       case search_fn.(node) do
         :not_found ->
           find_in_children(node, search_fn, child_fn)
@@ -147,10 +147,12 @@ defmodule Rez.Utils do
       end
     end
 
-    defp find_in_children(node, search_fn, child_fn) do
+    defp find_in_children(node, search_fn, child_fn) when not is_nil(node) do
+      children = child_fn.(node)
+
       Enum.find_value(
-        child_fn.(node),
-        fn child ->
+        children,
+        fn child when not is_nil(child) ->
           search(child, search_fn, child_fn)
         end
       )

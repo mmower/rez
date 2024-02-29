@@ -449,17 +449,45 @@ It's not elegant but it's feasible. This will likely get cleaned up in a future 
 
 === Dynamic Initializer
 
-A dynamic initializer uses the form `^i{...}` to run an expression once at the time the object is created. This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
+A dynamic initializer uses the form `^i{...}` to run an expression once at the time the object is created.
+
+This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
+
+Note that this is not a function, the initializer uses the last expression as the value. In the following example we name an actor using a randomly generated given & family name.
+
+....
+@actor random_npc {
+  name: ^i{
+    const given_name = $("given_names").randomElement();
+    const family_name = $("family_names").randomElement();
+    `${given_name} ${family_name}`;
+  }
+}
+....
 
 === Dynamic Value
 
 A dynamic value uses the form `^v{...}` to create an expression that gets evaluated each time it is referenced. This should be mostly superceded by the use of `^p{...}` to create properties.
 
 ....
-class_name: ^v{class == "g" ? "Gunslinger" : class =="s" ? "Sleuth" : "Crook"}
+@actor random_npc {
+  class_name: ^v{class == "g" ? "Gunslinger" : class =="s" ? "Sleuth" : "Crook"}
+}
 ....
 
 Note that there is an implicit `return` statement to which this value code is appended.
+
+=== Dynamic Property
+
+A dynamic property is a property generated from an expression in the form `^p{}` for example:
+
+....
+@actor random_npc {
+  class_name: ^p{
+    return this.class === "g" ? "Gunslinger" : class === "s" ? "Sleuth" : "Crook";
+  }
+}
+....
 
 == What's in a Game?
 

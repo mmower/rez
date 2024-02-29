@@ -114,6 +114,14 @@ defmodule Rez.AST.Game do
     |> Map.put(:by_id, Map.put(by_id, child_id, child))
   end
 
+  def recognises_id?(game, id) when is_atom(id) do
+    recognises_id?(game, to_string(id))
+  end
+
+  def recognises_id?(%Game{by_id: id_map}, id) when is_binary(id) do
+    Map.has_key?(id_map, id)
+  end
+
   @doc """
   ## Examples
       iex> alias Rez.AST.{Attribute, Game}
@@ -164,6 +172,7 @@ defmodule Rez.AST.Game do
 
   # Due to their dependency locations & zones are init'd separately
   @js_classes_to_init [
+    :lists,
     :behaviours,
     :actors,
     :assets,
@@ -173,7 +182,6 @@ defmodule Rez.AST.Game do
     :groups,
     :inventories,
     :items,
-    :lists,
     :plots,
     :relationships,
     :scenes,

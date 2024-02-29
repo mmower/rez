@@ -199,6 +199,22 @@
   }
 }
 
+@patch STRING_BEGINS_WITH_CONSONANT {
+  patch: "String"
+  method: "beginsWithConsonant"
+  impl: function() {
+    return /^[^aeiouAEIOU]/.test(this);
+  }
+}
+
+@patch STRING_BEGINS_WITH_VOWEL {
+  patch: "String"
+  method: "beginsWithVowel"
+  impl: function() {
+    return /^[aeiouAEIOU]/.test(string);
+  }
+}
+
 @patch STRING_CAPITALIZE {
   patch: "String"
   method: "capitalize"
@@ -727,6 +743,16 @@
 
   name: "dquoted"
   impl: (s) => {return `"${s}"`;}
+}
+
+@filter STRING_INDEFINITE_ARTICLE_FILTER {
+  %% String -> String
+
+  name: "i_article"
+  impl: (s) => {
+    const article = s.beginsWithConsonant() ? "a" : "an";
+    return `${article} ${s}`;
+  }
 }
 
 @filter ARRAY_LENGTH_FILTER {
