@@ -260,7 +260,7 @@ const basic_object = {
     const options = tree_spec["options"];
     const children = tree_spec["children"].map((spec) => this.instantiateBehaviourTree(spec));
 
-    return behaviour_template.instantiate(options, children);
+    return behaviour_template.instantiate(this, options, children);
   },
 
   createTraceryGrammarAttribute(attr_name, value) {

@@ -104,6 +104,10 @@ defmodule Rez.AST.ValueEncoder do
     encode_function(f)
   end
 
+  def encode_value({:code_block, code}) do
+    "function(obj) {return (#{code});}"
+  end
+
   def encode_value({:roll, {count, sides, modifier, rounds}}) do
     "new RezDieRoll(#{sides}, #{count}, #{modifier}, #{rounds})"
   end

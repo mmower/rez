@@ -1586,6 +1586,92 @@ The Rez stdlib defines a range of xref:behaviour_catalog.adoc[core behaviours] w
 
 The core behaviours are intended to provide an overall structure for creating different kinds of behaviour. In particular look at behaviours like xref:behaviour_catalog.adoc#_either[$either], xref:behaviour_catalog.adoc#_random_choice[$random_choice] and xref:behaviour_catalog:[$random_each] which can introduce variability into behaviour patterns.
 
+=== Writing Your Own Behaviours
+
+The `@behaviour` element allows you to write your own behaviours, typically these will be conditions and actions that query & modify, respectively, your game world. Let's take a look at a query first:
+
+....
+@behaviour actor_is_armed {
+  execute: function(owner, behaviour, wmem) {
+    return {
+      success: ($player.main_inventory.weapon_contents.length > 0),
+      wmem: wmem
+    }
+  }
+}
+....
+
+First note that the only thing we are required to define is the `execute:` attribute, which must be a regular function (an arrow function will not do). All `execute:` handler functions are required to return an object with two keys: `success` and `wmem`. The value for `success` should a boolean. In this case we return `true` if the players weapon slot has something in it, false if not. The value for `wmem` should be the working memory we were passed in.
+
+In this example we've assumed the actor is the #player. But we could make it more flexible using an option.
+
+....
+@behaviour actor_is_armed {
+  options: ["actor"]
+  execute: function(owner, behaviour, wmem) {
+    const actor = $(actor);
+    return {
+      success: (actor.main_inventory.weapon_contents.length > 0),
+      wmem: wmem
+    }
+  }
+}
+....
+
+Now we'd specify the behaviour as
+
+....
+^[actor_is_armed actor=#sam_spade]
+....
+
+An as long as Sam's `@actor` definition contained a `main_inventory` all would be well.
+
+Now let's examine how we would define an action:
+
+....
+@behaviour actor_drinks {
+  execute: function(owner, behaviour, wmem) {
+    $player.drunk += 1;
+    return {
+      success: true,
+      wmem: wmem
+    };
+  }
+}
+....
+
+We can see that this is even simpler. Most actions will return a successful result since you have, likely, already queried whether they be executed or not. But if an action can be executed and fail you can return a different results as per the query above.
+
+Working memory is assumed to be an object that is passed between the different behaviours in the tree. For example one behaviour could store a value that a later behaviour will use. We can see how `actor_sees_item` could return success and store the id of the item in the working memory for `actor_equips_item` to put into their inventory.
+
+Lastly the owner is the object that owns the behaviour tree. This allows you to make use of the owner's attributes within the behaviour. Here's an example of doing this. Let's create a generic `query` behaviour that lets us test a property of any object and compare it with an attribute of the owning element:
+
+....
+@behaviour query {
+  options: ["if", "obj"]
+  execute: function(owner, behaviour, wmem) {
+    const f = behaviour.option("if").bind(owner);
+    const o = $(behaviour.option("obj"));
+    return {
+      success: f(o),
+      wmem: wmem
+    };
+  }
+}
+
+@object foo {
+  cost: 2
+}
+
+@object bar {
+  cash: 10
+
+  test: ^[query obj="foo" if=^{obj.cost < this.cash}]
+}
+....
+
+Might take you a while to see what is going on here but we are making use of `bind` to make `this` into the owner object within the context of the code block being passed to the `query` via its `if` option.
+
 === Using Behaviour Trees
 
 Having defined a behaviour tree, how do you use it?

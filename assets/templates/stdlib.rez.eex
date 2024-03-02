@@ -974,7 +974,7 @@
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
+  execute: (owner, behaviour, wmem) => {
     let result = {success: true, wmem: wmem};
     for(const child of behaviour.children) {
       result = child.executeBehaviour(result.wmem);
@@ -1003,10 +1003,10 @@
     }
   }
 
-  execute: (behaviour, wmem) => {
+  execute: (owner, behaviour, wmem) => {
     const p = behaviour.intOption("p");
     const die = new RezDie(1, 100, 0);
-    let result = {success: false, id: behaviour.id, wmem};
+    let result = {success: false, wmem};
     for(const child of behaviour.children) {
       if(die.roll() < p) {
         result = child.executeBehaviour(result.wmem);
@@ -1028,11 +1028,11 @@
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
-    let result = {success: true, wmem: wmem};
+  execute: (owner, behaviour, wmem) => {
+    let result;
     for(const child of behaviour.children) {
-      result = child.executeBehaviour(result.wmem);
-      if(result.success) {
+      result = child.executeBehaviour(wmem);
+      if(!result.success) {
         break;
       }
     }
@@ -1051,11 +1051,11 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const count = behaviour.option("count");
+  execute: (owner, behaviour, wmem) => {
+    const count = behaviour.intOption("count");
     let result = {success: false, wmem: wmem};
     for(let i=0; i<count; i++) {
-      result = this.firstChild().executeBehaviour(result.wmem);
+      result = this.firstChild.executeBehaviour(result.wmem);
       if(!result.success) {
         return result;
       }
@@ -1076,11 +1076,11 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const attempts = behaviour.option("attempts");
+  execute: (owner, behaviour, wmem) => {
+    const attempts = behaviour.intOption("attempts");
     let result = {success: false, wmem: wmem};
     for(let i=0; i<attempts; i++) {
-      result = behaviour.firstChild().executeBehaviour(result.db);
+      result = behaviour.firstChild.executeBehaviour(result.wmem);
       if(result.success) {
         break;
       }
@@ -1101,12 +1101,12 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const p = behaviour.option("p");
+  execute: (owner, behaviour, wmem) => {
+    const p = behaviour.intOption("p");
     const die = new RezDie(1, 100, 0);
 
     if(die.roll() < p) {
-      return behaviour.firstChild().executeBehaviour(wmem);
+      return behaviour.firstChild.executeBehaviour(wmem);
     } else {
       return {success: false, id: behaviour.id, error: "Didn't execute"};
     }
@@ -1124,15 +1124,15 @@
   min_children: 2
   max_children: 2
 
-  execute: (behaviour, wmem) => {
-    const p = behaviour.option("p");
+  execute: (owner, behaviour, wmem) => {
+    const p = behaviour.intOption("p");
     const die = new RezDie(1, 100, 0);
     const roll = die.roll();
 
     if(roll < p) {
-      return behaviour.firstChild().executeBehaviour(wmem);
+      return behaviour.firstChild.executeBehaviour(wmem);
     } else {
-      return behaviour.secondChild().executeBehaviour(wmem);
+      return behaviour.secondChild.executeBehaviour(wmem);
     }
   }
 }
@@ -1146,9 +1146,9 @@
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
-    const die = new RezDie(1, behaviour.childCount(), 0);
-    const child = behaviour.getChild(die.roll());
+  execute: (owner, behaviour, wmem) => {
+    const die = new RezDie(1, behaviour.childCount, -1);
+    const child = behaviour.getChildAt(die.roll());
     return child.executeBehaviour(wmem);
   }
 }
@@ -1164,16 +1164,17 @@
   options: []
   min_children: 2
 
-  execute: (behaviour, wmem) => {
-    let child_walk = wmem[this];
+  execute: (owner, behaviour, wmem) => {
+    let child_walk = wmem[behaviour.id];
 
     if(typeof(child_walk) == "undefined" || child_walk.length == 0) {
-      child_walk = Array.from(Array(behaviour.childCount()).keys()).shuffle();
+      child_walk = Array.from(Array(behaviour.childCount).keys()).fy_shuffle();
     }
 
-    const child = child_walk.shift();
-    wmem[this] = child_walk;
+    const child_idx = child_walk.shift();
+    wmem[behaviour.id] = child_walk;
 
+    const child = behaviour.getChildAt(child_idx);
     return child.executeBehaviour(wmem);
   }
 }
@@ -1187,8 +1188,8 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const result = behaviour.firstChild().executeBehaviour(wmem);
+  execute: (owner, behaviour, wmem) => {
+    const result = behaviour.firstChild.executeBehaviour(wmem);
     result.success = true;
     return result;
   }
@@ -1203,8 +1204,8 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const result = behaviour.firstChild().executeBehaviour(wmem);
+  execute: (owner, behaviour, wmem) => {
+    const result = behaviour.firstChild.executeBehaviour(wmem);
     result.success = false;
     return result;
   }
@@ -1219,8 +1220,8 @@
   min_children: 1
   max_children: 1
 
-  execute: (behaviour, wmem) => {
-    const result = behaviour.firstChild().executeBehaviour(wmem);
+  execute: (owner, behaviour, wmem) => {
+    const result = behaviour.firstChild.executeBehaviour(wmem);
     if(result.success) {
       result.success = false;
       result.error = "Inversion";
@@ -1238,7 +1239,7 @@
   options: []
   max_children: 0
 
-  execute: (behaviour, wmem) => {
+  execute: (owner, behaviour, wmem) => {
     return {success: false, wmem: wmem};
   }
 }
@@ -1250,7 +1251,7 @@
   options: []
   max_children: 0
 
-  execute: (behaviour, wmem) => {
+  execute: (owner, behaviour, wmem) => {
     return {success: true, wmem: wmem};
   }
 }

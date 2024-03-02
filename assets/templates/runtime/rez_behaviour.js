@@ -16,6 +16,18 @@ RezBehaviour.prototype = {
   __proto__: basic_object,
   constructor: RezBehaviour,
 
+  get firstChild() {
+    return this.children[0];
+  },
+
+  get secondChild() {
+    return this.children[1];
+  },
+
+  get childCount() {
+    return this.children.length;
+  },
+
   configure() {
     const config_fn = this.getAttribute("configure");
     if(typeof(config_fn) === "function") {
@@ -47,24 +59,8 @@ RezBehaviour.prototype = {
     this.options[name] = value;
   },
 
-  firstChild() {
-      return this.children[0];
-  },
-
-  secondChild() {
-    return this.children[1];
-  },
-
-  getChild(idx) {
+  getChildAt(idx) {
     return this.children[idx];
-  },
-
-  children() {
-    return this.children;
-  },
-
-  childCount() {
-    return this.children.length;
   },
 
   result(wmem, success) {
@@ -78,9 +74,9 @@ RezBehaviour.prototype = {
   executeBehaviour(wmem) {
     // By definition this is a function of two attributes
     // (behaviour, wmem)
-    const handler = this.getAttribute("execute");
-    if(typeof(handler) === "function") {
-      return handler(this, wmem);
+    const execute = this.getAttribute("execute");
+    if(typeof(execute) === "function") {
+      return execute(this.owner, this, wmem);
     } else {
       return {
         id: this.id,
@@ -91,8 +87,9 @@ RezBehaviour.prototype = {
     }
   },
 
-  instantiate(options, children = []) {
+  instantiate(owner, options, children = []) {
     const behaviour = this.copyWithAutoId();
+    behaviour.owner = owner;
     behaviour.options = options;
     behaviour.children = children;
     behaviour.configure();

@@ -281,6 +281,19 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
+  def code_block_value() do
+    ParserCache.get_parser("code_block", fn ->
+      sequence(
+        [
+          lookahead(sequence([caret(), open_brace()])),
+          ignore(caret()),
+          text_delimited_by_nested_parsers(open_brace(), close_brace())
+        ],
+        ast: fn [code] -> {:code_block, code} end
+      )
+    end)
+  end
+
   # Property
   # ^p{}
   def property_value() do
@@ -543,6 +556,7 @@ defmodule Rez.Parser.ValueParsers do
           elem_ref_value(),
           binding_path_value(),
           keyword_value(),
+          code_block_value(),
           function_value(),
           dynamic_initializer_value(),
           dynamic_value(),

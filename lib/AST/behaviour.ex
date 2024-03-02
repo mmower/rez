@@ -29,7 +29,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
 
   def default_attributes(_behaviour),
     do: %{
-      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
+      "options" => Attribute.list("options", []),
+      "min_children" => Attribute.number("min_children", 0),
+      "max_children" => Attribute.number("max_children", 0),
+      "owner_id" => Attribute.elem_ref("owner_id", "")
     }
 
   def pre_process(behaviour), do: behaviour
@@ -44,23 +48,27 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
 
   def validators(_behaviour) do
     [
-      attribute_present?(
+      attribute_if_present?(
         "options",
         attribute_has_type?(
           :list,
           attribute_coll_of?(:keyword)
         )
       ),
-      attribute_if_present?(
-        "check_children",
-        attribute_has_type?(:function)
-      ),
       attribute_present?(
         "execute",
         attribute_has_type?(
           :function,
-          validate_expects_params?(["behaviour", "wmem"])
+          validate_expects_params?(["owner", "behaviour", "wmem"])
         )
+      ),
+      attribute_if_present?(
+        "min_children",
+        attribute_has_type?(:number)
+      ),
+      attribute_if_present?(
+        "max_children",
+        attribute_has_type?(:number)
       ),
       attribute_if_present?(
         "$js_ctor",
