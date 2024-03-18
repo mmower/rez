@@ -22,7 +22,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Style do
 
   def pre_process(style), do: style
 
-  def process(style, _node_map), do: style
+  def process(style, _resources), do: style
 
   def children(_style), do: []
 

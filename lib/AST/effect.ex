@@ -44,7 +44,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Effect do
 
   def pre_process(effect), do: effect
 
-  def process(effect, node_map) do
+  def process(effect, %{by_id: node_map}) do
     effect
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

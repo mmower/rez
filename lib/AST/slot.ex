@@ -43,7 +43,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
 
   def pre_process(slot), do: slot
 
-  def process(slot, node_map) do
+  def process(slot, %{by_id: node_map}) do
     slot
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

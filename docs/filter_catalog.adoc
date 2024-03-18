@@ -1,3 +1,11 @@
++++
+title = "Rez Filter Catalog"
+author = "Matt Mower"
+draft = false
+date = 2024-03-16
++++
+:relfileprefix: ../
+:relfilesuffix: /
 = Filter Catalog
 :toc:
 :toclevels: 1

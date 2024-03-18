@@ -111,6 +111,7 @@ defmodule Rez.Parser.Parser do
     choice(
       [
         alias_directive(),
+        behaviour_template(),
         derive_directive(),
         enum_directive(),
         # Now the pre-defined blocks

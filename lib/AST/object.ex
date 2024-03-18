@@ -33,7 +33,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Object do
 
   def pre_process(object), do: object
 
-  def process(object, node_map) do
+  def process(object, %{by_id: node_map}) do
     object
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

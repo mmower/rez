@@ -114,6 +114,10 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.compiled_template(name, t))}
   end
 
+  def set_bht_attr(%{attributes: attributes} = node, name, {:bht, value}) do
+    %{node | attributes: Map.put(attributes, name, Attribute.bht(name, value))}
+  end
+
   def delete_attr(%{attributes: attributes} = node, name) when is_binary(name) do
     %{node | attributes: Map.delete(attributes, name)}
   end
@@ -173,7 +177,7 @@ defmodule Rez.AST.NodeHelper do
   with the collection under `coll_key` having been passed through
   `Node.process` themselves.
   """
-  def process_collection(parent, coll_key, node_map) do
+  def process_collection(parent, coll_key, resources) do
     case Map.get(parent, coll_key) do
       nil ->
         parent
@@ -183,10 +187,54 @@ defmodule Rez.AST.NodeHelper do
           parent,
           coll_key,
           map_to_map(coll, fn child_node ->
-            Node.process(child_node, node_map)
+            process(child_node, resources)
           end)
         )
     end
+  end
+
+  @doc """
+  Process the node, including type-specific processes
+  """
+  def process(node, resources) do
+    node
+    |> expand_behaviour_templates(resources.behaviour_templates)
+    |> Node.process(resources)
+  end
+
+  @doc """
+  Given a node, search for behaviour-tree attributes and expand any templates used in the tree
+  """
+  def expand_behaviour_templates(node, templates) do
+    Enum.reduce(node.attributes, node, fn
+      {_, %{type: :bht} = attr}, node ->
+        expand_behaviour_attribute(node, attr, templates)
+
+      _, node ->
+        node
+    end)
+  end
+
+  @doc """
+  Given a behaviour-tree attribute, expand any templates within the value
+  """
+  def expand_behaviour_attribute(node, %{name: name, value: root_behaviour}, templates) do
+    set_bht_attr(node, name, {:bht, expand_behaviour(root_behaviour, templates)})
+  end
+
+  def expand_behaviour({:template, template_id}, templates) do
+    case Map.get(templates, template_id) do
+      nil ->
+        IO.puts("Compiler error: No @behaviour_template with id: '#{template_id}'!")
+        System.halt(98)
+
+      tmpl ->
+        expand_behaviour(tmpl, templates)
+    end
+  end
+
+  def expand_behaviour({behaviour_id, options, children}, templates) do
+    {behaviour_id, options, Enum.map(children, &expand_behaviour(&1, templates))}
   end
 
   @doc """

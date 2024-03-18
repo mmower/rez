@@ -33,7 +33,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Actor do
 
   def pre_process(actor), do: actor
 
-  def process(actor, node_map) do
+  def process(actor, %{by_id: node_map}) do
     actor
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

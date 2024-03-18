@@ -22,7 +22,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Script do
 
   def pre_process(script), do: script
 
-  def process(script, _node_map), do: script
+  def process(script, _resources), do: script
 
   def children(_script), do: []
 

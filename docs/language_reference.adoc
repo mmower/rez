@@ -1,4 +1,12 @@
-= Rez: a system for creating HTML choice-based games
++++
+title = "Language Guide"
+author = "Matt Mower"
+draft = false
+date = 2024-03-16
++++
+:relfileprefix: ../
+:relfilesuffix: /
+= Language Guide
 :toc:
 
 == Introduction
@@ -98,7 +106,7 @@ Rez is a declarative language for writing a game in terms of a set of elements r
 
 In Rez elements are things like items, actors, scenes, locations, assets and so forth. During compilation Rez draws these elements together and converts them into Javascript objects that represent the game when running in the browser.
 
-Elements are generally described using a set of named attributes. For example an `item`` might have a `description` attribute that can be displayed to the player when they examine the item.
+Elements are generally described using a set of named attributes. For example an `item` might have a `description` attribute that can be displayed to the player when they examine the item.
 
 Rez uses Javascript functions to supply dynamic behaviour. For the most part you can ignore this but, as your game becomes more complex and you want to incorporate dynamic behaviours, you may need to familiarize yourself with writing small Javascript functions.
 
@@ -300,6 +308,10 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |Used within `bindings` to specify an object via a property path.
 |``source.exits`
 
+|Code Block
+|A Javascript expression. It is converted into an expression `function(obj) {return (<block>);}`
+|`^{Math.rand_int(1,10)}`
+
 |Dynamic Initializer
 |A Javascript expression that is evaluated when the game starts
 |`^i{Math.rand_int(1,10)}`
@@ -346,7 +358,7 @@ The underlying data representation is a Javascript string.
 
 === Attribute Alias (Deprecated)
 
-An attribute alias is used to refer to an attribute of a specific element. It is prefixed with an ampersand (`&`) and consists of `elem_id.attr_name` where `elem_id`` is an element id and `attr_name`` is the name of an attribute of that element.
+An attribute alias is used to refer to an attribute of a specific element. It is prefixed with an ampersand (`&`) and consists of `elem_id.attr_name` where `elem_id` is an element id and `attr_name` is the name of an attribute of that element.
 
 The underlying representation is a Javascript object `{elem_id: <elem_id> attr_name: <attr_name>}`.
 
@@ -605,15 +617,22 @@ You can use Markup for simple formatting although here we are showing off some o
 
 You can go quite a long way using only this subset of Rez's features.
 
+== How to make a Game
+
+Having gotten over the basics
+
+
+
+
 == What's Going on in the Browser
 
 We should distinguish between two environments: The _author_time_ environment where we're dealing with `.rez` source files containg elements & attributes, and the _runtime_ environment where these have been compiled into JavaScript code that runs in the browser.
 
 === runtime.js
 
-All of the functionality of the game is converted into Javascript objects and functions which end up in a file called `runtime.js`. You can see this in the `dist/assets` folder of your game. It's worth looking through runtime.js because you can see all of the library classes and functionality. Note that you should never modify `runtime.js`` as it will be overwritten the next time you compile your game. However, in practice, there should be no reason to modify this file as its contents are produced from your game.
+All of the functionality of the game is converted into Javascript objects and functions which end up in a file called `runtime.js`. You can see this in the `dist/assets` folder of your game. It's worth looking through runtime.js because you can see all of the library classes and functionality. Note that you should never modify `runtime.js` as it will be overwritten the next time you compile your game. However, in practice, there should be no reason to modify this file as its contents are produced from your game.
 
-In the runtime environment, your `@game` element is translated into a JS object with `RezGame` as its prototype, the scenes into JS objects with `RezScene` as its prototype, and cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object defined in `runtime.js``.
+In the runtime environment, your `@game` element is translated into a JS object with `RezGame` as its prototype, the scenes into JS objects with `RezScene` as its prototype, and cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object defined in `runtime.js`.
 
 [Advanced Note]: If you want to use different objects you can use the `$js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
 
@@ -662,14 +681,14 @@ Using the `blocks:` attribute we can specify the attribute of cards that we want
 
 When the `explore` scene gets rendered it will render its current card and bind the rendered content to `content` and also render the card `#sidebar` and bind that content to `sidebar`. So using the `${sidebar}` template expression from the layout includes the sidebar content.
 
-Note that when a card is used as a block it automatically gets a `$parent_block` binding. This allows the content of the block to easily reference attributes of the enclosing card.
+Note that when a card is used from a `block:` attribute it is automatically given a `$parent_block` binding (that points to the card using it as a block) so that it can refer to the attributes of its parent card.
 
-This is useful when you want to create a "parameterized" block. For example, to dynamically render a list of exits available in a card representing a location.
+This is useful when you want to create a "parameterized" block. For example, we could dynamically render a list of available exits in a card representing a location, this way:
 
 ....
 @card list_exits {
   bindings: {
-    location: {function(block) {return block.parent_block.source;}}
+    location: ^{obj.$parent_block.source}
   }
   content: ```
     $if(location.exits) {%
@@ -699,27 +718,160 @@ This is useful when you want to create a "parameterized" block. For example, to 
 }
 ....
 
-In this example `#room_with_exits` has an `exits:` attribute and renders the card `#list_exits` as a block. Similarly `#another_room_with_exits` has an `exits:` attribute and renders `#list_exits`.
+In this example `#room_with_exits` and `#another_room_with_exits` both define an `exits:` attribute and render the card `#list_exits` as a block.
 
-However the `#list_exits` card doesn't have to know anything about the card that is rendering it, only that it
+However, `#list_exits` doesn't have to know which card is rendering it, only that it defines an `exits:` attribute.
 
-The `#list_exits` card doesn't have to know which card is rendering it, only that it defines an `exits:` attribute. We use a function binding to reach up to the parent that defines `exits:` (i.e. the main card being rendered).
+We use a code-block binding `location:` from the `#list_exits` card to reach up to its 'parent' card (the one that included it as a block) to find its `exits:` attribute and use that for rendering the list of exits.
 
 This means we can use `#list_exits` from any card that defines an `exits:` attribute.
 
 === What are Bindings?
 
-Bindings are how we make data from our game elements available to the rendering process. By itself the template doesn't know anything about your game world and the elements you have populated it with. You may have an `@actor` element with id `#player` that has a `name:` attribute, but the renderer doesn't know about that. It doesn't have a variable that refers to it. Bindings are how you give it one.
+Bindings are how we make data from our game elements available to the code and templates that are rendering our view. You've already seen an example of a binding in the section above:
 
-Rez tries to be helpful and creates some useful bindings automatically. For example it binds `card` to the `RezCard` object representing the `@card` that is currently being rendered and, likewise, `scene` to the current `RezScene` and `game` is always available. So, in your template, you can refer to attributes of the game, card, & scene using `game.` `card.` or `scene.`. There is also a binding `block` which we'll come back to later.
+....
+bindings: {
+  location: ^{obj.$parent_block.source}
+}
+....
 
-But if you want to write:
+But what does this mean? And why do we need it?
 
-```
+Let's go back to basics with a very simple content template, e.g.:
+
+....
+@card c_test_1 {
+  content: ```
+    Hello from the first chapter
+  ```
+}
+....
+
+This will present the text "Hello from the first chapter" in the browser.
+
+But how does this happen?
+
+Rez converts this simple markup into a Javascript function that renders it. For the content above you'd end up with something like
+
+....
+function(bindings) {
+  return [
+    function(bindings) {
+      return `<div id="card_c_test_1" data-card="c_test_1" class="card">Hello from the first chapter.</div>`;
+    }
+  ].reduce(
+    function(text, f) {
+      return text + f(bindings)
+    },
+    ""
+  );
+}
+....
+
+Now you might be thinking "OMG! Why do we need such a complex function to render a simple line of text?"
+
+If every template was as simple as this, we wouldn't. But dynamic templates do need this approach. But, before we get to that, let's break down this function.
+
+The outer level is a function that accepts an argument `bindings` and then returns the result of a `reduce()` call on an array. In this case an array containing a single function also taking `bindings` as its argument.
+
+This 'inner' function doesn't use its argument, it just returns the static string that is our output.
+
+The reducer function takes some text (initially an empty string) and a function (taking a bindings argument), and returns of appending the function result to the text.
+
+The result is that we "thread" the outer `bindings` variable through the inner function and concatenate the results.
+
+So essentially this boils down to:
+
+....
+"" + `<div id="card_c_test_1" data-card="c_test_1" class="card">Hello from the first chapter.</div>`
+....
+
+And, hence, to our output.
+
+To see why it works this way, let's look at a dynamic template using a template expression:
+
+....
+@card c_test_2 {
+  chapter: "second"
+  content: ```
+    Hello from the ${card.chapter} chapter.
+  ```
+}
+....
+
+This renders as "Hello from the second chapter." The template is taking the chapter title "second" from the cards `chapter:` attribute. Let's look at the rendering function generated for this template:
+
+....
+function(bindings) {
+  return [
+    function(bindings) {
+      return `<div id="card_c_test_2" data-card="c_test_2" class="card">Hello from the `;
+    },
+    function(bindings) {
+      return (function(bindings) {
+        return bindings.card.chapter;
+      })(bindings);
+    },
+    function(bindings) {
+      return ` chapter.</div>`;
+    }
+  ].reduce(
+    function(text, f) {
+      return text + f(bindings)
+    }, ""
+  );
+},
+....
+
+It's more complicated but follows the same exact pattern, running `reduce()` over an array, that now contains three inner functions. These functions return the following content respectively:
+
+....
+`<div id="card_c_test_2" data-card="c_test_2" class="card">Hello from the `
+`second`
+` chapter.</div>`
+....
+
+That is concatenated to present the user with "Hello from the second chapter."
+
+But how is "second" getting from the `chapter:` attribute of the card into the second inner function. It happens through the `bindings` argument that we are threading through the outer rendering function to those inner functions. Let's look at the second inner function:
+
+....
+function(bindings) {
+  return (function(bindings) {
+    return bindings.card.chapter;
+  })(bindings);
+}
+....
+
+If we strip away the mechanism here the core part is:
+
+....
+return bindings.card.chapter;
+....
+
+This is what the template expression `${card.chapter}` boils down to.
+
+This inner function is using it's `bindings` argument to look up `card.chapter`. `card` is an example of a default binding that Rez makes. Whenever a `@card` is rendering it binds `card` to the `RezCard` object representing that card. In this case the object that defines the `chapter` property, containing the string `"second"`. Rez also automatically binds `scene` to the current `RezScene` and `game` to the `RezGame` instance. So you can always use expressions involving `card`, `scene`, or `game` bindings without needing to bind anything yourself.
+
+But, by itself, the rendering system knows nothing about your game world and the elements you have populated it with. For example, you may have an `@actor` element with id `#player` that has a `name:` attribute, but the renderer doesn't know about that. In order to use an expression like:
+
+....
 ${player.name}
-```
+....
 
-In your template. How could you make that work?
+We have to teach Rez how to point `player` at the right object. That's where bindings and the `bindings:` attribute come in. They bind a variable name that you can use in a template to the Javascript object containing the values you want to refer to. To make the expression above work we'd use:
+
+....
+@card c_player_name {
+  bindings: {player: #player}
+  content: ```
+  Your name is ${player.name} and a very fine name it is too!
+  ```
+}
+....
+
+This is an example of an 'element binding'.
 
 ==== Element Bindings
 
@@ -729,7 +881,7 @@ The simplest form of binding is to bind a variable name to the game object repre
 bindings: {player: #player}
 ```
 
-Here we're teaching Rez to make a binding to the Javascript reference (`player``) representing the given element id (`#player`). With this binding in place we can refer to `player` in our templates.
+Here we're teaching Rez to make a binding to the Javascript reference (`player`) representing the given element id (`#player`). With this binding in place we can refer to `player` in our templates.
 
 ==== Function Bindings
 
@@ -767,7 +919,7 @@ A path binding is used to refer an object by a key-path from the $block object. 
 exits: `$parent_block.source.exits
 ....
 
-All path-references implictly begin with the `$block` variable (that refers to the card currently being rendered). So ``$parent_block` refers to the `$parent_block` attribute of the current `$block`.
+All path-references implictly begin with the `$block` variable (that refers to the card currently being rendered). So `$parent_block` refers to the `$parent_block` attribute of the current `$block`.
 
 Using a path binding we can get to the parent card which may be one of many cards (why we can't use an element reference) and its attributes.
 
@@ -889,7 +1041,7 @@ In this case we would add it to (for example) the scenes `blocks:` attribute. To
 
 === Scene Layout Mode
 
-A `@scene`` has a required attribute `layout_mode:` which can, as of v0.11, have two values:
+A `@scene` has a required attribute `layout_mode:` which can, as of v0.11, have two values:
 
 * `:single`
 * `:stack`
@@ -1189,7 +1341,7 @@ A substitution is where we replace a token like `${player.name}` in a template w
 content: ```Your name is ${player.name}. It is a good name.```
 ....
 
-If the `player`` objects `name` attribute is "matt" this will return:
+If the `player` objects `name` attribute is "matt" this will return:
 
 ....
 Your name is matt. It is a good name.
@@ -1210,26 +1362,34 @@ content: ```Your name is ${player.name | append: "!"}```
 Where does this `player` reference come from? Good question, this is an example of a binding. You've already seen bindings at work with `${content}` and `${sidebar}`. `content` is an example of a binding that Rez automatically makes available but you can add your own to refer to any objects you like.
 
 ....
-bindings: {player: #player}
+bindings: {
+  player: #player
+}
 content: ```Your name is ${player.name}```
 ....
 
-Here we are binding the Javascript variable `player` to an element with id `player` (which we might assume is an `@actor` element defining the player character). We can also make function bindings:
+Here we are binding the Javascript variable `player` to an element with id `player` (which we might assume is an `@actor` element defining the player character). For example:
 
 ....
-bindings: {player: () => {return $("player")}}
+bindings: {
+  player: ^{$("player")}
+}
 ....
 
-Would be an equivalent way of creating this binding. Because we often want to refer to game elements we have the shorthand above. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
+is an equivalent way of creating the same binding. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
 
 ....
-bindings: {actor: () => {return $("npc_list").randomElement()}}
+bindings: {
+  actor: ^{$("npc_list").randomElement()}
+}
 ....
 
 But you don't have to make bindings only to elements, you can bind to any Javascript value:
 
 ....
-bindings: {coins: Math.clrand_int(25)}
+bindings: {
+  coins: ^{Math.clrand_int(25)}
+}
 content: ```
 You found ${coins} coins on the floor and put them in your pocket.
 ```
@@ -1240,7 +1400,9 @@ You found ${coins} coins on the floor and put them in your pocket.
 In the context of a template there are usually default bindings:
 
 * `$block` - the current rendering block, the element it represents is usually in its `source` property
-* `$card` - when rendering a card, the card that is being rendered
+* `card` - the `RezCard` of the card being rendered
+* `scene` - the `RezScene` of the scene being rendered
+* `game` - the `RezGame` instance
 
 ==== Substitution Filters
 
@@ -1341,7 +1503,9 @@ $foreach(x: a.b.map((el) => somefun(el))) {%
 you would write:
 
 ....
-bindings: {list: function() {return a.b.map((el) => somefun(el))}}
+bindings: {
+  list: ^{a.b.map((el) => somefun(el))}
+}
 content: ```
 $foreach(x: list) {%
   <div id="${x.id}">${x.title}</div>

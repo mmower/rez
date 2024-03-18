@@ -24,7 +24,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
 
   def pre_process(relationship), do: relationship
 
-  def process(relationship, node_map) do
+  def process(relationship, %{by_id: node_map}) do
     relationship
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

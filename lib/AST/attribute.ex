@@ -77,6 +77,10 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :set, value: values}
   end
 
+  def bht(name, {_root_behaviour_id, %{} = _options, children} = value) when is_list(children) do
+    %Attribute{name: name, type: :bht, value: value}
+  end
+
   def source_template(name, value) when is_binary(value) do
     %Attribute{name: name, type: :source_template, value: value}
   end

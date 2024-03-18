@@ -24,7 +24,7 @@ defprotocol Rez.AST.Node do
   @doc """
   `process/1` should handle any post-processing of the given node.
   """
-  def process(node, node_map)
+  def process(node, resources)
 
   @doc """
   `children/1` should return a list of the children of the given node

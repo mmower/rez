@@ -38,7 +38,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
 
   def pre_process(behaviour), do: behaviour
 
-  def process(behaviour, node_map) do
+  def process(behaviour, %{by_id: node_map}) do
     behaviour
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

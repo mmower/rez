@@ -35,7 +35,7 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
 
   def pre_process(list), do: list
 
-  def process(list, node_map) do
+  def process(list, %{by_id: node_map}) do
     list
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

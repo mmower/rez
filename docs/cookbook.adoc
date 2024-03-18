@@ -1,4 +1,12 @@
-= REZ: Cookbook
++++
+title = "Rez Cookbook"
+author = "Matt Mower"
+draft = false
+date = 2024-03-16
++++
+:relfileprefix: ../
+:relfilesuffix: /
+= Cookbook
 
 The following is a guide to some of Rez's features and common things you may want to be able to do.
 
@@ -200,7 +208,7 @@ on_roll: (card, evt) => {
 }
 ....
 
-In this case the handler, after doing its work, plays the card `#after_roll``.
+In this case the handler, after doing its work, plays the card `#after_roll`.
 
 == Dynamic Links
 

@@ -48,7 +48,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Timer do
 
   def pre_process(timer), do: timer
 
-  def process(timer, node_map) do
+  def process(timer, %{by_id: node_map}) do
     timer
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

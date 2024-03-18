@@ -32,7 +32,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
 
   def pre_process(generator), do: generator
 
-  def process(generator, node_map) do
+  def process(generator, %{by_id: node_map}) do
     generator
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

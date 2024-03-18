@@ -1,4 +1,12 @@
-= Rez: Elements & Directives Catalog
++++
+title = "Rez Elements & Directives Catalog"
+author = "Matt Mower"
+draft = false
+date = 2024-03-16
++++
+:relfileprefix: ../
+:relfilesuffix: /
+= Elements & Directives Catalog
 :toc:
 :toclevels: 1
 
@@ -38,6 +46,7 @@ Elements describe in-game concepts.
 Directives modify in-game concepts.
 
 * <<Alias (Directive), Alias>>
+* <<Behaviour Template (Directive), Behaviour Template>>
 * <<Derive (Directive), Derive>>
 * <<Declare (Directive), Declare>>
 * <<Enum (Directive), Enum>>
@@ -380,6 +389,51 @@ The rest of the behaviours in this sequence will only be run if Sam is in his of
 |===
 
 === Optional Attributes
+
+== Behaviour Template (Directive)
+
+A behaviour template is a composable element of behaviour. When writing behaviour trees you may find yourself wanting to use some behaviours over and over but not want to copy a whole tree. That's where behaviour templates come in. With a template you can include just the parts of behaviour you need.
+
+=== Syntax
+
+The syntax for a behaviour template look like:
+
+....
+@behaviour_template <template_id> ^[...]
+....
+
+Behaviour template id's are separate to element id's and can overlap without conflict.
+
+=== Usage
+
+Let's look at an example. Here is an actor with some behaviours:
+
+....
+@actor sam_spade {
+  behaviours: ^[$select [$sequence [actor_in location_type=:bar] [actor_is state=:thirsty] [actor_says msg="Give me a whisky."]]
+                        [..more behaviours..]]
+}
+....
+
+Maybe it's not just Sam that you want to be able to order liquor at the bar. But you don't want to copy Sam's entire `behaviours:` attribute as it contains some behaviours that are unique to Sam. We can move this specific behaviour into a template and share it among multiple actors (or any other behaviour supporting object in your game):
+
+....
+@behaviour_template order_whisky ^[$sequence [actor_in location_type=:bar] [actor_is state=:thirsty] [actor_says msg="Give me a whisky."]]
+
+@actor sam_spade {
+  behaviours: ^[$select &order_whisky
+                        [..behaviours unique to Sam..]]
+}
+
+@actor joel_cairo {
+  behaviours: ^[$select &order_whisky
+                        [..behaviours unique to Joel..]]
+}
+....
+
+Now both Sam and Joel can make use of the behaviour.
+
+Templates can also include other templates allowing for clean composition of many complex behaviours.
 
 == Card (Element)
 

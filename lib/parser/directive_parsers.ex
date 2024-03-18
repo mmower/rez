@@ -9,6 +9,23 @@ defmodule Rez.Parser.DirectiveParsers do
   import Rez.Parser.UtilityParsers
   import Rez.Parser.ValueParsers
   import Rez.Parser.IdentifierParser
+  import Rez.Parser.BTreeParser
+
+  def behaviour_template() do
+    sequence(
+      [
+        iliteral("@behaviour_template"),
+        iws(),
+        commit(),
+        js_identifier("behaviour_template"),
+        iws(),
+        bt_parser()
+      ],
+      ast: fn [template_id, {:bht, bht}] ->
+        {:behaviour_template, template_id, bht}
+      end
+    )
+  end
 
   def declare_directive() do
     sequence(
@@ -106,17 +123,15 @@ defmodule Rez.Parser.DirectiveParsers do
 
   def keyboard_modifiers() do
     many(keyboard_modifier())
-    |> transform(
-      fn modifier_list ->
-        {:modifiers,
-          Enum.reduce(
-            modifier_list,
-            %{shiftKey: false, altKey: false, metaKey: false, ctrlKey: false},
-            fn key_mod, modifiers ->
-              Map.put(modifiers, key_mod, true)
-            end
-          )
-        }
+    |> transform(fn modifier_list ->
+      {:modifiers,
+       Enum.reduce(
+         modifier_list,
+         %{shiftKey: false, altKey: false, metaKey: false, ctrlKey: false},
+         fn key_mod, modifiers ->
+           Map.put(modifiers, key_mod, true)
+         end
+       )}
     end)
   end
 
@@ -124,7 +139,8 @@ defmodule Rez.Parser.DirectiveParsers do
     sequence([
       alpha(),
       many(choice([alpha(), digit()]))
-    ]) |> transform(fn ast -> ast |> List.flatten() |> List.to_string() end)
+    ])
+    |> transform(fn ast -> ast |> List.flatten() |> List.to_string() end)
   end
 
   def key_desc() do

@@ -82,7 +82,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def pre_process(scene), do: scene
 
-  def process(scene, node_map) do
+  def process(scene, %{by_id: node_map}) do
     scene
     |> NodeHelper.copy_attributes(node_map)
     |> Scene.build_template()

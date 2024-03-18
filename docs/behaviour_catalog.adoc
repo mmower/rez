@@ -1,3 +1,11 @@
++++
+title = "Rez Behaviour Catalog"
+author = "Matt Mower"
+draft = false
+date = 2024-03-16
++++
+:relfileprefix: ../
+:relfilesuffix: /
 = Behaviour Catalog
 :toc:
 :toc-title: Built-in behaviours

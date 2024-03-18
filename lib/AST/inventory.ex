@@ -36,7 +36,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
 
   def pre_process(inventory), do: inventory
 
-  def process(inventory, node_map) do
+  def process(inventory, %{by_id: node_map}) do
     inventory
     |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()

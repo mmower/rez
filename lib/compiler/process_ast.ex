@@ -12,11 +12,11 @@ defmodule Rez.Compiler.ProcessAST do
   @doc """
   Runs the Node.pre-process/1 callback on all AST nodes
   """
-  def run_phase(%Compilation{status: :ok, game: %Game{by_id: node_map} = game} = compilation) do
+  def run_phase(%Compilation{status: :ok, game: %Game{} = game} = compilation) do
     # We know we're possibly creating temporary files during node processing
     # so ensure they are cleaned up when we exit
     Temp.track!()
-    %{compilation | game: Node.process(game, node_map)}
+    %{compilation | game: Node.process(game, game)}
   end
 
   def run_phase(compilation) do

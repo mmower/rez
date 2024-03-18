@@ -32,6 +32,7 @@ defmodule Rez.AST.Game do
             actors: %{},
             assets: %{},
             behaviours: %{},
+            behaviour_templates: %{},
             cards: %{},
             effects: %{},
             factions: %{},
@@ -88,6 +89,10 @@ defmodule Rez.AST.Game do
 
   def add_child({:enum, id, values}, %Game{enums: enums} = game) do
     %{game | enums: Map.put(enums, id, values)}
+  end
+
+  def add_child({:behaviour_template, id, template}, %Game{behaviour_templates: templates} = game) do
+    %{game | behaviour_templates: Map.put(templates, id, template)}
   end
 
   def add_child({:keybinding, _, _, _} = key_binding, %Game{keybindings: bindings} = game) do
@@ -339,31 +344,31 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
 
   def pre_process(game), do: game
 
-  def process(%Game{} = game, node_map) do
+  def process(%Game{} = game, %{} = resources) do
     game
     |> Game.set_defaults()
     |> Game.build_template()
     |> TemplateHelper.compile_template_attributes()
-    |> NodeHelper.process_collection(:actors, node_map)
-    |> NodeHelper.process_collection(:assets, node_map)
-    |> NodeHelper.process_collection(:behaviours, node_map)
-    |> NodeHelper.process_collection(:cards, node_map)
-    |> NodeHelper.process_collection(:effects, node_map)
-    |> NodeHelper.process_collection(:factions, node_map)
-    |> NodeHelper.process_collection(:filters, node_map)
-    |> NodeHelper.process_collection(:generators, node_map)
-    |> NodeHelper.process_collection(:groups, node_map)
-    |> NodeHelper.process_collection(:inventories, node_map)
-    |> NodeHelper.process_collection(:slots, node_map)
-    |> NodeHelper.process_collection(:items, node_map)
+    |> NodeHelper.process_collection(:actors, resources)
+    |> NodeHelper.process_collection(:assets, resources)
+    |> NodeHelper.process_collection(:behaviours, resources)
+    |> NodeHelper.process_collection(:cards, resources)
+    |> NodeHelper.process_collection(:effects, resources)
+    |> NodeHelper.process_collection(:factions, resources)
+    |> NodeHelper.process_collection(:filters, resources)
+    |> NodeHelper.process_collection(:generators, resources)
+    |> NodeHelper.process_collection(:groups, resources)
+    |> NodeHelper.process_collection(:inventories, resources)
+    |> NodeHelper.process_collection(:slots, resources)
+    |> NodeHelper.process_collection(:items, resources)
     |> process_item_types()
-    |> NodeHelper.process_collection(:lists, node_map)
-    |> NodeHelper.process_collection(:objects, node_map)
-    |> NodeHelper.process_collection(:plots, node_map)
-    |> NodeHelper.process_collection(:relationships, node_map)
-    |> NodeHelper.process_collection(:scenes, node_map)
-    |> NodeHelper.process_collection(:systems, node_map)
-    |> NodeHelper.process_collection(:timers, node_map)
+    |> NodeHelper.process_collection(:lists, resources)
+    |> NodeHelper.process_collection(:objects, resources)
+    |> NodeHelper.process_collection(:plots, resources)
+    |> NodeHelper.process_collection(:relationships, resources)
+    |> NodeHelper.process_collection(:scenes, resources)
+    |> NodeHelper.process_collection(:systems, resources)
+    |> NodeHelper.process_collection(:timers, resources)
     |> Game.set_init_order()
   end
 

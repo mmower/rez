@@ -20,6 +20,8 @@
 
   initial_scene_id: #s_hello
 
+  %(../lib/stdlib.rez)
+
   layout: ```
   <!-- Main Content -->
   <section class="main-content is-fullheight">
@@ -28,7 +30,9 @@
   <!-- End -->
   ```
 
-  %(../lib/stdlib.rez)
+  %%
+  %% The game proper begins here
+  %%
 
   @scene s_hello {
     initial_card_id: #c_hello

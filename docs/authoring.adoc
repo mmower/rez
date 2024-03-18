@@ -1,0 +1,118 @@
++++
+title = "Rez Authors Guide"
+author = "Matt Mower"
+date = 2024-03-16
+draft = false
++++
+:relfileprefix: ../
+:relfilesuffix: /
+= Authors Guide
+:toc:
+
+== Creating Your First Game
+
+Let's start right at the beginning:
+
+...
+rez new first_game
+...
+
+This creates a set of folders and puts some initial content into them. The only thing we really need to concern ourselves with is the contents of the `src` folder. In that we should find a file called `first_game.rez`. That is the main source file of our game.
+
+...
+rez compile src/first_game.rez
+...
+
+This will build the HTML & Javascript to play the game. The resulting files are put into the `dist` folder. If you open `dist/index.html` in your browser you will be able to play the game.
+
+== First Steps In Writing
+
+Open the `first_game.rez` file and delete everything after the comment `%% The game proper begins here` up to the final `}` that closes the `@game` element. Rez uses matching braces (`{` and `}`) around element content.
+
+Let's start super simple: Putting something on screen. For that we'll need the existing `@game` element (because every game needs one), a `@scene` (again, every game must have at least one) and a `@card`.
+
+If you are familiar with Twine then a Rez `@card` is metaphorically equivalent to a Twine passage. Twine has no real equivalent to a Rez `@scene` which you can think of like a scene in a play or a movie. We're not making use of it yet but different scenes can present an entirely different "stage" for the cards to play out on.
+
+....
+@scene s_first_scene {
+  initial_card_id: #c_entrance
+}
+
+@card c_entrance {
+  content: ```
+  You are at the entrace to the castle. You experience a moment of trepidation, do you want to go inside?
+  ```
+}
+....
+
+So we've added a scene `#s_first_scene` and told it that the first card it should present is `#c_entrance`. We use the cards `content:` attribute to write what we want to see on screen. It's this simple at the beginning.
+
+Rez uses HTML markup and provides Bulma CSS and Alpine.JS to help style content and add dynamic elements. But, before we make any changes, re-compile. You're going to get an error:
+
+....
+ > Expected game/initial_scene_id to refer to a scene but the id 's_hello' was not found.
+....
+
+When we deleted the previous content we deleted the scene that was opening the game. We need to tell Rez about the new scene we have replaced it with. Find the line:
+
+....
+initial_scene_id: #s_hello
+....
+
+and amend it to:
+
+....
+initial_scene_id: #s_first_scene
+....
+
+Or, of course, you could rename the scene back to `s_hello`, either is fine.
+
+Now when you compile you should see:
+
+> rez v1.2.6 — compiled to dist folder
+
+Load the `dist/index.html` file in the browser and you should see something like:
+
+image::authoring_1.png[]
+
+Earlier we mentioned that scenes can present a "stage" and we do this by specifying their `layout:` attribute. Change the file so that the content now looks like this:
+
+....
+@scene s_first_scene {
+  initial_card_id: #c_entrance
+  layout: ```
+  <section class="hero">
+    <div class="hero-body">
+      <p class="title">${scene.current_card.description | capitalize}</p>
+    </div>
+  </section>
+  ${content}
+  ```
+}
+
+@card c_entrance {
+  description: "castle entrance"
+  content: ```
+  You are at the entrace to the castle. You experience a moment of trepidation, do you want to <a data-event="card" data-target="c_courtyard">go inside</a>?
+  ```
+}
+
+@card c_courtyard {
+  description: "castle courtyard"
+  content: ```
+  You stand in a dank courtyard, it's cobbles overgrown with moss and littered with broken equipment.
+  ```
+}
+....
+
+Re-compile and reload the game in the browser. You'll notice a few things. In the first place we now have a link to take us from the first card to the second. And that, whichever card you are looking at, the scene they are in (`#s_first_scene`) is displaying some content of its own.
+
+You'll also notice that this content also has a dynamic component, displaying the `description:` attribute defined by the current card.
+
+Some concepts we should go over here:
+
+* Rez is event driven. To load a different card we send the `card` event, and to do that we use an HTML `<a>` element as shown in the `content:` attribute of the `#c_entrance` entrance and HTML data-attributes. In this case `data-event` specifies the event and `data-target` which card to load next.
+* You can add your own attributes to card to do pretty much anything you can think of.
+* Scene layouts must include a `${content}` template expression (the content of their current card gets rendered into the `content` binding)
+* Scene layouts can use any legal HTML markup
+* Dynamic expressions use the `${expr}` format. We'll look more at those later.
