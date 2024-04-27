@@ -4,6 +4,7 @@ defmodule Rez.Parser.CollectionParser do
   import Ergo.Combinators,
     only: [
       choice: 1,
+      choice: 2,
       ignore: 1,
       lazy: 1,
       many: 1,
@@ -23,6 +24,7 @@ defmodule Rez.Parser.CollectionParser do
       hash: 0,
       comma: 0,
       pipe: 0,
+      star: 0,
       open_brace: 0,
       close_brace: 0,
       open_bracket: 0,
@@ -30,7 +32,16 @@ defmodule Rez.Parser.CollectionParser do
     ]
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
-  import Rez.Parser.ValueParsers, only: [value: 0]
+
+  import Rez.Parser.ValueParsers,
+    only: [
+      value: 0,
+      elem_ref_value: 0,
+      code_block_value: 0,
+      function_value: 0
+    ]
+
+  import Rez.Parser.JSBindingParser
 
   def collection_value() do
     choice([
@@ -69,7 +80,54 @@ defmodule Rez.Parser.CollectionParser do
     end)
   end
 
+  # Binding
+
+  # Bindings are a special kind of list value
+  # They are formed of a prefix: value but only support specific kinds of
+  # value that are used for value binding
+
+  def bound_value() do
+    choice(
+      [
+        elem_ref_value(),
+        binding_path(),
+        code_block_value(),
+        function_value()
+      ],
+      label: "bound-value",
+      debug: true
+    )
+  end
+
+  def list_binding() do
+    ParserCache.get_parser("list_binding", fn ->
+      sequence(
+        [
+          js_identifier(),
+          ignore(colon()),
+          iws(),
+          optional(star()),
+          bound_value()
+        ],
+        ast: fn
+          [prefix, value] ->
+            {:list_binding, {prefix, false, value}}
+
+          [prefix, _deref, value] ->
+            {:list_binding, {prefix, true, value}}
+        end
+      )
+    end)
+  end
+
   # List
+
+  def list_value() do
+    choice([
+      collection_value(),
+      list_binding()
+    ])
+  end
 
   def list() do
     ParserCache.get_parser("list", fn ->
@@ -79,12 +137,12 @@ defmodule Rez.Parser.CollectionParser do
           iows(),
           optional(
             sequence([
-              collection_value(),
+              list_value(),
               many(
                 sequence([
                   iws(),
                   ignore(optional(sequence([comma(), iws()]))),
-                  collection_value()
+                  list_value()
                 ])
               )
             ])

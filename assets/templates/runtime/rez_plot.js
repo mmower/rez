@@ -30,5 +30,3 @@ RezPlot.prototype = {
     }
   },
 };
-
-window.RezPlot = RezPlot;

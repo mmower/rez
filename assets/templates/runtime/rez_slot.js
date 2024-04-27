@@ -19,5 +19,3 @@ RezSlot.prototype = {
   },
 
 };
-
-window.Rez.Slot = RezSlot;

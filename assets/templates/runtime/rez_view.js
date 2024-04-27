@@ -54,11 +54,11 @@ RezBlock.prototype = {
     return target[ref.attr_name];
   },
 
-  instantiateFunctionBinding(f) {
+  instantiateFunctionBinding(bindings, f) {
     if (this.parent_block) {
-      return f(this, this.parent_block.source);
+      return f(this, this.parent_block.source, bindings);
     } else {
-      return f(this);
+      return f(this, null, bindings);
     }
   },
 
@@ -66,29 +66,46 @@ RezBlock.prototype = {
     return p(this.source);
   },
 
+  instantiatePathBinding(path_fn, bindings) {
+    return path_fn(bindings);
+  },
+
   // bindings are key-value pairs of the form {name, expr}
   // where an expression is either the id of an element
   // or a function. The result of instantiation is either
   // {name, element_ref} or {name, func_result}
   getBindings() {
-    const source_bindings = this.source.getAttributeValue("bindings", {});
-    return source_bindings.obj_map((query) => {
-      if (typeof query === "string") {
-        return this.instantiateIdBinding(query);
-      } else if (typeof query === "function") {
-        return this.instantiateFunctionBinding(query);
-      } else if (typeof query === "object") {
-        if (typeof query.attr_ref === "object") {
-          return this.instantiatPropertyBinding(query.attr_ref);
-        } else if (typeof query.binding === "function") {
-          return this.instantiateBindingPath(query.binding);
-        } else {
-          throw "Invalid binding type: " + typeof query + "!";
+    const source_bindings = this.source.getAttributeValue("bindings", []);
+
+    return source_bindings.reduce((bindings, binding_object) => {
+      const prefix = binding_object["prefix"];
+      const source = binding_object["source"];
+      const deref = binding_object["deref"];
+
+      let value;
+
+      if(typeof(source) === "string") {
+        value = this.instantiateIdBinding(source);
+      } else if(typeof(source) === "function") {
+        value = this.instantiateFunctionBinding(bindings, source);
+      } else if(typeof(source.binding) === "function") {
+        value = this.instantiatePathBinding(source.binding, bindings);
+        if(deref) {
+          if(Array.isArray(value)) {
+            value = value.map((id) => $(id));
+          } else {
+            value = $(value)
+          }
         }
       } else {
-        throw "Invalid binding type: " + typeof query + "!";
+        console.log("Binding prefix: " + prefix);
+        console.dir(value);
+        throw `Invalid binding type: ${typeof(value)}!`;
       }
-    });
+
+      bindings[prefix] = value;
+      return bindings;
+    }, {source: this.source});
   },
 
   bindValues() {
@@ -153,9 +170,9 @@ RezBlock.prototype = {
       return "block";
     } else if (this.block_type == "card") {
       if (this.flipped) {
-        return "card flipped_card";
+        return "flipped_card";
       } else {
-        return "card active_card";
+        return "active_card";
       }
     } else {
       throw "This shouldn't happen, right?";
@@ -176,8 +193,6 @@ RezBlock.prototype = {
     }
   },
 };
-
-window.Rezblock = RezBlock;
 
 //-----------------------------------------------------------------------------
 // Layout
@@ -241,8 +256,6 @@ RezSingleLayout.prototype = {
   },
 };
 
-window.RezSingleLayout = RezSingleLayout;
-
 //-----------------------------------------------------------------------------
 // Stack Layout
 //
@@ -286,8 +299,6 @@ RezStackLayout.prototype = {
     return this.contents.map((block) => block.html()).join(separator);
   },
 };
-
-window.RezStackLayout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers
@@ -364,6 +375,25 @@ let event_transformer_proto = {
   },
 };
 
+
+//-----------------------------------------------------------------------------
+// Block Transformer
+//-----------------------------------------------------------------------------
+
+function RezBlockTransformer() {
+  this.selector = "div.card[data-card]";
+}
+
+RezBlockTransformer.prototype = {
+  __proto__: transformer_proto,
+  constructor: RezBlockTransformer,
+
+  transformElement(elem) {
+    const elem_id = elem.dataset.card;
+    elem.rez_card = $(elem_id);
+  }
+}
+
 //-----------------------------------------------------------------------------
 // Link Transformers
 //-----------------------------------------------------------------------------
@@ -382,8 +412,6 @@ RezEventLinkTransformer.prototype = {
     this.addEventListener(elem, this.getEventName());
   },
 };
-
-window.RezEventLinkTransformer = RezEventLinkTransformer;
 
 //-----------------------------------------------------------------------------
 // Button Transformer
@@ -463,23 +491,49 @@ RezBindingTransformer.prototype = {
     return [binding_id, binding_attr];
   },
 
+  getBoundElem(input, binding_id) {
+    if(binding_id === "game") {
+      return $game;
+    } else if(binding_id === "scene") {
+      return $game.current_scene;
+    } else if(binding_id === "card") {
+      const card_el = input.closest("div.card");
+      return card_el.rez_card;
+    } else {
+      return $(binding_id);
+    };
+  },
+
+  getBoundValue(input, binding_id, binding_attr) {
+    return this.getBoundElem(input, binding_id).getAttribute(binding_attr)
+  },
+
+  setBoundValue(input, binding_id, binding_attr, value) {
+    this.getBoundElem(input, binding_id).setAttribute(binding_attr, value);
+  },
+
   transformTextInput(view, input, binding_id, binding_attr) {
+    const transformer = this;
+
     view.registerBinding(binding_id, binding_attr, function (value) {
       input.value = value;
     });
-    input.value = $(binding_id)[binding_attr];
+
+    input.value = this.getBoundValue(input, binding_id, binding_attr);
     input.addEventListener("input", function (evt) {
-      $(binding_id).setAttribute(binding_attr, evt.target.value);
+      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.value);
     });
   },
 
   transformCheckboxInput(view, input, binding_id, binding_attr) {
+    const transformer = this;
+
     view.registerBinding(binding_id, binding_attr, function (value) {
       input.checked = value;
     });
-    input.checked = $(binding_id)[binding_attr];
+    input.checked = this.getBoundValue(input, binding_id, binding_attr);
     input.addEventListener("change", function (evt) {
-      $(binding_id).setAttribute(binding_attr, evt.target.checked);
+      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.checked);
     });
   },
 
@@ -508,20 +562,22 @@ RezBindingTransformer.prototype = {
       });
     }
 
-    this.setRadioGroupValue(input.name, $(binding_id)[binding_attr]);
+    this.setRadioGroupValue(input.name, this.getBoundValue(input, binding_id, binding_attr));
 
     this.trackRadioGroupChange(input.name, function (evt) {
-      $(binding_id).setAttribute(binding_attr, evt.target.value);
+      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.value);
     });
   },
 
   transformSelect(view, select, binding_id, binding_attr) {
+    const transformer = this;
+
     view.registerBinding(binding_id, binding_attr, function (value) {
       select.value = value;
     });
-    select.value = $(binding_id)[binding_attr];
+    select.value = this.getBoundValue(select, binding_id, binding_attr);
     select.addEventListener("change", function (evt) {
-      $(binding_id).setAttribute(binding_attr, evt.target.value);
+      transformer.setBoundValue(select, binding_id, binding_attr, evt.target.value);
     });
   },
 
@@ -546,8 +602,6 @@ RezBindingTransformer.prototype = {
     }
   },
 };
-
-window.RezBindingTransformer = RezBindingTransformer;
 
 //-----------------------------------------------------------------------------
 // View
@@ -594,10 +648,11 @@ RezView.prototype = {
   defaultTransformers() {
     return [
       new RezEventLinkTransformer(this.receiver),
+      new RezBlockTransformer(),
       new RezButtonTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
-      new RezBindingTransformer(this.receiver),
+      new RezBindingTransformer(this.receiver)
     ];
   },
 
@@ -632,5 +687,3 @@ RezView.prototype = {
     this.transform();
   },
 };
-
-window.RezView = RezView;

@@ -93,5 +93,3 @@ RezDecision.prototype = {
     }
   },
 };
-
-window.RezDecision = RezDecision;

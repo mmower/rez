@@ -587,23 +587,6 @@ RezGame.prototype = {
   },
 
   /**
-   * @function getTarget
-   * @memberof RezGame
-   * @param {string} target_id
-   * @returns {object}
-   * @description it looks like this was a holdover from when we didn't add the game
-   * object to itself under the "game" id.
-   * @deprecated
-   */
-  getTarget(target_id) {
-    if (target_id == this.id) {
-      return this;
-    } else {
-      return this.getGameObject(target_id);
-    }
-  },
-
-  /**
    * @function updateView
    * @memberof RezGame
    * @description re-renders the view calling the 'before_render' and 'after_render'
@@ -703,7 +686,7 @@ RezGame.prototype = {
    */
   getEnabledSystems() {
     const filter = (o) => o.game_object_type === "system" && o.getAttributeValue("enabled");
-    const order = (sys1, sys2) => sys1.getAttributeValue("priority") > sys2.getAttributeValue("priority");
+    const order = (sys_a, sys_b) => sys_b.getAttributeValue("priority") - sys_a.getAttributeValue("priority");
     return this.filterObjects(filter).sort(order);
   },
 
@@ -726,5 +709,3 @@ RezGame.prototype = {
     this.$flash_messages = [];
   },
 };
-
-window.RezGame = RezGame;

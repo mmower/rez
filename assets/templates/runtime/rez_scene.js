@@ -114,5 +114,3 @@ RezScene.prototype = {
     this.reset();
   },
 };
-
-window.RezScene = RezScene;

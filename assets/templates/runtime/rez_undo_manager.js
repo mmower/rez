@@ -32,5 +32,3 @@ RezUndoManager.prototype = {
     }
   }
 };
-
-window.RezUndoManager = RezUndoManager;

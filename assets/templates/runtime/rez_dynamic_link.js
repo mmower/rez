@@ -47,5 +47,3 @@ RezDynamicLink.prototype = {
     this.display = false;
   },
 };
-
-window.RezDynamicLink = RezDynamicLink;

@@ -22,5 +22,3 @@ RezEffect.prototype = {
     return this.runEvent("remove", {owner_id: owner_id, slot_id: slot_id, item_id: item_id});
   }
 };
-
-window.RezEffect = RezEffect;

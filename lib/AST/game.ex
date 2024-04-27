@@ -442,6 +442,23 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
           attribute_refers_to?("scene")
         )
       ),
+      attribute_if_present?(
+        "bindings",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:list_binding)
+        )
+      ),
+      attribute_if_present?(
+        "blocks",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(
+            :elem_ref,
+            attribute_list_references?("card")
+          )
+        )
+      ),
       attribute_present?(
         "IFID",
         attribute_has_type?(:string)

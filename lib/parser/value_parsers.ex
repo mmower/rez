@@ -14,7 +14,6 @@ defmodule Rez.Parser.ValueParsers do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DelimitedParser
-  import Rez.Parser.JSBindingParser
 
   # String
 
@@ -186,7 +185,7 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("keyword", fn ->
       sequence(
         [
-          ignore(char(?:)),
+          ignore(colon()),
           many(char([?_, ?$, [?a..?z], [?A..?Z], [?0..?9]], label: "kw_char"), min: 1)
         ],
         label: "keyword-value",
@@ -232,20 +231,6 @@ defmodule Rez.Parser.ValueParsers do
         ],
         ast: fn [elem_id, attr_name] ->
           {:attr_ref, {elem_id, attr_name}}
-        end
-      )
-    end)
-  end
-
-  def binding_path_value() do
-    ParserCache.get_parser("binding_path", fn ->
-      sequence(
-        [
-          ignore(back_tick()),
-          binding_path()
-        ],
-        ast: fn [binding_path] ->
-          binding_path
         end
       )
     end)
@@ -404,12 +389,12 @@ defmodule Rez.Parser.ValueParsers do
 
   # Dice
   # ndX+-m
-  # 2d+6, 3d8-2, d10+1
+  # 2d+6, 3d8-2, 1d10+1
   def dice_value() do
     ParserCache.get_parser("dice", fn ->
       sequence(
         [
-          optional(number_value()) |> default({:number, 1}),
+          number_value(),
           ignore(char(?d)),
           number_value(),
           optional(
@@ -554,7 +539,6 @@ defmodule Rez.Parser.ValueParsers do
           heredoc_value(),
           string_value(),
           elem_ref_value(),
-          binding_path_value(),
           keyword_value(),
           code_block_value(),
           function_value(),

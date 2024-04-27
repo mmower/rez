@@ -235,5 +235,3 @@ RezEventProcessor.prototype = {
   },
 
 };
-
-window.RezEventProcessor = RezEventProcessor;

@@ -86,5 +86,3 @@ RezActor.prototype = {
     to_location.runEvent("enter", { actor_id: this.id });
   },
 };
-
-window.RezActor = RezActor;

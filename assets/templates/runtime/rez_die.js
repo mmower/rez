@@ -14,16 +14,6 @@ RezDie.prototype = {
   }
 };
 
-window.RezDie = RezDie;
-
-window.RezDie.D4 = new RezDie(4);
-window.RezDie.D6 = new RezDie(6);
-window.RezDie.D8 = new RezDie(8);
-window.RezDie.D10 = new RezDie(10);
-window.RezDie.D12 = new RezDie(12);
-window.RezDie.D20 = new RezDie(20);
-window.RezDie.D100 = new RezDie(100);
-
 function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {
   this.die = new RezDie(sides);
   this.count = count;
@@ -75,5 +65,3 @@ RezDieRoll.prototype = {
     }
   }
 };
-
-window.RezDieRoll = RezDieRoll;

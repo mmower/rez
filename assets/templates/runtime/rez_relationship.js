@@ -26,5 +26,3 @@ RezRelationship.prototype = {
     return this.game.getRelationship(this.target, this.source);
   }
 };
-
-window.RezRelationship = RezRelationship;

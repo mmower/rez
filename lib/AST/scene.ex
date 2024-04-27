@@ -117,6 +117,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
         )
       ),
       attribute_if_present?(
+        "bindings",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:list_binding)
+        )
+      ),
+      attribute_if_present?(
         "blocks",
         attribute_has_type?(
           :list,

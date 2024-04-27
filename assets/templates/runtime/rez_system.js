@@ -14,5 +14,3 @@ RezSystem.prototype = {
   __proto__: basic_object,
   constructor: RezSystem
 };
-
-window.Rez.System = RezSystem;

@@ -40,6 +40,8 @@ defmodule Rez.Parser.UtilityParsers do
 
   def minus(), do: ParserCache.get_parser("minus", fn -> char(?-) end)
 
+  def star(), do: ParserCache.get_parser("star", fn -> char(?*) end)
+
   def bar(), do: ParserCache.get_parser("bar", fn -> char(?|) end)
 
   def at(), do: ParserCache.get_parser("at", fn -> char(?@) end)

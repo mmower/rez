@@ -121,5 +121,3 @@ RezAsset.prototype = {
     },
   },
 };
-
-window.RezAsset = RezAsset;

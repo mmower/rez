@@ -96,5 +96,3 @@ RezBehaviour.prototype = {
     return behaviour;
   }
 };
-
-window.RezBehaviour = RezBehaviour;

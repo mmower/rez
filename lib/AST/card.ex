@@ -122,6 +122,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         attribute_has_type?(:source_template)
       ),
       attribute_if_present?(
+        "bindings",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:list_binding)
+        )
+      ),
+      attribute_if_present?(
         "blocks",
         attribute_has_type?(
           :list,
@@ -132,7 +139,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         )
       ),
       attribute_if_present?(
-        "css_clas",
+        "css_class",
         attribute_has_type?(:string)
       ),
       attribute_if_present?(

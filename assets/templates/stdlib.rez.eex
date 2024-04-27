@@ -38,6 +38,14 @@
   }
 }
 
+@patch BOOLEAN_RAND {
+  patch: "Boolean"
+  function: "rand"
+  impl: function() {
+    return Math.random() < 0.5 ? true : false;
+  }
+}
+
 @patch OBJECT_DEEP_COPY {
   patch: "Object"
   method: "copy"
@@ -631,6 +639,13 @@
 
   name: "round"
   impl: (n, dp) => {return n.roundp(dp);}
+}
+
+@filter STRING_CHAR_AT_FILTER {
+  %% String -> String
+
+  name: "char_at"
+  impl: (s, i) => {return s.charAt(i);}
 }
 
 @filter STRING_MAKE_FILTER {

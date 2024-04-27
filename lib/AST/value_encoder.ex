@@ -48,6 +48,10 @@ defmodule Rez.AST.ValueEncoder do
     ~s|"#{k}"|
   end
 
+  def encode_value({:list_binding, {prefix, deref, value}}) when is_boolean(deref) do
+    ~s|{prefix: "#{prefix}", deref: #{deref}, source: #{encode_value(value)}}|
+  end
+
   def encode_value({:bound_path, path}) do
     js_path =
       "[" <> Enum.map_join(path, ", ", fn path_component -> ~s|"#{path_component}"| end) <> "]"

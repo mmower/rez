@@ -1510,37 +1510,47 @@ The styles defined in the game's `@style` directives will be automatically inclu
 
 == System (Element)
 
-The `@system` element describes an in-game author defined **system**. By that we mean a process that can run that queries and, optionally, updates the state of the game world. In-game a system is represented by a RezSystem object.
+The `@system` element describes an author defined **system** that can respond to events generated in the game and modify the game world.
 
-For example we might want to model weather in our game so we could create a "weather system" that would update the in-game weather.
+Systems are orthogonal to event handlers that are specific to a given event. For example, when a user clicks a link this has a specific outcome that will be meaningful to the player. However any number of systems might also respond to this event.
 
-Rez uses the notion of a "tick" (as in, when the clock ticks) for running systems using the RezGame `runTick()` API.
+For example we might want to model weather in our game world and have the weather change, automatically, over time. This change is not necessarily related to any specific player activity (e.g. clicking a link to move between locations) but any event might trigger such a change.
+
+Whenever the player generates an event all `@system`s whose `enabled:` attribute is `true` get the opportunity to process, and potentially modify, the event before normal processing and to change the result afterward.
+
+Every `@system` must have a `priority:` attribute that is a number greater than `0`. `@system`s are run in highest-priority order (so priority `100` runs before priority `99`).
+
+Every `@system` must define at least one of `before-event:` or `after-event:` but can potentially define both.
 
 === Example
 
 ....
-%% Here is a system that maintains wall clock time, advancing the clock
-%% by one hour on each game tick. It also maintains a description of the
-%% hour in terms of morning, afternoon, etc…
+%% Here is a system that maintains wall clock time and when an event changes
+%% the time, calculates new weather
 
-@system clock_system {
+@system weather_system {
   enabled: true
-  priority: 1
+  priority: 25 %% low-priority
 
-  wallTime: 0
-  description: ""
+  wall_time: 0
+  past_wall_time: _ %% just so we get an accessor
 
-  on_tick: (system, evt) => {
-    this.wallTime += 1;
-    if(this.wallTime > 18) {
-      this.description = "evening";
-    } else if(this.wallTime > 12) {
-      this.description = "afternoon";
-    } else if(this.wallTime > 6) {
-      this.description = "morning";
-    } else {
-      this.description = "night";
+  weather: "It is sunny"
+
+  before_event: (system, event) => {
+    system.past_wall_time = system.wall_time;
+  }
+
+  after_event: (system, event, result) => {
+    if(system.wall_time != system.past_wall_time) {
+      system.calculate_weather();
     }
+
+    return result;
+  }
+
+  calculate_weather: function() {
+    this.weather = ["It is raining", "It is sunny"].randomElement();
   }
 }
 ....
@@ -1548,22 +1558,30 @@ Rez uses the notion of a "tick" (as in, when the clock ticks) for running system
 === Required Attributes
 
 * `enabled` [Boolean]: if false, this system will not be run
-* `priority` [Number]: systems are run in priority order
+* `priority` [Number]: systems are run in descending priority order
 
 === Optional Attributes
 === Event Handlers
 
 ==== on_init
 
-: `(system, event = {}) => {...}`
+`on_init: (system, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
 
-==== on_tick
+==== before_event
 
-: `(system, event = {}) => {...}
+`before_event: (system, event = {}) => {...}`
 
-As long as the system `enabled` attribute is `true` this script will be called every time the `RezGame` method `runTick` is called.
+This handler will be called before the event has been processed by `handleBrowserEvent()`. If the handler modifies the event, the modified event will be passed on to successive systems and `handleBrowserEvent()`.
+
+==== after_event
+
+`after_event: (system, event = {}, result) => {...}`
+
+This handler will be called after the event has been processed by `handleBrowserEvent()` and receives both the event in question and also the result that has been generated.
+
+If the handler modifies the result, the modified result will be passed back through successive systems and to the browser itself. Modifying the event does nothing as it has already been processed.
 
 == Timer (Element)
 

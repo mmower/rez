@@ -9,7 +9,7 @@ draft = false
 = Authors Guide
 :toc:
 
-== Creating Your First Game
+== Chapter 1: Creating Your First Game
 
 Let's start right at the beginning:
 
@@ -19,15 +19,21 @@ rez new first_game
 
 This creates a set of folders and puts some initial content into them. The only thing we really need to concern ourselves with is the contents of the `src` folder. In that we should find a file called `first_game.rez`. That is the main source file of our game.
 
+image::folder_structure1.png[]
+
 ...
 rez compile src/first_game.rez
 ...
 
 This will build the HTML & Javascript to play the game. The resulting files are put into the `dist` folder. If you open `dist/index.html` in your browser you will be able to play the game.
 
+image::folder_structure2.png[]
+
+You will also notice an `assets` folder, under `dist` containing some Javascript and CSS files. These are automatically moved there from the main `assets` and referenced by the game files. Of particular interest is the `runtime.js` file which is the Javascript code for your game (as well as the Rez standard library).
+
 == First Steps In Writing
 
-Open the `first_game.rez` file and delete everything after the comment `%% The game proper begins here` up to the final `}` that closes the `@game` element. Rez uses matching braces (`{` and `}`) around element content.
+Open the `first_game.rez` file and delete everything after the comment `%% The game proper begins here` up to the final `}` that closes the `@game` element (delete lines 35-75 inclusive) (see `step01`).
 
 Let's start super simple: Putting something on screen. For that we'll need the existing `@game` element (because every game needs one), a `@scene` (again, every game must have at least one) and a `@card`.
 
@@ -75,7 +81,7 @@ Load the `dist/index.html` file in the browser and you should see something like
 
 image::authoring_1.png[]
 
-Earlier we mentioned that scenes can present a "stage" and we do this by specifying their `layout:` attribute. Change the file so that the content now looks like this:
+Earlier we mentioned that scenes can present a "stage" and we do this by specifying their `layout:` attribute. Change the file so that the content now looks like this (see `step02`):
 
 ....
 @scene s_first_scene {
@@ -105,11 +111,61 @@ Earlier we mentioned that scenes can present a "stage" and we do this by specify
 }
 ....
 
-Re-compile and reload the game in the browser. You'll notice a few things. In the first place we now have a link to take us from the first card to the second. And that, whichever card you are looking at, the scene they are in (`#s_first_scene`) is displaying some content of its own.
+Re-compile and reload the game in the browser. You'll notice a few things. In the first place we now have a link to take us from the first card to the second. And that, whichever card you are looking at, the scene they are in (`#s_first_scene`) is displaying some content of its own. This uses dynamic component, displaying the `description:` attribute defined by the scene's current card.
 
-You'll also notice that this content also has a dynamic component, displaying the `description:` attribute defined by the current card.
+One role of the scene is to provide a layout that can be shared among a number of different cards, making more complex UI easier to build. Scene's do more than this as we'll see later. But let's expand on the layout theme a little. Let's use a sidebar to display some information.
 
-Some concepts we should go over here:
+Replace the existing `#s_first_scene` definition with this (see `step03`)
+
+....
+@scene s_first_scene {
+  initial_card_id: #c_entrance
+  blocks: [#c_sidebar]
+  layout: ```
+  <div class="columns">
+    <div class="column is-one-fifth">${c_sidebar}</div>
+    <div class="column">${content}</div>
+  </div>
+  ```
+}
+
+@actor player {
+  name: "Adventurer"
+  gold: 100
+}
+
+@card c_sidebar {
+  bindings: {player: #player}
+  content: ```
+  <section class="section">
+    <p class="is-size-5 has-text-weight-semibold">Name</p>
+    <p class="">${player.name}</p>
+  </section>
+  <section class="section">
+    <p class="is-size-5 has-text-weight-semibold">Gold</p>
+    <p>${player.gold}</p>
+  </section>
+  <section class="section">
+    <p class="is-size-5 has-text-weight-semibold">Location</p>
+    <p>${scene.current_card.description | capitalize}</p>
+  </section>
+  ```
+}
+....
+
+Note the use of the `blocks:` attribute of `#s_first_scene`. This specifies a list of other cards we want to render as part of the scene layout. In this case, `#c_sidebar` which is then made available as the binding `c_sidebar` so can be included with a template expression `${c_sidebar}`.
+
+In this step we're also making use of some Bulma CSS classes: `columns` & `column` to create a two column layout. Second the use of `<section>` to create sections in the sidebar. Loading the new card doesn't change the sidebar layout.
+
+Using different scenes is an easy way to have different parts of your game use a different layout and colour scheme.
+
+== Summary
+
+Rez is event-driven. What that means is that your game responds to events and then decides what to present to the player. For example clicking a link can generate the `card` event that loads a new card.
+
+Rez is HTML based. You write using HTML markup. But it also has some convenients, for example it doesn't require the `href` attribute on `<a>` tags.
+
+You can include dynamically generated content using the `${...}` template expression syntax.
 
 * Rez is event driven. To load a different card we send the `card` event, and to do that we use an HTML `<a>` element as shown in the `content:` attribute of the `#c_entrance` entrance and HTML data-attributes. In this case `data-event` specifies the event and `data-target` which card to load next.
 * You can add your own attributes to card to do pretty much anything you can think of.

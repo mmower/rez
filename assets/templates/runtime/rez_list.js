@@ -96,6 +96,14 @@ RezList.prototype = {
   // Bag
   //---------------------------------------------------------------------------
 
+  randomFromBag(bag_id = "default_bag") {
+    const item = this.randomRemaining(bag_id);
+    this.take_from(bag_id, item);
+    return item;
+  },
+
+  // Low-level interface, you should need to call these directly
+
   /*
    * Returns a random element from among those left in the bag. If the bag
    * is empty, returns nil.
@@ -170,5 +178,3 @@ RezList.prototype = {
 
 
 };
-
-window.RezList = RezList;
