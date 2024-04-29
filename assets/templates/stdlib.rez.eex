@@ -38,7 +38,7 @@
   }
 }
 
-@patch BOOLEAN_RAND {
+@patch PATCH_BOOLEAN_RAND {
   patch: "Boolean"
   function: "rand"
   impl: function() {
@@ -46,7 +46,7 @@
   }
 }
 
-@patch OBJECT_DEEP_COPY {
+@patch PATCH_OBJECT_DEEP_COPY {
   patch: "Object"
   method: "copy"
   impl: function() {
@@ -80,7 +80,7 @@
   }
 }
 
-@patch OBJECT_OBJ_MAP {
+@patch PATCH_OBJECT_OBJ_MAP {
   patch: "Object"
   method: "obj_map"
   impl: function(f) {
@@ -90,7 +90,7 @@
   }
 }
 
-@patch OBJECT_DQ_WRAP {
+@patch PATCH_OBJECT_DQ_WRAP {
   patch: "Object"
   method: "dq_wrap"
   impl: function() {
@@ -98,7 +98,7 @@
   }
 }
 
-@patch ARRAY_FY_SHUFFLE {
+@patch PATCH_ARRAY_FY_SHUFFLE {
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
   method: "fy_shuffle"
@@ -112,7 +112,7 @@
   }
 }
 
-@patch ARRAY_RANDOM_ELEMENT {
+@patch PATCH_ARRAY_RANDOM_ELEMENT {
   patch: "Array"
   method: "randomElement"
   impl: function() {
@@ -120,7 +120,7 @@
   }
 }
 
-@patch ARRAY_RANDOM_INDEX {
+@patch PATCH_ARRAY_RANDOM_INDEX {
   patch: "Array"
   method: "randomIndex"
   impl: function() {
@@ -128,7 +128,7 @@
   }
 }
 
-@patch ARRAY_FREQUENCIES {
+@patch PATCH_ARRAY_FREQUENCIES {
   patch: "Array"
   method: "frequencies"
   impl: function() {
@@ -146,7 +146,7 @@
   }
 }
 
-@patch ARRAY_SUM {
+@patch PATCH_ARRAY_SUM {
   patch: "Array"
   method: "sum"
   impl: function() {
@@ -154,7 +154,7 @@
   }
 }
 
-@patch ARRAY_EQUALS {
+@patch PATCH_ARRAY_EQUALS {
   patch: "Array"
   function: "equals"
   impl: function(a, b) {
@@ -165,7 +165,7 @@
   }
 }
 
-@patch ARRAY_PAIRS {
+@patch PATCH_ARRAY_PAIRS {
   patch: "Array"
   method: "to_pairs"
   impl: function() {
@@ -179,7 +179,7 @@
   }
 }
 
-@patch ARRAY_TAKE {
+@patch PATCH_ARRAY_TAKE {
   patch: "Array"
   method: "take"
   impl: function(n) {
@@ -191,7 +191,7 @@
   }
 }
 
-@patch ARRAY_REFS {
+@patch PATCH_ARRAY_REFS {
   patch: "Array"
   method: "refs"
   impl: function() {
@@ -199,7 +199,7 @@
   }
 }
 
-@patch ARRAY_N_OF {
+@patch PATCH_ARRAY_N_OF {
   patch: "Array"
   function: "n_of"
   impl: function(length, def_value) {
@@ -207,7 +207,7 @@
   }
 }
 
-@patch STRING_BEGINS_WITH_CONSONANT {
+@patch PATCH_STRING_BEGINS_WITH_CONSONANT {
   patch: "String"
   method: "beginsWithConsonant"
   impl: function() {
@@ -215,7 +215,7 @@
   }
 }
 
-@patch STRING_BEGINS_WITH_VOWEL {
+@patch PATCH_STRING_BEGINS_WITH_VOWEL {
   patch: "String"
   method: "beginsWithVowel"
   impl: function() {
@@ -223,7 +223,7 @@
   }
 }
 
-@patch STRING_CAPITALIZE {
+@patch PATCH_STRING_CAPITALIZE {
   patch: "String"
   method: "capitalize"
   impl: function(s) {
@@ -231,7 +231,7 @@
   }
 }
 
-@patch STRING_INTERPOLATE {
+@patch PATCH_STRING_INTERPOLATE {
   patch: "String"
   method: "interpolate"
   impl: function(game) {
@@ -239,7 +239,7 @@
   }
 }
 
-@patch STRING_POSSESSIVE {
+@patch PATCH_STRING_POSSESSIVE {
   patch: "String"
   method: "possessive"
   impl: function() {
@@ -251,7 +251,7 @@
   }
 }
 
-@patch STRING_CAMELIZE {
+@patch PATCH_STRING_CAMELIZE {
   patch: "String"
   method: "camelize"
   impl: function(s) {
@@ -261,7 +261,7 @@
   }
 }
 
-@patch STRING_TO_SNAKE_CASE {
+@patch PATCH_STRING_TO_SNAKE_CASE {
   patch: "String"
   method: "toSnakeCase"
   impl: function() {
@@ -272,7 +272,7 @@
   }
 }
 
-@patch STRING_PARSE_TIME {
+@patch PATCH_STRING_PARSE_TIME {
   patch: "String"
   method: "parseTime"
   impl: function() {
@@ -300,7 +300,7 @@
   }
 }
 
-@patch STRING_RANDOM_ID {
+@patch PATCH_STRING_RANDOM_ID {
   patch: "String"
   function: "randomId"
   impl: function() {
@@ -309,7 +309,7 @@
   }
 }
 
-@patch STRING_WRAP_WITH {
+@patch PATCH_STRING_WRAP_WITH {
   patch: "String"
   method: "wrapWith"
   impl: function(prefix, suffix) {
@@ -321,7 +321,7 @@
 %% https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
 %% https://stackoverflow.com/a/31129384/7518
 
-@patch SET_UNION {
+@patch PATCH_SET_UNION {
   patch: "Set"
   method: "union"
   impl: function(otherSet) {
@@ -329,7 +329,7 @@
   }
 }
 
-@patch SET_INTERSECTION {
+@patch PATCH_SET_INTERSECTION {
   patch: "Set"
   method: "intersection"
   impl: function(otherSet) {
@@ -337,7 +337,7 @@
   }
 }
 
-@patch SET_DIFFERENCE {
+@patch PATCH_SET_DIFFERENCE {
   patch: "Set"
   method: "difference"
   impl: function(otherSet) {
@@ -345,7 +345,7 @@
   }
 }
 
-@patch SET_EQUALS {
+@patch PATCH_SET_EQUALS {
   patch: "Set"
   method: "equals"
   impl: function(otherSet) {
@@ -354,7 +354,7 @@
   }
 }
 
-@patch SET_HAS_SUBSET {
+@patch PATCH_SET_HAS_SUBSET {
   patch: "Set"
   method: "hasSubset"
   impl: function(otherSet) {
@@ -362,7 +362,7 @@
   }
 }
 
-@patch NUMBER_ORDINAL {
+@patch PATCH_NUMBER_ORDINAL {
   patch: "Number"
   method: "ordinal"
   impl: function() {
@@ -381,7 +381,7 @@
   }
 }
 
-@patch NUMBER_RANGE {
+@patch PATCH_NUMBER_RANGE {
   patch: "Number"
   function: "range"
   impl: function(from, to, step) {
@@ -397,7 +397,7 @@
   }
 }
 
-@patch NUMBER_RND_BETWEEN {
+@patch PATCH_NUMBER_RND_BETWEEN {
   patch: "Number"
   function: "rand_between"
   impl: function(min, max) {
@@ -408,7 +408,7 @@
   }
 }
 
-@patch NUMBER_RNDF_BETWEEN {
+@patch PATCH_NUMBER_RNDF_BETWEEN {
   patch: "Number"
   function: "randf_between"
   impl: function(min, max) {
@@ -420,7 +420,7 @@
   }
 }
 
-@patch NUMBER_ROUNDP {
+@patch PATCH_NUMBER_ROUNDP {
   %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
   patch: "Number"
   method: "roundp"
@@ -430,7 +430,7 @@
   }
 }
 
-@patch NUMBER_CL_AVG {
+@patch PATCH_NUMBER_CL_AVG {
   patch: "Number"
   method: "cl_avg"
   impl: function(rounds) {
@@ -440,7 +440,7 @@
   }
 }
 
-@patch NUMBER_ROUND_TO_NEAREST_HALF {
+@patch PATCH_NUMBER_ROUND_TO_NEAREST_HALF {
   %% rounds a number to the nearest 0.5
   patch: "Number"
   method: "r2nh"
@@ -449,7 +449,7 @@
   }
 }
 
-@patch NUMBER_DIST_ROUND {
+@patch PATCH_NUMBER_DIST_ROUND {
   patch: "Number"
   method: "dist_round"
   impl: function() {
@@ -457,7 +457,15 @@
   }
 }
 
-@patch MATH_DIVMOD {
+@patch PATCH_NUMBER_CHANCE {
+  patch: "Number"
+  method: "chance"
+  impl: function() {
+    return Number.rand_between(1, 100) < this;
+  }
+}
+
+@patch PATCH_MATH_DIVMOD {
   patch: "Math"
   function: "div_mod"
   impl: function(n, d) {
@@ -467,7 +475,7 @@
   }
 }
 
-@patch MATH_DIST_ROUND {
+@patch PATCH_MATH_DIST_ROUND {
   %% Because JS only gives us random numbers as floating point we sometimes
   %% end up having to round when we want an. The question is whether we round
   %% up or round down which can create a bias. The dist_round function randomly
@@ -483,7 +491,7 @@
   }
 }
 
-@patch MATH_RAND_INT {
+@patch PATCH_MATH_RAND_INT {
   patch: "Math"
   function: "rand_int"
   impl: function(lim) {
@@ -491,7 +499,7 @@
   }
 }
 
-@patch MATH_CLRAND_INT {
+@patch PATCH_MATH_CLRAND_INT {
   patch: "Math"
   function: "clrand_int"
   impl: function(lim) {
@@ -501,13 +509,29 @@
   }
 }
 
-@patch MATH_CLRANDR_INT {
+@patch PATCH_MATH_CLRANDR_INT {
   patch: "Math"
   function: "clrandr_int"
   impl: function(lo, hi) {
     const v1 = Number.rnd_between(lo, hi);
     const v2 = Number.rnd_between(lo, hi);
     return Math.dist_round((v1+v2)/2);
+  }
+}
+
+@patch PATCH_MATH_CLAMPED_SUB {
+  patch: "Math"
+  function: "clamped_sub"
+  impl: function(value, sub, min) {
+    return Math.max(value-sub, 0);
+  }
+}
+
+@patch PATCH_MATH_CLAMPED_ADD {
+  patch: "Math"
+  function: "clamped_add"
+  impl: function(value, add, max) {
+    return Math.min(value+add, max);
   }
 }
 

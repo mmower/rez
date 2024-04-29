@@ -518,9 +518,9 @@ RezGame.prototype = {
     this.current_scene = scene;
 
     const layout = scene.getViewLayout();
-    layout.assignParams(params);
+    layout.params = params;
 
-    this.setViewContent(scene.getViewLayout());
+    this.setViewContent(layout);
     this.clearFlashMessages();
     scene.start();
     scene.ready();
@@ -547,7 +547,7 @@ RezGame.prototype = {
     this.current_scene = scene;
 
     const layout = scene.getViewLayout();
-    layout.assignParams(params);
+    layout.params = params;
 
     this.setViewContent(scene.getViewLayout());
     this.clearFlashMessages();

@@ -8,21 +8,14 @@ defmodule Rez.AST.TemplateHelper do
 
   alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
+  alias Rez.AST.HtmlTransformer
 
   alias Rez.Compiler.TemplateCompiler
   alias Rez.Parser.TemplateParser
 
-  @a_regex ~r/(<a)((?![^>]*\shref)[^>]*\sdata-event\s*=[^>]*>)/
-
-  def insert_hrefs(markup) do
-    Regex.replace(@a_regex, markup, fn _match, c1, c2 ->
-      c1 <> ~s| href="javascript:void(0)"| <> c2
-    end)
-  end
-
   def prepare_content(markup) when is_binary(markup) do
     markup
-    |> insert_hrefs()
+    |> HtmlTransformer.transform()
     |> string_to_lines()
     |> Enum.map_join("\n", &String.trim/1)
   end

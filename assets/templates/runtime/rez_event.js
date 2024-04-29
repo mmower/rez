@@ -2,6 +2,144 @@
 // Event Handling SubSystem
 //-----------------------------------------------------------------------------
 
+function RezEvent() {
+}
+
+RezEvent.prototype = {
+  constructor: RezEvent,
+
+  params: {},
+
+  setParam(name, value ) {
+    this.params[name] = value;
+    return this;
+  },
+
+  setParams(params) {
+    this.params = params;
+    return this;
+  },
+
+  flash_messages: [],
+
+  card_id: null,
+
+  scene_change_event: false,
+  scene_interlude_event: false,
+  scene_id: null,
+
+  scene_resume_event: false,
+
+  render_event: false,
+
+  error_message: null,
+
+  get hashFlash() {
+    return this.flash_messages.length > 0;
+  },
+
+  flash(message) {
+    this.flash_messages.push(message);
+    return this;
+  },
+
+  get shouldPlayCard() {
+    return this.card_id != null;
+  },
+
+  playCard(card_id) {
+    this.card_id = card_id;
+    return this;
+  },
+
+  get shouldRender() {
+    return this.render_event;
+  },
+
+  render() {
+    this.render_event = true;
+    return this;
+  },
+
+  get shouldChangeScene() {
+    return this.scene_change_event;
+  },
+
+  sceneChange(scene_id) {
+    this.scene_change_event = true;
+    this.scene_id = scene_id;
+    return this;
+  },
+
+  get shouldInterludeScene() {
+    return this.scene_interlude_event;
+  },
+
+  sceneInterlude(scene_id) {
+    this.scene_interlude_event = true;
+    this.scene_id = scene_id;
+    return this;
+  },
+
+  get shouldResumeScene() {
+    return this.scene_resume_event;
+  },
+
+  sceneResume() {
+    this.scene_resume_event = true;
+    return this;
+  },
+
+  get isError() {
+    return this.error_message != null;
+  },
+
+  error(message) {
+    this.error_message = message;
+    return this;
+  },
+
+  noop() {
+    return this;
+  }
+}
+
+RezEvent.built_in = function() {
+  return new RezEvent().noop();
+}
+
+RezEvent.flash = function(message) {
+  return new RezEvent().flash(message);
+}
+
+RezEvent.playCard = function(card_id) {
+  return new RezEvent().playCard(card_id);
+}
+
+RezEvent.render = function() {
+  return new RezEvent().render();
+}
+
+RezEvent.sceneChange = function(scene_id) {
+  return new RezEvent().sceneChange(scene_id);
+}
+
+RezEvent.sceneInterlude = function(scene_id) {
+  return new RezEvent().sceneInterlude(scene_id);
+}
+
+RezEvent.sceneResume = function() {
+  return new RezEvent().sceneResume();
+}
+
+RezEvent.noop = function() {
+  return new RezEvent().noop();
+}
+
+RezEvent.error = function(message) {
+  return new RezEvent().error(message);
+}
+
 function RezEventProcessor(game) {
   this.game = game;
 }
@@ -18,32 +156,34 @@ RezEventProcessor.prototype = {
   },
 
   dispatchResponse(response) {
-    if (typeof response == "object") {
-      if (response.flash) {
-        this.game.addFlashMessage(response.flash);
+    if(response instanceof RezEvent) {
+      if (response.hasFlash) {
+        for(message of response.flash_messages) {
+          this.game.addFlashMessage(message);
+        }
       }
 
-      if (response.scene) {
-        this.game.startSceneWithId(response.scene, response.params ?? {});
-      } else if(response.interlude) {
-        this.game.interludeSceneWithId(response.interlude, response.params ?? {});
-      } else if(response.resume) {
+      if(response.shouldChangeScene) {
+        this.game.startSceneWithId(response.scene_id, response.params);
+      } else if(response.shouldInterludeScene) {
+        this.game.interludeSceneWithId(response.scene_id, response.params);
+      } else if(response.shouldResumeScene) {
         this.game.resumePrevScene();
       }
 
-      if (response.card) {
-        this.scene.playCardWithId(response.card, response.params ?? {});
+      if(response.shouldPlayCard) {
+        this.scene.playCardWithId(response.card_id, response.params);
       }
 
-      if (response.render) {
+      if (response.shouldRender) {
         this.game.updateView();
       }
 
-      if (response.error) {
-        console.log(`Error: ${response.error}`);
+      if (response.isError) {
+        console.log(`Error: ${response.error_message}`);
       }
-    } else if (typeof response == "undefined") {
-      throw "Event handlers must return an object with at least one key from: [scene, card, flash, render, error, nop]!";
+    } else {
+      throw "Event handlers must return a RezEvent object!";
     }
   },
 
@@ -177,26 +317,22 @@ RezEventProcessor.prototype = {
 
   handleCardEvent(target, params) {
     console.log(`Handle card event: |${target}|`);
-    this.scene.playCardWithId(target, params);
-    return {builtin: true};
+    return RezEvent.playCard(target).setParams(params);
   },
 
   handleSwitchEvent(target, params) {
     console.log(`Handle switch event: |${target}|`);
-    this.game.startSceneWithId(target, params);
-    return {builtin: true};
+    return RezEvent.sceneChange(target).setParams(params);
   },
 
   handleInterludeEvent(target, params) {
     console.log(`Handle interlude event: |${target}|`);
-    this.game.interludeSceneWithId(target, params);
-    return {builtin: true};
+    return RezEvent.sceneInterlude(target).setParams(params);
   },
 
   handleResumeEvent(params) {
     console.log("Handle resume event");
-    this.game.resumePrevScene(params);
-    return {builtin: true};
+    return RezEvent.sceneResume().setParams(params);
   },
 
   handleBrowserInputEvent(evt) {

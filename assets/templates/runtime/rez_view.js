@@ -39,7 +39,7 @@ function RezBlock(block_type, source, params = {}) {
   this.block_type = block_type;
   this.source = source;
   this.flipped = false;
-  this.assignParams(params);
+  this.params = params;
 }
 
 RezBlock.prototype = {
@@ -74,7 +74,7 @@ RezBlock.prototype = {
   // where an expression is either the id of an element
   // or a function. The result of instantiation is either
   // {name, element_ref} or {name, func_result}
-  getBindings() {
+  getBindings(initial_bindings) {
     const source_bindings = this.source.getAttributeValue("bindings", []);
 
     return source_bindings.reduce((bindings, binding_object) => {
@@ -105,17 +105,18 @@ RezBlock.prototype = {
 
       bindings[prefix] = value;
       return bindings;
-    }, {source: this.source});
+    }, initial_bindings);
   },
 
   bindValues() {
-    const bindings = {
+    const initial_bindings = {
       block: this,
-      [this.source.bindAs()]: this.source,
-      ...this.getBindings(),
+      params: this.params,
+      source: this.source,
+      [this.source.bindAs()]: this.source
     };
 
-    return bindings;
+    return this.getBindings(initial_bindings);
   },
 
   // blocks are a list of id's of other card elements that we
@@ -176,12 +177,6 @@ RezBlock.prototype = {
       }
     } else {
       throw "This shouldn't happen, right?";
-    }
-  },
-
-  assignParams(params) {
-    for(const [param, value] of Object.entries(params)) {
-      this[param] = value;
     }
   },
 

@@ -617,13 +617,6 @@ You can use Markup for simple formatting although here we are showing off some o
 
 You can go quite a long way using only this subset of Rez's features.
 
-== How to make a Game
-
-Having gotten over the basics
-
-
-
-
 == What's Going on in the Browser
 
 We should distinguish between two environments: The _author_time_ environment where we're dealing with `.rez` source files containg elements & attributes, and the _runtime_ environment where these have been compiled into JavaScript code that runs in the browser.
@@ -1326,8 +1319,6 @@ This will work for audio & movie assets.
 == Template Expressions
 
 Template expressions are how you include dynamic content in your game user interface. They work in `@game` & `@scene` `layout` attributes and in a `@card`s `content` and `flipped_content` template attributes.
-
-[Advanced Note: Prior to v0.10 Rez used the Handlebars.js templating system and the handlerbars compiler and had the `@helper` directive to create new Handlebars helpers. This has been completely replaced by the Rez template expression system which has a built-in compiler and offers `@filter`s as an alternative to helpers.]
 
 Template Expressions are loosely based on the https://shopify.github.io/liquid/[Liquid] markup system. But it's worth noting that they are _not_ actually Liquid and you should always refer to this documentation not the Liquid docs.
 

@@ -11,19 +11,19 @@ draft = false
 
 == Chapter 1: Creating Your First Game
 
-Let's start right at the beginning:
+Let's start right at the beginning. We assume you have installed Rez and have an open terminal window in a folder where you'd like to create a new game.
 
-...
-rez new first_game
-...
+....
+> rez new first_game
+....
 
 This creates a set of folders and puts some initial content into them. The only thing we really need to concern ourselves with is the contents of the `src` folder. In that we should find a file called `first_game.rez`. That is the main source file of our game.
 
 image::folder_structure1.png[]
 
-...
-rez compile src/first_game.rez
-...
+....
+> rez compile src/first_game.rez
+....
 
 This will build the HTML & Javascript to play the game. The resulting files are put into the `dist` folder. If you open `dist/index.html` in your browser you will be able to play the game.
 
@@ -31,11 +31,13 @@ image::folder_structure2.png[]
 
 You will also notice an `assets` folder, under `dist` containing some Javascript and CSS files. These are automatically moved there from the main `assets` and referenced by the game files. Of particular interest is the `runtime.js` file which is the Javascript code for your game (as well as the Rez standard library).
 
-== First Steps In Writing
+=== First Steps In Writing
 
 Open the `first_game.rez` file and delete everything after the comment `%% The game proper begins here` up to the final `}` that closes the `@game` element (delete lines 35-75 inclusive) (see `step01`).
 
 Let's start super simple: Putting something on screen. For that we'll need the existing `@game` element (because every game needs one), a `@scene` (again, every game must have at least one) and a `@card`.
+
+Cards are the main way that we put content on screen. They require a `content:` attribute that is written using plain HTML, though you also have the power of https://bulma.io/[Bulma CSS] and https://alpinejs.dev/[Apline.js] (for styling & dynamic content) at your fingertips.
 
 If you are familiar with Twine then a Rez `@card` is metaphorically equivalent to a Twine passage. Twine has no real equivalent to a Rez `@scene` which you can think of like a scene in a play or a movie. We're not making use of it yet but different scenes can present an entirely different "stage" for the cards to play out on.
 
@@ -46,32 +48,34 @@ If you are familiar with Twine then a Rez `@card` is metaphorically equivalent t
 
 @card c_entrance {
   content: ```
-  You are at the entrace to the castle. You experience a moment of trepidation, do you want to go inside?
+  You are at the entrace to the castle. You experience a moment of... <span class="is_italic">trepidation</span>, do you want to go inside?
   ```
 }
 ....
 
 So we've added a scene `#s_first_scene` and told it that the first card it should present is `#c_entrance`. We use the cards `content:` attribute to write what we want to see on screen. It's this simple at the beginning.
 
-Rez uses HTML markup and provides Bulma CSS and Alpine.JS to help style content and add dynamic elements. But, before we make any changes, re-compile. You're going to get an error:
+When writing content, we are writing HTML and most of the normal rules apply here, although `<a>` tags will look a little funny to you. In this case we use the Bulma style `is_italic` to format part of the text.
+
+As an aside note the use of `s_` as a prefix to the id of scenes and `c_` as a prefix to the id of cards. When you start referring to ID's elsewhere in the game you'll be glad for adopting this kind of approach.
+
+Now, before we make any more changes, re-compile. You're going to get an error:
 
 ....
- > Expected game/initial_scene_id to refer to a scene but the id 's_hello' was not found.
+> Expected game/initial_scene_id to refer to a scene but the id 's_hello' was not found.
 ....
 
-When we deleted the previous content we deleted the scene that was opening the game. We need to tell Rez about the new scene we have replaced it with. Find the line:
+When we deleted the previous content we deleted the scene `#s_hello` that used to opening the game. We need to tell Rez about the new scene `#s_first_scene` we have replaced it with. Find the line:
 
 ....
 initial_scene_id: #s_hello
 ....
 
-and amend it to:
+This instructs the game which scene to start with, amend it to:
 
 ....
 initial_scene_id: #s_first_scene
 ....
-
-Or, of course, you could rename the scene back to `s_hello`, either is fine.
 
 Now when you compile you should see:
 
@@ -81,7 +85,19 @@ Load the `dist/index.html` file in the browser and you should see something like
 
 image::authoring_1.png[]
 
-Earlier we mentioned that scenes can present a "stage" and we do this by specifying their `layout:` attribute. Change the file so that the content now looks like this (see `step02`):
+Congratulations, you are now an author with Rez!
+
+=== Formatting with layouts
+
+How a game presents its content is a very important topic for authors and Rez gives you a lot of control over this. We mentioned that a scene can present a kind of "stage" upon which a part of your game plays out.
+
+A simple game might only use one scene but as your game grows more complex you might find need for a range of scenes. For a character screen, an inventory system, a planetary exploration, and an NPC dialog are likely to present very differently and have different kinds of interactions.
+
+Scenes lend themselves very naturally and support the idea both of changing from one scene to another (for example moving from an introduction or tutorial to the main game) as well as interludes where you switch to another scene and then back again (presenting an inventory or character screen) maintaining the players place.
+
+We'll talk more about this later but for now let's look at how scenes can present their own interface by specifying a `layout:` attribute. In the same way cards have `content:` which is HTML they present, scenes have `layout:` which is HTML that they present, wrapped around the content from their current card.
+
+Change the file so that the content now looks like this (see `step02`):
 
 ....
 @scene s_first_scene {
@@ -99,7 +115,7 @@ Earlier we mentioned that scenes can present a "stage" and we do this by specify
 @card c_entrance {
   description: "castle entrance"
   content: ```
-  You are at the entrace to the castle. You experience a moment of trepidation, do you want to <a data-event="card" data-target="c_courtyard">go inside</a>?
+  You are at the entrace to the castle. You experience a moment of trepidation, do you want to <a card="c_courtyard">go inside</a>?
   ```
 }
 
@@ -111,9 +127,43 @@ Earlier we mentioned that scenes can present a "stage" and we do this by specify
 }
 ....
 
-Re-compile and reload the game in the browser. You'll notice a few things. In the first place we now have a link to take us from the first card to the second. And that, whichever card you are looking at, the scene they are in (`#s_first_scene`) is displaying some content of its own. This uses dynamic component, displaying the `description:` attribute defined by the scene's current card.
+Re-compile and reload the game in the browser. You'll notice a few things.
 
-One role of the scene is to provide a layout that can be shared among a number of different cards, making more complex UI easier to build. Scene's do more than this as we'll see later. But let's expand on the layout theme a little. Let's use a sidebar to display some information.
+First, we now have a link that takes us from the starting card to the second card. Rez links are specified using regular HTML `<a>` tags but with some possibly unfamiliar attributes. To load a new card you don't use `href='...'`, you use `card='card_id'`.
+
+Second the scene itself is now presenting content directly via it's `layout:` attribute. When you specify a custom layout you must include the `${content}` expression somewhere because that contains the rendered content of the card (or cards) that the scene is presenting.
+
+You can also add a `layout:` attribute to the `@game` itself. It works exactly the same way as a `@scene` layout and uses the `${content}` expression to include the content being rendered by the current scene.
+
+=== Using expressions and bindings
+
+In this scene we're also using a xref:language_reference.adoc#_template_expressions[template expression] to display the `description:` attribute defined by the scene's current card. Scene layout can be a good way to present common content rather than duplicating this in the cards themselves.
+
+Simple template expressions are of the form `${expression}` where the expression starts with a binding. Bindings can look a little confusing at first but are actually a fairly simple concept: they give a name to something you want to refer to in a template expression.
+
+Here's a simple example: Every game has a single `@game` element with a `title:` attribute. At runtime this `@game` is represented by a Javascript object that stores the value of the title attribute. How can we refer to that object & value from a template?
+
+That is where bindings come in, they associate a name with an object.
+
+....
+@card c_game_title {
+  bindings: [
+    game: #game
+  ]
+
+  content: ```
+  This game is titled "${game.title}".
+  ```
+}
+....
+
+In practice you don't need to make this specific binding because Rez automatically binds `game`, `scene`, `card` to the current `@game`, `@scene`, and `@card` elements respectively. You can make use of those straight away.
+
+One role of a scene is to provide a layout and a context that can be shared among a number of different cards, making more complex UI easier to build. Scene's do more than this as we'll see later. But let's expand on the layout theme a little. Let's use a sidebar to display some information.
+
+=== Multi-column layouts and sidebars
+
+Fortunately Bulma makes this easy with its `columns` and `column` CSS classes.
 
 Replace the existing `#s_first_scene` definition with this (see `step03`)
 
@@ -135,7 +185,7 @@ Replace the existing `#s_first_scene` definition with this (see `step03`)
 }
 
 @card c_sidebar {
-  bindings: {player: #player}
+  bindings: [player: #player]
   content: ```
   <section class="section">
     <p class="is-size-5 has-text-weight-semibold">Name</p>
@@ -153,22 +203,20 @@ Replace the existing `#s_first_scene` definition with this (see `step03`)
 }
 ....
 
-Note the use of the `blocks:` attribute of `#s_first_scene`. This specifies a list of other cards we want to render as part of the scene layout. In this case, `#c_sidebar` which is then made available as the binding `c_sidebar` so can be included with a template expression `${c_sidebar}`.
+Note that the `@scene` now uses a `blocks:` attribute. This specifies the id of any additional cards we want to include within the game layout. Any card specified here gets rendered with the rendered content being bound to the same name in the bindings.
 
-In this step we're also making use of some Bulma CSS classes: `columns` & `column` to create a two column layout. Second the use of `<section>` to create sections in the sidebar. Loading the new card doesn't change the sidebar layout.
+In this case `#s_first_scene` wants to render the content of `#c_sidebar` as well its current card. Rez renders the card so that you can include it in your template with a `${c_sidebar}` expression within the layout.
 
-Using different scenes is an easy way to have different parts of your game use a different layout and colour scheme.
+The Scene layout is shared by the cards played into the scene. We don't have to replicate it. Using different scenes is an easy way to have different parts of your game use a different layout and colour scheme.
 
-== Summary
+=== Summary of Chapter 1
 
-Rez is event-driven. What that means is that your game responds to events and then decides what to present to the player. For example clicking a link can generate the `card` event that loads a new card.
-
-Rez is HTML based. You write using HTML markup. But it also has some convenients, for example it doesn't require the `href` attribute on `<a>` tags.
-
-You can include dynamically generated content using the `${...}` template expression syntax.
-
-* Rez is event driven. To load a different card we send the `card` event, and to do that we use an HTML `<a>` element as shown in the `content:` attribute of the `#c_entrance` entrance and HTML data-attributes. In this case `data-event` specifies the event and `data-target` which card to load next.
-* You can add your own attributes to card to do pretty much anything you can think of.
-* Scene layouts must include a `${content}` template expression (the content of their current card gets rendered into the `content` binding)
+* Rez is event-driven. What that means is that your game responds to events and then decides what to present to the player. For example clicking a link can generate the `card` event that loads a new card.
+* Rez is HTML based. You write using HTML markup. But it also has some convenients, for example it doesn't require the `href` attribute on `<a>` tags.
+* You can include dynamically generated content using the `${...}` template expression syntax.
+* To load a different card we send the `card` event, and to do that we use an HTML `<a card='card_id'>` element as shown in the `content:` attribute of the `#c_entrance` entrance and HTML data-attributes.
+* You can add your own attributes to cards, scenes, and the game to do pretty much anything you can think of.
+* Scene layouts must include a `${content}` template expression (the content of their current card gets bound to `content`)
+* You can use `bindings:` to refer to any game elements whose content you want to include in a template
+* You can use `blocks:` on a card, scene, or game to include the content from other cards in their template
 * Scene layouts can use any legal HTML markup
-* Dynamic expressions use the `${expr}` format. We'll look more at those later.

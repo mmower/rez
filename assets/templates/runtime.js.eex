@@ -29,6 +29,12 @@
 
   window.$game = game;
 
+  window.range = function*(sv, ev) {
+    for(let ix = sv; ix <= ev; ix += 1) {
+      yield ix;
+    }
+  }
+
   if(window.$game.getAttributeValue("$warn_before_reload", false)) {
     window.addEventListener("beforeunload", function(evt) {
       evt.preventDefault();
