@@ -9,9 +9,14 @@ const game = <%= Node.js_initializer(@game) %>;
 basic_object.game = game;
 
 /* Encode game objects */
+let el;
 <%= for collection <- Game.js_classes_to_init(),
     {_id, obj} <- Map.get(@game, collection) do %>
-  game.addGameObject(<%= Node.js_initializer(obj) %>);
+  el = <%= Node.js_initializer(obj) %>;
+  game.addGameObject(el);
+  <%= if NodeHelper.get_attr_value(obj, "$global", false) do %>
+    window.$<%= obj.id %> = el;
+  <% end %>
 <% end %>
 
 <%

@@ -236,21 +236,6 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
-  # Dynamic Value
-  # ^v{...}
-  def dynamic_value() do
-    ParserCache.get_parser("dynamic_value", fn ->
-      sequence(
-        [
-          ignore(caret()),
-          ignore(char(?v)),
-          text_delimited_by_nested_parsers(open_brace(), close_brace())
-        ],
-        ast: fn [f] -> {:dynamic_value, f} end
-      )
-    end)
-  end
-
   # Dynamic Initializer
   # ^i{...}
   def dynamic_initializer_value() do
@@ -543,7 +528,6 @@ defmodule Rez.Parser.ValueParsers do
           code_block_value(),
           function_value(),
           dynamic_initializer_value(),
-          dynamic_value(),
           property_value(),
           attr_ref_value(),
           file_value(),

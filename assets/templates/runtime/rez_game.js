@@ -570,7 +570,10 @@ RezGame.prototype = {
       // Let the interlude know we're done
       this.current_scene.finish();
       this.popScene(params);
-      this.current_scene.getViewLayout().assignParams(params);
+
+      const layout = this.current_scene.getViewLayout();
+      // Merge any new params into the existing params
+      layout.params = {...layout.params, ...params};
       this.updateView();
     }
   },

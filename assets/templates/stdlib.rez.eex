@@ -381,45 +381,6 @@
   }
 }
 
-@patch PATCH_NUMBER_RANGE {
-  patch: "Number"
-  function: "range"
-  impl: function(from, to, step) {
-    step ??= 1;
-
-    if(from>to) {
-      [from, to] = [to, from];
-    }
-
-    return Array.from(
-      {length: (to-from)/step+1},
-      (_, i) => from + (i * step));
-  }
-}
-
-@patch PATCH_NUMBER_RND_BETWEEN {
-  patch: "Number"
-  function: "rand_between"
-  impl: function(min, max) {
-    if(min > max) {
-      [min, max] = [max, min]
-    }
-    return Math.floor(min + Math.random() * (max - min + 1));
-  }
-}
-
-@patch PATCH_NUMBER_RNDF_BETWEEN {
-  patch: "Number"
-  function: "randf_between"
-  impl: function(min, max) {
-    if(min > max) {
-      [min, max] = [max, min]
-    }
-
-    return min + (Math.random() * (max - min));
-  }
-}
-
 @patch PATCH_NUMBER_ROUNDP {
   %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
   patch: "Number"
@@ -461,7 +422,7 @@
   patch: "Number"
   method: "chance"
   impl: function() {
-    return Number.rand_between(1, 100) < this;
+    return Math.rand_int_between(1, 100) < this;
   }
 }
 
@@ -472,6 +433,22 @@
     const div = Math.floor(n/d);
     const mod = n % d;
     return [div, mod];
+  }
+}
+
+@patch PATCH_MATH_RANGE {
+  patch: "Math"
+  function: "range"
+  impl: function(from, to, step) {
+    step ??= 1;
+
+    if(from>to) {
+      [from, to] = [to, from];
+    }
+
+    return Array.from(
+      {length: (to-from)/step+1},
+      (_, i) => from + (i * step));
   }
 }
 
@@ -499,9 +476,40 @@
   }
 }
 
-@patch PATCH_MATH_CLRAND_INT {
+@patch PATCH_MATH_RND_INT_BETWEEN {
   patch: "Math"
-  function: "clrand_int"
+  function: "rand_int_between"
+  impl: function(min, max) {
+    if(min > max) {
+      [min, max] = [max, min]
+    }
+    return Math.floor(min + Math.random() * (max - min + 1));
+  }
+}
+
+@patch PATCH_MATH_RAND_F_BETWEEN {
+  patch: "Math"
+  function: "rand_f_between"
+  impl: function(min, max) {
+    if(min > max) {
+      [min, max] = [max, min]
+    }
+
+    return min + (Math.random() * (max - min));
+  }
+}
+
+@patch PATCH_MATH_CL_RAND_F_BETWEEN {
+  patch: "Math"
+  function: "cl_rand_f_between"
+  impl: function(min, max) {
+    return (Math.randf_between(min, max) + Math.randf_between(min, max))/2;
+  }
+}
+
+@patch PATCH_MATH_CL_RAND_INT {
+  patch: "Math"
+  function: "cl_rand_int"
   impl: function(lim) {
     const v1 = Math.rand_int(lim);
     const v2 = Math.rand_int(lim);
@@ -509,12 +517,12 @@
   }
 }
 
-@patch PATCH_MATH_CLRANDR_INT {
+@patch PATCH_MATH_CLRAND_INT_BETWEEN {
   patch: "Math"
-  function: "clrandr_int"
+  function: "cl_rand_int_between"
   impl: function(lo, hi) {
-    const v1 = Number.rnd_between(lo, hi);
-    const v2 = Number.rnd_between(lo, hi);
+    const v1 = Math.rand_int_between(lo, hi);
+    const v2 = Math.rand_int_between(lo, hi);
     return Math.dist_round((v1+v2)/2);
   }
 }

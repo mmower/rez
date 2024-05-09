@@ -316,10 +316,6 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |A Javascript expression that is evaluated when the game starts
 |`^i{Math.rand_int(1,10)}`
 
-|Dynamic Value
-|A Javascript expression that is evaluated each time the attribute is referenced
-|`^v{this.uses * this.item_value * 25}`
-
 |Dynamic Property
 |A Javascript function expression that is converted into an object property
 |`^p{return this.first_name + " " + this.last_name}`
@@ -458,6 +454,13 @@ It's not elegant but it's feasible. This will likely get cleaned up in a future 
 
 === Tracery Grammar
 
+* TODO
+
+=== Code Block
+
+A code block uses the form `^{...}` and can contain a legal Javascript expression.
+
+The code block is implicitly transformed into a function of 1 argument `obj` and that returns the value of the expression.
 
 === Dynamic Initializer
 
@@ -476,18 +479,6 @@ Note that this is not a function, the initializer uses the last expression as th
   }
 }
 ....
-
-=== Dynamic Value
-
-A dynamic value uses the form `^v{...}` to create an expression that gets evaluated each time it is referenced. This should be mostly superceded by the use of `^p{...}` to create properties.
-
-....
-@actor random_npc {
-  class_name: ^v{class == "g" ? "Gunslinger" : class =="s" ? "Sleuth" : "Crook"}
-}
-....
-
-Note that there is an implicit `return` statement to which this value code is appended.
 
 === Dynamic Property
 
