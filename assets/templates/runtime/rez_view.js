@@ -34,6 +34,13 @@ function evaluateExpression(expression, bindings, rval = true) {
 // View
 //-----------------------------------------------------------------------------
 
+/*
+block_type: ?
+source: an element with attributes
+params: ?
+
+ */
+
 function RezBlock(block_type, source, params = {}) {
   this.parent_block = null;
   this.block_type = block_type;
@@ -80,27 +87,32 @@ RezBlock.prototype = {
     return source_bindings.reduce((bindings, binding_object) => {
       const prefix = binding_object["prefix"];
       const source = binding_object["source"];
+      const literal = binding_object["literal"];
       const deref = binding_object["deref"];
 
       let value;
 
-      if(typeof(source) === "string") {
-        value = this.instantiateIdBinding(source);
-      } else if(typeof(source) === "function") {
-        value = this.instantiateFunctionBinding(bindings, source);
-      } else if(typeof(source.binding) === "function") {
-        value = this.instantiatePathBinding(source.binding, bindings);
-        if(deref) {
-          if(Array.isArray(value)) {
-            value = value.map((id) => $(id));
-          } else {
-            value = $(value)
-          }
-        }
+      if(typeof(literal) !== "undefined") {
+        value = literal
       } else {
-        console.log("Binding prefix: " + prefix);
-        console.dir(value);
-        throw `Invalid binding type: ${typeof(value)}!`;
+        if(typeof(source) === "string") {
+          value = this.instantiateIdBinding(source);
+        } else if(typeof(source) === "function") {
+          value = this.instantiateFunctionBinding(bindings, source);
+        } else if(typeof(source.binding) === "function") {
+          value = this.instantiatePathBinding(source.binding, bindings);
+          if(deref) {
+            if(Array.isArray(value)) {
+              value = value.map((id) => $(id));
+            } else {
+              value = $(value)
+            }
+          }
+        } else {
+          console.log("Binding prefix: " + prefix);
+          console.dir(value);
+          throw `Invalid binding type: ${typeof(value)}!`;
+        }
       }
 
       bindings[prefix] = value;

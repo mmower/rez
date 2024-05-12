@@ -207,6 +207,30 @@
   }
 }
 
+@patch PATCH_ARRAY_SAMPLE {
+  patch: "Array"
+  method: "sample"
+  impl: function(percentage) {
+    if (!Array.isArray(this) || this.length === 0 || percentage <= 0) {
+      return []; // Return an empty array for invalid input
+    }
+
+    const sampleSize = Math.ceil(this.length * (percentage / 100));
+    const result = [];
+    const indicesUsed = new Set();
+
+    while (result.length < sampleSize && indicesUsed.size < this.length) {
+      const randomIndex = Math.floor(Math.random() * this.length);
+      if (!indicesUsed.has(randomIndex)) {
+        indicesUsed.add(randomIndex);
+        result.push(this[randomIndex]);
+      }
+    }
+
+    return result;
+  }
+}
+
 @patch PATCH_STRING_BEGINS_WITH_CONSONANT {
   patch: "String"
   method: "beginsWithConsonant"
@@ -503,7 +527,7 @@
   patch: "Math"
   function: "cl_rand_f_between"
   impl: function(min, max) {
-    return (Math.randf_between(min, max) + Math.randf_between(min, max))/2;
+    return (Math.rand_f_between(min, max) + Math.rand_f_between(min, max))/2;
   }
 }
 

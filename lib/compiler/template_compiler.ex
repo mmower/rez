@@ -127,6 +127,37 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
+  def compile_chunk({:partial, t_expr, {:params, params}}) do
+    params =
+      Enum.map_join(params, ",", fn {key, value} ->
+        case value do
+          {:string, s} ->
+            ~s|#{key}: "#{s}"|
+
+          {:number, n} ->
+            ~s|#{key}: #{n}|
+
+          {:boolean, b} ->
+            ~s|#{key}: #{b}|
+
+          {:bound_path, path} ->
+            ~s|#{key}: bindings.#{Enum.join(path, ".")}|
+        end
+      end)
+
+    body = ~s|
+      const partial_id = bindings.#{t_expr};
+      const partial = $(partial_id);
+      partial.$parent = bindings.source;
+      const block = new RezBlock("block", partial);
+      block.parent_block = bindings.block;
+      block.params = {#{params}};
+      return block.html();
+    |
+
+    js_create_fn(body, false)
+  end
+
   def conditional_expr(:if, expr, sub_template) do
     ~s|
     if(evaluateExpression(`#{expr}`, bindings)) {

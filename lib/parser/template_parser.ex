@@ -16,6 +16,15 @@ defmodule Rez.Parser.TemplateParser do
 
   import Ergo.Meta, only: [commit: 0]
 
+  import Rez.Parser.ValueParsers,
+    only: [
+      string_value: 0,
+      number_value: 0,
+      bool_value: 0
+    ]
+
+  import Rez.Parser.JSBindingParser, only: [binding_path: 0]
+
   import Rez.Parser.UtilityParsers,
     only: [
       iws: 0,
@@ -37,6 +46,7 @@ defmodule Rez.Parser.TemplateParser do
 
   def if_macro(), do: PC.get_parser("if_macro", fn -> literal("$if") end)
   def fe_macro(), do: PC.get_parser("fe_macro", fn -> literal("$foreach") end)
+  def ps_macro(), do: PC.get_parser("ps_macro", fn -> literal("$partial") end)
   def do_macro(), do: PC.get_parser("do_macro", fn -> literal("$do") end)
   def open_body(), do: PC.get_parser("open_body", fn -> literal("{%") end)
   def close_body(), do: PC.get_parser("close_body", fn -> literal("%}") end)
@@ -138,6 +148,74 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def partial_param_value() do
+    choice([
+      string_value(),
+      number_value(),
+      bool_value(),
+      binding_path()
+    ])
+  end
+
+  def partial_param() do
+    sequence(
+      [
+        iows(),
+        ignore(optional(comma())),
+        iows(),
+        js_identifier(),
+        iows(),
+        ignore(colon()),
+        iows(),
+        partial_param_value()
+      ],
+      ast: fn [param_id, param_value] ->
+        {:param, param_id, param_value}
+      end
+    )
+  end
+
+  def partial_params() do
+    sequence(
+      [
+        ignore(open_brace()),
+        many(partial_param()),
+        ignore(close_brace())
+      ],
+      ast: fn [params] ->
+        {
+          :params,
+          Enum.reduce(params, %{}, fn {:param, param_id, param_value}, params ->
+            Map.put(params, param_id, param_value)
+          end)
+        }
+      end
+    )
+  end
+
+  import Rez.Parser.Trace
+
+  def partial() do
+    sequence(
+      [
+        trace(true),
+        ignore(ps_macro()),
+        ignore(open_paren()),
+        iows(),
+        js_identifier(),
+        iows(),
+        ignore(comma()),
+        iows(),
+        partial_params(),
+        iows(),
+        ignore(close_paren())
+      ],
+      ast: fn [partial_expr, param_map] ->
+        {:partial, partial_expr, param_map}
+      end
+    )
+  end
+
   def doblock() do
     sequence(
       [
@@ -185,6 +263,7 @@ defmodule Rez.Parser.TemplateParser do
 
   def la_open_doblock(), do: PC.get_parser("open_doblock", fn -> literal("$do{") end)
   def la_open_foreach(), do: PC.get_parser("open_foreach", fn -> literal("$foreach(") end)
+  def la_open_partial(), do: PC.get_parser("open_partial", fn -> literal("$partial(") end)
   def escape_dollar(), do: PC.get_parser("escape_dollar", fn -> literal("\\$") end)
 
   def string() do
@@ -196,6 +275,7 @@ defmodule Rez.Parser.TemplateParser do
             la_open_doblock(),
             open_interpolation(),
             la_open_foreach(),
+            la_open_partial(),
             escape_dollar()
           ])
         ),
@@ -219,6 +299,7 @@ defmodule Rez.Parser.TemplateParser do
         doblock(),
         interpolation(),
         foreach(),
+        partial(),
         string()
       ]),
       ast: fn ast -> {:source_template, ast} end

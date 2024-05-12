@@ -38,7 +38,10 @@ defmodule Rez.Parser.CollectionParser do
       value: 0,
       elem_ref_value: 0,
       code_block_value: 0,
-      function_value: 0
+      function_value: 0,
+      string_value: 0,
+      number_value: 0,
+      bool_value: 0
     ]
 
   import Rez.Parser.JSBindingParser
@@ -86,16 +89,39 @@ defmodule Rez.Parser.CollectionParser do
   # They are formed of a prefix: value but only support specific kinds of
   # value that are used for value binding
 
-  def bound_value() do
+  def bound_literal() do
     choice(
       [
-        elem_ref_value(),
-        binding_path(),
-        code_block_value(),
-        function_value()
+        string_value(),
+        number_value(),
+        bool_value()
       ],
-      label: "bound-value",
-      debug: true
+      label: "bound-literal",
+      ast: fn value ->
+        {:literal, value}
+      end
+    )
+  end
+
+  def bound_source() do
+    sequence(
+      [
+        optional(star()),
+        choice([
+          elem_ref_value(),
+          binding_path(),
+          code_block_value(),
+          function_value()
+        ])
+      ],
+      label: "bound-source",
+      ast: fn
+        [source] ->
+          {:source, false, source}
+
+        [_star, source] ->
+          {:source, true, source}
+      end
     )
   end
 
@@ -106,15 +132,13 @@ defmodule Rez.Parser.CollectionParser do
           js_identifier(),
           ignore(colon()),
           iws(),
-          optional(star()),
-          bound_value()
+          choice([
+            bound_literal(),
+            bound_source()
+          ])
         ],
-        ast: fn
-          [prefix, value] ->
-            {:list_binding, {prefix, false, value}}
-
-          [prefix, _deref, value] ->
-            {:list_binding, {prefix, true, value}}
+        ast: fn [prefix, literal_or_source] ->
+          {:list_binding, {prefix, literal_or_source}}
         end
       )
     end)

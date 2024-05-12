@@ -48,7 +48,15 @@ defmodule Rez.AST.ValueEncoder do
     ~s|"#{k}"|
   end
 
-  def encode_value({:list_binding, {prefix, deref, value}}) when is_boolean(deref) do
+  def encode_value({:list_binding, {prefix, deref, {:literal, value}}}) when is_boolean(deref) do
+    ~s|{prefix: "#{prefix}", deref: #{deref}, literal: #{encode_value(value)}}|
+  end
+
+  def encode_value({:list_binding, {prefix, {:literal, value}}}) do
+    ~s|{prefix: "#{prefix}", literal: #{encode_value(value)}}|
+  end
+
+  def encode_value({:list_binding, {prefix, {:source, deref, value}}}) when is_boolean(deref) do
     ~s|{prefix: "#{prefix}", deref: #{deref}, source: #{encode_value(value)}}|
   end
 
