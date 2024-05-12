@@ -20,7 +20,8 @@ defmodule Rez.Parser.TemplateParser do
     only: [
       string_value: 0,
       number_value: 0,
-      bool_value: 0
+      bool_value: 0,
+      elem_ref_value: 0
     ]
 
   import Rez.Parser.JSBindingParser, only: [binding_path: 0]
@@ -202,7 +203,12 @@ defmodule Rez.Parser.TemplateParser do
         ignore(ps_macro()),
         ignore(open_paren()),
         iows(),
-        js_identifier(),
+        choice([
+          string_value(),
+          elem_ref_value(),
+          binding_path(),
+          js_identifier()
+        ]),
         iows(),
         ignore(comma()),
         iows(),

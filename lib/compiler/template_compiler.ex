@@ -145,14 +145,22 @@ defmodule Rez.Compiler.TemplateCompiler do
         end
       end)
 
+    partial_id =
+      case t_expr do
+        {:bound_path, path} -> ~s|bindings.#{Enum.join(path, ".")}|
+        {:string, id} -> ~s|"#{id}"|
+        {:elem_ref, id} -> ~s|"#{id}"|
+        id when is_binary(id) -> "bindings.#{id}"
+      end
+
     body = ~s|
-      const partial_id = bindings.#{t_expr};
+      const partial_id = #{partial_id};
       const partial = $(partial_id);
       partial.$parent = bindings.source;
       const block = new RezBlock("block", partial);
       block.parent_block = bindings.block;
       block.params = {#{params}};
-      return block.html();
+      return block.renderBlock();
     |
 
     js_create_fn(body, false)
