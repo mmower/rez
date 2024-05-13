@@ -84,6 +84,15 @@ RezBlock.prototype = {
   getBindings(initial_bindings) {
     const source_bindings = this.source.getAttributeValue("bindings", []);
 
+    if(this.source.getAttributeValue("$debug_bindings", false)) {
+      console.log(`Binding source: ${this.source.id}`);
+      console.log("Inital Bindings");
+      console.dir(initial_bindings);
+
+      console.log("Bindings");
+      console.dir(source_bindings);
+    }
+
     return source_bindings.reduce((bindings, binding_object) => {
       const prefix = binding_object["prefix"];
       const source = binding_object["source"];

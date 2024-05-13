@@ -98,6 +98,17 @@
   }
 }
 
+@patch PATCH_ARRAY_REMOVE {
+  patch: "Array"
+  method: "remove"
+  impl: function(elem) {
+    const idx = this.indexOf(elem);
+    if(idx !== -1) {
+      this.splice(idx, 1);
+    }
+  }
+}
+
 @patch PATCH_ARRAY_FY_SHUFFLE {
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
