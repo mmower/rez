@@ -14,3 +14,5 @@ RezFaction.prototype = {
   __proto__: basic_object,
   constructor: RezFaction
 };
+
+window.Rez.RezFaction = RezFaction;

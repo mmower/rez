@@ -13,3 +13,5 @@ RezItem.prototype = {
   __proto__: basic_object,
   constructor: RezItem,
 };
+
+window.Rez.RezItem = RezItem;

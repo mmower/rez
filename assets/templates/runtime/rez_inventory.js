@@ -426,3 +426,5 @@ RezInventory.prototype = {
     items.forEach((item_id) => this.removeItemFromSlot(slot_id, item_id));
   }
 };
+
+window.Rez.RezInventory = RezInventory;

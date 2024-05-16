@@ -20,3 +20,5 @@ RezObject.prototype = {
   __proto__: basic_object,
   constructor: RezObject
 };
+
+window.Rez.RezObject = RezObject;

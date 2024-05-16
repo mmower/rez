@@ -209,11 +209,15 @@ defmodule Rez.Parser.ValueParsers do
           ignore(hash()),
           # Otherwise it MUST be an elem_ref
           commit(),
+          # optional(bang()),
           js_identifier()
         ],
         label: "elem-ref-value",
         debug: true,
-        ast: fn [elem_id] -> {:elem_ref, elem_id} end
+        ast: fn
+          [elem_id] -> {:elem_ref, elem_id}
+          [_bang, elem_id] -> {:clone_ref, elem_id}
+        end
       )
     end)
   end

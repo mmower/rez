@@ -175,6 +175,6 @@ RezList.prototype = {
     this.walks[walk_id] = walk;
     return walk;
   },
-
-
 };
+
+window.Rez.RezList = RezList;

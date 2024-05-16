@@ -17,7 +17,7 @@ Rez has excellent support for making good looking interfaces. It includes a soph
 
 Rez supports asset management, NPC actors & behaviours, item & inventory management, factions, relationships, plots, customisable systems, and much more.
 
-Rez can get deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/docs/rez.html[online documentation] for tutorials, language reference, and runtime API documentation.
+Rez can get deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/[online documentation] for tutorials, language reference, and runtime API documentation.
 
 == Getting Started
 

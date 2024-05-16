@@ -41,3 +41,5 @@ RezTimer.prototype = {
     this.timer = null;
   }
 };
+
+window.Rez.RezTimer = RezTimer;

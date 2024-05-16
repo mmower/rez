@@ -17,5 +17,6 @@ RezSlot.prototype = {
   get has_capacity() {
     return this.getAttribute("capacity") !== undefined;
   },
-
 };
+
+window.Rez.RezSlot = RezSlot;

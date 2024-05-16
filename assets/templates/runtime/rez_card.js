@@ -44,3 +44,5 @@ RezCard.prototype = {
     }
   },
 };
+
+window.Rez.RezCard = RezCard;

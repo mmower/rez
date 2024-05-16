@@ -10,11 +10,13 @@ RezDie.prototype = {
   constructor: RezDie,
 
   roll() {
-    return Number.rand_between(1, this.sides);
+    return Math.rand_int_between(1, this.sides);
   }
 };
 
-function RezDieRoll(sides = 6, count = 1, modifier = 0, rounds = 1) {
+window.Rez.RezDie = RezDie;
+
+function RezDieRoll(count, sides, modifier, rounds = 1) {
   this.die = new RezDie(sides);
   this.count = count;
   this.modifier = modifier;
@@ -65,3 +67,5 @@ RezDieRoll.prototype = {
     }
   }
 };
+
+window.Rez.RezDieRoll = RezDieRoll;

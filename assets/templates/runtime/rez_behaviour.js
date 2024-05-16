@@ -75,16 +75,30 @@ RezBehaviour.prototype = {
     // By definition this is a function of two attributes
     // (behaviour, wmem)
     const execute = this.getAttribute("execute");
-    if(typeof(execute) === "function") {
-      return execute(this.owner, this, wmem);
-    } else {
+    if(typeof(execute) !== "function") {
       return {
         id: this.id,
         wmem: wmem,
         success: false,
         error: "No execute handler found."
+      };
+    }
+
+    const expected_keys = this.getAttribute("expected_keys");
+    if(Array.isArray(expected_keys)) {
+      for(let prop_key of expected_keys) {
+        if(!wmem.hasOwnProperty(prop_key)) {
+          return {
+            id: this.id,
+            wmem: wmem,
+            success: false,
+            error: `Expected key '${prop_key}' is not present in wmem.`
+          };
+        }
       }
     }
+
+    return execute(this.owner, this, wmem);
   },
 
   instantiate(owner, options, children = []) {
@@ -96,3 +110,5 @@ RezBehaviour.prototype = {
     return behaviour;
   }
 };
+
+window.Rez.RezBehaviour = RezBehaviour;

@@ -12,11 +12,15 @@ date = 2024-03-16
 
 == $sequence
 
-The `$sequence` behaviour takes two or more children and when executed will execute its children in turn. If any child fails then `$sequence` will stop at that point and fail. If all the children suceeed then `$sequence` will succeed.
+The `$sequence` behaviour takes two or more children and, when executed, it executes each of its children in turn. If any child fails then `$sequence` will stop at that point and fail. If all the children suceeed then the `$sequence` will succeed.
+
+The effect is like a boolean `and` expression. Sequences are often a set of conditions followed by a set of actions.
 
 == $select
 
-The `$select` behaviour takes two or more children and when executed will execute its hildren in turn. If a child succeeds then `$select` will immediately stop executing and succeed. If all the children fail then `$select` will fail.
+The `$select` behaviour takes two or more children and, when executed, it executes each of its children in turn. If any child succeeds then `$select` will immediately succeed without executing any further children. If all the children fail then `$select` will fail.
+
+The effect is like a boolean `or` expression. Selects often express a range of alternative behaviours where we want only the first to succeed.
 
 == $select_p
 

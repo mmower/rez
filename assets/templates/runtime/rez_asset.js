@@ -121,3 +121,5 @@ RezAsset.prototype = {
     },
   },
 };
+
+window.Rez.RezAsset = RezAsset;

@@ -210,6 +210,14 @@
   }
 }
 
+@patch PATCH_ARRAY_IDS {
+  patch: "Array"
+  method: "ids"
+  impl: function() {
+    return this.map((obj) => obj.id);
+  }
+}
+
 @patch PATCH_ARRAY_N_OF {
   patch: "Array"
   function: "n_of"
@@ -537,8 +545,13 @@
 @patch PATCH_MATH_CL_RAND_F_BETWEEN {
   patch: "Math"
   function: "cl_rand_f_between"
-  impl: function(min, max) {
-    return (Math.rand_f_between(min, max) + Math.rand_f_between(min, max))/2;
+  impl: function(min, max, rounds) {
+    rounds = rounds ?? 2;
+    let total = 0;
+    for(let i = 0; i < rounds; i+= 1) {
+      total += Math.rand_f_between(min, max);
+    }
+    return total/rounds;
   }
 }
 

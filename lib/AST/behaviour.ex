@@ -31,6 +31,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
     do: %{
       "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
       "options" => Attribute.list("options", []),
+      "expected_keys" => Attribute.list("expected_keys", []),
       "min_children" => Attribute.number("min_children", 0),
       "max_children" => Attribute.number("max_children", 0),
       "owner_id" => Attribute.elem_ref("owner_id", "")
@@ -50,6 +51,13 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
     [
       attribute_if_present?(
         "options",
+        attribute_has_type?(
+          :list,
+          attribute_coll_of?(:keyword)
+        )
+      ),
+      attribute_if_present?(
+        "expected_keys",
         attribute_has_type?(
           :list,
           attribute_coll_of?(:keyword)

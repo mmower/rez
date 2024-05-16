@@ -712,3 +712,5 @@ RezGame.prototype = {
     this.$flash_messages = [];
   },
 };
+
+window.Rez.RezGame = RezGame;

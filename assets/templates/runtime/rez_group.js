@@ -73,3 +73,5 @@ RezGroup.prototype = {
     return asset_id;
   }
 };
+
+window.Rez.RezGroup = RezGroup;

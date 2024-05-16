@@ -93,3 +93,5 @@ RezDecision.prototype = {
     }
   },
 };
+
+window.Rez.RezDecision = RezDecision;

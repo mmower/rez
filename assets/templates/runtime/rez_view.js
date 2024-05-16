@@ -210,6 +210,8 @@ RezBlock.prototype = {
   },
 };
 
+window.Rez.RezBlock = RezBlock;
+
 //-----------------------------------------------------------------------------
 // Layout
 //-----------------------------------------------------------------------------
@@ -272,6 +274,8 @@ RezSingleLayout.prototype = {
   },
 };
 
+window.Rez.RezSingleLayout = RezSingleLayout;
+
 //-----------------------------------------------------------------------------
 // Stack Layout
 //
@@ -315,6 +319,8 @@ RezStackLayout.prototype = {
     return this.contents.map((block) => block.html()).join(separator);
   },
 };
+
+window.Rez.RezStackLayout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers
@@ -410,6 +416,8 @@ RezBlockTransformer.prototype = {
   }
 }
 
+window.Rez.RezBlockTransformer = RezBlockTransformer;
+
 //-----------------------------------------------------------------------------
 // Link Transformers
 //-----------------------------------------------------------------------------
@@ -428,6 +436,8 @@ RezEventLinkTransformer.prototype = {
     this.addEventListener(elem, this.getEventName());
   },
 };
+
+window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
 
 //-----------------------------------------------------------------------------
 // Button Transformer
@@ -448,7 +458,7 @@ RezButtonTransformer.prototype = {
   },
 };
 
-Window.RezButtonTransformer = RezButtonTransformer;
+window.Rez.RezButtonTransformer = RezButtonTransformer;
 
 //-----------------------------------------------------------------------------
 // FormTransformer
@@ -465,7 +475,7 @@ RezFormTransformer.prototype = {
   constructor: RezFormTransformer
 };
 
-Window.RezFormTransformer = RezFormTransformer;
+window.Rez.RezFormTransformer = RezFormTransformer;
 
 //-----------------------------------------------------------------------------
 // InputTransformer
@@ -479,7 +489,7 @@ function RezInputTransformer(receiver) {
 
 RezInputTransformer.prototype = event_transformer_proto;
 
-Window.RezInputTransformer = RezInputTransformer;
+window.Rez.RezInputTransformer = RezInputTransformer;
 
 //-----------------------------------------------------------------------------
 // BindingTransformer
@@ -619,6 +629,8 @@ RezBindingTransformer.prototype = {
   },
 };
 
+window.Rez.RezBindingTransformer = RezBindingTransformer;
+
 //-----------------------------------------------------------------------------
 // View
 //-----------------------------------------------------------------------------
@@ -703,3 +715,5 @@ RezView.prototype = {
     this.transform();
   },
 };
+
+window.Rez.RezView = RezView;

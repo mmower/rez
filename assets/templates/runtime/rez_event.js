@@ -140,6 +140,8 @@ RezEvent.error = function(message) {
   return new RezEvent().error(message);
 }
 
+window.Rez.RezEvent = RezEvent;
+
 function RezEventProcessor(game) {
   this.game = game;
 }
@@ -371,3 +373,5 @@ RezEventProcessor.prototype = {
   },
 
 };
+
+window.Rez.RezEventProcessor = RezEventProcessor;
