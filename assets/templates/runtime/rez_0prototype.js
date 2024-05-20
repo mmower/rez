@@ -112,6 +112,9 @@ const basic_object = {
           return $(ref_id);
         },
         set: function (ref) {
+          if(ref === null) {
+            throw "Cannot assign an empty ID ref";
+          }
           this.setAttribute(attr_name, ref.id);
         },
       });

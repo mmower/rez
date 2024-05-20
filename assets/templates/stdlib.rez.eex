@@ -198,7 +198,7 @@
       throw `Cannot take ${n} items from an array containing ${this.length} items!`;
     }
 
-    return Number.range(1, n).map((_) => {return this.shift()});
+    return Math.range(1, n).map((_) => {return this.shift()});
   }
 }
 
@@ -357,6 +357,14 @@
   method: "wrapWith"
   impl: function(prefix, suffix) {
     return prefix + this + suffix;
+  }
+}
+
+@patch PATCH_STRING_INDEFINITE_ARTICLE {
+  patch: "String"
+  method: "indefiniteArticle"
+  impl: function() {
+    return this.beginsWithConsonant() ? "a" : "an";
   }
 }
 
@@ -845,7 +853,7 @@
 
   name: "i_article"
   impl: (s) => {
-    const article = s.beginsWithConsonant() ? "a" : "an";
+    const article = s.indefiniteArticle();
     return `${article} ${s}`;
   }
 }
@@ -1072,6 +1080,28 @@
   execute: (owner, behaviour, wmem) => {
     let result = {success: true, wmem: wmem};
     for(const child of behaviour.children) {
+      result = child.executeBehaviour(result.wmem);
+      if(result.success) {
+        break;
+      }
+    }
+    return result;
+  }
+}
+
+@behaviour $select_r {
+  %% The $select_r behaviour is similar to $select except that each time it
+  %% executes, it executes its children in random order.
+
+  $template: true
+  options: []
+  min_children: 2
+
+  execute: (owner, behaviour, wmem) => {
+    let result = {success: true, wmem: wmem};
+    const indices = Math.range(0, behaviour.childCount-1).fy_shuffle();
+    for(const i of indices) {
+      const child = behaviour.getChildAt(i);
       result = child.executeBehaviour(result.wmem);
       if(result.success) {
         break;
@@ -1317,13 +1347,8 @@
 
   execute: (owner, behaviour, wmem) => {
     const result = behaviour.firstChild.executeBehaviour(wmem);
-    if(result.success) {
-      result.success = false;
-      result.error = "Inversion";
-      result.id = behaviour.id;
-    } else {
-      result.success = true;
-    }
+    result.success = !result.success;
+    return result;
   }
 }
 

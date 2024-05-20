@@ -400,7 +400,7 @@ RezGame.prototype = {
   getGameObject(id, should_throw = true) {
     if (!this.game_objects.has(id)) {
       if (should_throw) {
-        throw "No such ID |" + id + "| found!";
+        throw `No such ID |${id}| found!`;
       } else {
         return null;
       }

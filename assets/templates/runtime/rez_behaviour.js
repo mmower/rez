@@ -98,7 +98,16 @@ RezBehaviour.prototype = {
       }
     }
 
-    return execute(this.owner, this, wmem);
+    const result = execute(this.owner, this, wmem);
+    if(typeof(result) !== "object") {
+      throw "Behaviour execute returned non-object";
+    } else if(!result.hasOwnProperty("success")) {
+      throw "Behaviour execute return object without success";
+    } else if(typeof(result.success) == "undefined") {
+      throw "Behaviour execute returned success undefined";
+    }
+
+    return result;
   },
 
   instantiate(owner, options, children = []) {

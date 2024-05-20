@@ -310,7 +310,7 @@ RezEventProcessor.prototype = {
   handleCustomEvent(event_name, params) {
     const [receiver, handler] = this.getEventHandler(event_name);
     if(!handler) {
-      return {error: `Unable to find an event handler for |${event_name}|`};
+      return RezEvent.error(`Unable to find an event handler for |${event_name}|`);
     } else {
       console.log(`Routing event |${event_name}| to |${receiver.id}|`);
       return handler(receiver, params);

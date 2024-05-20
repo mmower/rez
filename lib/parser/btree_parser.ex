@@ -55,9 +55,13 @@ defmodule Rez.Parser.BTreeParser do
   def bt_template_ref() do
     sequence(
       [
+        ignore(open_bracket()),
+        iows(),
         ignore(amp()),
         iows(),
-        js_identifier()
+        js_identifier(),
+        iows(),
+        ignore(close_bracket())
       ],
       ast: fn [template_id] ->
         {:template, template_id}

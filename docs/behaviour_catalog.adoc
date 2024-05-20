@@ -16,11 +16,15 @@ The `$sequence` behaviour takes two or more children and, when executed, it exec
 
 The effect is like a boolean `and` expression. Sequences are often a set of conditions followed by a set of actions.
 
+Metaphorically a `$sequence` is like a recipe, a set of steps that should be following from start to finish. If you get half way through a recipe and are missing a key ingredient, the recipe cannot be finished.
+
 == $select
 
 The `$select` behaviour takes two or more children and, when executed, it executes each of its children in turn. If any child succeeds then `$select` will immediately succeed without executing any further children. If all the children fail then `$select` will fail.
 
 The effect is like a boolean `or` expression. Selects often express a range of alternative behaviours where we want only the first to succeed.
+
+Metaphorically a `$select` is like the mains section of a menu, you pick an choose among the options available but don't (at least the author tries not to) order two mains.
 
 == $select_p
 
@@ -34,6 +38,10 @@ The `$select_p` behaviour is a variant on `$select`. It takes a probability opti
 |1-100
 |probability of any given child getting executed
 |===
+
+== $select_r
+
+The `$select_r` behaviour is a variant on `$select`. When a `$select_r` is executed it executes its children in a random order.
 
 == $loop
 
