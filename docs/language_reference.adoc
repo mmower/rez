@@ -2,7 +2,7 @@
 title = "Language Guide"
 author = "Matt Mower"
 draft = false
-date = 2024-03-16
+date = 2024-05-13
 +++
 :relfileprefix: ../
 :relfilesuffix: /
@@ -671,9 +671,9 @@ This is useful when you want to create a "parameterized" block. For example, we 
 
 ....
 @card list_exits {
-  bindings: {
-    location: ^{obj.$parent_block.source}
-  }
+  bindings: [
+    location: $block.$parent_block.source
+  ]
   content: ```
     $if(location.exits) {%
       $foreach(exit: location.exits) {%
@@ -715,9 +715,9 @@ This means we can use `#list_exits` from any card that defines an `exits:` attri
 Bindings are how we make data from our game elements available to the code and templates that are rendering our view. You've already seen an example of a binding in the section above:
 
 ....
-bindings: {
-  location: ^{obj.$parent_block.source}
-}
+bindings: [
+  location: $block.$parent_block.source
+]
 ....
 
 But what does this mean? And why do we need it?
@@ -735,6 +735,8 @@ Let's go back to basics with a very simple content template, e.g.:
 This will present the text "Hello from the first chapter" in the browser.
 
 But how does this happen?
+
+The next section is quite technical and will likely require a good understanding of Javascript, far more than is required to use bindings & expressions. Feel free to skip ahead if you don't feel comfortable digging this deep.
 
 Rez converts this simple markup into a Javascript function that renders it. For the content above you'd end up with something like
 
@@ -755,7 +757,7 @@ function(bindings) {
 
 Now you might be thinking "OMG! Why do we need such a complex function to render a simple line of text?"
 
-If every template was as simple as this, we wouldn't. But dynamic templates do need this approach. But, before we get to that, let's break down this function.
+If every template was as simple as this, we wouldn't. But a simpler approach wouldn't allow us to build more complex, dynamic, templates. Before we get to that, let's break down this function.
 
 The outer level is a function that accepts an argument `bindings` and then returns the result of a `reduce()` call on an array. In this case an array containing a single function also taking `bindings` as its argument.
 
@@ -784,7 +786,19 @@ To see why it works this way, let's look at a dynamic template using a template 
 }
 ....
 
-This renders as "Hello from the second chapter." The template is taking the chapter title "second" from the cards `chapter:` attribute. Let's look at the rendering function generated for this template:
+This template breaks down into three chunks:
+
+* "Hello from the "
+* `${card.chapter}`
+* " chapter."
+
+The first and last chunk are simple strings, like our previous example. But the middle chunk is a template expression that must be generated, using some Javascript, when the card is being rendered. At that time the value of `card.chapter` is `"second"` so the template is  equivalent to an expression like:
+
+....
+"Hello from the " + "second" + " chapter."
+....
+
+Let's look at the rendering function generated for this template:
 
 ....
 function(bindings) {
@@ -1495,6 +1509,23 @@ $foreach(x: list) {%
 ```
 ....
 
+=== Partial Templates
+
+A fairly common requirement when building dynamic interfaces is to want to render one card within another. For simple cases you can use the `blocks:` attribtue on `@game`, `@scene`, or `@card` to render a named card as a block.
+
+However there are two areas where this approach does not work:
+
+* you don't know the name of the card to render at author time
+* you want to render the same card multiple times and get a different output
+
+The latter is the `$foreach` case.
+
+Solving these two problems are what the `$partial` expression is for.
+
+
+
+
+
 === Do Blocks
 
 To setup attributes for rendering you can run code in an event handler. For example a `@card` can have an `on_start` hander:
@@ -1529,11 +1560,11 @@ However in many cases it might be easier to use a "do block" inline in the templ
 
 == Behaviour Trees
 
-In the realm of game development and interactive simulations, creating entities that respond to their environment in realistic and complex ways is a cornerstone of immersive experiences. Rez, is a platform for building such interactive experiences, enables authors to infuse characters and objects with dynamic behaviors using Javascript. However, as the complexity of these behaviors grows, managing them can become problematic. This is where behaviour trees come into play, offering a structured yet flexible way to design and implement AI behaviors.
+In the realm of game development and interactive simulations it is very desirable to be able to create entities that can respond to their environment in realistic and complex ways. Rez enables authors to infuse characters and objects with dynamic behaviors using Javascript. However, as the complexity of these behaviors grows, managing them can become problematic. This is where behaviour trees come into play, offering a structured yet flexible way to design and implement AI behaviors.
 
-Behaviour trees are an artificial intelligence technique that revolutionized NPC behavior in video games, with their roots tracing back to landmark titles like Halo 2. Unlike finite state machines, which can quickly become unwieldy as the number of states grows, behaviour trees provide a modular, scalable, and easy-to-understand approach. They excel in managing complex decision-making processes, making them an ideal choice for developers looking to create nuanced AI behaviors without getting lost in a web of code.
+Behaviour trees are an artificial intelligence technique that revolutionized NPC behavior in video games, with their roots tracing back to landmark titles like Halo 2. Behaviour trees provide a modular, scalable, and easy-to-understand approach. They excel in managing complex decision-making processes, making them an ideal choice for developers looking to create nuanced AI behaviors without getting lost in a web of code.
 
-At the heart of behaviour trees lies the concept of breaking down behaviors into a tree of decisions, where each node (what we call a `@behaviour`) represents a choice or action, guiding the entity's behavior based on conditions and events in the game world. This hierarchical structure allows for clear and logical organization of behaviors, from simple actions like moving to a location, to complex sequences of decisions such as engaging in combat or solving puzzles.
+At the heart of behaviour trees lies the concept of breaking down behaviors into a tree of decisions, where each node in the tree represents some kind of choice or action. These choices and actions guide the entity's behavior based on conditions and events in the game world. This hierarchical structure allows for clear and logical organization of behaviors, from simple actions like moving to a location, to complex sequences of decisions such as engaging in combat or solving puzzles.
 
 The beauty of using behaviour trees in Rez lies in their versatility and ease of integration. With Rez's support for behaviour trees, authors can create rich, adaptive, AI that can handle a wide range of scenarios, reacting to the game world and player actions in realistic ways.
 
