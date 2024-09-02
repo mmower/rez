@@ -862,7 +862,7 @@ We have to teach Rez how to point `player` at the right object. That's where bin
 
 ....
 @card c_player_name {
-  bindings: {player: #player}
+  bindings: [player: #player]
   content: ```
   Your name is ${player.name} and a very fine name it is too!
   ```
@@ -875,9 +875,9 @@ This is an example of an 'element binding'.
 
 The simplest form of binding is to bind a variable name to the game object representing an element. In the example above we're looking for the `name:` attribute of some element with the id `#player`. We can make this work by binding the `player` variable as follows:
 
-```
-bindings: {player: #player}
-```
+....
+bindings: [player: #player]
+....
 
 Here we're teaching Rez to make a binding to the Javascript reference (`player`) representing the given element id (`#player`). With this binding in place we can refer to `player` in our templates.
 
@@ -892,9 +892,11 @@ Sometimes we want to be able to refer to something that isn't an element with a 
 For these situations we have function bindings. Here we bind a variable name to the return value of a function written inline in the bindings. Here are some examples:
 
 ....
-random_number: () => {return Math.rand_int(10)}
-weapon: () => {return game.get_weapon($player.favourite_weapon_id);}
-exits: () => {return $player.location.exits(true);}
+bindings: [
+  random_number: () => {return Math.rand_int(10)}
+  weapon: () => {return game.get_weapon($player.favourite_weapon_id);}
+  exits: () => {return $player.location.exits(true);}
+]
 ....
 
 In each case the variable will be bound to the return value of the function.
@@ -906,7 +908,9 @@ Note that these bindings are re-created each time the template is rendered so wh
 Attribute bindings are a convenience when you want to refer to a specific element attribute.
 
 ....
-name: &player.name
+bindings: [
+  name: &player.name
+]
 ....
 
 ==== Path Bindings
@@ -914,7 +918,9 @@ name: &player.name
 A path binding is used to refer an object by a key-path from the $block object. This is mainly useful when implement cards intended to be used as bound blocks, that want to refer to their parent card context.
 
 ....
-exits: `$parent_block.source.exits
+bindings: [
+  exits: `$parent_block.source.exits
+]
 ....
 
 All path-references implictly begin with the `$block` variable (that refers to the card currently being rendered). So `$parent_block` refers to the `$parent_block` attribute of the current `$block`.
@@ -925,16 +931,16 @@ Using a path binding we can get to the parent card which may be one of many card
 
 Path bindings are often used to get at the internal mechanics (parent blocks, sources and so on) which are already a little complicated.
 
-Also it is not possible to make one binding that refers to another, so, while
+Note that unlike previous versions it is now possible to make bindings that refer to previous bindings, so:
 
 ....
-weapon: &player.weapon
-rounds: &weapon.rounds
+bindings: [
+  player: #player
+  name: player.name
+]
 ....
 
-seems like it should work, it doesn't because the `weapon` binding isn't available when the `rounds` binding is made.
-
-We hope to fix this in a future version. In the meantime you can usually use a function binding to get at what you need.
+Is legal, however you can only refer to *previous* bindings made in the same bindings block.
 
 === Stack Layout, Flipped Cards, and Blocks
 
@@ -1358,34 +1364,34 @@ content: ```Your name is ${player.name | append: "!"}```
 Where does this `player` reference come from? Good question, this is an example of a binding. You've already seen bindings at work with `${content}` and `${sidebar}`. `content` is an example of a binding that Rez automatically makes available but you can add your own to refer to any objects you like.
 
 ....
-bindings: {
+bindings: [
   player: #player
-}
+]
 content: ```Your name is ${player.name}```
 ....
 
 Here we are binding the Javascript variable `player` to an element with id `player` (which we might assume is an `@actor` element defining the player character). For example:
 
 ....
-bindings: {
+bindings: [
   player: ^{$("player")}
-}
+]
 ....
 
 is an equivalent way of creating the same binding. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
 
 ....
-bindings: {
+bindings: [
   actor: ^{$("npc_list").randomElement()}
-}
+]
 ....
 
 But you don't have to make bindings only to elements, you can bind to any Javascript value:
 
 ....
-bindings: {
+bindings: [
   coins: ^{Math.clrand_int(25)}
-}
+]
 content: ```
 You found ${coins} coins on the floor and put them in your pocket.
 ```
@@ -1499,9 +1505,9 @@ $foreach(x: a.b.map((el) => somefun(el))) {%
 you would write:
 
 ....
-bindings: {
+bindings: [
   list: ^{a.b.map((el) => somefun(el))}
-}
+]
 content: ```
 $foreach(x: list) {%
   <div id="${x.id}">${x.title}</div>

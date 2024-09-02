@@ -1612,14 +1612,13 @@ where every minute the player is at risk of a monster wandering into their locat
 
 |`repeat`
 |Boolean
-|If true this timer will keep sending events until it stops, otherwise it will only
-|send one event.
+|If true this timer will keep sending events until it stops, otherwise it will only send one event.
 
 |`count` (optional)
+|Integer
 |With a repeated timer this specifies the number of times it should repeat.
 
 |`event`
 |Keyword
-|Specifies the name of the event that will be sent when the timer runs down. The
-|event follows the normal rules for custom events.
+|Specifies the name of the event that will be sent when the timer runs down. The event follows the normal rules for custom events.
 |===
