@@ -35,7 +35,9 @@ defmodule Rez.Parser.TemplateParser do
       open_brace: 0,
       close_brace: 0,
       open_paren: 0,
-      close_paren: 0
+      close_paren: 0,
+      forward_slash: 0,
+      right_angle_bracket: 0
     ]
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
@@ -53,6 +55,7 @@ defmodule Rez.Parser.TemplateParser do
   def close_body(), do: PC.get_parser("close_body", fn -> literal("%}") end)
   def entails(), do: PC.get_parser("entails", fn -> literal("->") end)
   def open_interpolation(), do: PC.get_parser("open_interpolation", fn -> literal("${") end)
+  def open_user_macro(), do: PC.get_parser("user_macro", fn -> literal("<.") end)
 
   def cancel_interpolation_marker() do
     literal("\\$") |> replace("$")
@@ -263,6 +266,21 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def user_macro() do
+    sequence(
+      [
+        ignore(open_user_macro()),
+        js_identifier(),
+        iows(),
+        ignore(forward_slash()),
+        ignore(right_angle_bracket())
+      ],
+      ast: fn [name] ->
+        {:user_macro, name}
+      end
+    )
+  end
+
   def la_open_conditional(),
     do:
       PC.get_parser("open_conditional", fn -> sequence([literal("$if"), iows(), literal("(")]) end)
@@ -271,6 +289,7 @@ defmodule Rez.Parser.TemplateParser do
   def la_open_foreach(), do: PC.get_parser("open_foreach", fn -> literal("$foreach(") end)
   def la_open_partial(), do: PC.get_parser("open_partial", fn -> literal("$partial(") end)
   def escape_dollar(), do: PC.get_parser("escape_dollar", fn -> literal("\\$") end)
+  def la_user_macro(), do: PC.get_parser("open_user_macro", fn -> literal("<.") end)
 
   def string() do
     char_parser =
@@ -282,6 +301,7 @@ defmodule Rez.Parser.TemplateParser do
             open_interpolation(),
             la_open_foreach(),
             la_open_partial(),
+            la_user_macro(),
             escape_dollar()
           ])
         ),
@@ -306,6 +326,7 @@ defmodule Rez.Parser.TemplateParser do
         interpolation(),
         foreach(),
         partial(),
+        user_macro(),
         string()
       ]),
       ast: fn ast -> {:source_template, ast} end

@@ -27,6 +27,21 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
+  def user_macro_directive() do
+    sequence(
+      [
+        iliteral("@macro"),
+        iws(),
+        js_identifier("name"),
+        iws(),
+        arrow_function_value()
+      ],
+      ast: fn [name, impl_fn] ->
+        {:user_macro, name, impl_fn}
+      end
+    )
+  end
+
   def declare_directive() do
     sequence(
       [

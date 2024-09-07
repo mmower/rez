@@ -44,6 +44,7 @@ defmodule Rez.AST.Game do
             items: %{},
             keybindings: [],
             lists: %{},
+            user_macros: %{},
             objects: %{},
             patches: [],
             plots: %{},
@@ -97,6 +98,10 @@ defmodule Rez.AST.Game do
 
   def add_child({:keybinding, _, _, _} = key_binding, %Game{keybindings: bindings} = game) do
     %{game | keybindings: [key_binding | bindings]}
+  end
+
+  def add_child({:user_macro, name, impl_fn}, %Game{user_macros: user_macros} = game) do
+    %{game | user_macros: Map.put(user_macros, name, impl_fn)}
   end
 
   def add_child(%{} = child, %Game{} = game) do

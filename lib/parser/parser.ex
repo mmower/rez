@@ -140,6 +140,7 @@ defmodule Rez.Parser.Parser do
         system_block(),
         timer_block(),
         keybinding_directive(),
+        user_macro_directive(),
         # Now user defined aliases
         alias_block()
       ],

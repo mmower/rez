@@ -88,6 +88,19 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
+  def compile_chunk({:user_macro, name}) do
+    body = ~s|
+    const user_macro = window.Rez.user_macros['#{name}'];
+    if(typeof user_macro === "undefined") {
+      throw `No user @macro #{name} defined!`;
+    } else {
+      return user_macro();
+    }
+    |
+
+    js_create_fn(body, false)
+  end
+
   def compile_chunk({:foreach, iter_name, binding_spec, content}) do
     compile_chunk({:foreach, iter_name, binding_spec, content, {:source_template, [""]}})
   end
