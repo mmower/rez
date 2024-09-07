@@ -1,6 +1,11 @@
 // Bind keyboard event generators
 function rez_keybinding_listener(event) {
-  let ep = $game.event_processor;
+  const targetTag = event.target.tagName.toLowerCase();
+  if(targetTag === "input" || targetTag === "textarea") {
+    return;
+  }
+
+  const ep = $game.event_processor;
   let pred;
 
 <%= for {:keybinding, _, _, {:keyword, event_name}} = binding <- @game.keybindings do %>

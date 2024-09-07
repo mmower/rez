@@ -94,7 +94,7 @@ RezAsset.prototype = {
 
   imageElement(w, h) {
     const el = document.createElement("img");
-    el.setAttribute("src", this.path);
+    el.setAttribute("src", this.$dist_path);
     el.setAttribute("width", this.getWidth(w));
     el.setAttribute("height", this.getHeight(h));
     return el;
@@ -111,13 +111,13 @@ RezAsset.prototype = {
 
   tagGenerators: {
     image: function (asset) {
-      return asset.imageTag();
+      return this.imageTag();
     },
     audio: function (asset) {
-      return asset.audioTag();
+      return this.audioTag();
     },
     video: function (asset) {
-      return asset.videoTag();
+      return this.videoTag();
     },
   },
 };

@@ -248,7 +248,7 @@ RezEventProcessor.prototype = {
   },
 
   decodeEvent(evt) {
-    const { event, target, ...params } = evt.target.dataset;
+    const { event, target, ...params } = evt.currentTarget.dataset;
     return [event.toLowerCase(), target, params];
   },
 
