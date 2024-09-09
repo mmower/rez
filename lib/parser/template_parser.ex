@@ -32,6 +32,7 @@ defmodule Rez.Parser.TemplateParser do
       iows: 0,
       colon: 0,
       comma: 0,
+      equals: 0,
       open_brace: 0,
       close_brace: 0,
       open_paren: 0,
@@ -271,12 +272,34 @@ defmodule Rez.Parser.TemplateParser do
       [
         ignore(open_user_macro()),
         js_identifier(),
+        optional(many(user_macro_attr())),
         iows(),
         ignore(forward_slash()),
         ignore(right_angle_bracket())
       ],
-      ast: fn [name] ->
-        {:user_macro, name}
+      ast: fn
+        [name] ->
+          {:user_macro, name, %{}}
+
+        [name, attributes] ->
+          {:user_macro, name, Enum.into(attributes, %{})}
+      end
+    )
+  end
+
+  defp user_macro_attr() do
+    sequence(
+      [
+        iws(),
+        js_identifier(),
+        ignore(equals()),
+        choice([
+          number_value(),
+          string_value()
+        ])
+      ],
+      ast: fn [attr_name, attr_value] ->
+        {attr_name, attr_value}
       end
     )
   end
