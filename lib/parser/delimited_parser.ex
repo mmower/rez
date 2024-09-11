@@ -107,12 +107,16 @@ defmodule Rez.Parser.DelimitedParser do
     ])
   end
 
-  def text_delimited_by_nested_parsers(open_parser, close_parser, _options \\ []) do
-    counter = "#{System.system_time(:second)}#{:rand.uniform(1_000_000)}"
+  def text_delimited_by_nested_parsers(open_parser, close_parser, options \\ []) do
+    counter = "#{:erlang.unique_integer([:monotonic, :positive])}"
+    start_open = Keyword.get(options, :start_open, false)
+
+    start_parser =
+      if start_open, do: set_counter(counter, 0), else: open(open_parser, counter, :zero)
 
     sequence(
       [
-        open(open_parser, counter, :zero),
+        start_parser,
         many(
           choice([
             open(open_parser, counter, :inc),

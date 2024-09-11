@@ -59,7 +59,6 @@ RezScene.prototype = {
   },
 
   finishCurrentCard() {
-    console.log("> finishCurrentCard");
     if (this.current_card) {
       this.current_card.runEvent("finish", {});
       this.runEvent("finish_card", {});

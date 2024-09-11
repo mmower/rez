@@ -27,10 +27,10 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
-  def user_macro_directive() do
+  def component_directive() do
     sequence(
       [
-        iliteral("@macro"),
+        iliteral("@component"),
         iws(),
         js_identifier("name"),
         iws(),

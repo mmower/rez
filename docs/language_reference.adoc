@@ -1564,6 +1564,34 @@ However in many cases it might be easier to use a "do block" inline in the templ
 }
 ....
 
+=== User Components
+
+Sometimes you want to be able to hide away some of the complexity of what you are doing behind a clean syntax. That is what `@components` are for.
+
+For example let's say we are writing a lot of event buttons like this:
+
+````
+<button class="button is-small" data-event="reload">…</button>
+````
+
+The boilerplate to make a button can be a bit tiresome and it obscures the most important thing about this button, that pressing it triggers the `reload` event. Let's make a component:
+
+````
+@component event_button (bindings, assigns, content) => {
+  return `<button class="button is-small" data-event="${assigns["event"]}">${content}</button>`;
+}
+````
+
+Now we can write:
+
+````
+<event_button* event="reload">…</event_button*>
+````
+
+And things are neater. Note that the component tag has a `*` suffix which is what Rez uses to identify `event_button` as a user component and look for its `@component` definition.
+
+Because `<event_button*>` is a container tag it has a `content` argument containing all the rendered content that goes inside the tag. For self-closing tags `content` is undefined.
+
 == Behaviour Trees
 
 In the realm of game development and interactive simulations it is very desirable to be able to create entities that can respond to their environment in realistic and complex ways. Rez enables authors to infuse characters and objects with dynamic behaviors using Javascript. However, as the complexity of these behaviors grows, managing them can become problematic. This is where behaviour trees come into play, offering a structured yet flexible way to design and implement AI behaviors.

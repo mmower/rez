@@ -27,6 +27,10 @@ defmodule Rez.AST.TemplateHelper do
       src
     end)
     |> prepare_content()
+    |> then(fn src ->
+      if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.prepared", src)
+      src
+    end)
     |> html_processor.()
     |> then(fn html ->
       if Debug.dbg_do?(:debug), do: File.write!("cache/#{id}.html", html)

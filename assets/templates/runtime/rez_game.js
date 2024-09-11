@@ -600,6 +600,7 @@ RezGame.prototype = {
     this.runEvent("before_render", {});
     this.view.update();
     this.runEvent("after_render", {});
+    this.clearFlashMessages();
   },
 
   /**

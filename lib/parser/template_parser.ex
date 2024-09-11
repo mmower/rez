@@ -1,5 +1,5 @@
 defmodule Rez.Parser.TemplateParser do
-  import Ergo.Terminals, only: [literal: 1, any: 0]
+  import Ergo.Terminals, only: [literal: 1, any: 0, captured_literal: 1]
 
   import Ergo.Combinators,
     only: [
@@ -14,7 +14,7 @@ defmodule Rez.Parser.TemplateParser do
       not_lookahead: 1
     ]
 
-  import Ergo.Meta, only: [commit: 0]
+  import Ergo.Meta, only: [commit: 0, capture: 2]
 
   import Rez.Parser.ValueParsers,
     only: [
@@ -30,6 +30,7 @@ defmodule Rez.Parser.TemplateParser do
     only: [
       iws: 0,
       iows: 0,
+      star: 0,
       colon: 0,
       comma: 0,
       equals: 0,
@@ -38,6 +39,7 @@ defmodule Rez.Parser.TemplateParser do
       open_paren: 0,
       close_paren: 0,
       forward_slash: 0,
+      left_angle_bracket: 0,
       right_angle_bracket: 0
     ]
 
@@ -56,7 +58,16 @@ defmodule Rez.Parser.TemplateParser do
   def close_body(), do: PC.get_parser("close_body", fn -> literal("%}") end)
   def entails(), do: PC.get_parser("entails", fn -> literal("->") end)
   def open_interpolation(), do: PC.get_parser("open_interpolation", fn -> literal("${") end)
-  def open_user_macro(), do: PC.get_parser("user_macro", fn -> literal("<.") end)
+
+  def open_user_macro(),
+    do:
+      PC.get_parser("user_macro", fn ->
+        sequence([
+          left_angle_bracket(),
+          js_identifier(),
+          star()
+        ])
+      end)
 
   def cancel_interpolation_marker() do
     literal("\\$") |> replace("$")
@@ -198,12 +209,9 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  import Rez.Parser.Trace
-
   def partial() do
     sequence(
       [
-        trace(true),
         ignore(ps_macro()),
         ignore(open_paren()),
         iows(),
@@ -267,11 +275,88 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def user_macro() do
+  alias Ergo.Parser
+  alias Ergo.Context
+
+  def debug_captures() do
+    Parser.terminal(
+      :debug_capture,
+      "debug_capture",
+      fn %Context{} = ctx ->
+        IO.puts("DEBUG CAPTURES")
+
+        ctx
+        |> Map.get(:captures, %{})
+        |> IO.inspect()
+
+        ctx
+      end
+    )
+  end
+
+  def open_container_user_macro() do
     sequence(
       [
-        ignore(open_user_macro()),
+        ignore(left_angle_bracket()),
+        js_identifier() |> capture(:macro_tag),
+        ignore(star()),
+        optional(many(user_macro_attr())),
+        iows(),
+        ignore(right_angle_bracket())
+      ],
+      ast: fn
+        [tag_name] ->
+          [tag_name, []]
+
+        [_tag_name, _attrs] = ast ->
+          ast
+      end
+    )
+  end
+
+  def open_nested_container_user_macro() do
+    sequence([
+      left_angle_bracket(),
+      captured_literal(:macro_tag),
+      star(),
+      optional(many(user_macro_attr())),
+      iows(),
+      right_angle_bracket()
+    ])
+  end
+
+  def close_container_user_macro() do
+    sequence([
+      ignore(left_angle_bracket()),
+      ignore(forward_slash()),
+      ignore(captured_literal(:macro_tag)),
+      ignore(star()),
+      ignore(right_angle_bracket())
+    ])
+  end
+
+  def container_user_macro() do
+    sequence(
+      [
+        open_container_user_macro(),
+        DP.text_delimited_by_nested_parsers(
+          open_nested_container_user_macro(),
+          close_container_user_macro(),
+          start_open: true
+        )
+      ],
+      ast: fn [[tag_name, attrs], content] ->
+        {:user_macro, tag_name, attrs, TemplateParser.parse(content)}
+      end
+    )
+  end
+
+  def self_contained_user_macro() do
+    sequence(
+      [
+        ignore(left_angle_bracket()),
         js_identifier(),
+        ignore(star()),
         optional(many(user_macro_attr())),
         iows(),
         ignore(forward_slash()),
@@ -279,10 +364,10 @@ defmodule Rez.Parser.TemplateParser do
       ],
       ast: fn
         [name] ->
-          {:user_macro, name, %{}}
+          {:user_macro, name, %{}, nil}
 
         [name, attributes] ->
-          {:user_macro, name, Enum.into(attributes, %{})}
+          {:user_macro, name, Enum.into(attributes, %{}), nil}
       end
     )
   end
@@ -304,6 +389,13 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def user_macro() do
+    choice([
+      self_contained_user_macro(),
+      container_user_macro()
+    ])
+  end
+
   def la_open_conditional(),
     do:
       PC.get_parser("open_conditional", fn -> sequence([literal("$if"), iows(), literal("(")]) end)
@@ -312,7 +404,6 @@ defmodule Rez.Parser.TemplateParser do
   def la_open_foreach(), do: PC.get_parser("open_foreach", fn -> literal("$foreach(") end)
   def la_open_partial(), do: PC.get_parser("open_partial", fn -> literal("$partial(") end)
   def escape_dollar(), do: PC.get_parser("escape_dollar", fn -> literal("\\$") end)
-  def la_user_macro(), do: PC.get_parser("open_user_macro", fn -> literal("<.") end)
 
   def string() do
     char_parser =
@@ -324,7 +415,7 @@ defmodule Rez.Parser.TemplateParser do
             open_interpolation(),
             la_open_foreach(),
             la_open_partial(),
-            la_user_macro(),
+            open_user_macro(),
             escape_dollar()
           ])
         ),
@@ -336,7 +427,9 @@ defmodule Rez.Parser.TemplateParser do
         char_parser,
         many(char_parser)
       ],
-      ast: fn ast -> ast |> List.flatten() |> List.to_string() end
+      ast: fn ast ->
+        ast |> List.flatten() |> List.to_string()
+      end
     )
   end
 

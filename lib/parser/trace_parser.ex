@@ -16,10 +16,38 @@ defmodule Rez.Parser.Trace do
     IO.puts("[L#{ctx.line}:#{ctx.col}] #{message}")
   end
 
+  def trace_counters() do
+    Parser.combinator(:trace_counters, "s_trace_counters", fn %Context{} = ctx ->
+      counters = Map.get(ctx, :counters, %{})
+      if tracing?(ctx), do: trace_log(ctx, inspect(counters))
+      ctx
+    end)
+  end
+
+  def trace_capture(key) do
+    Parser.combinator(:trace_capture, "s_trace_capture", fn %Context{captures: captures} = ctx ->
+      if tracing?(ctx) do
+        trace_log(ctx, "#{key} = #{Map.get(captures, key, "<not found>")}")
+      end
+
+      ctx
+    end)
+  end
+
   def trace_input() do
     Parser.combinator(:trace_input, "s_trace_input", fn %Context{input: input} = ctx ->
       if tracing?(ctx) do
-        trace_log(ctx, Rez.Utils.ellipsize(input))
+        trace_log(ctx, Rez.Utils.ellipsize(input, 400))
+      end
+
+      ctx
+    end)
+  end
+
+  def trace_input(match) when is_binary(match) do
+    Parser.combinator(:trace_input, "s_trace_input", fn %Context{input: input} = ctx ->
+      if tracing?(ctx) && String.starts_with?(input, match) do
+        trace_log(ctx, Rez.Utils.ellipsize(input, 400))
       end
 
       ctx

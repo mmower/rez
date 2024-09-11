@@ -47,6 +47,7 @@ Directives modify in-game concepts.
 
 * <<Alias (Directive), Alias>>
 * <<Behaviour Template (Directive), Behaviour Template>>
+* <<Component (Directive), Component>>
 * <<Derive (Directive), Derive>>
 * <<Declare (Directive), Declare>>
 * <<Enum (Directive), Enum>>
@@ -559,6 +560,34 @@ Rez also has support for more dynamic types of links:
 When a card link is written in this format, Rez will look inside the card for an attribute with the same name and a function value. It will call the function which can determine whether the link should be shown or hidden and, if it is shown whether it should be enabled or disabled. whether it is enabled or disabled.
 
 However there is support for other kinds of actions and dynamic links. See the xref:cookbook.adoc[COOKBOOK] for more information.
+
+== Component (Directive)
+
+A `@component` directive is used to specify an HTML component used in templates.
+
+For example we may have specified a button like this:
+
+````
+<button class="button is-small" data-event="reload">…</button>
+````
+
+There's nothing wrong with this but the details are obscured by the attribute syntax, what if we could write:
+
+````
+<event_button* event="reload">…</event_button*>
+````
+
+The `*` in `event_button*` indicates that this tag is implemented by a component with the same name.
+
+Let's write this component:
+
+````
+@component event_button (bindings, assigns, content) => {
+  return `<button class="button is-small" data-event="${assigns["event"]}">${content}</button>`;
+}
+````
+
+Container components like `<event_button*>` have their contents available in the `content` argument, attribute values in `assigns`, and all bindings available at the component site in `bindings`. Self contained components have no content specified.
 
 == Declare (Directive)
 

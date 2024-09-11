@@ -186,7 +186,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
             {:error, "No 'type' attribute available for #{Node.node_type(node)}/#{node.id}"}
 
           %Attribute{value: type} ->
-            accepted_types =
+            accepted_type_specs =
               slots
               |> Enum.map(fn {_slot_id, slot} -> NodeHelper.get_attr_value(slot, "accepts") end)
               # We need to filter the results because if a slot is missing its
@@ -196,7 +196,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
               |> Enum.filter(&(!is_nil(&1)))
               |> Enum.uniq()
 
-            case Enum.any?(accepted_types, fn accepted_type ->
+            case Enum.any?(accepted_type_specs, fn accepted_type
+                                                   when is_binary(accepted_type) ->
                    Game.is_a(game, type, accepted_type)
                  end) do
               true -> :ok

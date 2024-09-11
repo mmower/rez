@@ -3,12 +3,19 @@
 //-----------------------------------------------------------------------------
 
 function RezEvent() {
+  this.params = {};
+  this.flash_messages = [];
+  this.card_id = null;
+  this.scene_id = null;
+  this.scene_change_event = false;
+  this.scene_interlude_event = false;
+  this.scene_resume_event = false;
+  this.render_event = false;
+  this.error_message = null;
 }
 
 RezEvent.prototype = {
   constructor: RezEvent,
-
-  params: {},
 
   setParam(name, value ) {
     this.params[name] = value;
@@ -20,21 +27,7 @@ RezEvent.prototype = {
     return this;
   },
 
-  flash_messages: [],
-
-  card_id: null,
-
-  scene_change_event: false,
-  scene_interlude_event: false,
-  scene_id: null,
-
-  scene_resume_event: false,
-
-  render_event: false,
-
-  error_message: null,
-
-  get hashFlash() {
+  get hasFlash() {
     return this.flash_messages.length > 0;
   },
 
@@ -160,7 +153,7 @@ RezEventProcessor.prototype = {
   dispatchResponse(response) {
     if(response instanceof RezEvent) {
       if (response.hasFlash) {
-        for(message of response.flash_messages) {
+        for(let message of response.flash_messages) {
           this.game.addFlashMessage(message);
         }
       }

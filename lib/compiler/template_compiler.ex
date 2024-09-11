@@ -89,7 +89,9 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
-  def compile_chunk({:user_macro, name, attributes}) do
+  def compile_chunk({:user_macro, name, attributes, content}) do
+    {:compiled_template, compiled_template} = compile(content)
+
     assigns =
       attributes
       |> Enum.map(fn {key, value} -> ~s|#{key}: #{ValueEncoder.encode_value(value)}| end)
@@ -97,10 +99,14 @@ defmodule Rez.Compiler.TemplateCompiler do
 
     body = ~s|
     const user_macro = window.Rez.user_macros['#{name}'];
+
+    const sub_template = #{compiled_template};
+    const sub_content = sub_template(bindings);
+
     if(typeof user_macro === "undefined") {
       throw `No user @macro #{name} defined!`;
     } else {
-      return user_macro(bindings, {#{assigns}});
+      return user_macro(bindings, {#{assigns}}, sub_content);
     }
     |
 

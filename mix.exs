@@ -23,7 +23,7 @@ defmodule Rez.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ergo, "~> 0.9"},
+      {:ergo, "~> 1.0"},
       # {:ergo, path: "/Users/matt/Projects/Elixir/ergo"},
       {:logical_file, "~> 1.0"},
       # {:logical_file, path: "/Users/matt/Projects/Elixir/logical_file"},
