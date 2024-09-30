@@ -24,7 +24,7 @@ defmodule Rez.Compiler.ParseSource do
       {:ok, content, id_map} ->
         case find_duplicate_id_definitions(id_map) do
           [] ->
-            case build_game(content) do
+            case build_game(content, id_map) do
               {:error, message} ->
                 Compilation.add_error(compilation, message)
 
@@ -96,13 +96,13 @@ defmodule Rez.Compiler.ParseSource do
     |> Enum.map_join("\n", fn {lno, line} -> "#{lno}> #{line}" end)
   end
 
-  def build_game(content) when is_list(content) do
+  def build_game(content, id_map) when is_list(content) and is_map(id_map) do
     case sort_game_and_content(content) do
       {[], _} ->
         {:error, "No @game element defined."}
 
       {[game], elems_and_directives} ->
-        Enum.reduce(elems_and_directives, game, fn e, game ->
+        Enum.reduce(elems_and_directives, %{game | id_map: id_map}, fn e, game ->
           Game.add_child(e, game)
         end)
     end
