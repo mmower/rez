@@ -136,7 +136,7 @@ defmodule Rez.Parser.StructureParsers do
         Context.add_error(
           ctx,
           :block_not_matched,
-          "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
+          "@#{label} starting L#{line}:#{col}"
         )
       end
     )

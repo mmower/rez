@@ -53,17 +53,33 @@ defmodule Rez.Compiler.ParseSource do
       {:error, reasons, line, col, _input} ->
         {file, logical_line} = LogicalFile.resolve_line(source, line)
         context = source_context(source, line, col)
-        reasons = Enum.map_join(reasons, "\n", fn {_line, _col, reason} -> reason end)
+
+        reasons = Enum.map_join(reasons, "\n", &translate_code/1)
+
+        error = """
+        #{file} L#{logical_line}:#{col}\n
+        Compilation failed:
+        #{reasons}\n
+        #{context}
+        """
 
         Compilation.add_error(
           compilation,
-          "#{file} L#{logical_line}:#{col} Unable to compile source: #{reasons}\n#{context}"
+          error
         )
     end
   end
 
   def run_phase(compilation) do
     compilation
+  end
+
+  defp translate_code({:block_not_matched, _pos, reason}) do
+    "Unable to complete #{reason}"
+  end
+
+  defp translate_code({:unexpected_char, _pos, reason}) do
+    reason
   end
 
   defp source_context(source, line, col) do
