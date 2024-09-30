@@ -11,7 +11,7 @@ defmodule Rez.Parser.DirectiveParsers do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.BTreeParser
 
-  def behaviour_template() do
+  defp behaviour_template() do
     sequence(
       [
         iliteral("@behaviour_template"),
@@ -21,13 +21,14 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         bt_parser()
       ],
+      label: "@behaviour_template",
       ast: fn [template_id, {:bht, bht}] ->
         {:behaviour_template, template_id, bht}
       end
     )
   end
 
-  def component_directive() do
+  defp component_directive() do
     sequence(
       [
         iliteral("@component"),
@@ -36,13 +37,14 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         arrow_function_value()
       ],
+      label: "@component",
       ast: fn [name, impl_fn] ->
         {:user_macro, name, impl_fn}
       end
     )
   end
 
-  def declare_directive() do
+  defp declare_directive() do
     sequence(
       [
         iliteral("@declare"),
@@ -50,7 +52,7 @@ defmodule Rez.Parser.DirectiveParsers do
         commit(),
         js_identifier("declare")
       ],
-      label: "declare",
+      label: "@declare",
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
                 ast: [id],
@@ -74,7 +76,7 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
-  def derive_directive() do
+  defp derive_directive() do
     sequence(
       [
         iliteral("@derive"),
@@ -84,14 +86,14 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         keyword_value()
       ],
-      label: "derive",
+      label: "@derive",
       ast: fn [{:keyword, tag}, {:keyword, parent}] ->
         {:derive, tag, parent}
       end
     )
   end
 
-  def enum_directive() do
+  defp enum_directive() do
     sequence(
       [
         iliteral("@enum"),
@@ -110,14 +112,14 @@ defmodule Rez.Parser.DirectiveParsers do
         iows(),
         ignore(close_bracket())
       ],
-      label: "enum",
+      label: "@enum",
       ast: fn [id, first_kw, other_kws] ->
         {:enum, id, [first_kw | List.flatten(other_kws)]}
       end
     )
   end
 
-  def modifier_key(modifier_name, event_name) do
+  defp modifier_key(modifier_name, event_name) do
     sequence([
       iliteral(modifier_name),
       iows(),
@@ -127,7 +129,7 @@ defmodule Rez.Parser.DirectiveParsers do
     |> replace(event_name)
   end
 
-  def keyboard_modifier() do
+  defp keyboard_modifier() do
     choice([
       modifier_key("shift", :shiftKey),
       modifier_key("meta", :metaKey),
@@ -136,7 +138,7 @@ defmodule Rez.Parser.DirectiveParsers do
     ])
   end
 
-  def keyboard_modifiers() do
+  defp keyboard_modifiers() do
     many(keyboard_modifier())
     |> transform(fn modifier_list ->
       {:modifiers,
@@ -150,7 +152,7 @@ defmodule Rez.Parser.DirectiveParsers do
     end)
   end
 
-  def key_name() do
+  defp key_name() do
     sequence([
       alpha(),
       many(choice([alpha(), digit()]))
@@ -158,7 +160,7 @@ defmodule Rez.Parser.DirectiveParsers do
     |> transform(fn ast -> ast |> List.flatten() |> List.to_string() end)
   end
 
-  def key_desc() do
+  defp key_desc() do
     sequence(
       [
         keyboard_modifiers(),
@@ -168,7 +170,7 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
-  def keybinding_directive() do
+  defp keybinding_directive() do
     sequence(
       [
         iliteral("@keybinding"),
@@ -178,10 +180,24 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         keyword_value()
       ],
-      label: "keybinding",
+      label: "@keybinding",
       ast: fn [{:keybinding, modifiers, key}, event] ->
         {:keybinding, modifiers, key, event}
       end
+    )
+  end
+
+  def directive() do
+    choice(
+      [
+        behaviour_template(),
+        component_directive(),
+        declare_directive(),
+        derive_directive(),
+        enum_directive(),
+        keybinding_directive()
+      ],
+      label: "directive"
     )
   end
 end

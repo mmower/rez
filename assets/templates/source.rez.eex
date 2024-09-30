@@ -5,6 +5,41 @@
 %% Released 2022-2024 under the GPLv3 license
 %%
 
+%(../lib/stdlib.rez)
+
+@stylesheet {
+  .disabled-link {
+    color: #757575; /* Greyed out color */
+    cursor: default; /* Change cursor to default to indicate it's not clickable */
+    pointer-events: none; /* Prevent clicking */
+  }
+
+  .tooltip {
+    display: inline-block;
+    position: relative;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
 @game {
   name: "<%= @name %>"
   archive_format: 1
@@ -16,41 +51,6 @@
   version: "<%= Rez.version %>"
   created: "<%= @created %>"
   initial_scene_id: #explore_dungeon
-
-  %(../lib/stdlib.rez)
-
-  @stylesheet {
-    .disabled-link {
-      color: #757575; /* Greyed out color */
-      cursor: default; /* Change cursor to default to indicate it's not clickable */
-      pointer-events: none; /* Prevent clicking */
-    }
-
-    .tooltip {
-      display: inline-block;
-      position: relative;
-    }
-
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 120px;
-      background-color: black;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 5px;
-      position: absolute;
-      z-index: 1;
-
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
-    }
-  }
 
   blocks: [#sidebar]
   bindings: {messages: `game.$flash_messages}
@@ -83,1198 +83,1198 @@
 
     game.clearFlashMessages();
   }
+}
 
-  @card sidebar {
-    bindings: {
-      clock: #clock
-      player: #player
-      weapon: &player.weapon
+@card sidebar {
+  bindings: {
+    clock: #clock
+    player: #player
+    weapon: &player.weapon
+  }
+  content: ```
+  <div class="block">${player.name}</div>
+  <div class="block">${player.class_name}</div>
+  <div class="block">
+    <p class="menu-label is-hidden-touch">
+    Turn: ${clock.turns}
+    </p>
+  </div>
+
+  <div class="block">
+    <ul>
+      <li>Wounds: ${player.wounds}</li>
+      $if(player.shaken) {%<li><strong>Shaken</strong></li>%}
+      <li>Initiative: ${player.initiative}</li>
+      <li>Strength: ${player.strength}</li>
+      <li>Toughness: ${player.toughness}</li>
+      <li>Fight: ${player.fighting}</li>
+      <li>Dodge: ${player.dodge}</li>
+      <li>Mana: ${player.mana}</li>
+      <li>Gold: ${player.gold}</li>
+      <li>XP: ${player.xp}</li>
+    </ul>
+  </div>
+
+  $if(weapon) {%
+  <div class="block">
+  Current Weapon:
+  ${weapon.name} — ${weapon.damage | desc_roll}
+  </div>
+  %}
+  ```
+}
+
+@filter f_die_roll {
+  name: "desc_roll"
+  impl: (d) => {return d.description();}
+}
+
+@system clock {
+  enabled: true
+  priority: 1
+
+  turns: 0
+
+  after_event: (clock, evt, result) => {
+    if(evt.target.dataset.turn === "1") {
+      clock.advance();
     }
-    content: ```
-    <div class="block">${player.name}</div>
-    <div class="block">${player.class_name}</div>
-    <div class="block">
-      <p class="menu-label is-hidden-touch">
-      Turn: ${clock.turns}
-      </p>
-    </div>
-
-    <div class="block">
-      <ul>
-        <li>Wounds: ${player.wounds}</li>
-        $if(player.shaken) {%<li><strong>Shaken</strong></li>%}
-        <li>Initiative: ${player.initiative}</li>
-        <li>Strength: ${player.strength}</li>
-        <li>Toughness: ${player.toughness}</li>
-        <li>Fight: ${player.fighting}</li>
-        <li>Dodge: ${player.dodge}</li>
-        <li>Mana: ${player.mana}</li>
-        <li>Gold: ${player.gold}</li>
-        <li>XP: ${player.xp}</li>
-      </ul>
-    </div>
-
-    $if(weapon) {%
-    <div class="block">
-    Current Weapon:
-    ${weapon.name} — ${weapon.damage | desc_roll}
-    </div>
-    %}
-    ```
+    return result;
   }
 
-  @filter f_die_roll {
-    name: "desc_roll"
-    impl: (d) => {return d.description();}
+  advance: function() {
+    this.turns += 1;
+  }
+}
+
+@actor player {
+  name: "The adventurer"
+  description: "A bold adventurer"
+  class: :m
+
+  container_id: #player_inventory
+
+  fought_boss: false
+
+  wildcard: true
+  initiative: 2
+  strength: 8
+  toughness: 6
+  fighting: 8
+  dodge: 0
+  wounds: 0
+  mana: 0
+  shaken: false
+
+  gold: 0
+
+  kills: 0
+  xp: 0
+
+  spells: []
+
+  class_name: ^v{this.class == "m" ? "Mage" : this.class == "r" ? "Rogue" : "Fighter"}
+
+  weapon: ^p{
+    const weapon_id = $player.container.getItemForSlot("weapon_slot");
+    return $(weapon_id);
   }
 
-  @system clock {
-    enabled: true
-    priority: 1
+  on_start: (player) => {
+    //player.container.setItemForSlot("weapon_slot", "dagger");
+  }
+}
 
-    turns: 0
+@item topic_base {
+  type: :topic
+  sname: ""
+  text: ""
+  read: false
+}
 
-    after_event: (clock, evt, result) => {
-      if(evt.target.dataset.turn === "1") {
-        clock.advance();
-      }
-      return result;
-    }
+@actor the_imp {
+  name: "The Imp"
+  location_id: #c_dungeon_entrance
+  container_id: #imp_inventory
 
-    advance: function() {
-      this.turns += 1;
-    }
+  add_topic: function(topic_id) {
+    this.container.addItemToSlot("topics_slot", topic_id);
   }
 
-  @actor player {
-    name: "The adventurer"
-    description: "A bold adventurer"
-    class: :m
-
-    container_id: #player_inventory
-
-    fought_boss: false
-
-    wildcard: true
-    initiative: 2
-    strength: 8
-    toughness: 6
-    fighting: 8
-    dodge: 0
-    wounds: 0
-    mana: 0
-    shaken: false
-
-    gold: 0
-
-    kills: 0
-    xp: 0
-
-    spells: []
-
-    class_name: ^v{this.class == "m" ? "Mage" : this.class == "r" ? "Rogue" : "Fighter"}
-
-    weapon: ^p{
-      const weapon_id = $player.container.getItemForSlot("weapon_slot");
-      return $(weapon_id);
-    }
-
-    on_start: (player) => {
-      //player.container.setItemForSlot("weapon_slot", "dagger");
-    }
+  get_topics: function() {
+    return this.container.getItemsForSlot("topics_slot");
   }
 
-  @item topic_base {
-    type: :topic
-    sname: ""
-    text: ""
-    read: false
+  on_start: (imp) => {
+    imp.add_topic("topic_welcome_to_the_dungeon");
+    imp.add_topic("topic_how_to_get_out");
   }
+}
 
-  @actor the_imp {
-    name: "The Imp"
-    location_id: #c_dungeon_entrance
-    container_id: #imp_inventory
+@slot topics_slot {
+  accepts: :topic
+}
 
-    add_topic: function(topic_id) {
-      this.container.addItemToSlot("topics_slot", topic_id);
-    }
+@alias topic = item<topic_base>
 
-    get_topics: function() {
-      return this.container.getItemsForSlot("topics_slot");
-    }
+@inventory imp_inventory {
+  slots: #{#topics_slot}
+}
 
-    on_start: (imp) => {
-      imp.add_topic("topic_welcome_to_the_dungeon");
-      imp.add_topic("topic_how_to_get_out");
-    }
-  }
+@topic topic_welcome_to_the_dungeon {
+  sname: "Dungeon"
+  card_id: #c_why_are_you_here
+}
 
-  @slot topics_slot {
-    accepts: :topic
-  }
+@topic topic_how_to_get_out {
+  sname: "Escape"
+  card_id: #c_how_to_get_out
+}
 
-  @alias topic = item<topic_base>
+@card c_why_are_you_here {
+  content: ```
+  The Imp shifts about uncomfortably. "Why are you here? Why are any of us here?"
+  <a data-event="card" data-target="conversation_topics">Ask about something else.</a>
+  ```
+  on_start: () => {$("topic_welcome_to_the_dungeon").read = true;}
+}
 
-  @inventory imp_inventory {
-    slots: #{#topics_slot}
-  }
+@card c_how_to_get_out {
+  content: ```
+  The Imp looks north with a grim face. "There's no way out. Not without killing that which cannot be killed by any man, or Imp."
+  <a data-event="card" data-target="conversation_topics">Ask about something else.</a>
+  ```
+  on_start: () => {$("topic_how_to_get_out").read = true;}
+}
 
-  @topic topic_welcome_to_the_dungeon {
-    sname: "Dungeon"
-    card_id: #c_why_are_you_here
-  }
+@scene player_setup {
+  layout_mode: :single
+  layout: ```
+  ${content}
+  ```
+  initial_card_id: #player_set_name
+}
 
-  @topic topic_how_to_get_out {
-    sname: "Escape"
-    card_id: #c_how_to_get_out
-  }
-
-  @card c_why_are_you_here {
-    content: ```
-    The Imp shifts about uncomfortably. "Why are you here? Why are any of us here?"
-    <a data-event="card" data-target="conversation_topics">Ask about something else.</a>
-    ```
-    on_start: () => {$("topic_welcome_to_the_dungeon").read = true;}
-  }
-
-  @card c_how_to_get_out {
-    content: ```
-    The Imp looks north with a grim face. "There's no way out. Not without killing that which cannot be killed by any man, or Imp."
-    <a data-event="card" data-target="conversation_topics">Ask about something else.</a>
-    ```
-    on_start: () => {$("topic_how_to_get_out").read = true;}
-  }
-
-  @scene player_setup {
-    layout_mode: :single
-    layout: ```
-    ${content}
-    ```
-    initial_card_id: #player_set_name
-  }
-
-  @card player_set_name {
-    bindings: {player: #player}
-    content: ```
-    <div class="box" x-data="{player_name: ${player.name | quoted}}">
-      <div class="field">
-        <label class="label">What is your name adventurer?</label>
-        <div class="control">
-          <input x-model="player_name" class="input" type="text" rez-bind="player.name" placeholder="Name">
-        </div>
-      </div>
-      <div class="field">
-        <div class="control">
-          <textarea class="textarea is-small" rez-bind="player.description" placeholder="Describe yourself"></textarea>
-        </div>
-      </div>
-      <div class="field">
-        <label class="label">What class are you playing?</label>
-        <div class="control">
-          <label class="radio">
-            <input type="radio" name="class" value="f" rez-bind="player.class">Figher
-          </label>
-          <label class="radio">
-            <input type="radio" name="class" value="r">Rogue
-          </label>
-          <label class="radio">
-            <input type="radio" name="class" value="m">Mage
-          </label>
-        </div>
-      </div>
-      <div class="control" x-cloak x-show="player_name.length > 1">
-        <button data-event="switch" data-target="explore_dungeon" class="button">Enter the Dungeon</button>
+@card player_set_name {
+  bindings: {player: #player}
+  content: ```
+  <div class="box" x-data="{player_name: ${player.name | quoted}}">
+    <div class="field">
+      <label class="label">What is your name adventurer?</label>
+      <div class="control">
+        <input x-model="player_name" class="input" type="text" rez-bind="player.name" placeholder="Name">
       </div>
     </div>
-    ```
+    <div class="field">
+      <div class="control">
+        <textarea class="textarea is-small" rez-bind="player.description" placeholder="Describe yourself"></textarea>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">What class are you playing?</label>
+      <div class="control">
+        <label class="radio">
+          <input type="radio" name="class" value="f" rez-bind="player.class">Figher
+        </label>
+        <label class="radio">
+          <input type="radio" name="class" value="r">Rogue
+        </label>
+        <label class="radio">
+          <input type="radio" name="class" value="m">Mage
+        </label>
+      </div>
+    </div>
+    <div class="control" x-cloak x-show="player_name.length > 1">
+      <button data-event="switch" data-target="explore_dungeon" class="button">Enter the Dungeon</button>
+    </div>
+  </div>
+  ```
 
-    on_finish: (card) => {
-      if($player.class === "f") {
-        $player.strength += 2;
-        $player.toughness += 2;
-        $player.fighting += 2;
-        $player.container.setItemForSlot("weapon_slot", "long_sword");
-      } else if($player.class == "r") {
-        $player.initiative += 2;
-        $player.fighting += 2;
-        $player.dodge += 2;
-        $player.container.setItemForSlot("weapon_slot", "short_sword");
-      } else if($player.class == "m") {
-        $player.strength -= 1;
-        $player.toughness -= 1;
-        $player.fighting -= 2;
-        $player.mana += 12;
-        $player.spells = ["spell_fireball", "spell_missile"];
-        $player.container.setItemForSlot("weapon_slot", "dagger");
-      }
+  on_finish: (card) => {
+    if($player.class === "f") {
+      $player.strength += 2;
+      $player.toughness += 2;
+      $player.fighting += 2;
+      $player.container.setItemForSlot("weapon_slot", "long_sword");
+    } else if($player.class == "r") {
+      $player.initiative += 2;
+      $player.fighting += 2;
+      $player.dodge += 2;
+      $player.container.setItemForSlot("weapon_slot", "short_sword");
+    } else if($player.class == "m") {
+      $player.strength -= 1;
+      $player.toughness -= 1;
+      $player.fighting -= 2;
+      $player.mana += 12;
+      $player.spells = ["spell_fireball", "spell_missile"];
+      $player.container.setItemForSlot("weapon_slot", "dagger");
     }
   }
-
-  @actor balrog {
-    monster: true
-    boss: true
-
-    name: "Balrog"
-    description: "A huge figure wreathed in fire and smoke, terrible to behold"
-
-    wildcard: true
-    initiative: 6
-    strength: 12
-    toughness: 12
-    fighting: 12
-    shaken: false
-    dodge: -3
-    damage: 12
-    wounds: 0
-    xp: 30
-  }
-
-  @actor troll {
-    $template: true
-
-    monster: true
-    name: "Troll"
-    description: "A big ugly troll, wielding a club"
-
-    wildcard: false
-    initiative: 1
-    strength: 12
-    toughness: 10
-    fighting: 8
-    shaken: false
-    dodge: -2
-    wounds: 0
-    xp: 10
-
-    treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 2|
-  }
-
-  @actor troll_chief {
-    $template: true
-
-    monster: true
-    name: ^i{"Chief " + $("troll_names").randomElement()}
-    description: "A huge, formidable, troll wielding an iron shod club"
-
-    wildcard: true
-    initiative: 2
-    strength: 12
-    toughness: 12
-    fighting: 12
-    shaken: false
-    dodge: -1
-    damage: 10
-    wounds: 0
-    xp: 25
-
-    treasure: |#amazing_treasure 1|
-  }
-
-  @list troll_names {
-    values: [
-      "Stonegruff Grumblehide"
-      "Riverfang Rockstomper"
-      "Thornclaw Earthgrinder"
-      "Darkshade Loomshadow"
-      "Cragjaw Mossbeard"
-      "Gloomheart Shadowgrove"
-      "Grimsnarl Knotwood"
-      "Stormeye Thunderhowl"
-      "Rusttooth Ironbiter"
-      "Earthrend Skyfury"
-    ]
-  }
-
-  @actor goblin {
-    $template: true
-
-    monster: true
-    name: "Goblin"
-    description: "A sneaky goblin, wielding a dagger"
-
-    wildcard: false
-    initiative: 1
-    strength: 4
-    toughness: 6
-    fighting: 6
-    shaken: false
-    dodge: 1
-    damage: 4
-    wounds: 0
-    xp: 1
-
-    treasure: |#poor_treasure 4 #average_treasure 2 #good_treasure 1|
-  }
-
-  @actor goblin_chief {
-    $template: true
-
-    monster: true
-    name: ^i{"Chief " + $("goblin_names").randomElement()}
-    description: "A large, tough, looking goblin wielding a flail"
-
-    wildcard: true
-    initiative: 2
-    strength: 6
-    toughness: 8
-    fighting: 8
-    shaken: false
-    dodge: 1
-    damage: 8
-    wounds: 0
-    xp: 5
-
-    treasure: |#average_treasure 1 #good_treasure 3 #excellent_treasure 1|
-  }
-
-  @list goblin_names {
-    values: [
-       "Splug"
-       "Pugna"
-       "Dreeble"
-       "Ghrak"
-       "Blarg"
-       "Bogrot"
-       "Zorg"
-       "Drool"
-       "Fozg",
-       "Ghrak"
-    ]
-  }
-
-  @actor spider {
-    $template: true
-
-    monster: true
-    name: "Spider"
-    description: "A dark and venmous spider"
-
-    wildcard: false
-    initiative: 2
-    strength: 6
-    toughness: 6
-    fighting: 4
-    shaken: false
-    deck: 6
-    wounds: 0
-    xp: 3
-
-    treasure: |#poor_treasure 1 #average_treasure 1 #good_treasure 1|
-  }
-
-  @actor spider_queen {
-    $template: true
-
-    monster: true
-    name: ^i{"Queen " + $("spider_names").randomElement()}
-    description: "A huge spider with glowing eyes and terrible fangs"
-
-    wildcard: true
-    initiative: 3
-    strength: d8
-    toughness: 8
-    fighting: 6
-    shaken: false
-    dodge: 1
-    damage: 8
-    wounds: 0
-    xp: 9
-
-    treasure: |#average_treasure 1 #good_treasure 2 #excellent_treasure 2|
-  }
-
-  @list spider_names {
-    values: [
-      "Venomshade"
-      "Gloomweb"
-      "Crimsoneye"
-      "Whisperthread"
-      "Wraithspindle"
-      "Glimmerweb"
-      "Netherveil"
-      "Starweave"
-      "Dreadspindle"
-      "Twilightfang"
-    ]
-  }
-
-  @actor orc {
-    $template: true
-
-    monster: true
-    name: "Orc"
-    description: "A large tusked humanoid with green skin, wielding a longsword"
-
-    initiative: 3
-    strength: 8
-    toughness: 10
-    fighting: 8
-    shaken: false
-    damage: 8
-    wounds: 0
-    xp: 5
-
-    treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 1|
-  }
-
-  @actor orc_chief {
-    $template: true
-
-    monster: true
-    name: ^i{"Chief " + $("orc_names").randomElement()}
-    description: "A huge tusked humanoid with green skin, wielding a great sword"
-
-    wildcard: true
-    initiative: 4
-    strength: 10
-    toughness: 10
-    fighting: 10
-    shaken: false
-    damage: 10
-    wounds: 0
-    xp: 15
-
-    treasure: |#good_treasure 1 #excellent_treasure 1 #amazing_treasure 1|
-  }
-
-  @list orc_names {
-    values: [
-      "Gruk"
-      "Zog"
-      "Urak"
-      "Thulok"
-      "Drazag"
-      "Skullcrusher"
-      "Bloodfang"
-      "Snaggletusk"
-      "Gork"
-      "Azog"
-    ]
-  }
-
-  @object poor_treasure {
-    description: "a small pouch of gold"
-
-    gold: 2d6
-    weapon: |#dagger 2 #short_sword 1|
-  }
-
-  @object average_treasure {
-    description: "a fat pouch of gold"
-
-    gold: 3d6
-    weapon: |#dagger 1 #short_sword 1|
-  }
-
-  @object good_treasure {
-    description: "a large bag of gold"
-
-    gold: 6d6
-    weapon: |#dagger 1 #short_sword 2 #long_sword 1 #healing_potion 1|
-  }
-
-  @object excellent_treasure {
-    description: "a small chest of gold"
-
-    gold: 10d6
-    weapon: |#short_sword 1 #long_sword 2 #moon_sword 1 #healing_potion 1|
-  }
-
-  @object amazing_treasure {
-    descrption: "a large chest of gold"
-
-    gold: 20d6
-    weapon: |#long_sword 1 #moon_sword 2 #elven_sword 1 #healing_potion 2|
-  }
-
-  @derive :weapon :item
-  @derive :edged_weapon :weapon
-  @derive :sword :edged_weapon
-  @derive :crush_weapon :weapon
-  @derive :mace :crush_weapon
-  @derive :belt :item
-  @derive :potion :item
-
-  @item dagger {
-    type: :edged_weapon
-    magic: false
-
-    name: "dagger"
-    damage: 1d4
-  }
-
-  @item short_sword {
-    type: :edged_weapon
-    magic: false
-
-    name: "shortsword"
-    damage: 1d6
-  }
-
-  @item long_sword {
-    type: :edged_weapon
-    magic: false
-
-    name: "longsword"
-    damage: 1d8
-  }
-
-  @item moon_sword {
-    type: :edged_weapon
-    magic: false
-
-    name: "moon silver longsword"
-    damage: 1d8+1
-  }
-
-  @item elven_sword {
-    type: :edged_weapon
-    magic: true
-
-    name: "elven longwword"
-    damage: 1d8+2
-  }
-
-  @item healing_potion {
-    type: :potion
-  }
-
-  @slot weapon_slot {
-    accepts: :weapon
-  }
-
-  @slot potion_slot {
-    accepts: :potion
-  }
-
-  @slot backpack_slot {
-    accepts: :item
-  }
-
-  @inventory player_inventory {
-    title: "Player inventory"
-    slots: #{#weapon_slot #potion_slot #backpack_slot}
-  }
-
-  @scene explore_dungeon {
-    layout_mode: :single
-    layout: ```
-    ${content}
-    ```
-    initial_card_id: #c_dungeon_entrance
-
-    on_resume: (scene, params) => {
-      console.log("Explore Dungeon being resumed");
-      if(params.success) {
-        scene.current_card.monster_defeated = true;
-      }
+}
+
+@actor balrog {
+  monster: true
+  boss: true
+
+  name: "Balrog"
+  description: "A huge figure wreathed in fire and smoke, terrible to behold"
+
+  wildcard: true
+  initiative: 6
+  strength: 12
+  toughness: 12
+  fighting: 12
+  shaken: false
+  dodge: -3
+  damage: 12
+  wounds: 0
+  xp: 30
+}
+
+@actor troll {
+  $template: true
+
+  monster: true
+  name: "Troll"
+  description: "A big ugly troll, wielding a club"
+
+  wildcard: false
+  initiative: 1
+  strength: 12
+  toughness: 10
+  fighting: 8
+  shaken: false
+  dodge: -2
+  wounds: 0
+  xp: 10
+
+  treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 2|
+}
+
+@actor troll_chief {
+  $template: true
+
+  monster: true
+  name: ^i{"Chief " + $("troll_names").randomElement()}
+  description: "A huge, formidable, troll wielding an iron shod club"
+
+  wildcard: true
+  initiative: 2
+  strength: 12
+  toughness: 12
+  fighting: 12
+  shaken: false
+  dodge: -1
+  damage: 10
+  wounds: 0
+  xp: 25
+
+  treasure: |#amazing_treasure 1|
+}
+
+@list troll_names {
+  values: [
+    "Stonegruff Grumblehide"
+    "Riverfang Rockstomper"
+    "Thornclaw Earthgrinder"
+    "Darkshade Loomshadow"
+    "Cragjaw Mossbeard"
+    "Gloomheart Shadowgrove"
+    "Grimsnarl Knotwood"
+    "Stormeye Thunderhowl"
+    "Rusttooth Ironbiter"
+    "Earthrend Skyfury"
+  ]
+}
+
+@actor goblin {
+  $template: true
+
+  monster: true
+  name: "Goblin"
+  description: "A sneaky goblin, wielding a dagger"
+
+  wildcard: false
+  initiative: 1
+  strength: 4
+  toughness: 6
+  fighting: 6
+  shaken: false
+  dodge: 1
+  damage: 4
+  wounds: 0
+  xp: 1
+
+  treasure: |#poor_treasure 4 #average_treasure 2 #good_treasure 1|
+}
+
+@actor goblin_chief {
+  $template: true
+
+  monster: true
+  name: ^i{"Chief " + $("goblin_names").randomElement()}
+  description: "A large, tough, looking goblin wielding a flail"
+
+  wildcard: true
+  initiative: 2
+  strength: 6
+  toughness: 8
+  fighting: 8
+  shaken: false
+  dodge: 1
+  damage: 8
+  wounds: 0
+  xp: 5
+
+  treasure: |#average_treasure 1 #good_treasure 3 #excellent_treasure 1|
+}
+
+@list goblin_names {
+  values: [
+      "Splug"
+      "Pugna"
+      "Dreeble"
+      "Ghrak"
+      "Blarg"
+      "Bogrot"
+      "Zorg"
+      "Drool"
+      "Fozg",
+      "Ghrak"
+  ]
+}
+
+@actor spider {
+  $template: true
+
+  monster: true
+  name: "Spider"
+  description: "A dark and venmous spider"
+
+  wildcard: false
+  initiative: 2
+  strength: 6
+  toughness: 6
+  fighting: 4
+  shaken: false
+  deck: 6
+  wounds: 0
+  xp: 3
+
+  treasure: |#poor_treasure 1 #average_treasure 1 #good_treasure 1|
+}
+
+@actor spider_queen {
+  $template: true
+
+  monster: true
+  name: ^i{"Queen " + $("spider_names").randomElement()}
+  description: "A huge spider with glowing eyes and terrible fangs"
+
+  wildcard: true
+  initiative: 3
+  strength: d8
+  toughness: 8
+  fighting: 6
+  shaken: false
+  dodge: 1
+  damage: 8
+  wounds: 0
+  xp: 9
+
+  treasure: |#average_treasure 1 #good_treasure 2 #excellent_treasure 2|
+}
+
+@list spider_names {
+  values: [
+    "Venomshade"
+    "Gloomweb"
+    "Crimsoneye"
+    "Whisperthread"
+    "Wraithspindle"
+    "Glimmerweb"
+    "Netherveil"
+    "Starweave"
+    "Dreadspindle"
+    "Twilightfang"
+  ]
+}
+
+@actor orc {
+  $template: true
+
+  monster: true
+  name: "Orc"
+  description: "A large tusked humanoid with green skin, wielding a longsword"
+
+  initiative: 3
+  strength: 8
+  toughness: 10
+  fighting: 8
+  shaken: false
+  damage: 8
+  wounds: 0
+  xp: 5
+
+  treasure: |#average_treasure 1 #good_treasure 1 #excellent_treasure 1|
+}
+
+@actor orc_chief {
+  $template: true
+
+  monster: true
+  name: ^i{"Chief " + $("orc_names").randomElement()}
+  description: "A huge tusked humanoid with green skin, wielding a great sword"
+
+  wildcard: true
+  initiative: 4
+  strength: 10
+  toughness: 10
+  fighting: 10
+  shaken: false
+  damage: 10
+  wounds: 0
+  xp: 15
+
+  treasure: |#good_treasure 1 #excellent_treasure 1 #amazing_treasure 1|
+}
+
+@list orc_names {
+  values: [
+    "Gruk"
+    "Zog"
+    "Urak"
+    "Thulok"
+    "Drazag"
+    "Skullcrusher"
+    "Bloodfang"
+    "Snaggletusk"
+    "Gork"
+    "Azog"
+  ]
+}
+
+@object poor_treasure {
+  description: "a small pouch of gold"
+
+  gold: 2d6
+  weapon: |#dagger 2 #short_sword 1|
+}
+
+@object average_treasure {
+  description: "a fat pouch of gold"
+
+  gold: 3d6
+  weapon: |#dagger 1 #short_sword 1|
+}
+
+@object good_treasure {
+  description: "a large bag of gold"
+
+  gold: 6d6
+  weapon: |#dagger 1 #short_sword 2 #long_sword 1 #healing_potion 1|
+}
+
+@object excellent_treasure {
+  description: "a small chest of gold"
+
+  gold: 10d6
+  weapon: |#short_sword 1 #long_sword 2 #moon_sword 1 #healing_potion 1|
+}
+
+@object amazing_treasure {
+  descrption: "a large chest of gold"
+
+  gold: 20d6
+  weapon: |#long_sword 1 #moon_sword 2 #elven_sword 1 #healing_potion 2|
+}
+
+@derive :weapon :item
+@derive :edged_weapon :weapon
+@derive :sword :edged_weapon
+@derive :crush_weapon :weapon
+@derive :mace :crush_weapon
+@derive :belt :item
+@derive :potion :item
+
+@item dagger {
+  type: :edged_weapon
+  magic: false
+
+  name: "dagger"
+  damage: 1d4
+}
+
+@item short_sword {
+  type: :edged_weapon
+  magic: false
+
+  name: "shortsword"
+  damage: 1d6
+}
+
+@item long_sword {
+  type: :edged_weapon
+  magic: false
+
+  name: "longsword"
+  damage: 1d8
+}
+
+@item moon_sword {
+  type: :edged_weapon
+  magic: false
+
+  name: "moon silver longsword"
+  damage: 1d8+1
+}
+
+@item elven_sword {
+  type: :edged_weapon
+  magic: true
+
+  name: "elven longwword"
+  damage: 1d8+2
+}
+
+@item healing_potion {
+  type: :potion
+}
+
+@slot weapon_slot {
+  accepts: :weapon
+}
+
+@slot potion_slot {
+  accepts: :potion
+}
+
+@slot backpack_slot {
+  accepts: :item
+}
+
+@inventory player_inventory {
+  title: "Player inventory"
+  slots: #{#weapon_slot #potion_slot #backpack_slot}
+}
+
+@scene explore_dungeon {
+  layout_mode: :single
+  layout: ```
+  ${content}
+  ```
+  initial_card_id: #c_dungeon_entrance
+
+  on_resume: (scene, params) => {
+    console.log("Explore Dungeon being resumed");
+    if(params.success) {
+      scene.current_card.monster_defeated = true;
     }
   }
+}
 
-  @filter exit_link {
-    name: "exit_link"
-    impl: (exit, location) => {
-      function title(exit) {
-        if(exit.by) {
-          return `${exit.by.capitalize()} ${exit.dir} to ${exit.alias.capitalize()}`;
-        } else {
-          return `${exit.dir.capitalize()} to ${exit.alias.capitalize()}`;
-        }
-      }
-
-      if(exit.check) {
-        const can_use_exit = new RezDecision();
-        const decide_fn = location.getAttribute(exit.check);
-        decide_fn(can_use_exit);
-        if(can_use_exit.wasYes) {
-          return `<a href="javascript:void(0);" data-event="card" data-target="${exit.to}" data-turn="1">${title(exit)}</a>`;
-        } else if(can_use_exit.hidden) {
-          return "";
-        } else {
-          return `<span class="tooltip"><a href="#"" class="disabled-link">${title(exit)}</a><span class="tooltiptext">${can_use_exit.reason}</span>`;
-        }
+@filter exit_link {
+  name: "exit_link"
+  impl: (exit, location) => {
+    function title(exit) {
+      if(exit.by) {
+        return `${exit.by.capitalize()} ${exit.dir} to ${exit.alias.capitalize()}`;
       } else {
+        return `${exit.dir.capitalize()} to ${exit.alias.capitalize()}`;
+      }
+    }
+
+    if(exit.check) {
+      const can_use_exit = new RezDecision();
+      const decide_fn = location.getAttribute(exit.check);
+      decide_fn(can_use_exit);
+      if(can_use_exit.wasYes) {
         return `<a href="javascript:void(0);" data-event="card" data-target="${exit.to}" data-turn="1">${title(exit)}</a>`;
-      }
-    }
-  }
-
-  @card c_exits {
-    $suppress_wrapper: true
-    bindings: {location: function(block) {return block.parent_block.source;}}
-    content: ```
-    $foreach(exit: location.exits) {%
-      <li>${exit | exit_link: location}</li>
-    %}
-    ```
-  }
-
-  @card c_actors {
-    $suppress_wrapper: true
-    bindings: {actors: (block) => {
-      const location = block.parent_block.source;
-      const actors = $game.getAll("actor").filter((actor) => {return actor.location && actor.location == location});
-      return actors;
-    }}
-
-    content: ```
-    $foreach(actor: actors) {%
-      ${actor.name} is here.
-    %}
-    ```
-  }
-
-  @card c_conversations {
-    $suppress_wrapper: true
-    bindings: {actors: (block) => {
-      const location = block.parent_block.source;
-      const actors = $game.getAll("actor").filter((actor) => {return actor.location && actor.location == location});
-      return actors;
-    }}
-    content: ```
-    $foreach(actor: actors) {%
-      <li><a data-event="interlude" data-target="conversation" data-actor_id="${actor.id}">Talk to ${actor.name}</a></li>
-    %}
-    ```
-  }
-
-  @card c_dungeon_entrance {
-    exits: [{alias: "outside" by: "walk" dir: "north" to: #c_outside_world check: :can_leave} {alias: "tunnel" by: "walk" dir: "west" to: #c_dungeon_tunnel_1}]
-    blocks: [#c_exits #c_actors #c_conversations]
-    location: [:dungeon :entrance]
-    content: ```
-    <div class="box">
-      The entrance to a dank, dark, dungeon. Water drips from the ceiling and the floor is slimy and uneven. Should you be doing this?
-      <p class="block">${c_actors}</p>
-
-      From here you can:
-      <div class="block">
-      <ul>
-      ${c_exits}
-      ${c_conversations}
-      </ul>
-      </div>
-    </div>
-    ```
-
-    can_leave: function(allow) {
-      if($("player").fought_boss) {
-        allow.yes();
+      } else if(can_use_exit.hidden) {
+        return "";
       } else {
-        allow.no("You cannot escape the dungeon, something has placed a terrible spell upon the entrance and you cannot pass!");
+        return `<span class="tooltip"><a href="#"" class="disabled-link">${title(exit)}</a><span class="tooltiptext">${can_use_exit.reason}</span>`;
       }
+    } else {
+      return `<a href="javascript:void(0);" data-event="card" data-target="${exit.to}" data-turn="1">${title(exit)}</a>`;
     }
   }
+}
 
-  @card c_dungeon_tunnel_1 {
-    exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2}]
-    location: [:dungeon :tunnel_1]
-    blocks: [#c_exits]
-    content: ```
-    <div class="box">
-      A dark echo-ey tunnel. You can hear your heart beating fast.
-      ${c_exits}
-    </div>
-    ```
-  }
+@card c_exits {
+  $suppress_wrapper: true
+  bindings: {location: function(block) {return block.parent_block.source;}}
+  content: ```
+  $foreach(exit: location.exits) {%
+    <li>${exit | exit_link: location}</li>
+  %}
+  ```
+}
 
-  @card c_dungeon_tunnel_2 {
-    exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_1} {alias: "chamber" dir: "south" to: #c_dungeon_chamber}]
-    location: [:dungeon :tunnel_2]
-    blocks: [#c_exits]
-    content: ```
-    <div class="box">
-      <div class="block">A narrow tunnel that smells foul, something horrible lurks nearby.</div>
-      ${c_exits}
-    </div>
-    ```
-  }
+@card c_actors {
+  $suppress_wrapper: true
+  bindings: {actors: (block) => {
+    const location = block.parent_block.source;
+    const actors = $game.getAll("actor").filter((actor) => {return actor.location && actor.location == location});
+    return actors;
+  }}
 
-  @object location {
-    monster_id: _
-  }
+  content: ```
+  $foreach(actor: actors) {%
+    ${actor.name} is here.
+  %}
+  ```
+}
 
-  @card c_dungeon_chamber {
-    exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_2} {alias: "dungeon" dir: "descend" to: #c_level_2 check: :can_descend}]
-    bindings: {location: #location}
-    blocks: [#c_exits]
-    location: [:dungeon :chamber]
-    monster_id: 0
-    monster_defeated: false
-    searched: false
-    content: ```
-    <div class="box">
+@card c_conversations {
+  $suppress_wrapper: true
+  bindings: {actors: (block) => {
+    const location = block.parent_block.source;
+    const actors = $game.getAll("actor").filter((actor) => {return actor.location && actor.location == location});
+    return actors;
+  }}
+  content: ```
+  $foreach(actor: actors) {%
+    <li><a data-event="interlude" data-target="conversation" data-actor_id="${actor.id}">Talk to ${actor.name}</a></li>
+  %}
+  ```
+}
+
+@card c_dungeon_entrance {
+  exits: [{alias: "outside" by: "walk" dir: "north" to: #c_outside_world check: :can_leave} {alias: "tunnel" by: "walk" dir: "west" to: #c_dungeon_tunnel_1}]
+  blocks: [#c_exits #c_actors #c_conversations]
+  location: [:dungeon :entrance]
+  content: ```
+  <div class="box">
+    The entrance to a dank, dark, dungeon. Water drips from the ceiling and the floor is slimy and uneven. Should you be doing this?
+    <p class="block">${c_actors}</p>
+
+    From here you can:
     <div class="block">
-    Clearly the lair of the beast. Bomes and small trinkets litter the filthy floor.
+    <ul>
+    ${c_exits}
+    ${c_conversations}
+    </ul>
     </div>
-    <div class="block">
-    $if(location.monster) {%
-      There is a <a data-event="interlude" data-target="engage_in_battle" data-monster_id="${location.monster.id}">${location.monster.name}</a> here!
-    %}, {%
-      $if(!card.searched) {%
-        <div class="block"><a data-event="search">Search the chamber</a></div>
-      %}
-      ${c_exits}
+  </div>
+  ```
+
+  can_leave: function(allow) {
+    if($("player").fought_boss) {
+      allow.yes();
+    } else {
+      allow.no("You cannot escape the dungeon, something has placed a terrible spell upon the entrance and you cannot pass!");
+    }
+  }
+}
+
+@card c_dungeon_tunnel_1 {
+  exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2}]
+  location: [:dungeon :tunnel_1]
+  blocks: [#c_exits]
+  content: ```
+  <div class="box">
+    A dark echo-ey tunnel. You can hear your heart beating fast.
+    ${c_exits}
+  </div>
+  ```
+}
+
+@card c_dungeon_tunnel_2 {
+  exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_1} {alias: "chamber" dir: "south" to: #c_dungeon_chamber}]
+  location: [:dungeon :tunnel_2]
+  blocks: [#c_exits]
+  content: ```
+  <div class="box">
+    <div class="block">A narrow tunnel that smells foul, something horrible lurks nearby.</div>
+    ${c_exits}
+  </div>
+  ```
+}
+
+@object location {
+  monster_id: _
+}
+
+@card c_dungeon_chamber {
+  exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_2} {alias: "dungeon" dir: "descend" to: #c_level_2 check: :can_descend}]
+  bindings: {location: #location}
+  blocks: [#c_exits]
+  location: [:dungeon :chamber]
+  monster_id: 0
+  monster_defeated: false
+  searched: false
+  content: ```
+  <div class="box">
+  <div class="block">
+  Clearly the lair of the beast. Bomes and small trinkets litter the filthy floor.
+  </div>
+  <div class="block">
+  $if(location.monster) {%
+    There is a <a data-event="interlude" data-target="engage_in_battle" data-monster_id="${location.monster.id}">${location.monster.name}</a> here!
+  %}, {%
+    $if(!card.searched) {%
+      <div class="block"><a data-event="search">Search the chamber</a></div>
     %}
-    </div>
-    ```
+    ${c_exits}
+  %}
+  </div>
+  ```
 
-    can_descend: function(allow) {
-      const loc = $("location");
-      const card = $game.current_scene.current_card;
-      if(loc.monster || !card.searched) {
-        allow.no_and_hide();
-      } else {
-        allow.yes();
-      }
-    }
-
-    on_search: (card) => {
-      card.searched = true;
-      return {
-        flash: "You find a hidden trapdoor in the floor.",
-        render: true
-      };
-    }
-
-    on_start: (room) => {
-      if(!room.monster_defeated) {
-        const goblin = $("goblin").copyWithAutoId();
-        $game.addGameObject(goblin);
-        $("location").monster = goblin;
-      } else {
-        console.log("The monster has already been defeated!");
-        $("location").monster_id = "";
-      }
+  can_descend: function(allow) {
+    const loc = $("location");
+    const card = $game.current_scene.current_card;
+    if(loc.monster || !card.searched) {
+      allow.no_and_hide();
+    } else {
+      allow.yes();
     }
   }
 
-  @card c_outside_world {
-    content: ```
-    <div class="box">
-      <div class="block">The clear daylight of the outside!</div>
-      <div class="block">You have <a data-event="switch" data-target="end_game">made it</a>.</div>
-    </div>
-    ```
+  on_search: (card) => {
+    card.searched = true;
+    return {
+      flash: "You find a hidden trapdoor in the floor.",
+      render: true
+    };
   }
 
-  @card c_level_2 {
-    content: ```
-    <div class="box">
-      <p class="block">It is dark here</p>.
-    </div>
-    ```
-  }
-
-  @scene conversation {
-    initial_card_id: #conversation_topics
-  }
-
-  @card conversation_topics {
-    actor_id: _
-    bindings: {
-      actor: `actor
-      topics: (block) => {
-        return block.source.actor.get_topics().map((topic_id) => $(topic_id));
-      }
+  on_start: (room) => {
+    if(!room.monster_defeated) {
+      const goblin = $("goblin").copyWithAutoId();
+      $game.addGameObject(goblin);
+      $("location").monster = goblin;
+    } else {
+      console.log("The monster has already been defeated!");
+      $("location").monster_id = "";
     }
-    content: ```
-    <div class="box">
-      <div class="block">
-        $if(topics.length > 0) {%
-          ${card.actor.name} can talk to you about:
-          <ul>
-          $foreach(topic: topics) {%
-            <li><a data-event="card" data-target="${topic.card_id}">${topic.sname}</a> $if(topic.read) {%(read)%}</li>
-          %}
-          </ul>
-        %}, {%
-        <p class="block">${card.actor.name} has nothing to say to you.</p>
+  }
+}
+
+@card c_outside_world {
+  content: ```
+  <div class="box">
+    <div class="block">The clear daylight of the outside!</div>
+    <div class="block">You have <a data-event="switch" data-target="end_game">made it</a>.</div>
+  </div>
+  ```
+}
+
+@card c_level_2 {
+  content: ```
+  <div class="box">
+    <p class="block">It is dark here</p>.
+  </div>
+  ```
+}
+
+@scene conversation {
+  initial_card_id: #conversation_topics
+}
+
+@card conversation_topics {
+  actor_id: _
+  bindings: {
+    actor: `actor
+    topics: (block) => {
+      return block.source.actor.get_topics().map((topic_id) => $(topic_id));
+    }
+  }
+  content: ```
+  <div class="box">
+    <div class="block">
+      $if(topics.length > 0) {%
+        ${card.actor.name} can talk to you about:
+        <ul>
+        $foreach(topic: topics) {%
+          <li><a data-event="card" data-target="${topic.card_id}">${topic.sname}</a> $if(topic.read) {%(read)%}</li>
         %}
-      </div>
-      <p class="block"><a data-event="resume">Finish speaking with ${actor.name}.</a></p>
-    </div>
-    ```
-
-    on_start: (card) => {
-      card.actor_id = card.scene.current_block.actor_id;
-    }
-  }
-
-  @scene engage_in_battle {
-    monster: _
-    on_start: (scene) => {
-      scene.monster = $(scene.current_block.monster_id);
-      console.log("Starting battle scene with monster: " + scene.monster.name);
-    }
-    layout_mode: :stack
-    layout: ```
-    <div class="box">
-      ${content}
-    </div>
-    ```
-    initial_card_id: #battle_card
-  }
-
-  @object spell_fireball {
-    name: "Fireball"
-    cost: 2
-    damage: 5d6
-  }
-
-  @object spell_missile {
-    name: "Magic Missile"
-    cost: 1
-    damage: 2d4
-  }
-
-  @filter cast_spell {
-    name: "cast_spell"
-    impl: (spell_id) => {
-      const spell = $(spell_id);
-      if($player.mana >= spell.cost) {
-        return `<li><a data-event="cast_spell" data-spell="${spell.id}">Cast ${spell.name} (${spell.cost})</a></li>`;
-      } else {
-        return `<li class="tooltip"><a href="javascript:void(0)" class="disabled-link">Cast ${spell.name}</a><span class="tooltiptext">Cannot cast due to insufficient mana!</span></li>`;
-      }
-    }
-  }
-
-  @filter bool_status {
-    name: "bool_status"
-    impl: (b) => {return b ? "yes" : "no";}
-  }
-
-  @card battle_card {
-    bindings: {
-      monster: `scene.monster
-      player: #player
-      weapon: &player.weapon
-    }
-    content: ```
-    <div class="box">
-      <div class="block">You face off against the ${monster.name}. $if(player.shaken) {% You are shaken. %}</div>
-      <div class="block">
-        <ul>
-          $if(monster.shaken) {%
-            ${monster.name} is shaken
-          %}
-          <li>Wounds: ${monster.wounds}</li>
-          <li>Initiative: ${monster.initiative}</li>
-          <li>Strength: ${monster.strength}</li>
-          <li>Toughness: ${monster.toughness}</li>
-          <li>Fight: ${monster.fighting}</li>
-          <li>Damage: ${monster.damage}</li>
         </ul>
-      </div>
-      <div class="block">
-        <ul>
-          <li><a data-event="fight" data-turn="1">Attack with ${weapon.name}</a></li>
-          $foreach(spell_id: player.spells) {%
-            ${spell_id | cast_spell}
-          %}
-          <li><a data-event="flee">Attempt to Flee</a></li>
-        </ul>
-      </div>
+      %}, {%
+      <p class="block">${card.actor.name} has nothing to say to you.</p>
+      %}
     </div>
-    ```
+    <p class="block"><a data-event="resume">Finish speaking with ${actor.name}.</a></p>
+  </div>
+  ```
 
-    on_cast_spell: (card, params) => {
-      const block = card.current_block;
+  on_start: (card) => {
+    card.actor_id = card.scene.current_block.actor_id;
+  }
+}
 
-      const spell = $(params.spell);
-      block.messages = [];
+@scene engage_in_battle {
+  monster: _
+  on_start: (scene) => {
+    scene.monster = $(scene.current_block.monster_id);
+    console.log("Starting battle scene with monster: " + scene.monster.name);
+  }
+  layout_mode: :stack
+  layout: ```
+  <div class="box">
+    ${content}
+  </div>
+  ```
+  initial_card_id: #battle_card
+}
 
-      $player.mana -= spell.cost;
-      const damage = spell.damage.roll();
+@object spell_fireball {
+  name: "Fireball"
+  cost: 2
+  damage: 5d6
+}
 
-      block.messages.push(`Casts ${spell.name} for ${damage} damage`);
+@object spell_missile {
+  name: "Magic Missile"
+  cost: 1
+  damage: 2d4
+}
 
-      const monster = card.scene.monster;
-      const [wounds, _] = Math.div_mod(damage, monster.toughness)
+@filter cast_spell {
+  name: "cast_spell"
+  impl: (spell_id) => {
+    const spell = $(spell_id);
+    if($player.mana >= spell.cost) {
+      return `<li><a data-event="cast_spell" data-spell="${spell.id}">Cast ${spell.name} (${spell.cost})</a></li>`;
+    } else {
+      return `<li class="tooltip"><a href="javascript:void(0)" class="disabled-link">Cast ${spell.name}</a><span class="tooltiptext">Cannot cast due to insufficient mana!</span></li>`;
+    }
+  }
+}
 
-      if(wounds === 0) {
-        block.messages.push(`Grazes the ${monster.name}`);
-      } else {
-        block.messages.push(`Causes ${wounds} wounds to the ${monster.name}`);
-      }
+@filter bool_status {
+  name: "bool_status"
+  impl: (b) => {return b ? "yes" : "no";}
+}
 
-      monster.wounds += wounds;
-      if(monster.wounds>3) {
-        block.messages.push("Killing it!");
-        return {
-          card: "monster_dies"
-        };
-      } else {
-        return {
-          card: "battle_card"
-        };
-      }
+@card battle_card {
+  bindings: {
+    monster: `scene.monster
+    player: #player
+    weapon: &player.weapon
+  }
+  content: ```
+  <div class="box">
+    <div class="block">You face off against the ${monster.name}. $if(player.shaken) {% You are shaken. %}</div>
+    <div class="block">
+      <ul>
+        $if(monster.shaken) {%
+          ${monster.name} is shaken
+        %}
+        <li>Wounds: ${monster.wounds}</li>
+        <li>Initiative: ${monster.initiative}</li>
+        <li>Strength: ${monster.strength}</li>
+        <li>Toughness: ${monster.toughness}</li>
+        <li>Fight: ${monster.fighting}</li>
+        <li>Damage: ${monster.damage}</li>
+      </ul>
+    </div>
+    <div class="block">
+      <ul>
+        <li><a data-event="fight" data-turn="1">Attack with ${weapon.name}</a></li>
+        $foreach(spell_id: player.spells) {%
+          ${spell_id | cast_spell}
+        %}
+        <li><a data-event="flee">Attempt to Flee</a></li>
+      </ul>
+    </div>
+  </div>
+  ```
+
+  on_cast_spell: (card, params) => {
+    const block = card.current_block;
+
+    const spell = $(params.spell);
+    block.messages = [];
+
+    $player.mana -= spell.cost;
+    const damage = spell.damage.roll();
+
+    block.messages.push(`Casts ${spell.name} for ${damage} damage`);
+
+    const monster = card.scene.monster;
+    const [wounds, _] = Math.div_mod(damage, monster.toughness)
+
+    if(wounds === 0) {
+      block.messages.push(`Grazes the ${monster.name}`);
+    } else {
+      block.messages.push(`Causes ${wounds} wounds to the ${monster.name}`);
     }
 
-    on_fight: (card, evt) => {
-      const monster = card.scene.monster;
-      const order = $("initiative_deck").order([$player, monster]);
-      console.dir(order);
-
-      const block = card.current_block;
-      block.messages = [];
-
-      let attacker = order[0].entity;
-      let defender = order[1].entity;
-
-      if(attacker.shaken) {
-        const recovery_die = new RezDie(6);
-        if(recovery_die.roll() > 4) {
-          block.messages.push(`${attacker.name} is shaken but spends the round recovering.`);
-          attacker.shaken = false;
-        } else {
-          block.messages.push(`${attacker.name} is shaken and cannot attack`);
-        }
-      } else {
-        const first_attack = card.attack(attacker, defender);
-        block.messages.push(`${attacker.name} goes 1st with ${order[0].initiative.face} and ${first_attack.a_desc}`);
-        if(first_attack.hit) {
-          block.messages.push(first_attack.w_desc);
-          if(first_attack.dies) {
-            return {card: first_attack.defender == $player ? "player_dies" : "monster_dies"};
-          }
-        }
-      }
-
-      if(defender.shaken) {
-        const recovery_die = new RezDie(6);
-        if(recovery_die.roll() > 4) {
-          block.messages.push(`${defender.name} is shaken, but recovers`);
-          defender.shaken = false;
-        } else {
-          block.messages.push(`${defender.name} is shaken`);
-        }
-      } else {
-        const second_attack = card.attack(defender, attacker);
-        block.messages.push(`${defender.name} goes 2nd with ${order[1].initiative.face} and ${second_attack.a_desc}`);
-        if(second_attack.hit) {
-          block.messages.push(second_attack.w_desc);
-          if(second_attack.dies) {
-            return {card: second_attack.defender == $player ? "player_dies" : "monster_dies"};
-          }
-        }
-      }
-
+    monster.wounds += wounds;
+    if(monster.wounds>3) {
+      block.messages.push("Killing it!");
+      return {
+        card: "monster_dies"
+      };
+    } else {
       return {
         card: "battle_card"
       };
     }
+  }
 
-    attack_roll: function(sides, mod) {
-      let total = mod ?? 0;
-      let roll = 0;
-      let aces = 0;
-      const die = new RezDie(sides);
+  on_fight: (card, evt) => {
+    const monster = card.scene.monster;
+    const order = $("initiative_deck").order([$player, monster]);
+    console.dir(order);
 
-      do {
-        roll = die.roll();
-        total += roll;
-        if(roll == sides) {
-          aces += 1;
-        }
-        console.log(`Rolls ${roll}${roll === sides ? " with an ace!" : ""}`);
-      } while(roll == sides);
+    const block = card.current_block;
+    block.messages = [];
 
-      return [total, aces];
-    }
+    let attacker = order[0].entity;
+    let defender = order[1].entity;
 
-    roll_attack: function(wildcard, sides, mod) {
-      const [normal, n_aces] = this.attack_roll(sides, mod ?? 0);
-      const [wild, w_aces] = wildcard ? this.attack_roll(6, mod ?? 0) : [0, 0];
-      console.log(`Attack ${normal}/${wild}`);
-
-      if(normal > wild) {
-        return [normal, n_aces];
+    if(attacker.shaken) {
+      const recovery_die = new RezDie(6);
+      if(recovery_die.roll() > 4) {
+        block.messages.push(`${attacker.name} is shaken but spends the round recovering.`);
+        attacker.shaken = false;
       } else {
-        return [wild, w_aces];
+        block.messages.push(`${attacker.name} is shaken and cannot attack`);
+      }
+    } else {
+      const first_attack = card.attack(attacker, defender);
+      block.messages.push(`${attacker.name} goes 1st with ${order[0].initiative.face} and ${first_attack.a_desc}`);
+      if(first_attack.hit) {
+        block.messages.push(first_attack.w_desc);
+        if(first_attack.dies) {
+          return {card: first_attack.defender == $player ? "player_dies" : "monster_dies"};
+        }
       }
     }
 
-    damage_roll: function(sides, mod) {
-      let total = mod ?? 0;
-      let roll = 0;
-      const die = new RezDie(sides);
-
-      do {
-        roll = die.roll();
-        total += roll;
-      } while(roll == sides);
-
-      return total;
-    }
-
-    attack: function(attacker, defender) {
-      const result = {};
-      result.attacker = attacker;
-      result.defender = defender;
-
-      console.log(`Attacker: ${attacker.name} fighting=${attacker.fighting}`);
-
-      const [attack_roll, aces] = this.roll_attack(attacker.wildcard, attacker.fighting, attacker.wounds);
-
-      result.attack = attack_roll;
-      result.aces = aces;
-      result.parry = 2 + defender.dodge + Math.floor(defender.fighting / 2);
-      result.hit = result.attack >= result.parry;
-
-      result.a_desc = `${result.hit ? "Hits" : "Misses"} (${result.attack} vs ${result.parry})`;
-
-      if(result.hit) {
-        result.damage = this.damage_roll(attacker.strength);
-        console.log(`Base damage: ${result.damage}`);
-        if(attacker.weapon) {
-          const weapon_damage = this.damage_roll(attacker.weapon.damage.die.sides, attacker.weapon.damage.die.mod);
-          console.log(`Weapon damage: ${weapon_damage}`);
-          result.damage += weapon_damage;
-        } else {
-          const creature_damage = this.damage_roll(attacker.damage);
-          console.log(`Creature damage: ${creature_damage}`);
-          result.damage += creature_damage;
-        }
-        console.log(`Total damage: ${result.damage}`);
-
-        const [wounds, _] = Math.div_mod(result.damage, defender.toughness)
-        result.wounds = wounds;
-
-        if(result.wounds > 0) {
-          result.w_desc = `Causes ${result.wounds} wounds! (${result.damage} vs ${defender.toughness})`;
-          defender.shaken = true;
-        } else {
-          result.w_desc = `Graze, causing no damage (${result.damage} vs ${defender.toughness})`;
-        }
-
-        defender.wounds += result.wounds;
-        result.dies = defender.wounds > 3;
-      }
-
-      return result;
-    }
-
-    on_flee: (card, evt) => {
-    }
-
-    flipped_content: ```
-    <div class="box">
-      $foreach(message: $block.messages) {%
-        <div class="block">${message}</div>
-      %}
-    </div>
-    ```
-  }
-
-  @card player_dies {
-    content: ```
-    Player is dead!
-    ```
-  }
-
-  @card monster_dies {
-    bindings: {monster: `scene.monster}
-    content: ```
-    <div class="box">
-     ${monster.name} is dead! <a data-event="card" data-target="loot_the_room">Loot the room</a>.
-    </div>
-    ```
-
-    on_start: (card) => {
-      $("location").monster_id = "";
-      $player.xp += card.scene.monster.xp;
-    }
-  }
-
-  @card loot_the_room {
-    gold: _
-
-    content: ```
-    <div class="box">
-    You find ${card.gold} gold. <a data-event="resume" data-success="true">Continue</a>
-    </div>
-    ```
-
-    on_start: (card) => {
-      const treasure = $(card.scene.monster.treasure);
-      card.gold = treasure.gold.roll();
-      $player.gold += card.gold;
-    }
-  }
-
-  @scene end_game {
-    initial_card_id: #end_game_card
-  }
-
-  @card end_game_card {
-    bindings: {player: #player
-              clock: #clock}
-    content: ```
-    You have escaped the dungeon in ${clock.turns} turns. You killed ${player.kills} monsters, won ${player.gold} gold and ${player.xp} xp.
-    ```
-  }
-
-  @object initiative_deck {
-    cards: _
-    draw_pile: _
-
-    on_init: (deck) => {
-      const suits = ["♣", "♦", "♥", "♠"];
-      const faces = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
-
-      deck.cards = Number.range(0, 51).map((n) => {
-        let [suit, card] = Math.div_mod(n, 13);
-        card = card == 0 ? 13 : card;
-        return {
-          n: n,
-          suit: suit,
-          card: card,
-          face: `${faces[card-1]}${suits[suit]}`
-        }
-      });
-      deck.reset();
-    }
-
-    reset: function() {
-      this.draw_pile = [...this.cards].fy_shuffle();
-    }
-
-    card_sort: function(card_1, card_2) {
-      if(card_1.card == card_2.card) {
-        return card_2.suit - card_1.suit;
+    if(defender.shaken) {
+      const recovery_die = new RezDie(6);
+      if(recovery_die.roll() > 4) {
+        block.messages.push(`${defender.name} is shaken, but recovers`);
+        defender.shaken = false;
       } else {
-        return card_2.card - card_1.card;
+        block.messages.push(`${defender.name} is shaken`);
+      }
+    } else {
+      const second_attack = card.attack(defender, attacker);
+      block.messages.push(`${defender.name} goes 2nd with ${order[1].initiative.face} and ${second_attack.a_desc}`);
+      if(second_attack.hit) {
+        block.messages.push(second_attack.w_desc);
+        if(second_attack.dies) {
+          return {card: second_attack.defender == $player ? "player_dies" : "monster_dies"};
+        }
       }
     }
 
-    order: function(entities) {
-      this.reset();
+    return {
+      card: "battle_card"
+    };
+  }
 
-      const order = [];
+  attack_roll: function(sides, mod) {
+    let total = mod ?? 0;
+    let roll = 0;
+    let aces = 0;
+    const die = new RezDie(sides);
 
-      for(const entity of entities) {
-        order.push({entity: entity, initiative: this.draw(entity.initiative)});
+    do {
+      roll = die.roll();
+      total += roll;
+      if(roll == sides) {
+        aces += 1;
+      }
+      console.log(`Rolls ${roll}${roll === sides ? " with an ace!" : ""}`);
+    } while(roll == sides);
+
+    return [total, aces];
+  }
+
+  roll_attack: function(wildcard, sides, mod) {
+    const [normal, n_aces] = this.attack_roll(sides, mod ?? 0);
+    const [wild, w_aces] = wildcard ? this.attack_roll(6, mod ?? 0) : [0, 0];
+    console.log(`Attack ${normal}/${wild}`);
+
+    if(normal > wild) {
+      return [normal, n_aces];
+    } else {
+      return [wild, w_aces];
+    }
+  }
+
+  damage_roll: function(sides, mod) {
+    let total = mod ?? 0;
+    let roll = 0;
+    const die = new RezDie(sides);
+
+    do {
+      roll = die.roll();
+      total += roll;
+    } while(roll == sides);
+
+    return total;
+  }
+
+  attack: function(attacker, defender) {
+    const result = {};
+    result.attacker = attacker;
+    result.defender = defender;
+
+    console.log(`Attacker: ${attacker.name} fighting=${attacker.fighting}`);
+
+    const [attack_roll, aces] = this.roll_attack(attacker.wildcard, attacker.fighting, attacker.wounds);
+
+    result.attack = attack_roll;
+    result.aces = aces;
+    result.parry = 2 + defender.dodge + Math.floor(defender.fighting / 2);
+    result.hit = result.attack >= result.parry;
+
+    result.a_desc = `${result.hit ? "Hits" : "Misses"} (${result.attack} vs ${result.parry})`;
+
+    if(result.hit) {
+      result.damage = this.damage_roll(attacker.strength);
+      console.log(`Base damage: ${result.damage}`);
+      if(attacker.weapon) {
+        const weapon_damage = this.damage_roll(attacker.weapon.damage.die.sides, attacker.weapon.damage.die.mod);
+        console.log(`Weapon damage: ${weapon_damage}`);
+        result.damage += weapon_damage;
+      } else {
+        const creature_damage = this.damage_roll(attacker.damage);
+        console.log(`Creature damage: ${creature_damage}`);
+        result.damage += creature_damage;
+      }
+      console.log(`Total damage: ${result.damage}`);
+
+      const [wounds, _] = Math.div_mod(result.damage, defender.toughness)
+      result.wounds = wounds;
+
+      if(result.wounds > 0) {
+        result.w_desc = `Causes ${result.wounds} wounds! (${result.damage} vs ${defender.toughness})`;
+        defender.shaken = true;
+      } else {
+        result.w_desc = `Graze, causing no damage (${result.damage} vs ${defender.toughness})`;
       }
 
-      order.sort((i1, i2) => {
-        return this.card_sort(i1.initiative, i2.initiative);
-      });
-
-      return order;
+      defender.wounds += result.wounds;
+      result.dies = defender.wounds > 3;
     }
 
-    draw_n: function(n) {
-      const cards = this.draw_pile.take(n);
-      cards.sort(this.card_sort);
-      return cards;
+    return result;
+  }
+
+  on_flee: (card, evt) => {
+  }
+
+  flipped_content: ```
+  <div class="box">
+    $foreach(message: $block.messages) {%
+      <div class="block">${message}</div>
+    %}
+  </div>
+  ```
+}
+
+@card player_dies {
+  content: ```
+  Player is dead!
+  ```
+}
+
+@card monster_dies {
+  bindings: {monster: `scene.monster}
+  content: ```
+  <div class="box">
+    ${monster.name} is dead! <a data-event="card" data-target="loot_the_room">Loot the room</a>.
+  </div>
+  ```
+
+  on_start: (card) => {
+    $("location").monster_id = "";
+    $player.xp += card.scene.monster.xp;
+  }
+}
+
+@card loot_the_room {
+  gold: _
+
+  content: ```
+  <div class="box">
+  You find ${card.gold} gold. <a data-event="resume" data-success="true">Continue</a>
+  </div>
+  ```
+
+  on_start: (card) => {
+    const treasure = $(card.scene.monster.treasure);
+    card.gold = treasure.gold.roll();
+    $player.gold += card.gold;
+  }
+}
+
+@scene end_game {
+  initial_card_id: #end_game_card
+}
+
+@card end_game_card {
+  bindings: {player: #player
+            clock: #clock}
+  content: ```
+  You have escaped the dungeon in ${clock.turns} turns. You killed ${player.kills} monsters, won ${player.gold} gold and ${player.xp} xp.
+  ```
+}
+
+@object initiative_deck {
+  cards: _
+  draw_pile: _
+
+  on_init: (deck) => {
+    const suits = ["♣", "♦", "♥", "♠"];
+    const faces = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+
+    deck.cards = Number.range(0, 51).map((n) => {
+      let [suit, card] = Math.div_mod(n, 13);
+      card = card == 0 ? 13 : card;
+      return {
+        n: n,
+        suit: suit,
+        card: card,
+        face: `${faces[card-1]}${suits[suit]}`
+      }
+    });
+    deck.reset();
+  }
+
+  reset: function() {
+    this.draw_pile = [...this.cards].fy_shuffle();
+  }
+
+  card_sort: function(card_1, card_2) {
+    if(card_1.card == card_2.card) {
+      return card_2.suit - card_1.suit;
+    } else {
+      return card_2.card - card_1.card;
+    }
+  }
+
+  order: function(entities) {
+    this.reset();
+
+    const order = [];
+
+    for(const entity of entities) {
+      order.push({entity: entity, initiative: this.draw(entity.initiative)});
     }
 
-    draw: function(n) {
-      const cards = this.draw_n(n);
-      return cards[0];
-    }
+    order.sort((i1, i2) => {
+      return this.card_sort(i1.initiative, i2.initiative);
+    });
+
+    return order;
+  }
+
+  draw_n: function(n) {
+    const cards = this.draw_pile.take(n);
+    cards.sort(this.card_sort);
+    return cards;
+  }
+
+  draw: function(n) {
+    const cards = this.draw_n(n);
+    return cards[0];
   }
 }

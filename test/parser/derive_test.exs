@@ -11,20 +11,22 @@ defmodule Rez.Parser.DeriveTest do
 
   test "derive from multiple roots" do
     input = """
-    @game {
+      @game {}
       @derive :weapon :item
       @derive :sword :weapon
       @derive :long_sword :sword
       @derive :long_sword :one_handed
       @derive :great_sword :sword
       @derive :great_sword :two_handed
-    }
     """
 
     source = dummy_source(input)
 
-    ctx = Ergo.parse(game_block(), input, data: %{source: source, id_map: %{}})
-    assert %{status: :ok, ast: %Game{is_a: is_a} = game} = ctx
+    ctx = Ergo.parse(top_level(), input, data: %{source: source, id_map: %{}})
+    assert %{status: :ok, ast: content} = ctx
+
+    game = Rez.Compiler.ParseSource.build_game(content)
+    assert %Rez.AST.Game{} = game
 
     types = %{
       "great_sword" => MapSet.new(["sword", "two_handed"]),
@@ -35,7 +37,7 @@ defmodule Rez.Parser.DeriveTest do
 
     assert %TypeHierarchy{
              is_a: ^types
-           } = is_a
+           } = game.is_a
 
     assert Game.is_a(game, "great_sword", "item")
     assert Game.is_a(game, "long_sword", "one_handed")

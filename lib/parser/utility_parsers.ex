@@ -76,6 +76,10 @@ defmodule Rez.Parser.UtilityParsers do
 
   def arrow(), do: ParserCache.get_parser("arrow", fn -> literal("=>") end)
 
+  def string() do
+    Combinators.many(non_ws(), min: 1, ast: &List.to_string(&1))
+  end
+
   def block_begin(),
     do: ParserCache.get_parser("block_begin", fn -> ignore(open_brace()) end)
 

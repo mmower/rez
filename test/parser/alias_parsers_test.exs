@@ -2,12 +2,7 @@ defmodule Rez.Parser.AliasParsesTest do
   use ExUnit.Case
   import Rez.Parser.AliasParsers
   alias Rez.AST.NodeHelper
-
-  def dummy_source(input, file \\ "test.rez", base_path \\ ".") do
-    lines = String.split(input, ~r/\n/, trim: true)
-    section = LogicalFile.Section.new(file, 1..Enum.count(lines), lines, 0)
-    LogicalFile.assemble(base_path, [section])
-  end
+  import Rez.Utils, only: [dummy_source: 1]
 
   test "parse empty alias definition" do
     input = """
@@ -15,7 +10,7 @@ defmodule Rez.Parser.AliasParsesTest do
     """
 
     source = dummy_source(input)
-    ctx = Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
+    ctx = Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
 
     assert %{
              status: :ok,
@@ -29,7 +24,7 @@ defmodule Rez.Parser.AliasParsesTest do
     """
 
     source = dummy_source(input)
-    ctx = Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
+    ctx = Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
 
     assert %{
              status: :ok,
@@ -45,7 +40,7 @@ defmodule Rez.Parser.AliasParsesTest do
     source = dummy_source(input)
 
     assert %{status: :ok, data: %{aliases: aliases}} =
-             Ergo.parse(alias_define(), input, data: %{source: source, aliases: %{}})
+             Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
 
     assert %{
              "standard_scene" =>
@@ -63,7 +58,7 @@ defmodule Rez.Parser.AliasParsesTest do
     source = dummy_source(input)
 
     assert %{status: :ok, ast: ast} =
-             Ergo.parse(alias_block(), input,
+             Ergo.parse(aliased_element(), input,
                data: %{
                  id_map: %{},
                  source: source,

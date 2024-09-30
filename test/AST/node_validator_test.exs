@@ -11,7 +11,7 @@ defmodule Rez.AST.NodeValidatorTest do
              errors: [
                {_inventory, "Missing required attribute: slots"}
              ],
-             validated: ["inventory/inv-1 @ test.rez:1:1"]
+             validated: []
            } = NodeValidator.validate(inventory, game)
   end
 

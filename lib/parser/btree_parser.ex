@@ -6,7 +6,7 @@ defmodule Rez.Parser.BTreeParser do
   import Ergo.Combinators,
     only: [
       ignore: 1,
-      choice: 1,
+      choice: 2,
       lazy: 1,
       lookahead: 1,
       many: 2,
@@ -46,10 +46,14 @@ defmodule Rez.Parser.BTreeParser do
   end
 
   def bt_node() do
-    choice([
-      bt_template_ref(),
-      bt_instance()
-    ])
+    choice(
+      [
+        bt_template_ref(),
+        bt_instance(),
+        bt_empty()
+      ],
+      label: "bt_node"
+    )
   end
 
   def bt_template_ref() do
@@ -63,8 +67,23 @@ defmodule Rez.Parser.BTreeParser do
         iows(),
         ignore(close_bracket())
       ],
+      label: "bt_remplate_ref",
       ast: fn [template_id] ->
         {:template, template_id}
+      end
+    )
+  end
+
+  def bt_empty() do
+    sequence(
+      [
+        ignore(open_bracket()),
+        iows(),
+        ignore(close_bracket())
+      ],
+      label: "bt_empty",
+      ast: fn [] ->
+        {:empty, %{}, []}
       end
     )
   end
@@ -80,6 +99,7 @@ defmodule Rez.Parser.BTreeParser do
         iows(),
         ignore(close_bracket())
       ],
+      label: "bt_instance",
       ast: fn ast ->
         case ast do
           [node_type] ->
@@ -108,6 +128,7 @@ defmodule Rez.Parser.BTreeParser do
         iows(),
         value()
       ]),
+      label: "bt_options",
       ast: fn name_value_pairs ->
         Enum.reduce(name_value_pairs, %{}, fn [name, value], options ->
           Map.put(options, name, value)

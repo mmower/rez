@@ -158,4 +158,14 @@ defmodule Rez.Utils do
       )
     end
   end
+
+  @doc """
+  The `dummy_source/3` function converts a string into a `LogicalFile` with
+  a fake file name (defaults to 'test.rez') and path (defaults to '.').
+  """
+  def dummy_source(input, file \\ "test.rez", base_path \\ ".") do
+    lines = String.split(input, ~r/\n/, trim: true)
+    section = LogicalFile.Section.new(file, 1..Enum.count(lines), lines, 0)
+    LogicalFile.assemble(base_path, [section])
+  end
 end

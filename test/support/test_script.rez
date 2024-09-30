@@ -2,118 +2,118 @@
   name: "Twisty Maze Adventure"
   IFID: "051F7581-43EF-48A7-93C3-A84A70203917"
   initial_scene_id: #cards
+}
 
-  @item sword {
-    $template: true
-    category: :equipment
-    slot: #sword_slot
-  }
+@item sword {
+  $template: true
+  category: :equipment
+  slot: #sword_slot
+}
 
-  @alias sword = item<sword>
+@alias sword = item<sword>
 
-  @actor player {
-    name: "The Adventurer"
-  }
+@actor player {
+  name: "The Adventurer"
+}
 
-  @inventory player_inv {
-    title: "Player inventory"
-    category: "equipment"
-    slots: #{#sword_slot #ring_slot}
-  }
+@inventory player_inv {
+  title: "Player inventory"
+  category: "equipment"
+  slots: #{#sword_slot #ring_slot}
+}
 
-  @slot sword_slot {
-    name: "sword"
-    compatible: #sword
-    size: 1
-  }
+@slot sword_slot {
+  name: "sword"
+  compatible: #sword
+  size: 1
+}
 
-  @slot ring_slot {
-    name: "ring"
-    compatible: #ring
-    size: 2
-  }
+@slot ring_slot {
+  name: "ring"
+  compatible: #ring
+  size: 2
+}
 
-  @item topic_the_ring {
-    type: :topic
-    memory: "You remember Gandalf mentioning the ring to you, a plain
-    gold band of Bilbo's that he was often touching or playing with in his
-    pocket but seemed quite secretive about."
-  }
+@item topic_the_ring {
+  type: :topic
+  memory: "You remember Gandalf mentioning the ring to you, a plain
+  gold band of Bilbo's that he was often touching or playing with in his
+  pocket but seemed quite secretive about."
+}
 
-  @slot spell_slot {
-    name: "spell"
-    compatible: #spell
-    size: 5
-  }
+@slot spell_slot {
+  name: "spell"
+  compatible: #spell
+  size: 5
+}
 
-  @inventory player_spells {
-    title: "Player spells"
-    category: "spells"
-    slots: #{#spell_slot}
-  }
+@inventory player_spells {
+  title: "Player spells"
+  category: "spells"
+  slots: #{#spell_slot}
+}
 
-  @scene cards {
-    title: "The beginning"
-    location: #foo
-    initial_card: #psg1
-    on_start: (game, evt) => {return game;}
-  }
+@scene cards {
+  title: "The beginning"
+  location: #foo
+  initial_card: #psg1
+  on_start: (game, evt) => {return game;}
+}
 
-  @actor wizard {
-    name: "Wizard of Frobbz"
-    race: #wizard
-  }
+@actor wizard {
+  name: "Wizard of Frobbz"
+  race: #wizard
+}
 
-  %% This is a line comment, the next line is an include macro
-  %(items.rez)
+%% This is a line comment, the next line is an include macro
+%(items.rez)
 
-  @sword elvish_sword {
-    name: "elvish sword"
-    bearing: #elvish
-  }
+@sword elvish_sword {
+  name: "elvish sword"
+  bearing: #elvish
+}
 
-  @list place_names {
-    values: ["the white house" "the underground" "Festeron"]
-  }
+@list place_names {
+  values: ["the white house" "the underground" "Festeron"]
+}
 
-  @list magic_numbers {
-    values: [42]
-  }
+@list magic_numbers {
+  values: [42]
+}
 
-  @effect eff1 {
-    type: #spell
-    on_apply: (game, evt) => {return game;}
-  }
+@effect eff1 {
+  type: #spell
+  on_apply: (game, evt) => {return game;}
+}
 
-  @card psg1 {
-    template: """
-    Markdown here!
-    """
-  }
+@card psg1 {
+  template: """
+  Markdown here!
+  """
+}
 
-  @asset img1 {
-    type: #image
-    tags: [#foo #bar #baz]
-    path: "/path/to/asset.jpg"
-    width: 340
-    height: 280
-  }
+@asset img1 {
+  type: #image
+  tags: [#foo #bar #baz]
+  path: "/path/to/asset.jpg"
+  width: 340
+  height: 280
+}
 
-  @asset snd1 {
-    type: #sound
-    path: "/baz/sound.mp3"
-  }
+@asset snd1 {
+  type: #sound
+  path: "/baz/sound.mp3"
+}
 
-  @asset mov1 {
-    type: #movie
-    path: "/moo.mpg"
-  }
+@asset mov1 {
+  type: #movie
+  path: "/moo.mpg"
+}
 
-  @script {
-    // Javascript code goes here
-  }
+@script {
+  // Javascript code goes here
+}
 
-  @stylesheet {
-    /* CSS goes here */
-  }
+@stylesheet {
+  /* CSS goes here */
 }

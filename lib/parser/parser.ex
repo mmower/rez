@@ -9,167 +9,58 @@ defmodule Rez.Parser.Parser do
 
   alias Ergo.Context
   alias Ergo.Telemetry
+
+  alias Ergo.Terminals
   import Ergo.Combinators
 
   import Rez.Parser.AliasParsers
-  import Rez.Parser.StructureParsers
+  import Rez.Parser.ElementsParser
   import Rez.Parser.UtilityParsers
-  import Rez.Parser.RelationshipParsers
   import Rez.Parser.DirectiveParsers
 
-  import Rez.Utils, only: [random_str: 0]
-
-  def actor_block() do
-    block_with_id("actor", Rez.AST.Actor)
-  end
-
-  def asset_block() do
-    block_with_id("asset", Rez.AST.Asset)
-  end
-
-  def behaviour_block() do
-    block_with_id("behaviour", Rez.AST.Behaviour)
-  end
-
-  def card_block() do
-    block_with_id("card", Rez.AST.Card)
-  end
-
-  def effect_block() do
-    block_with_id("effect", Rez.AST.Effect)
-  end
-
-  def faction_block() do
-    block_with_id("faction", Rez.AST.Faction)
-  end
-
-  def filter_block() do
-    block_with_id("filter", Rez.AST.Filter)
-  end
-
-  def generator_block() do
-    block_with_id("generator", Rez.AST.Generator)
-  end
-
-  def group_block() do
-    block_with_id("group", Rez.AST.Group)
-  end
-
-  def helper_block() do
-    block_with_id("helper", Rez.AST.Helper)
-  end
-
-  def inventory_block() do
-    block_with_id("inventory", Rez.AST.Inventory)
-  end
-
-  def item_block() do
-    block_with_id("item", Rez.AST.Item)
-  end
-
-  def list_block() do
-    block_with_id("list", Rez.AST.List)
-  end
-
-  def object_block() do
-    block_with_id("object", Rez.AST.Object)
-  end
-
-  def patch_block() do
-    block_with_id("patch", Rez.AST.Patch)
-  end
-
-  def plot_block() do
-    block_with_id("plot", Rez.AST.Plot)
-  end
-
-  def scene_block() do
-    block_with_id("scene", Rez.AST.Scene)
-  end
-
-  def script_block() do
-    delimited_block("script", fn -> "script_" <> random_str() end, Rez.AST.Script)
-  end
-
-  def slot_block() do
-    block_with_id("slot", Rez.AST.Slot)
-  end
-
-  def style_block() do
-    delimited_block("stylesheet", fn -> "styles_" <> random_str() end, Rez.AST.Style)
-  end
-
-  def system_block() do
-    block_with_id("system", Rez.AST.System)
-  end
-
-  def timer_block() do
-    block_with_id("timer", Rez.AST.Timer)
+  def bad_element() do
+    sequence(
+      [
+        ignore(at()),
+        string()
+      ],
+      label: "bad_element",
+      ctx: fn %Context{entry_points: [{line, col} | _], ast: name} = ctx ->
+        ctx
+        |> Context.add_error(:bad_syntax, "Unknown element: #{name} at #{line}:#{col}")
+        |> Context.make_error_fatal()
+      end
+    )
   end
 
   def game_content() do
-    choice(
+    sequence(
       [
-        alias_directive(),
-        behaviour_template(),
-        derive_directive(),
-        enum_directive(),
-        # Now the pre-defined blocks
-        actor_block(),
-        asset_block(),
-        behaviour_block(),
-        card_block(),
-        effect_block(),
-        faction_block(),
-        filter_block(),
-        generator_block(),
-        group_block(),
-        helper_block(),
-        inventory_block(),
-        item_block(),
-        list_block(),
-        declare_directive(),
-        object_block(),
-        patch_block(),
-        plot_block(),
-        relationship_elem(),
-        scene_block(),
-        script_block(),
-        slot_block(),
-        style_block(),
-        system_block(),
-        timer_block(),
-        keybinding_directive(),
-        component_directive(),
-        # Now user defined aliases
-        alias_block()
+        iows(),
+        lookahead(at()),
+        choice([
+          directive(),
+          element(),
+          alias_directive(),
+          aliased_element(),
+          bad_element()
+        ])
       ],
-      label: "game-content",
-      debug: true
+      label: "game_content"
     )
-  end
-
-  def game_block() do
-    block_with_children(
-      "game",
-      fn _attrs -> "game" end,
-      Rez.AST.Game,
-      game_content(),
-      &Rez.AST.Game.add_child/2
-    )
+    |> hoist()
   end
 
   def top_level() do
     sequence(
       [
+        many(game_content()),
         iows(),
-        game_block(),
-        iows(),
-        Ergo.Terminals.eoi()
+        ignore(Terminals.eoi())
       ],
-      label: "top-level",
-      ast: &List.first/1
+      label: "top-level"
     )
+    |> hoist()
   end
 
   def parse(%LogicalFile{} = source, telemetry \\ false) do

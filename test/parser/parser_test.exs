@@ -8,6 +8,7 @@ defmodule Rez.Parser.ParserTest do
 
   alias Rez.AST.NodeHelper
   import Rez.Parser.Parser
+  import Rez.Parser.ElementsParser
   import Rez.Compiler.ReadSource
 
   @test_script_path "test/support/test_script.rez"
@@ -28,21 +29,24 @@ defmodule Rez.Parser.ParserTest do
     input = read_source(@test_script_path)
     full_path = Path.expand(@test_script_path)
 
-    assert {:ok, %Rez.AST.Game{} = game, %{} = _id_map} = parse(input)
+    assert {:ok, [%Rez.AST.Game{} = game | rest], %{} = _id_map} = parse(input)
     assert %Rez.AST.Game{position: position} = game
     assert {^full_path, 1, 1} = position
     {_file, line, _col} = position
     assert {^full_path, 1} = LogicalFile.resolve_line(input, line)
 
-    # Tests an item gets pulled in from the included file
-    %{items: items} = game
-    assert %Rez.AST.Item{attributes: attributes} = Map.get(items, "orcrist")
+    # Tests items have been pulled in from the included file
+    items = Enum.filter(rest, &is_struct(&1, Rez.AST.Item))
+    assert Enum.count(items) == 4
+
+    assert [%Rez.AST.Item{attributes: attributes}] =
+             Enum.filter(items, &(NodeHelper.get_attr_value(&1, "name") == "Orcrist"))
 
     assert %Rez.AST.Attribute{name: "_parents", type: :list, value: [{:keyword, :sword}]} =
              Map.get(attributes, "_parents")
   end
 
-  test "parses script block" do
+  test "parses script element" do
     input = """
     @script {
       // Javascript code goes here
@@ -50,7 +54,7 @@ defmodule Rez.Parser.ParserTest do
     """
 
     %Context{status: status, ast: ast} =
-      Ergo.parse(script_block(), input, data: %{id_map: %{}, source: dummy_source(input)})
+      Ergo.parse(script_element(), input, data: %{id_map: %{}, source: dummy_source(input)})
 
     assert :ok = status
 
@@ -59,7 +63,7 @@ defmodule Rez.Parser.ParserTest do
     assert ^content = "// Javascript code goes here"
   end
 
-  test "parses style block" do
+  test "parses style element" do
     input = """
     @stylesheet {
       # CSS styles go here
@@ -67,7 +71,7 @@ defmodule Rez.Parser.ParserTest do
     """
 
     %Context{status: status, ast: ast} =
-      Ergo.parse(style_block(), input, data: %{id_map: %{}, source: dummy_source(input)})
+      Ergo.parse(style_element(), input, data: %{id_map: %{}, source: dummy_source(input)})
 
     assert :ok = status
 
@@ -76,7 +80,7 @@ defmodule Rez.Parser.ParserTest do
     assert ^content = "# CSS styles go here"
   end
 
-  test "parses actor block" do
+  test "parses actor element" do
     input = """
     @actor gandalf {
       name: "Gandalf"
@@ -84,7 +88,8 @@ defmodule Rez.Parser.ParserTest do
     }
     """
 
-    context = Ergo.parse(actor_block(), input, data: %{source: dummy_source(input), id_map: %{}})
+    context =
+      Ergo.parse(actor_element(), input, data: %{source: dummy_source(input), id_map: %{}})
 
     assert %{status: :ok} = context
 
@@ -101,7 +106,7 @@ defmodule Rez.Parser.ParserTest do
            } = context.ast
   end
 
-  test "parses scene block" do
+  test "parses scene element" do
     input = """
     @scene a1s1 {
       title: "Act 1 - Scene 1"
@@ -109,7 +114,8 @@ defmodule Rez.Parser.ParserTest do
     }
     """
 
-    context = Ergo.parse(scene_block(), input, data: %{source: dummy_source(input), id_map: %{}})
+    context =
+      Ergo.parse(scene_element(), input, data: %{source: dummy_source(input), id_map: %{}})
 
     assert %{status: :ok} = context
 
@@ -125,14 +131,14 @@ defmodule Rez.Parser.ParserTest do
            } = context.ast
   end
 
-  test "parses card block" do
+  test "parses card element" do
     input = """
     @card first_card {
       template: "This is some **Markdown** content for this card."
     }
     """
 
-    context = Ergo.parse(card_block(), input, data: %{source: dummy_source(input), id_map: %{}})
+    context = Ergo.parse(card_element(), input, data: %{source: dummy_source(input), id_map: %{}})
 
     assert %{status: :ok} = context
 
@@ -159,10 +165,10 @@ defmodule Rez.Parser.ParserTest do
     Telemetry.start()
 
     assert %{status: :ok, ast: %Rez.AST.Slot{id: "main_hand_slot"}} =
-             Ergo.parse(slot_block(), input, data: %{source: dummy_source(input), id_map: %{}})
+             Ergo.parse(slot_element(), input, data: %{source: dummy_source(input), id_map: %{}})
   end
 
-  test "parses inventory block" do
+  test "parses inventory element" do
     input = """
     @inventory inv_1 {
       tags: #\{:shopping}
@@ -174,7 +180,7 @@ defmodule Rez.Parser.ParserTest do
     Telemetry.start()
 
     context =
-      Ergo.parse(inventory_block(), input,
+      Ergo.parse(inventory_element(), input,
         id: "inventory-1-run",
         data: %{source: dummy_source(input), id_map: %{}}
       )
@@ -222,7 +228,7 @@ defmodule Rez.Parser.ParserTest do
            } = context.ast
   end
 
-  test "parses item block" do
+  test "parses item element" do
     input = """
     @item blue_cloak {
       type: :equipment
@@ -231,7 +237,7 @@ defmodule Rez.Parser.ParserTest do
     }
     """
 
-    context = Ergo.parse(item_block(), input, data: %{source: dummy_source(input), id_map: %{}})
+    context = Ergo.parse(item_element(), input, data: %{source: dummy_source(input), id_map: %{}})
 
     assert %{status: :ok} = context
 

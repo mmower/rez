@@ -27,9 +27,9 @@ defmodule Rez.Compiler.TemplateCompilerTest do
 
   # @tag :skip
   test "compile conditional chunk into render function" do
-    chunk = {:conditional, "player.health < 50", {:source_template, ["<div>wounded!</div>"]}}
+    chunk = {:conditional, [{"player.health < 50", {:source_template, ["<div>wounded!</div>"]}}]}
 
-    assert "function(bindings) { \n    if(evaluateExpression(`player.health < 50`, bindings)) {\n      const sub_template = function(bindings) {return [function(bindings) {return `<div>wounded!</div>`;}].reduce(function(text, f) {return text + f(bindings)}, \"\");};\n      return sub_template(bindings);\n    } else {\n      return \"\";\n    };}" =
+    assert "function(bindings) { \n    if(evaluateExpression(`player.health < 50`, bindings)) {\n      const sub_template = function(bindings) {return [function(bindings) {return `<div>wounded!</div>`;}].reduce(function(text, f) {return text + f(bindings)}, \"\");};\n      return sub_template(bindings);\n    }\n      else {\n        return \"\";\n      }\n      ;}" =
              C.compile_chunk(chunk)
   end
 

@@ -21,14 +21,22 @@ defmodule Rez.Compiler.ParseSource do
         } = compilation
       ) do
     case Parser.parse(source) do
-      {:ok, %Game{status: :ok} = game, id_map} ->
-        case validate_id_map(id_map) do
+      {:ok, content, id_map} ->
+        case find_duplicate_id_definitions(id_map) do
           [] ->
-            %{
-              compilation
-              | game: %{game | id_map: id_map},
-                progress: ["Compiled source" | progress]
-            }
+            case build_game(content) do
+              {:error, message} ->
+                Compilation.add_error(compilation, message)
+
+              %Game{status: {:error, reason}} ->
+                Compilation.add_error(compilation, reason)
+
+              game ->
+                compilation
+                |> Map.put(:game, game)
+                |> Map.put(:id_map, id_map)
+                |> Map.put(:progress, ["Compiled source" | progress])
+            end
 
           errors when is_list(errors) ->
             Enum.reduce(errors, compilation, fn {id, mappings}, compilation ->
@@ -41,9 +49,6 @@ defmodule Rez.Compiler.ParseSource do
               )
             end)
         end
-
-      {:ok, %Game{status: {:error, reason}}, _id_map} ->
-        Compilation.add_error(compilation, reason)
 
       {:error, reasons, line, col, _input} ->
         {file, logical_line} = LogicalFile.resolve_line(source, line)
@@ -75,7 +80,25 @@ defmodule Rez.Compiler.ParseSource do
     |> Enum.map_join("\n", fn {lno, line} -> "#{lno}> #{line}" end)
   end
 
-  defp validate_id_map(id_map) do
+  def build_game(content) when is_list(content) do
+    case sort_game_and_content(content) do
+      {[], _} ->
+        {:error, "No @game element defined."}
+
+      {[game], elems_and_directives} ->
+        Enum.reduce(elems_and_directives, game, fn e, game ->
+          Game.add_child(e, game)
+        end)
+    end
+  end
+
+  defp sort_game_and_content(content) when is_list(content) do
+    Enum.split_with(content, &is_struct(&1, Rez.AST.Game))
+  end
+
+  # Filter the id_map values for lists. A list means multiple attempts
+  # to define a given ID
+  defp find_duplicate_id_definitions(id_map) do
     Enum.filter(id_map, fn {_id, mapping} -> is_list(mapping) end)
   end
 end

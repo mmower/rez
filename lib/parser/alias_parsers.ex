@@ -77,9 +77,9 @@ defmodule Rez.Parser.AliasParsers do
   end
 
   @doc """
-  The `alias_block` parser
+  The `aliased_element/0` parser
   """
-  def alias_block() do
+  def aliased_element() do
     sequence(
       [
         ignore(at()),
