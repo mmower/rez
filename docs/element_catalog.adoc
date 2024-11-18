@@ -125,9 +125,9 @@ In this example of our game the player can decide which of the antagonists they 
   container: #sams_stuff
 }
 
-@rel #sam_spade #miss_wonderly +2
-@rel #sam_spade #joel_cairo -2
-@rel #sam_spade #kaspar_gutman -4
+@rel #sam_spade -> #miss_wonderly {affinity: +2}
+@rel #sam_spade -> #joel_cairo {affinity: -2}
+@rel #sam_spade -> #kaspar_gutman {affinity: -4}
 
 @actor joel_cairo {
   name: "Joel Cairo"
@@ -142,9 +142,9 @@ In this example of our game the player can decide which of the antagonists they 
   container: #joels_stuff
 }
 
-@rel #joel_cairo #sam_spade 1
-@rel #joel_cairo #miss_wonderly -1
-@rel #joel_cairo #kaspar_gutman -3
+@rel #joel_cairo -> #sam_spade {affinity: 1}
+@rel #joel_cairo -> #miss_wonderly {affinity: -1}
+@rel #joel_cairo -> #kaspar_gutman {affinity: -3}
 
 @actor miss_wonderly {
   name: "Ruth Wonderly"
@@ -159,9 +159,9 @@ In this example of our game the player can decide which of the antagonists they 
   container: #ruths_stuff
 }
 
-@rel #miss_wonderly #sam_spade 4
-@rel #miss_wonderly #joel_cairo 1
-@rel #miss_wonderly #kaspar_gutman -2
+@rel #miss_wonderly -> #sam_spade {affinity: 4}
+@rel #miss_wonderly -> #joel_cairo {affinity: 1}
+@rel #miss_wonderly -> #kaspar_gutman {affinity: -2}
 
 @actor kaspar_gutman {
   name: "Kaspar Gutman"
@@ -176,9 +176,9 @@ In this example of our game the player can decide which of the antagonists they 
   container: #kaspar_stuff
 }
 
-@rel #kaspar_gutman #sam_spade 2
-@rel #kaspar_gutman #miss_wonderly -2
-@rel #kaspar_gutman #joel_cairo 1
+@rel #kaspar_gutman -> #sam_spade {affinity: 2}
+@rel #kaspar_gutman -> #miss_wonderly {affinity: -2}
+@rel #kaspar_gutman -> #joel_cairo {affinity: 1}
 ....
 
 By using a set of `@actor`s we can keep things separate and easier to understand and use the built-in `@rel` directive to create relationships between the actors.
@@ -604,7 +604,9 @@ the relationship
 
 ....
 @declare the_dark
-@rel #player #the_dark -5
+@rel #player -> #the_dark {
+  affinity: -5
+}
 ....
 
 == Derive (Directive)
@@ -1221,16 +1223,18 @@ A relationship can be specified between any two elements with an id. The most ob
 The `@rel` element does not follow the usual element syntax. Instead it looks like this:
 
 ....
-@rel source_id target_id {
+@rel source_id -> target_id {
   <attributes>
 }
 
-@rel #player #gutman_faction {
+@rel #player -> #gutman_faction {
   affinity: -1.0
 }
 ....
 
 A relationship element isn't assigned an id but automatically derives its id from the source and target id, in the example above the id would be `rel_player_gutman_faction`.
+
+The syntax uses the `->` symbol to help understand the unidirectionality of a relationship as being from a source element upon a target element.
 
 The `getRelationship(source, target)` API on the `RezGame` object is a short-
 hand for doing this lookup manually.
@@ -1240,13 +1244,13 @@ We can use `@rel` to define all kinds of relationships:
 ....
 %% the Gutman faction loves the Falcon
 @declare falcon
-@rel #gutman_faction #falcon {
+@rel #gutman_faction -> #falcon {
   affinity: 1.0
 }
 
 %% the player hates brocolli
 @declare brocolli
-@rel #player #brocolli {
+@rel #player -> #brocolli {
   affinity: -1.0
 }
 ....
@@ -1254,7 +1258,7 @@ We can use `@rel` to define all kinds of relationships:
 In these examples we have used an `affinity:` attribute (range: -1.0 to +1.0) to define the strength of the relationship but you can use any attributes you like. The following would be equally valid:
 
 ....
-@rel #player #miss_wannalee {
+@rel #player -> #miss_wannalee {
   love: 65
   suspicion: 25
 }
@@ -1263,7 +1267,7 @@ In these examples we have used an `affinity:` attribute (range: -1.0 to +1.0) to
 An alternative approach is to use tags:
 
 ....
-@rel #player #miss_wannalee {
+@rel #player -> #miss_wannalee {
   tags: #{:lover :suspicious}
 }
 ....

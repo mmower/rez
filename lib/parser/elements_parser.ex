@@ -2,6 +2,7 @@ defmodule Rez.Parser.ElementsParser do
   import Ergo.Combinators, only: [choice: 2]
   import Rez.Utils, only: [random_str: 0]
   import Rez.Parser.StructureParsers, only: [block: 3, block_with_id: 2, delimited_block: 3]
+  import Rez.Parser.RelationshipParsers, only: [relationship_elem: 0]
 
   def actor_element() do
     block_with_id("actor", Rez.AST.Actor)
@@ -110,6 +111,7 @@ defmodule Rez.Parser.ElementsParser do
         object_element(),
         patch_element(),
         plot_element(),
+        relationship_elem(),
         scene_element(),
         script_element(),
         slot_element(),

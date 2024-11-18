@@ -23,7 +23,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
   def node_type(_faction), do: "faction"
 
   def js_ctor(faction) do
-    NodeHelper.get_attr_value(faction, "$js_ctor", "RezEffect")
+    NodeHelper.get_attr_value(faction, "$js_ctor", "RezFaction")
   end
 
   def default_attributes(_faction),

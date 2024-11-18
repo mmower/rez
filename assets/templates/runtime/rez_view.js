@@ -324,6 +324,15 @@ window.Rez.RezStackLayout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers
+//
+// A transformer uses a CSS selector to find certain elements in the rendered
+// content and do something with them.
+//
+// The getSelector() method returns a CSS selector that defines which elements
+// are to be transformed.
+//
+// The transformeElement() method should overridden and will get passed each
+// matching element and should transform it.
 //-----------------------------------------------------------------------------
 
 let transformer_proto = {
@@ -351,20 +360,32 @@ let transformer_proto = {
 
 //-----------------------------------------------------------------------------
 // Event Transformers
+//
+// An Event Transformer is used to add an event handler listener to the
+// matching elements.
+//
+// It expects a receiver property that defines the object which handles
+// events raised and an event property that specifies the name of the event
+// to be registered.
+//
+// The receiver is expected to define two methods:
+//    handleBrowserEvent
+//    dispatchResponse
+// the collective define the response to the event.
 //-----------------------------------------------------------------------------
 
 let event_transformer_proto = {
   __proto__: transformer_proto,
 
   getReceiver() {
-    if (typeof this.receiver == "undefined") {
+    if (typeof this.receiver === "undefined") {
       throw "Undefined receiver!";
     }
     return this.receiver;
   },
 
   getEventName() {
-    if (typeof this.event == "undefined") {
+    if (typeof this.event === "undefined") {
       throw "Undefined event!";
     }
     return this.event;
@@ -400,6 +421,9 @@ let event_transformer_proto = {
 
 //-----------------------------------------------------------------------------
 // Block Transformer
+//
+// A Block Transformer operates on a <div class="card" data-card="...">
+// blocks.
 //-----------------------------------------------------------------------------
 
 function RezBlockTransformer() {
@@ -420,10 +444,13 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 //-----------------------------------------------------------------------------
 // Link Transformers
+//
+// Link Transformers operate on <a data-event="..."> tags within a
+// <div class="card">.
 //-----------------------------------------------------------------------------
 
 function RezEventLinkTransformer(receiver) {
-  this.selector = "div.card a[data-event]";
+  this.selector = "div.scene a[data-event]";
   this.event = "click";
   this.receiver = receiver;
 }

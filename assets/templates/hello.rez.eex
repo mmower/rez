@@ -5,6 +5,9 @@
 %% Released 2022-2024 under the GPLv3 license
 %%
 
+
+%(../lib/stdlib.rez)
+
 @game {
   name: "<%= @name %>"
   title: "<%= @game_title %>"
@@ -20,8 +23,6 @@
 
   initial_scene_id: #s_hello
 
-  %(../lib/stdlib.rez)
-
   layout: ```
   <!-- Main Content -->
   <section class="main-content is-fullheight">
@@ -29,48 +30,44 @@
   </section>
   <!-- End -->
   ```
+}
 
-  %%
-  %% The game proper begins here
-  %%
+@scene s_hello {
+  initial_card_id: #c_hello
+}
 
-  @scene s_hello {
-    initial_card_id: #c_hello
-  }
+@card c_hello {
+  content: ```
+  <section class="hero">
+    <div class="hero-body">
+      <p class="title">${card.game.title}</p>
+      <p class="subtitle">From <span class="has-text-primary">${card.game.author}</span></p>
+    </div>
+    <div class="box">
+      <ul>
+        <li><a data-event="card" data-target="c_ending" data-ending="good">Good Ending</a></li>
+        <li><a data-event="card" data-target="c_ending" data-ending="bad">Bad Ending</a></li>
+      </ul>
+    </div>
+  </section>
+  ```
+}
 
-  @card c_hello {
-    content: ```
-    <section class="hero">
-      <div class="hero-body">
-        <p class="title">${card.game.title}</p>
-        <p class="subtitle">From <span class="has-text-primary">${card.game.author}</span></p>
-      </div>
-      <div class="box">
-        <ul>
-          <li><a data-event="card" data-target="c_ending" data-ending="good">Good Ending</a></li>
-          <li><a data-event="card" data-target="c_ending" data-ending="bad">Bad Ending</a></li>
-        </ul>
-      </div>
-    </section>
-    ```
-  }
+@filter filter_ending_style {
+  name: "ending_style"
+  impl: (ending) => {return ending === "good" ? "has-background-success" : "has-background-danger";}
+}
 
-  @filter filter_ending_style {
-    name: "ending_style"
-    impl: (ending) => {return ending === "good" ? "has-background-success" : "has-background-danger";}
-  }
-
-  @card c_ending {
-    content: ```
-    <section class="hero">
-      <div class="hero-body">
-        <p class="title ${block.ending | ending_style}">Game Over!</p>
-        <p class="subtitle has-text-primary">You got the ${block.ending} ending!</p>
-      </div>
-      <div class="box">
-        <a data-event="card" data-target="c_hello">Play Again</a>
-      </div>
-    </section>
-    ```
-  }
+@card c_ending {
+  content: ```
+  <section class="hero">
+    <div class="hero-body">
+      <p class="title ${block.ending | ending_style}">Game Over!</p>
+      <p class="subtitle has-text-primary">You got the ${block.ending} ending!</p>
+    </div>
+    <div class="box">
+      <a data-event="card" data-target="c_hello">Play Again</a>
+    </div>
+  </section>
+  ```
 }

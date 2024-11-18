@@ -74,6 +74,10 @@ defmodule Rez.Compiler.ParseSource do
     compilation
   end
 
+  defp translate_code({:bad_syntax, _pos, reason}) do
+    reason
+  end
+
   defp translate_code({:block_not_matched, _pos, reason}) do
     "Unable to complete #{reason}"
   end

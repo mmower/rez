@@ -29,7 +29,13 @@ defmodule Rez.AST.HtmlTransformer do
   end
 
   def insert_href_attr(attrs) do
-    attr_insert(attrs, {"href", "javascript:void(0);"})
+    case attr_value(attrs, "href") do
+      nil ->
+        attr_insert(attrs, {"href", "javascript:void(0);"})
+
+      href ->
+        attrs
+    end
   end
 
   def transform_card_attr(attrs) do
