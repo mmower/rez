@@ -98,6 +98,23 @@
   }
 }
 
+@patch PATCH_ARRAY_ENGLISH_LIST {
+  patch: "Array"
+  method: "englishList"
+  impl: function() {
+    const length = this.length;
+    if (length === 0) {
+        return "";
+    } else if (length === 1) {
+        return this[0];
+    } else if (length === 2) {
+        return this.join(" and ");
+    } else {
+        return this.slice(0, -1).join(", ") + ", and " + this[length - 1];
+    }
+  }
+}
+
 @patch PATCH_ARRAY_REMOVE {
   patch: "Array"
   method: "remove"

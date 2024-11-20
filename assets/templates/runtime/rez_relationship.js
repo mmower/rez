@@ -18,8 +18,16 @@ RezRelationship.prototype = {
     return this.getAttributeValue("source");
   },
 
+  get source_obj() {
+    return $(this.source);
+  },
+
   get target() {
     return this.getAttributeValue("target");
+  },
+
+  get target_obj() {
+    return $(this.target);
   },
 
   get inverse() {

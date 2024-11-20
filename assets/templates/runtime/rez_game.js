@@ -468,6 +468,18 @@ RezGame.prototype = {
     return this.getGameObject(rel_id, false);
   },
 
+  getRelationshipsOf(source_id) {
+    return this.filterObjects((o) => {
+      return o.game_object_type == "relationship" && o.id.startsWith(`rel_${source_id}_`)
+    })
+  },
+
+  getRelationshipsOn(target_id) {
+    return this.filterObjects((o) => {
+      return o.game_object_type == "relationship" && o.id.endsWith(`_${target_id}`)
+    })
+  },
+
   /**
    * @function filterObjects
    * @memberof RezGame
