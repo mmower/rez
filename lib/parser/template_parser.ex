@@ -28,9 +28,9 @@ defmodule Rez.Parser.TemplateParser do
 
   import Rez.Parser.UtilityParsers,
     only: [
+      dot: 0,
       iws: 0,
       iows: 0,
-      star: 0,
       colon: 0,
       comma: 0,
       equals: 0,
@@ -59,13 +59,13 @@ defmodule Rez.Parser.TemplateParser do
   def entails(), do: PC.get_parser("entails", fn -> literal("->") end)
   def open_interpolation(), do: PC.get_parser("open_interpolation", fn -> literal("${") end)
 
-  def open_user_macro(),
+  def open_user_component(),
     do:
-      PC.get_parser("user_macro", fn ->
+      PC.get_parser("user_component", fn ->
         sequence([
           left_angle_bracket(),
-          js_identifier(),
-          star()
+          dot(),
+          js_identifier()
         ])
       end)
 
@@ -294,13 +294,13 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def open_container_user_macro() do
+  def open_container_user_component() do
     sequence(
       [
         ignore(left_angle_bracket()),
+        ignore(dot()),
         js_identifier() |> capture(:macro_tag),
-        ignore(star()),
-        optional(many(user_macro_attr())),
+        optional(many(user_component_attr())),
         iows(),
         ignore(right_angle_bracket())
       ],
@@ -314,65 +314,70 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def open_nested_container_user_macro() do
+  def open_nested_container_user_component() do
     sequence([
       left_angle_bracket(),
+      dot(),
       captured_literal(:macro_tag),
-      star(),
-      optional(many(user_macro_attr())),
+      optional(many(user_component_attr())),
       iows(),
       right_angle_bracket()
     ])
   end
 
-  def close_container_user_macro() do
+  def close_container_user_component() do
     sequence([
       ignore(left_angle_bracket()),
       ignore(forward_slash()),
+      ignore(dot()),
       ignore(captured_literal(:macro_tag)),
-      ignore(star()),
       ignore(right_angle_bracket())
     ])
   end
 
-  def container_user_macro() do
+  def container_user_component() do
     sequence(
       [
-        open_container_user_macro(),
+        open_container_user_component(),
         DP.text_delimited_by_nested_parsers(
-          open_nested_container_user_macro(),
-          close_container_user_macro(),
+          open_nested_container_user_component(),
+          close_container_user_component(),
           start_open: true
         )
       ],
       ast: fn [[tag_name, attrs], content] ->
-        {:user_macro, tag_name, attrs, TemplateParser.parse(content)}
+        {:user_component, tag_name, attrs, TemplateParser.parse(content)}
       end
     )
   end
 
-  def self_contained_user_macro() do
+  def self_contained_user_component() do
     sequence(
       [
         ignore(left_angle_bracket()),
+        ignore(dot()),
         js_identifier(),
-        ignore(star()),
-        optional(many(user_macro_attr())),
+        optional(many(user_component_attr())),
         iows(),
         ignore(forward_slash()),
         ignore(right_angle_bracket())
       ],
       ast: fn
         [name] ->
-          {:user_macro, name, %{}, nil}
+          {:user_component, name, %{}, nil}
 
         [name, attributes] ->
-          {:user_macro, name, Enum.into(attributes, %{}), nil}
+          {:user_component, name, Enum.into(attributes, %{}), nil}
       end
     )
   end
 
-  defp user_macro_attr() do
+  # defp dynamic_attr_value() do
+  #   DP.text_delimited_by_nested_parsers(open_brace(), close_brace())
+  #   |> transform(fn expr -> {:attr_expr, expr} end)
+  # end
+
+  defp user_component_attr() do
     sequence(
       [
         iws(),
@@ -380,6 +385,7 @@ defmodule Rez.Parser.TemplateParser do
         ignore(equals()),
         choice([
           number_value(),
+          # dynamic_attr_value(),
           string_value()
         ])
       ],
@@ -389,10 +395,10 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  def user_macro() do
+  def user_component() do
     choice([
-      self_contained_user_macro(),
-      container_user_macro()
+      self_contained_user_component(),
+      container_user_component()
     ])
   end
 
@@ -415,7 +421,7 @@ defmodule Rez.Parser.TemplateParser do
             open_interpolation(),
             la_open_foreach(),
             la_open_partial(),
-            open_user_macro(),
+            open_user_component(),
             escape_dollar()
           ])
         ),
@@ -442,7 +448,7 @@ defmodule Rez.Parser.TemplateParser do
         interpolation(),
         foreach(),
         partial(),
-        user_macro(),
+        user_component(),
         string()
       ]),
       ast: fn ast -> {:source_template, ast} end

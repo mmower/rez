@@ -89,24 +89,37 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
-  def compile_chunk({:user_macro, name, attributes, content}) do
-    {:compiled_template, compiled_template} = compile(content)
-
-    assigns =
-      attributes
-      |> Enum.map(fn {key, value} -> ~s|#{key}: #{ValueEncoder.encode_value(value)}| end)
-      |> Enum.join(",")
+  def compile_chunk({:user_component, name, attributes, nil}) do
+    assigns = component_assigns(attributes)
 
     body = ~s|
-    const user_macro = window.Rez.user_macros['#{name}'];
+    const user_component = window.Rez.user_components['#{name}'];
+
+    if(typeof user_component === "undefined") {
+      throw `No user @macro #{name} defined!`;
+    } else {
+      return user_component(bindings, {#{assigns}}, null);
+    }
+    |
+
+    js_create_fn(body, false)
+  end
+
+  def compile_chunk({:user_component, name, attributes, content}) do
+    {:compiled_template, compiled_template} = compile(content)
+
+    assigns = component_assigns(attributes)
+
+    body = ~s|
+    const user_component = window.Rez.user_components['#{name}'];
 
     const sub_template = #{compiled_template};
     const sub_content = sub_template(bindings);
 
-    if(typeof user_macro === "undefined") {
+    if(typeof user_component === "undefined") {
       throw `No user @macro #{name} defined!`;
     } else {
-      return user_macro(bindings, {#{assigns}}, sub_content);
+      return user_component(bindings, {#{assigns}}, sub_content);
     }
     |
 
@@ -205,6 +218,16 @@ defmodule Rez.Compiler.TemplateCompiler do
       const sub_template = #{sub_template};
       return sub_template(bindings);
     }|
+  end
+
+  defp component_assigns(attributes) do
+    Enum.map_join(attributes, ",", fn
+      {key, {:attr_expr, expr}} ->
+        ~s|#{key}: eval("#{expr}")|
+
+      {key, value} ->
+        ~s|#{key}: #{ValueEncoder.encode_value(value)}|
+    end)
   end
 
   defmodule Values do

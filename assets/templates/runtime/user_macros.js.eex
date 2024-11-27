@@ -1,6 +1,0 @@
-window.Rez.user_macros = {};
-
-<% alias Rez.AST.ValueEncoder %>
-<%= for {name, {:function, impl_fn}} <- @game.user_macros do %>
-  window.Rez.user_macros.<%= name %> = <%= ValueEncoder.encode_function(impl_fn) %>;
-<% end %>

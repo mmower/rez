@@ -314,10 +314,26 @@
 @patch PATCH_STRING_CAMELIZE {
   patch: "String"
   method: "camelize"
-  impl: function(s) {
-    return s.replace(/[_.-](\w|$)/g, function (_, x) {
+  impl: function() {
+    return this.replace(/[_.-](\w|$)/g, function (_, x) {
 	  	return x.toUpperCase();
 	  });
+  }
+}
+
+@patch PATCH_STRING_SNAKE_TO_KEBAB_CASE {
+  patch: "String"
+  method: "snakeToKebabCase"
+  impl: function() {
+    return this.replace(/_/g, "-");
+  }
+}
+
+@patch PATCH_STRING_KEBEB_TO_SNAKE_CASE {
+  patch: "String"
+  method: "kebabToSnakeCase"
+  impl: function() {
+    return this.replace(/-/g, "_");
   }
 }
 

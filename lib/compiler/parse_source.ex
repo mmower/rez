@@ -74,16 +74,20 @@ defmodule Rez.Compiler.ParseSource do
     compilation
   end
 
-  defp translate_code({:bad_syntax, _pos, reason}) do
-    reason
+  # defp translate_code({:bad_syntax, _pos, reason}) do
+  #   reason
+  # end
+
+  # defp translate_code({:block_not_matched, _pos, reason}) do
+  #   "Unable to complete #{reason}"
+  # end
+
+  defp translate_code({code, pos, reason}) when is_atom(code) do
+    translate_code({Atom.to_string(code), pos, reason})
   end
 
-  defp translate_code({:block_not_matched, _pos, reason}) do
-    "Unable to complete #{reason}"
-  end
-
-  defp translate_code({:unexpected_char, _pos, reason}) do
-    reason
+  defp translate_code({code, pos, reason}) when is_binary(code) do
+    "#{code} @ #{inspect(pos)}: #{reason}"
   end
 
   defp source_context(source, line, col) do

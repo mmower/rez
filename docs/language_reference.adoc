@@ -689,7 +689,7 @@ This is useful when you want to create a "parameterized" block. For example, we 
   content: ```
     Room
     ${exits}
-  ````
+  ```
 }
 
 @card another_room_with_exits {
@@ -1499,7 +1499,7 @@ content: ```
 $foreach(x: a.b.map((el) => somefun(el))) {%
   <div id="${x.id}">${x.title}</div>
 %}
-````
+```
 ....
 
 you would write:
@@ -1570,27 +1570,27 @@ Sometimes you want to be able to hide away some of the complexity of what you ar
 
 For example let's say we are writing a lot of event buttons like this:
 
-````
+....
 <button class="button is-small" data-event="reload">…</button>
-````
+....
 
 The boilerplate to make a button can be a bit tiresome and it obscures the most important thing about this button, that pressing it triggers the `reload` event. Let's make a component:
 
-````
+....
 @component event_button (bindings, assigns, content) => {
   return `<button class="button is-small" data-event="${assigns["event"]}">${content}</button>`;
 }
-````
+....
 
 Now we can write:
 
-````
-<event_button* event="reload">…</event_button*>
-````
+....
+<.event_button event="reload">…</.event_button>
+....
 
-And things are neater. Note that the component tag has a `*` suffix which is what Rez uses to identify `event_button` as a user component and look for its `@component` definition.
+And things are neater. Note that the component tag has a `.` prefix which is what Rez uses to identify `event_button` as a user component and look for its `@component` definition.
 
-Because `<event_button*>` is a container tag it has a `content` argument containing all the rendered content that goes inside the tag. For self-closing tags `content` is undefined.
+Because `<.event_button>` is a container tag it has a `content` argument containing all the rendered content that goes inside the tag. For self-closing tags `content` is undefined.
 
 == Behaviour Trees
 

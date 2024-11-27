@@ -48,8 +48,8 @@ defmodule Rez.Compiler.CreateRuntime do
 
   EEx.function_from_file(
     :def,
-    :user_macros,
-    Path.expand("assets/templates/runtime/user_macros.js.eex"),
+    :user_components,
+    Path.expand("assets/templates/runtime/user_components.js.eex"),
     [:assigns]
   )
 
@@ -91,7 +91,7 @@ defmodule Rez.Compiler.CreateRuntime do
         js_userlib: js_userlib,
         patch_js_objects: patch_js_objects(game: game),
         bind_keys: bind_keys(game: game),
-        user_macros: user_macros(game: game),
+        user_components: user_components(game: game),
         init_game_objects: init_game_objects(game: game),
         register_expression_filters: register_expression_filters(game: game)
       )

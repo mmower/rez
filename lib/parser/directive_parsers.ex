@@ -39,7 +39,7 @@ defmodule Rez.Parser.DirectiveParsers do
       ],
       label: "@component",
       ast: fn [name, impl_fn] ->
-        {:user_macro, name, impl_fn}
+        {:user_component, name, impl_fn}
       end
     )
   end

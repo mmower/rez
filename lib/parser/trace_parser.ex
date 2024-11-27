@@ -44,6 +44,17 @@ defmodule Rez.Parser.Trace do
     end)
   end
 
+  def trace_last_match() do
+    Parser.combinator(:trace_last_match, "s_trace_last_match", fn %Context{consumed: consumed} =
+                                                                    ctx ->
+      if tracing?(ctx) do
+        trace_log(ctx, "Last Match: #{String.last(consumed)}")
+      end
+
+      ctx
+    end)
+  end
+
   def trace_input(match) when is_binary(match) do
     Parser.combinator(:trace_input, "s_trace_input", fn %Context{input: input} = ctx ->
       if tracing?(ctx) && String.starts_with?(input, match) do

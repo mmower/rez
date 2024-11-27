@@ -567,27 +567,27 @@ A `@component` directive is used to specify an HTML component used in templates.
 
 For example we may have specified a button like this:
 
-````
+....
 <button class="button is-small" data-event="reload">…</button>
-````
+....
 
 There's nothing wrong with this but the details are obscured by the attribute syntax, what if we could write:
 
-````
-<event_button* event="reload">…</event_button*>
-````
+....
+<.event_button event="reload">…</.event_button>
+....
 
-The `*` in `event_button*` indicates that this tag is implemented by a component with the same name.
+The `.` prefix in `<.event_button>` indicates that this tag is implemented as a user component.
 
 Let's write this component:
 
-````
+....
 @component event_button (bindings, assigns, content) => {
   return `<button class="button is-small" data-event="${assigns["event"]}">${content}</button>`;
 }
-````
+....
 
-Container components like `<event_button*>` have their contents available in the `content` argument, attribute values in `assigns`, and all bindings available at the component site in `bindings`. Self contained components have no content specified.
+Container components like `<.event_button>` have their contents available in the `content` argument, attribute values in `assigns`, and all bindings available at the component site in `bindings`. Self contained components have no content specified.
 
 == Declare (Directive)
 
