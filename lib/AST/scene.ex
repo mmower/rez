@@ -73,10 +73,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
     do: %{
       "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
       "current_card_id" => Attribute.string("current_card_id", ""),
-      "layout_mode" => Attribute.keyword("layout_mode", "single"),
-      "layout" => Attribute.source_template("layout", "${content}"),
-      "layout_reverse" => Attribute.boolean("layout_reverse", false),
-      "layout_separator" => Attribute.string("layout_separator", ""),
       "$running" => Attribute.boolean("$running", false)
     }
 

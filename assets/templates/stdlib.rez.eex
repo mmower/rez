@@ -3,6 +3,26 @@
 %% ** Do not modify as local changes will be overwritten every time the game is compiled **
 
 %% ----------------------------------------------------------------------------
+%% Defaults
+%% ----------------------------------------------------------------------------
+
+@defaults card {
+  $flipped: false
+  $suppress_wrapper: false
+}
+
+@defaults scene {
+  layout_mode: :single
+  layout_reverse: false
+  layout_separator: ""
+  layout: ```${content}```
+}
+
+@defaults slot {
+  apply_effects: true
+}
+
+%% ----------------------------------------------------------------------------
 %% Head Assets
 %% ----------------------------------------------------------------------------
 

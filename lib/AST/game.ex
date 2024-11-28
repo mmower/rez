@@ -34,6 +34,7 @@ defmodule Rez.AST.Game do
             behaviours: %{},
             behaviour_templates: %{},
             cards: %{},
+            defaults: %{},
             effects: %{},
             factions: %{},
             filters: %{},
@@ -75,6 +76,13 @@ defmodule Rez.AST.Game do
     %{game | relationships: Map.put(relationships, source, {target, affinity})}
   end
 
+  def add_child({:defaults, elem, attributes}, %Game{defaults: defaults} = game)
+      when is_binary(elem) and is_map(attributes) do
+    old_defaults = Map.get(defaults, elem, %{})
+    new_defaults = Map.merge(old_defaults, attributes)
+    %{game | defaults: Map.put(defaults, elem, new_defaults)}
+  end
+
   #
   # We use a Map->MapSet here because a keyword might be derived from more than
   # one parent keyword, e.g.
@@ -108,7 +116,10 @@ defmodule Rez.AST.Game do
     add_dynamic_child(game, child)
   end
 
-  defp add_dynamic_child(%Game{by_id: by_id} = game, %{id: child_id} = child) do
+  defp add_dynamic_child(
+         %Game{by_id: by_id, defaults: defaults} = game,
+         %{id: child_id, attributes: attributes} = child
+       ) do
     content_key = struct_key(child)
 
     content = Map.get(game, content_key)
@@ -116,6 +127,10 @@ defmodule Rez.AST.Game do
     if is_nil(content) do
       IO.puts("Failed to get content: #{content_key}. Did you rename and not change all uses?")
     end
+
+    default_attributes = Map.get(defaults, Node.node_type(child), %{})
+    new_attributes = Map.merge(default_attributes, attributes)
+    child = %{child | attributes: new_attributes}
 
     nodes = Map.put(content, child_id, child)
 

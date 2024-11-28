@@ -11,6 +11,8 @@ defmodule Rez.Parser.DirectiveParsers do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.BTreeParser
 
+  import Rez.Utils, only: [attr_list_to_map: 1]
+
   defp behaviour_template() do
     sequence(
       [
@@ -72,6 +74,26 @@ defmodule Rez.Parser.DirectiveParsers do
           )
 
         ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
+      end
+    )
+  end
+
+  defp defaults_directive() do
+    sequence(
+      [
+        iliteral("@defaults"),
+        iws(),
+        commit(),
+        elem_tag(),
+        iws(),
+        block_begin(),
+        attribute_list(),
+        iws(),
+        block_end()
+      ],
+      label: "@defaults",
+      ast: fn [elem, attributes] ->
+        {:defaults, elem, attr_list_to_map(attributes)}
       end
     )
   end
@@ -193,6 +215,7 @@ defmodule Rez.Parser.DirectiveParsers do
         behaviour_template(),
         component_directive(),
         declare_directive(),
+        defaults_directive(),
         derive_directive(),
         enum_directive(),
         keybinding_directive()

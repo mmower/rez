@@ -48,8 +48,9 @@ Directives modify in-game concepts.
 * <<Alias (Directive), Alias>>
 * <<Behaviour Template (Directive), Behaviour Template>>
 * <<Component (Directive), Component>>
-* <<Derive (Directive), Derive>>
 * <<Declare (Directive), Declare>>
+* <<Defaults (Directive), Defaults>>
+* <<Derive (Directive), Derive>>
 * <<Enum (Directive), Enum>>
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
@@ -608,6 +609,22 @@ the relationship
   affinity: -5
 }
 ....
+
+== Defaults (Directive)
+
+A `@defaults` directive is a way to setup default attributes for a type of element.
+
+=== Example
+
+....
+@defaults card {
+  hub: false
+}
+....
+
+From this point in the source file all `@card` elements will pick up a `hub: false` attribute without you having to set it.
+
+Note that you can later change issue a new default for `@card` and any `@card` elements defined from that point will inherit the new default instead.
 
 == Derive (Directive)
 

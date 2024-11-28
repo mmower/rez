@@ -38,7 +38,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
 
   def default_attributes(_slot),
     do: %{
-      "apply_effects" => Attribute.boolean("apply_effects", true)
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
     }
 
   def pre_process(slot), do: slot

@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.4.5"
+  @version "1.4.6"
 
   def project do
     [
@@ -39,7 +39,7 @@ defmodule Rez.MixProject do
       {:poison, "~> 5.0"},
       {:dialyxir, "~> 1.3", runtime: false},
       {:apex, "~>1.2.1"},
-      {:floki, "~> 0.36.2"}
+      {:scribe, "~> 0.11"}
     ]
   end
 
