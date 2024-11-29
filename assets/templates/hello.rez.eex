@@ -5,7 +5,6 @@
 %% Released 2022-2024 under the GPLv3 license
 %%
 
-
 %(../lib/stdlib.rez)
 
 @game {
@@ -21,7 +20,7 @@
   version: "1.0"
   created: "<%= @created %>"
 
-  initial_scene_id: #s_hello
+  initial_scene_id: #sc_main
 
   layout: ```
   <!-- Main Content -->
@@ -32,11 +31,11 @@
   ```
 }
 
-@scene s_hello {
-  initial_card_id: #c_hello
+@scene sc_main {
+  initial_card_id: #c_intro
 }
 
-@card c_hello {
+@card c_intro {
   content: ```
   <section class="hero">
     <div class="hero-body">
@@ -45,28 +44,28 @@
     </div>
     <div class="box">
       <ul>
-        <li><a data-event="card" data-target="c_ending" data-ending="good">Good Ending</a></li>
-        <li><a data-event="card" data-target="c_ending" data-ending="bad">Bad Ending</a></li>
+        <li><a card="c_ending" data-ending="good">Good Ending</a></li>
+        <li><a card="c_ending" data-ending="bad">Bad Ending</a></li>
       </ul>
     </div>
   </section>
   ```
 }
 
-@filter filter_ending_style {
-  name: "ending_style"
-  impl: (ending) => {return ending === "good" ? "has-background-success" : "has-background-danger";}
+@component title (bindings, assigns, content) => {
+  const css_class = bindings.block.params.ending === "good" ? "has-background-success" : "has-background-danger";
+  return `<p class="title ${css_class}">${content}</p>`;
 }
 
 @card c_ending {
   content: ```
   <section class="hero">
     <div class="hero-body">
-      <p class="title ${block.ending | ending_style}">Game Over!</p>
-      <p class="subtitle has-text-primary">You got the ${block.ending} ending!</p>
+      <.title>Game Over!</.title>
+      <p class="subtitle has-text-primary">You got the ${block.params.ending} ending!</p>
     </div>
     <div class="box">
-      <a data-event="card" data-target="c_hello">Play Again</a>
+      <a card="c_intro">Play Again</a>
     </div>
   </section>
   ```

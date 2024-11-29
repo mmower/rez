@@ -612,7 +612,16 @@ the relationship
 
 == Defaults (Directive)
 
-A `@defaults` directive is a way to setup default attributes for a type of element.
+A `@defaults` directive is a way to setup default attributes for a type of element or alias.
+
+The syntax is simple:
+
+....
+@defaults <element_or_alias> {
+  attribute: value
+  attribute: value
+}
+....
 
 === Example
 
@@ -625,6 +634,27 @@ A `@defaults` directive is a way to setup default attributes for a type of eleme
 From this point in the source file all `@card` elements will pick up a `hub: false` attribute without you having to set it.
 
 Note that you can later change issue a new default for `@card` and any `@card` elements defined from that point will inherit the new default instead.
+
+It is possible to set defaults for an `@alias` that will only be set for elements that use the alias. So this is legal:
+
+....
+@defaults card {
+  is_storylet: false
+}
+
+@defaults storylet {
+  is_storylet: true
+  storylets: function() {
+    return [];
+  }
+}
+
+@alias storylet = card
+....
+
+Now a card defined using the `@storylet` alias will has `is_storylet: true` and the default implementation of the `storylets:` attribute while regular cards get `is_storylet: false` and have no `storylets:` attribute.
+
+See `stdlib.rez` for modifiable system defaults.
 
 == Derive (Directive)
 

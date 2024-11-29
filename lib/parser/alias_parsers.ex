@@ -76,6 +76,8 @@ defmodule Rez.Parser.AliasParsers do
     )
   end
 
+  alias Rez.AST.Attribute
+
   @doc """
   The `aliased_element/0` parser
   """
@@ -105,7 +107,7 @@ defmodule Rez.Parser.AliasParsers do
 
           {target_tag, {:parent_objects, parent_objects}} ->
             target_module = NodeHelper.node_for_tag(target_tag)
-            attributes = attr_list_to_map(attr_list)
+            attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
             {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
             block =

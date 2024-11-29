@@ -129,8 +129,23 @@ defmodule Rez.AST.Game do
     end
 
     default_attributes = Map.get(defaults, Node.node_type(child), %{})
-    new_attributes = Map.merge(default_attributes, attributes)
-    child = %{child | attributes: new_attributes}
+
+    alias_default_attributes =
+      case Map.fetch(attributes, "$alias") do
+        :error ->
+          %{}
+
+        {:ok, %Attribute{value: alias_elem}} ->
+          Map.get(defaults, alias_elem, %{})
+      end
+
+    attributes =
+      default_attributes
+      |> Map.merge(alias_default_attributes)
+      |> Map.merge(attributes)
+
+    # new_attributes = Map.merge(default_attributes, attributes)
+    child = %{child | attributes: attributes}
 
     nodes = Map.put(content, child_id, child)
 
