@@ -28,8 +28,8 @@
 
 @asset _ALPINE_JS {
   file_name: "alpinejs.min.js"
-  defer: true
-  pre_runtime: true
+  $js_defer: true
+  $pre_runtime: true
 }
 
 @asset _BULMA_CSS {
@@ -38,14 +38,14 @@
 
 @asset _PLURALIZE_JS {
   file_name: "pluralize.js"
-  defer: false
-  pre_runtime: true
+  $js_defer: false
+  $pre_runtime: true
 }
 
 @asset _TRACERY_JS {
   file_name: "tracery.js"
-  defer: false
-  pre_runtime: true
+  $js_defer: false
+  $pre_runtime: true
 }
 
 %% ----------------------------------------------------------------------------

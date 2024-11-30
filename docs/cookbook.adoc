@@ -10,6 +10,22 @@ date = 2024-03-16
 
 The following is a guide to some of Rez's features and common things you may want to be able to do.
 
+== Including custom Javascript
+
+To include a custom Javascript file into your game add the .js file to your assets folder and a corresponding `@asset` element to your game. Use the `$js_runtime` attribute to tell Rez that it should be included in the runtime.js file.
+
+....
+@asset custom_js {
+  file: "custom.js"
+
+  $js_runtime: true
+}
+....
+
+To have a Javascript file included as a separate file, included before runtime.js, use `$pre_runtime: true`.
+
+To apply the `defer` attribute to the corresponding `<script>` tag use `$js_defer: true`.
+
 == Using `@object`
 
 Rez defines a number of generally useful elements like `@actor`, `@item`, `@inventory`, `@scene` and so forth. These elements have built-in behaviours designed to be useful but flexible.
