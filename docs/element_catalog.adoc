@@ -818,9 +818,9 @@ See also the filter_catalog.
 
 == Game (Element)
 
-The game element is the top-level specification of the game and its metadata. It also defines the scebe entry point of the game.
+The game element is the top-level specification of the game and its metadata. It also defines the scene entry point of the game.
 
-The `@game` element has an implicit ID of `game`. All other elements and directives should be nested inside the top-level `@game`.
+The `@game` element has an implicit ID of `game`.
 
 === Example
 

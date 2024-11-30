@@ -1,0 +1,203 @@
++++
+title = "About Rez"
+author = "Matt Mower"
+date = 2024-03-16
+draft = false
++++
+
+A system for creating choice-based HTML games & interactive fiction. Written in Elixir & Javascript by Matt Mower.
+
+<table>
+  <thead>
+  <tr>
+    <th>Version</th>
+    <th>Date</th>
+    <th>Milestone</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.8</td>
+      <td>24 Oct 2022</td>
+      <td>First public build</td>
+    </tr>
+    <tr>
+      <td>1.0</td>
+      <td>14 Nov 2023</td>
+      <td>Went 1.0</td>
+    </tr>
+    <tr>
+      <td>1.4.6</td>
+      <td>28 Nov 2024</td>
+      <td>Current build</td>
+    </tr>
+  </tbody>
+</table>
+
+== Introduction
+
+Rez is an open source system for creating choice-based HTML games & interactive fiction. It uses HTML/CSS, Javascript, images, movies, and sounds to present an interface, where players make choices by interactive HTML elements like links & forms.
+
+An obvious comparison for Rez is https://twinery.org/[Twine]. The ideal Rez user is likely creating a game that is over-ambitious for Twine and is not afraid to write a bit of Javascript code for, e.g., handling events.
+
+Rez has excellent support for making good looking interfaces. It includes a sophisticated layout system with a simple, yet compreshensive, template language. It is built upon the https://bulma.io/[Bulma] CSS framework and includes https://alpinejs.dev/[Alpine.JS] for simple dynamic layout.
+
+Rez supports asset management, NPC actors & behaviours, item & inventory management, factions, relationships, plots, customisable systems, and much more.
+
+Rez can get deep but you can be productive with a subset of the language and learn the rest as you need to make use of it. See the http://rez-lang.com/docs/rez.html[online documentation] for tutorials, language reference, and runtime API documentation.
+
+== Getting Started
+
+To write a game with Rez you write one or more <code>.rez</code> source files and then use the rez compiler to turn them into a complete game: all the HTML, javascript code, & assets bundled ready to play the game in the browser, or distribute it.
+
+The Rez language is mostly declarative. You use attributes to specify what happens and Rez takes care of the details. Dynamic behaviours (for example procedural generation) are supported by through incorporating Javascript functions. It requires only a little Javascript knowledge to get productive.
+
+== Installation
+
+Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed.
+
+Rez targets Elixir v1.16/OTP-26 but should be compilable with previous versions back to 1.13/OTP-25.
+
+https://github.com/mmower/rez/releases/tag/v1.4.6[Binary releases] are available.
+
+To build it yourself:
+
+=== macOS
+
+Building on macOS depends on https://git-scm.com/[git], https://brew.sh/[Homebrew] and https://asdf-vm.com/[ASDF]. If you install ASDF directly the homebrew dependency is unnecessary.
+
+....
+# Install git
+# Install homebrew
+# Get Rez
+git clone git@github.com:mmower/rez.git
+cd rez
+# We use ASDF for tool dependency management
+brew install asdf
+# Will bring in nodejs, erlang, and elixir
+asdf install
+# Will install BulmaCSS, and Alpine.JS
+npm install
+# Install Elixir deps
+mix deps.get
+# Creates the `rez` compiler binary
+./build_escript
+# Check the binary works
+./rez --version # should report something like 1.0
+# Copy to somewhere in your ${path}
+cp rez ~/bin/</pre>
+....
+
+The Node.js dependency is not for Node at runtime but to bring in some Javascript dependencies that get compiled into the resulting Rez applications.
+
+=== Windows
+
+These instructions are a little old but may still work.
+
+==== Install Elixir and Erlang.
+
+Download the Elixir web installer from https://elixir-lang.org/install.html#windows[elixir-lang.org] and install v1.14.2 or newer (the installer will give you a choice of versions during install). Installing Elixir will also install the appropriate version of Erlang by default. If you have a prior install of Erlang, you may need to check that it's compatible with latest Elixir.
+
+Verify your install in Powershell with
+
+....
+elixir -v
+Erlang/OTP 25 [erts-13.0.4] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:1] [jit:ns]
+Elixir 1.14.2 (compiled with Erlang/OTP 25)
+....
+
+==== Install Node.js
+
+Install https://nodejs.org/https://github.com/coreybutler/nvm-windows[NodeJS 19]. A optional version manager like [NVM for Windows] can make this easier.
+
+==== Clone the repo
+
+....
+git clone git@github.com:mmower/rez.git
+cd rez
+
+npm install
+mix deps.get
+....
+
+==== Build the rez compiler binary
+
+From Powershell:
+
+....
+> $env:BUILD_MODE = 'escript'; $env:MIX_ENV = 'prod'; mix escript.build
+....
+
+==== Verify your build
+
+....
+> .\rez --version
+....
+
+==== Put rez in your path
+
+Edit your environment variables and add the repo to your PATH. Now you should be able to run `rez` from any directory in your shell, undecorated. Check that you can print the version from the root directory
+
+....
+> cd \; rez version
+....
+
+=== Other OS
+
+If you are able to get Rez to run on a different platform please create a PR with the instructions.
+
+
+== Usage
+
+=== Creating a new game
+
+To create a new game:
+
+....
+rez new <game-name>
+....
+
+This creates a new game directory with the same name as the game name and populates it with a template game and its dependencies. The <code>dist</code> folder is where the compiled game will be placed.
+
+Optionally you can specify any of these additional command line arguments:
+
+....
+--author-name="My name"
+--author-email="My email"
+--game-title="What my game is called"
+--game-homepage="URL for more info about my game"</pre>
+....
+
+=== Compiling
+
+A Rez game is compiled into a set of HTML, Javascript, CSS, and asset files that represent the game.
+
+From the game directory:
+
+....
+rez compile [--verbose 0-4] src/<file.rez>
+....
+
+This will build the complete game in the <code>dist</code> folder including all assets referenced in the game.
+
+The resulting files can be zipped for easy distribtion or potentially turned into an Electron application.
+
+Note that, at present, no attempt is made to minimise or optimise the resulting JS or CSS. This exercise is left to the author.
+
+== Acknowledgements
+
+=== Front End
+
+* https://github.com/galaxykate/tracery[Tracery] used courtesy of http://www.galaxykate.com/[Galaxy Kate] under the https://github.com/galaxykate/tracery/blob/master/LICENSE.MD[Apache 2.0 license].
+* https://alpinejs.dev/[Alpinejs] used courtesy of https://calebporzio.com/[Caleb Porzio] under the https://github.com/alpinejs/alpine/blob/main/LICENSE.md[MIT license]
+* https://bulma.io/[Bulma CSS] used courtesy of [Jeremy Thomas](<a href="https://jgthms.com/" class="bare">https://jgthms.com/</a>) under the https://github.com/jgthms/bulma/blob/master/LICENSE[MIT license]
+* https://github.com/plurals/pluralize[Pluralize] used courtesy of [Blake Embrey](<a href="http://blakeembrey.me/" class="bare">http://blakeembrey.me/</a>) under the https://github.com/plurals/pluralize/blob/master/LICENSE[MIT license]
+* https://github.com/rrrene/credo[Credo] used courtesy of https://rrrene.org/[René Föhring] under the https://github.com/rrrene/credo/blob/master/LICENSE[MIT license]
+* https://github.com/zyro/elixir-uuid[elixir-uuid] used courtesy of http://andreimihu.com/[Andrei Mihu] under the https://github.com/zyro/elixir-uuid/blob/master/LICENSE[Apache 2.0 license]
+* https://github.com/danhper/elixir-temp[Temp] used courtesy of https://daniel.perez.sh/[Daniel Perez] under the https://github.com/danhper/elixir-temp/blob/master/LICENSE[MIT license]
+* https://github.com/Group4Layers/ex_image_info[ExImageInfo] used courtesy of https://github.com/rNoz[Raúl] under the https://github.com/Group4Layers/ex_image_info/blob/master/LICENSE.md[MIT license]
+* https://github.com/girishramnani/inflector[Inflectorex] used courtesy of https://github.com/girishramnani[Girish Ramnani] under the https://github.com/girishramnani/inflector/blob/master/LICENSE[MIT license]
+* https://github.com/burrito-elixir/burrito[Burrito] used courtesy of https://puppy.surf/[Digit] under the https://github.com/burrito-elixir/burrito/blob/main/LICENSE[MIT license]
+* https://github.com/elixir-plug/mime[MIME] used courtesy of https://dashbit.co/[José Valim] under the https://github.com/elixir-plug/mime/blob/master/LICENSE[Apache 2.0 license]
+* https://github.com/devinus/poison[Poison] used courtesy of https://devinus.io/[Devin Alexander Torres] under the https://github.com/devinus/poison/blob/master/LICENSE[BSD0 license]
+* https://github.com/bjro/apex[Apex] used courtesy of https://bjro.github.io/[Björn Rochel] under the https://github.com/bjro/apex#license[MIT license]

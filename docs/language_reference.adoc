@@ -420,34 +420,34 @@ At the moment, due to a lack of JSON support, it is not possible to use attribut
 
 ....
 @card card1 {
-    content: ```
-    ${f}
-    ```
+  content: ```
+  ${f}
+  ```
 
-    func_table: |#o1 50 #o2 25 #o3 25|
+  func_table: |#o1 50 #o2 25 #o3 25|
 
-    choose_f: function() {
-      return $(this.func_table).f();
-    }
+  choose_f: function() {
+    return $(this.func_table).f();
   }
+}
 
-  @object o1 {
-    f: function() {
-      return 1;
-    }
+@object o1 {
+  f: function() {
+    return 1;
   }
+}
 
-  @object o2 {
-    f: function() {
-      return 2;
-    }
+@object o2 {
+  f: function() {
+    return 2;
   }
+}
 
-  @object o3 {
-    f: function() {
-      return 3;
-    }
+@object o3 {
+  f: function() {
+    return 3;
   }
+}
 ....
 
 It's not elegant but it's feasible. This will likely get cleaned up in a future version.
@@ -492,6 +492,20 @@ A dynamic property is a property generated from an expression in the form `^p{}`
 }
 ....
 
+=== Special Attributes
+
+* `$global`:boolean
+
+Declaring an element as a global, Rez will create a global variable with the same name as the object id.
+
+* `$template`:boolean
+
+Declaring an element a template means it is intended to be used as a template for objects created with Rez `copyAssigningId()` and `copyWithAutoId()` methods. A template does not the usual init system.
+
+* `$js_ctor`:string
+
+Using the `$js_ctor` attribute allows overriding of the JS prototype for a given element.
+
 == What's in a Game?
 
 The simplest possible Rez game would look something like this:
@@ -506,75 +520,75 @@ The simplest possible Rez game would look something like this:
   layout: ```
   ${content}
   ```
+}
 
-  %(stdlib.rez)
+%(stdlib.rez)
 
-  @scene play_game {
-    initial_card: #did_you_win
-    layout_mode: :single
-    played: 0
-    won: 0
-    win_p: 0
-    layout: ```
-    <div class="container">
-      $if{scene.played > 0} {%
-        <section class="hero is-primary">
-          <div class="hero-body">
-            <p class="title">Winning Percentage: ${scene.win_p | round: 0}%</p>
-            <p class="subtitle">
-              $if{scene.win_p >= 50.0} {%
-                You are a winner!
-              %}, {%
-                You are a loser!
-              %}
-            </p>
-          </div>
-        </section>
-      %}
+@scene play_game {
+  initial_card: #did_you_win
+  layout_mode: :single
+  played: 0
+  won: 0
+  win_p: 0
+  layout: ```
+  <div class="container">
+    $if{scene.played > 0} {%
+      <section class="hero is-primary">
+        <div class="hero-body">
+          <p class="title">Winning Percentage: ${scene.win_p | round: 0}%</p>
+          <p class="subtitle">
+            $if{scene.win_p >= 50.0} {%
+              You are a winner!
+            %}, {%
+              You are a loser!
+            %}
+          </p>
+        </div>
+      </section>
+    %}
 
-      <p>Played: ${scene.played}</p>
-      <p>Won ${scene.won}</p>
+    <p>Played: ${scene.played}</p>
+    <p>Won ${scene.won}</p>
 
-      ${content}
-    </div>
-    ```
-    win: function() {
-      this.played += 1;
-      this.won += 1;
-      this.win_p = this.won * 100 / this.played;
-    }
-    lose: function() {
-      this.played += 1;
-      this.win_p = this.won * 100 / this.played;
-    }
+    ${content}
+  </div>
+  ```
+  win: function() {
+    this.played += 1;
+    this.won += 1;
+    this.win_p = this.won * 100 / this.played;
   }
-
-  @card did_you_win {
-    content: ```
-    Did you win? [[yes|yes_i_won]] | [[no|no_i_lost]]
-    ```
+  lose: function() {
+    this.played += 1;
+    this.win_p = this.won * 100 / this.played;
   }
+}
 
-  @card yes_i_won {
-    content: ```
-    Congratulations!
+@card did_you_win {
+  content: ```
+  Did you win? [[yes|yes_i_won]] | [[no|no_i_lost]]
+  ```
+}
 
-    [[Play again|did_you_win]]
-    ```
-    on_start: (card) => {
-      card.scene.win();
-    }
+@card yes_i_won {
+  content: ```
+  Congratulations!
+
+  [[Play again|did_you_win]]
+  ```
+  on_start: (card) => {
+    card.scene.win();
   }
+}
 
-  @card no_i_lost {
-    content: ```
-    Better luck next time!
+@card no_i_lost {
+  content: ```
+  Better luck next time!
 
-    [[Play again|did_you_win]]
-    ```
-    on_start: (card) => {
-      card.scene.lose();
-    }
+  [[Play again|did_you_win]]
+  ```
+  on_start: (card) => {
+    card.scene.lose();
   }
 }
 ....
@@ -1037,7 +1051,7 @@ When a card gets rendered its `content` template is embedded within the followin
 
 One thing to note is that the `scene_id` may not be what you expect. If the current scene was set to `#explore_office` you might expect that the rendered HTML would contain this id. However Rez treats your @scene and @card elements as a template and uses a copy when rendering a scene.
 
-==
+=== Block Content
 
 Block content comes from cards that are being rendered inside another card. For example you might have a card `#sidebar` that we want to use to render sidebar content that should always be visible.
 
@@ -1527,10 +1541,6 @@ However there are two areas where this approach does not work:
 The latter is the `$foreach` case.
 
 Solving these two problems are what the `$partial` expression is for.
-
-
-
-
 
 === Do Blocks
 
