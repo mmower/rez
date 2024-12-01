@@ -9,6 +9,7 @@
 @defaults card {
   $flipped: false
   $suppress_wrapper: false
+  tags: #{}
 }
 
 @defaults scene {
@@ -16,6 +17,7 @@
   layout_reverse: false
   layout_separator: ""
   layout: ```${content}```
+  tags: #{}
 }
 
 @defaults slot {
