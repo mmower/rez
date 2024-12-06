@@ -6,9 +6,37 @@
 %% Defaults
 %% ----------------------------------------------------------------------------
 
+@defaults actor {
+  tags: #{}
+}
+
+@defaults asset {
+  tags: #{}
+}
+
 @defaults card {
   $flipped: false
   $suppress_wrapper: false
+  tags: #{}
+}
+
+@defaults faction {
+  tags: #{}
+}
+
+@defaults inventory {
+  tags: #{}
+}
+
+@defaults item {
+  tags: #{}
+}
+
+@defaults plot {
+  tags: #{}
+}
+
+@defaults rel {
   tags: #{}
 }
 
@@ -22,6 +50,11 @@
 
 @defaults slot {
   apply_effects: true
+  tags: #{}
+}
+
+@defaults system {
+  tags: #{}
 }
 
 %% ----------------------------------------------------------------------------
@@ -212,6 +245,14 @@
         Array.isArray(b) &&
         a.length === b.length &&
         a.every((val, index) => val === b[index]);
+  }
+}
+
+@patch PATCH_ARRAY_STARTS_WITH_SEQUENCE {
+  patch: "Array"
+  method: "startsWithSequence"
+  impl: function(sequence) {
+    return this.slice(0, sequence.length).every((value, index) => value === sequence[index]);
   }
 }
 

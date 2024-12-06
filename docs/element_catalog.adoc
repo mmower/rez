@@ -1565,18 +1565,16 @@ handler will be called.
       // Do something
     }
 
-== Style (Directive)
+== Styles (Directive)
 
-A style is used to include arbitrary CSS into the compiled game. Specify a style using the `@style` directive.
+The `@styles` directive is used to include arbitrary CSS into the compiled game.
 
-The `@style` directive consists of a string containing the CSS to include between `{` and `}` markers.
-
-The styles defined in the game's `@style` directives will be automatically included as &lt;style&gt; tags before the end of the &lt;head&gt; element of the generated HTML template.
+The styles defined within a `@styles` directives will be automatically included as &lt;style&gt; tags before the end of the &lt;head&gt; element of the generated HTML template.
 
 === Example
 
 ....
-@style {
+@styles {
   .card {
     /* My custom styles here */
   }

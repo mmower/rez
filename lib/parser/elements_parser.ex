@@ -80,8 +80,8 @@ defmodule Rez.Parser.ElementsParser do
     block_with_id("slot", Rez.AST.Slot)
   end
 
-  def style_element() do
-    delimited_block("stylesheet", fn -> "styles_" <> random_str() end, Rez.AST.Style)
+  def styles_element() do
+    delimited_block("styles", fn -> "styles_" <> random_str() end, Rez.AST.Style)
   end
 
   def system_element() do
@@ -115,7 +115,7 @@ defmodule Rez.Parser.ElementsParser do
         scene_element(),
         script_element(),
         slot_element(),
-        style_element(),
+        styles_element(),
         system_element(),
         timer_element()
       ],

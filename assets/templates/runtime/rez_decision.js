@@ -9,89 +9,114 @@
  * When given a decision the caller should call either of `yes()` or
  * `no(reason)` to instruct the calling code about what to do.
  */
+class RezDecision {
+  #purpose
+  #made
+  #result
+  #hidden
+  #reason
+  #data
+  #used_default
 
-function RezDecision(purpose, data = {}) {
-  this.purpose = purpose;
-  this.made = false;
-  this.result = false;
-  this.hidden = false;
-  this.reason = "";
-  this.data = data;
-  this.used_default = false;
-}
+  constructor(purpose, data = {}) {
+    this.#purpose = purpose;
+    this.#made = false;
+    this.#result = false;
+    this.#hidden = false;
+    this.#reason = "";
+    this.#data = data;
+    this.#used_default = false;
+  }
 
-RezDecision.prototype = {
-  constructor: RezDecision,
-
-  yes() {
-    this.made = true;
-    this.result = true;
-    this.used_default = false;
-    return this;
-  },
-
-  default_yes() {
-    this.made = true;
-    this.result = true;
-    this.used_default = true;
-  },
-
-  no(reason = "none given") {
-    this.made = true;
-    this.result = false;
-    this.reason = reason;
-    this.used_default = false;
-    return this;
-  },
-
-  no_and_hide(reason = "none given") {
-    this.made = true;
-    this.result = false;
-    this.reason = reason;
-    this.hidden = true;
-    this.used_default = false;
-    return this;
-  },
-
-  default_no(reason = "none given") {
-    this.made = true;
-    this.result = false;
-    this.reason = reason;
-    this.used_default = true;
-  },
+  get purpose() {
+    return this.#purpose;
+  }
 
   get wasMade() {
-    return this.made;
-  },
+    return this.#made;
+  }
 
-  get usedDefault() {
-    return this.used_default;
-  },
-
-  setData(key, value) {
-    this.data[key] = value;
-    return this;
-  },
+  get result() {
+    return this.#result;
+  }
 
   get wasYes() {
-    return this.result;
-  },
+    return this.#result;
+  }
 
   get wasNo() {
-    return !this.result;
-  },
+    return !this.wasYes;
+  }
+
+  get isHidden() {
+    return this.#hidden;
+  }
+
+  get reason() {
+    return this.#reason;
+  }
+
+  get data() {
+    return this.#data;
+  }
+
+  get usedDefault() {
+    return this.#used_default;
+  }
+
+  yes() {
+    this.#made = true;
+    this.#result = true;
+    this.#used_default = false;
+    return this;
+  }
+
+  defaultYes() {
+    this.#made = true;
+    this.#result = true;
+    this.#used_default = true;
+    return this;
+  }
+
+  no(reason = "none given") {
+    this.#made = true;
+    this.#result = false;
+    this.#reason = reason;
+    this.#used_default = false;
+    return this;
+  }
+
+  noAndHide(reason = "none given") {
+    this.#made = true;
+    this.#result = false;
+    this.#reason = reason;
+    this.#hidden = true;
+    this.#used_default = false;
+    return this;
+  }
+
+  defaultNo(reason = "none given") {
+    this.#made = true;
+    this.#result = false;
+    this.#reason = reason;
+    this.#used_default = true;
+    return this;
+  }
+
+  setData(key, value) {
+    this.#data[key] = value;
+    return this;
+  }
 
   explain() {
     if (this.result) {
       return `Result was yes`;
     } else {
-      if (this.hide) {
+      if (this.hidden) {
         return `Result was no (${this.reason}) and hide the decision`;
       } else {
         return `Result was no (${this.reason})`;
       }
     }
-  },
-};
-
-window.Rez.RezDecision = RezDecision;
+  }
+}
