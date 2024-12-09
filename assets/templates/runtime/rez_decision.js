@@ -86,13 +86,12 @@ class RezDecision {
     return this;
   }
 
-  noAndHide(reason = "none given") {
+  hide() {
     this.#made = true;
     this.#result = false;
-    this.#reason = reason;
+    this.#reason = "hidden";
     this.#hidden = true;
     this.#used_default = false;
-    return this;
   }
 
   defaultNo(reason = "none given") {

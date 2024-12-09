@@ -573,6 +573,14 @@
   }
 }
 
+@patch PATH_MATH_DIV {
+  patch: "Math"
+  function: "div"
+  impl: function(n, d) {
+    return Math.floor(n/d);
+  }
+}
+
 @patch PATCH_MATH_DIVMOD {
   patch: "Math"
   function: "div_mod"
@@ -683,7 +691,7 @@
   patch: "Math"
   function: "clamped_sub"
   impl: function(value, sub, min) {
-    return Math.max(value-sub, 0);
+    return Math.max(value-sub, min);
   }
 }
 
