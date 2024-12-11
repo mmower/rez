@@ -52,8 +52,12 @@ RezInventory.prototype = {
     const initial_contents = this.getAttribute("initial_contents");
     if(typeof(initial_contents) === "object") {
       for(const [slot_id, contents] of Object.entries(initial_contents)) {
-        for(const item_id of contents) {
-          this.addItemToSlot(slot_id, item_id);
+        if(Array.isArray(contents)) {
+          for(const item_id of contents) {
+            this.addItemToSlot(slot_id, item_id);
+          }
+        } else {
+          this.addItemToSlot(slot_id, contents);
         }
       }
     }
