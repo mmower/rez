@@ -29,7 +29,7 @@ The Rez language is mostly declarative. You use attributes to specify what happe
 
 Rez is written in the Elixir programming language and requires both Elixir and Erlang to be installed.
 
-Rez targets Elixir v1.15/OTP-26 but should be compilable with previous versions back to 1.13/OTP-25.
+Rez targets Elixir v1.15/OTP-26 and is compatible with versions from v1.15 to v1.16.
 
 === macOS
 

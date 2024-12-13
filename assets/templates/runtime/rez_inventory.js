@@ -22,23 +22,6 @@ RezInventory.prototype = {
   constructor: RezInventory,
 
   /**
-   * @function addItemHolderForSlot
-   * @memberof RezInventory
-   * @param {string} slot_id
-   * @description adds an empty array to hold items for the given slot.
-   */
-  addSlot(slot_id) {
-    const items = this.getAttribute("items");
-    items[slot_id] = [];
-
-    Object.defineProperty(this, `${slot_id}_contents`, {
-      get: function () {
-        return this.getAttribute("items")[slot_id];
-      },
-    });
-  },
-
-  /**
    * @function elementInitializer
    * @memberof RezInventory
    * @description called as part of the init process this creates the inital inventory slots
@@ -61,6 +44,23 @@ RezInventory.prototype = {
         }
       }
     }
+  },
+
+  /**
+   * @function addItemHolderForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @description adds an empty array to hold items for the given slot.
+   */
+  addSlot(slot_id) {
+    const items = this.getAttribute("items");
+    items[slot_id] = [];
+
+    Object.defineProperty(this, `${slot_id}_contents`, {
+      get: function () {
+        return this.getAttribute("items")[slot_id];
+      },
+    });
   },
 
   /**
@@ -136,10 +136,10 @@ RezInventory.prototype = {
    * @description add either a single item_id or an array of item_ids to the slot
    */
   appendToSlot(slot_id, item_or_items) {
-    if(typeof(item_or_items) === "string") {
-      this.appendItemToSlot(slot_id, item_or_items);
-    } else if(typeof(item_or_items) === "array") {
+    if(Array.isArray(item_or_items)) {
       item_or_items.forEach((item_id) => this.appendItemToSlot(slot_id, item_id));
+    } else {
+      this.appendItemToSlot(slot_id, item_or_items);
     }
   },
 

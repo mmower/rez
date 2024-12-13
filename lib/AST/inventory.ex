@@ -30,6 +30,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
   def default_attributes(_inventory),
     do: %{
       "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
+      "all_items" => Attribute.list("all_items", []),
       "items" => Attribute.table("items", %{}),
       "apply_effects" => Attribute.boolean("apply_effects", true)
     }
