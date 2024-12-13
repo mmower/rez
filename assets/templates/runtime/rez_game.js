@@ -598,7 +598,7 @@ RezGame.prototype = {
    * @param {Object} content block to be added to the view
    */
   setViewContent(content) {
-    this.view.getLayout().addContent(content);
+    this.view.addLayoutContent(content);
   },
 
   /**
