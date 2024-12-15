@@ -6,7 +6,7 @@
 
 const game = <%= Node.js_initializer(@game) %>;
 
-basic_object.game = game;
+RezBasicObject.game = game;
 
 /* Encode game objects */
 let el;

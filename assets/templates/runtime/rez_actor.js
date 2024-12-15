@@ -2,22 +2,10 @@
 // Actor
 //-----------------------------------------------------------------------------
 
-/**
- * @class
- * @param {string} id
- * @param {object} attributes
- */
-function RezActor(id, attributes) {
-  this.id = id;
-  this.game_object_type = "actor";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
-
-RezActor.prototype = {
-  __proto__: basic_object,
-  constructor: RezActor,
+class RezActor extends RezBasicObject {
+  constructor(id, attributes) {
+    super("actor", id, attributes);
+  }
 
   /**
    * @function checkItem
@@ -39,19 +27,19 @@ RezActor.prototype = {
    * The RezDecision will default to yes. The event handler should return an
    * appropriate RezDecision.
    */
-  checkItem(inventory_id, slot_id, item_id) {
+  checkItem(inventoryId, slotId, itemId) {
     const decision = new RezDecision("Filter Item");
     decision.default_yes();
     if (this.willHandleEvent("accept_item")) {
       this.runEvent("accept_item", {
         decision: decision,
-        inventory_id: inventory_id,
-        slot_id: slot_id,
-        item_id: item_id,
+        inventoryId: inventoryId,
+        slotId: slotId,
+        itemId: itemId,
       });
     }
     return decision;
-  },
+  }
 
   /**
    * @function elementInitializer
@@ -60,9 +48,9 @@ RezActor.prototype = {
    */
   elementInitializer() {
     if (this.hasAttribute("initial_location")) {
-      this.move_to(this.getAttributeValue("initial_location"));
+      this.moveTo(this.getAttributeValue("initial_location"));
     }
-  },
+  }
 
   /**
    * @function moveTo
@@ -70,21 +58,21 @@ RezActor.prototype = {
    * @param {string} to_location_id
    * @description moves this actor to a new location
    */
-  move_to(to_location_id) {
-    console.log("Moving |" + this.id + "| to |" + to_location_id + "|");
+  moveTo(destLocationId) {
+    console.log(`Moving |${this.id}| to |${destLocationId}|`);
 
     if (this.hasAttribute("location_id")) {
-      const from_location_id = this.getAttributeValue("location_id");
-      this.runEvent("leave", { location_id: from_location_id });
-      const from_location = $(from_location_id);
-      from_location.runEvent("leave", { actor_id: this.id });
+      const fromLocationId = this.getAttributeValue("location_id");
+      this.runEvent("leave", {location_id: fromLocationId});
+      const fromLocation = $(fromLocationId);
+      fromLocation.runEvent("leave", { actor_id: this.id });
     }
 
-    this.setAttribute("location_id", to_location_id);
-    this.runEvent("enter", { location_id: to_location_id });
-    const to_location = $(to_location_id);
-    to_location.runEvent("enter", { actor_id: this.id });
-  },
-};
+    this.setAttribute("location_id", destLocationId);
+    this.runEvent("enter", { location_id: destLocationId });
+    const destLocation = $(destLocationId);
+    destLocation.runEvent("enter", { actor_id: this.id });
+  }
+}
 
 window.Rez.RezActor = RezActor;

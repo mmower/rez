@@ -8,17 +8,10 @@
 // or behaviours.
 //-----------------------------------------------------------------------------
 
-function RezObject(id, attributes) {
-  this.id = id;
-  this.game_object_type = "object";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
+class RezObject extends RezBasicObject {
+  constructor(id, attributes) {
+    super("object", id, attributes)
+  }
 }
-
-RezObject.prototype = {
-  __proto__: basic_object,
-  constructor: RezObject
-};
 
 window.Rez.RezObject = RezObject;

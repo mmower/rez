@@ -2,50 +2,64 @@
 // DynamicLink
 //-----------------------------------------------------------------------------
 
-function RezDynamicLink(card) {
-  this.game_object_type = "dynamic_link";
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-  this.card = card;
-}
+class RezDynamicLink {
+  #card;
+  #inactiveClass;
+  #choosen;
+  #display;
+  #markup;
 
-RezDynamicLink.prototype = {
-  constructor: RezDynamicLink,
+  constructor(card) {
+    this.#card = card;
+    this.#inactiveClass = "inactive";
+    this.#choosen = false;
+    this.#display = true;
+    this.#markup = "<strong>No text for dynamic link</strong>";
+  }
 
-  inactive_class: "inactive",
-  choosen: false,
-  display: true,
-  markup: "<strong>No text for dynamic link</strong>",
+  get card() {
+    return this.#card;
+  }
 
-  allow(response, target_id) {
-    this.choosen = true;
-    if (typeof response == "function") {
-      this.markup = response();
+  get inactiveClass() {
+    return this.#inactiveClass;
+  }
+
+  get choosen() {
+    return this.#choosen;
+  }
+
+  get display() {
+    return this.#display;
+  }
+
+  get markup() {
+    return this.#markup;
+  }
+
+  allow(response, targetId) {
+    this.#choosen = true;
+    if (typeof response === "function") {
+      this.#markup = response();
     } else {
-      this.markup = `<a href="javascript:void(0)" data-event="card" data-target="${target_id}">${response}</a>`;
+      this.#markup = `<a href="javascript:void(0)" data-event="card" data-target="${targetId}">${response}</a>`;
     }
-  },
+  }
 
-  deny(text, as_link) {
-    this.choosen = true;
+  deny(text, asLink) {
+    this.#choosen = true;
 
-    if (as_link == null || as_link) {
-      this.markup =
-        '<a href="javascript:void(0)" class="' +
-        this.inactive_class +
-        '">' +
-        text +
-        "</a>";
+    if(asLink == null || asLink) {
+      this.#markup = `<a href="javascript:void(0)" class="${this.inactiveClass}">${text}</a>`;
     } else {
-      this.markup =
-        '<span class="' + this.inactive_class + '">' + text + "</span>";
+      this.#markup = `<span class="${this.inactiveClass}">${text}</span>`;
     }
-  },
+  }
 
   hide() {
-    this.choosen = true;
-    this.display = false;
-  },
-};
+    this.#choosen = true;
+    this.#display = false;
+  }
+}
 
 window.Rez.RezDynamicLink = RezDynamicLink;

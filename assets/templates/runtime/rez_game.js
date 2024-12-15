@@ -2,81 +2,49 @@
 // Game
 //-----------------------------------------------------------------------------
 
-/**
- * @class
- * @param {string} id
- * @param {object} attributes
- * @description Represents the singleton @game instance
- */
-function RezGame(id, attributes) {
-  this.id = id;
-  this.undo_manager = new RezUndoManager();
-  this.event_processor = new RezEventProcessor(this);
-  this.game_object_type = "game";
-  this.attributes = attributes;
-  this.tag_index = {};
-  this.attr_index = {};
-  this.wmem = { game: this };
-  this.game_objects = new Map();
-  this.properties_to_archive = [
-    "wmem",
-    "tag_index",
-    "attr_index"
-  ];
-  this.changed_attributes = [];
-  this.$ = this.getGameObject;
-  this.addGameObject(this);
-}
+class RezGame extends RezBasicObject {
+  #undoManager;
+  #eventProcessor;
+  #tagIndex;
+  #attrIndex;
+  #wmem;
+  #gameObjects;
 
-RezGame.prototype = {
-  __proto__: basic_object,
-  constructor: RezGame,
+  constructor(id, attributes) {
+    super("game", id, attributes);
 
-  targetType: "game",
+    this.#undoManager = new RezUndoManager();
+    this.#eventProcessor = new RezEventProcessor(this);
+    this.#tagIndex = {};
+    this.#attrIndex = {};
+    this.#wmem = {game: this};
+    this.#gameObjects = new Map();
+    this.$ = this.getGameObject;
+    this.addGameObject(this);
+  }
 
-  /**
-   * @memberof RezGame
-   * @property {RezUndoManager} undoManager the game undo manager
-   */
+  targetType = "game";
+
   get undoManager() {
-    return this.undo_manager;
-  },
+    return this.#undoManager;
+  }
 
-  /**
-   * @function bindAs
-   * @memberof RezGame
-   * @returns {string} default binding name for this object
-   */
+  get gameObjects() {
+    return this.#gameObjects;
+  }
+
   bindAs() {
     return "game";
-  },
+  }
 
-  /**
-   * @function getViewTemplate
-   * @memberof RezGame
-   * @returns {*} the layout template object, need to check what type that is
-   */
   getViewTemplate() {
     return this.$layout_template;
-  },
+  }
 
-  /**
-   * @function initLevels
-   * @memberof RezGame
-   * @returns {Array} array of init levels to run (e.g. [0, 1, ..])
-   */
   initLevels() {
     return [0, 1, 2, 3];
-  },
+  }
 
-  /**
-   * @function saveFileName
-   * @memberof RezGame
-   * @param {string} prefix (defaults to game name)
-   * @returns {string} file name
-   * @description generates a save file name using a prefix & a date-time with
-   * a .json extension.
-   */
   saveFileName(prefix) {
     if(typeof(prefix) === "undefined") {
       prefix = this.name;
@@ -93,73 +61,57 @@ RezGame.prototype = {
       now.getMinutes(),
       now.getSeconds(),
     ];
-    const date_mapped = date_parts.map(formatter);
-    const date_joined = date_mapped.join("");
-    return prefix.toSnakeCase() + "_" + date_joined + ".json";
-  },
+    const dateMapped = date_parts.map(formatter);
+    const dateJoined = dateMapped.join("");
+    return prefix.toSnakeCase() + "_" + dateJoined + ".json";
+  }
 
-  /**
-   * @function dataWithArchivedObjects
-   * @memberof RezGame
-   * @param {object} data data archive to append objects to
-   * @returns {object} modified data archive
-   */
   dataWithArchivedObjects(data) {
     console.dir(this);
-    console.log("Checking " + this.game_objects.size + " objects.");
-    this.game_objects.forEach(function (obj, id) {
-      console.log(id + " -> " + obj.needsArchiving());
-      if (obj.needsArchiving()) {
+    console.log(`Checking ${this.gameObjects.size} objects.`);
+    this.gameObjects.forEach(function (obj, id) {
+      console.log(`${id} -> ${obj.needsArchiving()}`);
+      if(obj.needsArchiving()) {
         data["objs"] = data["objs"] || {};
         data["objs"][obj.id] = obj;
       }
     });
     console.log("Done");
     return data;
-  },
+  }
 
-  /**
-   * @function toJSON
-   * @memberof RezGame
-   * @returns {object} a versioned JSON archive
-   */
   toJSON() {
     let data = this.archiveDataContainer();
     data = this.dataWithArchivedAttributes(data);
-    data = this.dataWithArchivedProperties(data);
+    // data = this.dataWithArchivedProperties(data);
     data = this.dataWithArchivedObjects(data);
 
     return {
-      rez_archive: this.archive_format,
+      archive_format: this.archive_format,
       data: data,
     };
-  },
+  }
 
-  /**
-   * @function archive
-   * @memberof RezGame
-   * @returns {string} JSON formatted archive string
-   */
   archive() {
     const archived = {};
 
     return JSON.stringify(this, function (key, value) {
       console.log("archive: [" + key + "]");
 
-      if (key == "" || value == null) {
+      if(key === "" || value === null) {
         // This is the game itself
         archived["game"] = true;
         return value;
-      } else if (isGameObject(value)) {
+      } else if(value instanceof RezBasicObject) {
         // This is a game object
         const goid = value.id; // GameObjectID
         console.log("<- is a game object: " + goid);
-        if (archived[goid]) {
+        if(archived[goid]) {
           console.log("<- is already archived");
           return {
             json$safe: true,
             type: "ref",
-            game_object_type: value.game_object_type,
+            element_name: value.element_name,
             game_object_id: value.id,
           };
         } else {
@@ -167,20 +119,20 @@ RezGame.prototype = {
           archived[goid] = true;
           return value;
         }
-      } else if (isObject(value)) {
+      } else if(isObject(value)) {
         return value.obj_map((v) => {
-          if (isGameObject(v)) {
+          if(v instanceof RezBasicObject) {
             return {
               json$safe: true,
               type: "ref",
-              game_object_type: value.game_object_type,
+              element_name: value.element_name,
               game_object_id: value.id,
             };
           } else {
             return v;
           }
         });
-      } else if (typeof value == "function") {
+      } else if(typeof value == "function") {
         return {
           json$safe: true,
           type: "function",
@@ -192,9 +144,9 @@ RezGame.prototype = {
       }
       return value;
     });
-  },
+  }
 
-  /**
+   /**
    * @function save
    * @memberof RezGame
    * @description triggers a download of the game archive
@@ -221,7 +173,7 @@ RezGame.prototype = {
       URL.revokeObjectURL(link.href);
       link.parentNode.removeChild(link);
     }, 0);
-  },
+  }
 
   /**
    * @function load
@@ -232,22 +184,18 @@ RezGame.prototype = {
   load(source) {
     const wrapper = JSON.parse(source);
 
-    const archive_version = wrapper["rez_archive"];
-    if (typeof archive_version == "undefined") {
-      throw "JSON does not represent a Rez game archive!";
-    } else if (archive_version != this.getAttribute("archive_format")) {
-      throw (
-        "JSON is v" +
-        archive_version +
-        " which is not supported (v" +
-        this.getAttribute("archive_format") +
-        ")!"
-      );
+    const archiveFormat = wrapper["archive_format"];
+    const currentFormat = this.getAttribute("archive_format");
+
+    if(typeof archiveFormat === "undefined") {
+      throw new Error("JSON does not represent a Rez game archive!");
+    } else if(archiveFormat != currentFormat) {
+      throw new Error(`JSON version v${archiveFormat} different to current v${currentFormat})!`);
     }
 
     const data = wrapper["data"];
-    if (typeof data == "undefined") {
-      throw "JSON does not contain data archive!";
+    if(typeof data === "undefined") {
+      throw new Error("JSON does not contain data archive!");
     }
 
     // Load the game's attributes and properties
@@ -262,7 +210,7 @@ RezGame.prototype = {
     }
 
     this.getAll().forEach((obj) => obj.runEvent("game_loaded"));
-  },
+  }
 
   /**
    * @function getTaggedWith
@@ -272,13 +220,13 @@ RezGame.prototype = {
    * @description returns all game-objects tagged with the specified tag
    */
   getTaggedWith(tag) {
-    const objects = this.tag_index[tag];
-    if (objects) {
+    const objects = this.#tagIndex[tag];
+    if(objects) {
       return Array.from(objects);
     } else {
       return [];
     }
-  },
+  }
 
   /**
    * For each attribute defined on this game object, add it to the game-wide
@@ -290,7 +238,7 @@ RezGame.prototype = {
     Object.entries(elem.attributes).forEach(([k, v]) => {
       this.indexAttribute(elem.id, k);
     });
-  },
+  }
 
   /**
    * Adds the element to the per-attribute index.
@@ -298,11 +246,11 @@ RezGame.prototype = {
    * @param {string} elem_id id of element to add to the per-attr index
    * @param {string} attr_name
    */
-  indexAttribute(elem_id, attr_name) {
-    let index = this.attr_index[attr_name] ?? new Set();
-    index.add(elem_id);
-    this.attr_index[attr_name] = index;
-  },
+  indexAttribute(elemId, attrName) {
+    let index = this.#attrIndex[attrName] ?? new Set();
+    index.add(elemId);
+    this.#attrIndex[attrName] = index;
+  }
 
   /**
    * Return the ids of all game elements having the specified attribute.
@@ -310,10 +258,10 @@ RezGame.prototype = {
    * @param {string} attr_name
    * @returns {Array} matching element ids
    */
-  getObjectsWith(attr_name) {
-    const index = this.attr_index[attr_name] ?? new Set();
+  getObjectsWith(attrName) {
+    const index = this.#attrIndex[attrName] ?? new Set();
     return Array.from(index);
-  },
+  }
 
   /**
    * @function indexObjectForTag
@@ -323,14 +271,14 @@ RezGame.prototype = {
    * @description applies the specified tag to the spectified game-object
    */
   indexObjectForTag(obj, tag) {
-    let objects = this.tag_index[tag];
+    let objects = this.#tagIndex[tag];
     if (!objects) {
       objects = new Set([obj.id]);
-      this.tag_index[tag] = objects;
+      this.#tagIndex[tag] = objects;
     } else {
       objects.add(obj.id)
     }
-  },
+  }
 
   /**
    * @function unindexObjectForTag
@@ -340,11 +288,11 @@ RezGame.prototype = {
    * @description removes the specified tag from the specified game-object
    */
   unindexObjectForTag(obj, tag) {
-    let objects = this.tag_index[tag];
-    if (objects) {
+    let objects = this.#tagIndex[tag];
+    if(objects) {
       objects.delete(obj.id);
     }
-  },
+  }
 
   /**
    * @function addToTagIndex
@@ -355,7 +303,7 @@ RezGame.prototype = {
   addToTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
     tags.forEach((tag) => this.indexObjectForTag(obj, tag));
-  },
+  }
 
   /**
    * @function removeFromTagIndex
@@ -366,7 +314,7 @@ RezGame.prototype = {
   removeFromTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
     tags.forEach((tag) => this.unindexObjectForTag(obj, tag));
-  },
+  }
 
   /**
    * @function addGameObject
@@ -375,39 +323,38 @@ RezGame.prototype = {
    * @description adds an object representing a game element to the game world and automatically tagging it by its attributes
   */
   addGameObject(obj) {
-    if (!isGameObject(obj)) {
+    if(!(obj instanceof RezBasicObject)) {
       console.dir(obj);
-      throw "Attempt to register non-game object!";
+      throw new Error("Attempt to register non-game object!");
     }
 
-    obj.game = this;
-    this.game_objects.set(obj.id, obj);
+    this.#gameObjects.set(obj.id, obj);
     this.addToTagIndex(obj);
     this.addToAttrIndex(obj);
-  },
+  }
 
   /**
    * @function getGameObject
    * @memberof RezGame
    * @param {string} id id of game-object
    * @param {boolean} should_throw (default: true)
-   * @returns {basic_object|null} game-object or null
+   * @returns {basic_object|undefined} game-object or undefined
    * @description given an element id returns the appropriate game-object reference
    *
    * If should_throw is true an exception will be thrown if the element id
    * is not valid. Otherwise null is returned.
    */
-  getGameObject(id, should_throw = true) {
-    if (!this.game_objects.has(id)) {
-      if (should_throw) {
-        throw `No such ID |${id}| found!`;
+  getGameObject(id, shouldThrow = true) {
+    const obj = this.#gameObjects.get(id);
+    if(typeof(obj) === "undefined") {
+      if(shouldThrow) {
+        throw new Error(`No such ID |${id}| found!`);
       } else {
-        return null;
+        return undefined;
       }
-    } else {
-      return this.game_objects.get(id);
     }
-  },
+    return obj;
+  }
 
   /**
    * @function getTypedGameObject
@@ -417,18 +364,17 @@ RezGame.prototype = {
    * @param {boolean} should_throw (default: true)
    * @returns {basic_object|null} game-object or null
    */
-  getTypedGameObject(id, type, should_throw = true) {
-    const obj = this.getGameObject(id, type, should_throw);
-    if(obj.game_object_type !== type) {
-      if(should_throw) {
-        throw `Game object |${id}| was expected to have type |${type}| but found |${obj.game_object_type}|!`
+  getTypedGameObject(id, element, shouldThrow = true) {
+    const obj = this.getGameObject(id, shouldThrow);
+    if(typeof(obj) !== "undefined" && obj.element !== element) {
+      if(shouldThrow) {
+        throw new Error(`Game object |${id}| expected to be |${element}| but was |${obj.element}|!`);
       } else {
-        return null;
+        return undefined;
       }
-    } else {
-      return obj;
     }
-  },
+    return obj;
+  }
 
   /**
    * @function elementAttributeHasChanged
@@ -441,15 +387,15 @@ RezGame.prototype = {
    *
    * Currently this function notifies the undo manager and the view
    */
-  elementAttributeHasChanged(elem, attr_name, old_value, new_value) {
+  elementAttributeHasChanged(elem, attrName, oldValue, newValue) {
     if(this.undoManager) {
-      this.undoManager.recordChange(elem.id, attr_name, old_value);
+      this.undoManager.recordChange(elem.id, attrName, oldValue);
     }
 
     if(this.view) {
-      this.view.updateBoundControls(elem.id, attr_name, new_value);
+      this.view.updateBoundControls(elem.id, attrName, newValue);
     }
-  },
+  }
 
   /**
    * @function getRelationship
@@ -463,22 +409,22 @@ RezGame.prototype = {
    * Note that in Rez relationships are unidirectional so that getRelationship("a", "b")
    * and getRelationship("b", "a") are different RezRelationship objects.
    */
-  getRelationship(source_id, target_id) {
-    const rel_id = "rel_" + source_id + "_" + target_id;
-    return this.getGameObject(rel_id, false);
-  },
+  getRelationship(sourceId, targetId) {
+    const relId = "rel_" + sourceId + "_" + targetId;
+    return this.getTypedGameObject(relId, "relationship", false);
+  }
 
-  getRelationshipsOf(source_id) {
-    return this.filterObjects((o) => {
-      return o.game_object_type == "relationship" && o.id.startsWith(`rel_${source_id}_`)
-    })
-  },
+  getRelationshipsOf(sourceId) {
+    return this.filterObjects(
+      (o) => o.element == "relationship" && o.id.startsWith(`rel_${sourceId}_`)
+    );
+  }
 
-  getRelationshipsOn(target_id) {
-    return this.filterObjects((o) => {
-      return o.game_object_type == "relationship" && o.id.endsWith(`_${target_id}`)
-    })
-  },
+  getRelationshipsOn(targetId) {
+    return this.filterObjects(
+      (o) => o.element == "relationship" && o.id.endsWith(`_${targetId}`)
+    );
+  }
 
   /**
    * @function filterObjects
@@ -488,8 +434,8 @@ RezGame.prototype = {
    * @description filters all game-objects returning those for which the pred filter returns true
    */
   filterObjects(pred) {
-    return Array.from(this.game_objects.values()).filter(pred);
-  },
+    return Array.from(this.#gameObjects.values()).filter(pred);
+  }
 
   /**
    * @function getAll
@@ -498,13 +444,13 @@ RezGame.prototype = {
    * @returns {array} game-objects with the specified type
    * @description filters all game-objects returning those with the specified type
    */
-  getAll(target_type) {
-    if(target_type === undefined) {
-      return Array.from(this.game_objects.values());
+  getAll(element) {
+    if(typeof element === undefined) {
+      return Array.from(this.#gameObjects.values());
     } else {
-      return this.filterObjects((obj) => obj.game_object_type == target_type);
+      return this.filterObjects((obj) => obj.element === element);
     }
-  },
+  }
 
   /**
    * @function startSceneWithId
@@ -513,19 +459,14 @@ RezGame.prototype = {
    * @param {object} params data to pass to the new scene
    * @description finish the current scene and start the new scene with the given id
    */
-  startSceneWithId(scene_id, params = {}) {
-    if (scene_id == null) {
-      throw "new_scene_id cannot be null!";
-    }
+  startSceneWithId(sceneId, params = {}) {
+    // current_scene is a Rez attribute defined by @scene
 
-    if (this.current_scene) {
+    if(this.current_scene) {
       this.current_scene.finish();
     }
 
-    const scene = $(scene_id);
-    if(scene.game_object_type !== "scene") {
-      throw `Attempt to switch scene to game object |${scene_id}| which is a |${scene.game_object_type}|!`;
-    }
+    const scene = this.getTypedGameObject(sceneId, "scene", true);
 
     this.current_scene = scene;
 
@@ -536,7 +477,7 @@ RezGame.prototype = {
     this.clearFlashMessages();
     scene.start();
     scene.ready();
-  },
+  }
 
   /**
    * @function interludeSceneWithId
@@ -545,16 +486,12 @@ RezGame.prototype = {
    * @param {object} params data to pass to the new scene
    * @description interrupts the current scene, pushing it to the scene stack, and then starts the new scene with the given id
    */
-  interludeSceneWithId(scene_id, params = {}) {
-    console.log(`Interlude from |${this.current_scene_id}| to |${scene_id}|`);
+  interludeSceneWithId(sceneId, params = {}) {
+    // current_scene is a Rez attribute defined by @scene
 
-    // Save the state of the current scene
     this.pushScene();
 
-    const scene = $(scene_id);
-    if(scene.game_object_type !== "scene") {
-      throw `Attempt to interlude to game object |${new_scene_id}| which is a |${scene.game_object_type}|!`;
-    }
+    const scene = this.getTypedGameObject(sceneId, "scene", true);
 
     this.current_scene = scene;
 
@@ -566,7 +503,7 @@ RezGame.prototype = {
 
     scene.start();
     scene.ready();
-  },
+  }
 
   /**
    * @function resumePrevScene
@@ -575,9 +512,8 @@ RezGame.prototype = {
    * @description finishes the current scene, then pops the previous scene from the scene stack and resumes it
    */
   resumePrevScene(params = {}) {
-    console.log(`Resume from |${this.current_scene_id}|`);
-    if (!this.canResume()) {
-      throw "Cannot resume without a scene on the stack!";
+    if(!this.canResume()) {
+      throw new Error("Cannot resume without a scene on the stack!");
     } else {
       // Let the interlude know we're done
       this.current_scene.finish();
@@ -588,7 +524,7 @@ RezGame.prototype = {
       layout.params = {...layout.params, ...params};
       this.updateView();
     }
-  },
+  }
 
   /**
    * Informs the view of new content to be rendered. It is left up to the view
@@ -599,7 +535,7 @@ RezGame.prototype = {
    */
   setViewContent(content) {
     this.view.addLayoutContent(content);
-  },
+  }
 
   /**
    * @function updateView
@@ -613,7 +549,7 @@ RezGame.prototype = {
     this.view.update();
     this.runEvent("after_render", {});
     this.clearFlashMessages();
-  },
+  }
 
   /**
    * @function canResume
@@ -623,7 +559,7 @@ RezGame.prototype = {
    */
   canResume() {
     return this.$scene_stack.length > 0;
-  },
+  }
 
   /**
    * @function pushScene
@@ -631,10 +567,11 @@ RezGame.prototype = {
    * @description interrupts the current scene and puts it on the scene stack
    */
   pushScene() {
+    // current_scene is an attribute defined on @game
     this.current_scene.interrupt();
     this.$scene_stack.push(this.current_scene_id);
     this.view.pushLayout(new RezSingleLayout("scene", this));
-  },
+  }
 
   /**
    * @function popScene
@@ -646,7 +583,7 @@ RezGame.prototype = {
     this.view.popLayout();
     this.current_scene_id = this.$scene_stack.pop();
     this.current_scene.resume(params);
-  },
+  }
 
   /**
    * @function setViewLayout
@@ -656,7 +593,7 @@ RezGame.prototype = {
    */
   setViewLayout(layout) {
     this.view.setLayout(layout);
-  },
+  }
 
   /**
    * @function start
@@ -665,7 +602,7 @@ RezGame.prototype = {
    * @description called automatically from the index.html this runs init on the registered game
    * objects then starts the view and starts the initial scene
    */
-  start(container_id) {
+  start(containerId) {
     console.log("> Game.start");
 
     // Init every object, will also trigger on_init for any object that defines it
@@ -687,13 +624,13 @@ RezGame.prototype = {
     });
 
     this.view = new RezView(
-      container_id,
-      this.event_processor,
+      containerId,
+      this.#eventProcessor,
       new RezSingleLayout("game", this)
     );
 
     this.startSceneWithId(this.initial_scene_id);
-  },
+  }
 
   /**
    * @function getEnabledSystems
@@ -701,10 +638,10 @@ RezGame.prototype = {
    * @returns {array} all 'system' game-objects with attribute enabled=true
    */
   getEnabledSystems() {
-    const filter = (o) => o.game_object_type === "system" && o.getAttributeValue("enabled");
+    const filter = (o) => o.element === "system" && o.getAttributeValue("enabled");
     const order = (sys_a, sys_b) => sys_b.getAttributeValue("priority") - sys_a.getAttributeValue("priority");
     return this.filterObjects(filter).sort(order);
-  },
+  }
 
   /**
    * @function addFlashMessage
@@ -714,7 +651,7 @@ RezGame.prototype = {
    */
   addFlashMessage(message) {
     this.$flash_messages.push(message);
-  },
+  }
 
   /**
    * @function clearFlashMessages
@@ -723,7 +660,7 @@ RezGame.prototype = {
    */
   clearFlashMessages() {
     this.$flash_messages = [];
-  },
-};
+  }
+}
 
 window.Rez.RezGame = RezGame;

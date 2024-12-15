@@ -2,37 +2,17 @@
 // Relationship
 //-----------------------------------------------------------------------------
 
-function RezRelationship(id, attributes) {
-  this.id = id;
-  this.game_object_type = "relationship";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-}
+class RezRelationship extends RezBasicObject {
+  constructor(id, attributes) {
+    super("relationship", id, attributes);
+  }
 
-RezRelationship.prototype = {
-  __proto__: basic_object,
-  constructor: RezRelationship,
-
-  get source() {
-    return this.getAttributeValue("source");
-  },
-
-  get source_obj() {
-    return $(this.source);
-  },
-
-  get target() {
-    return this.getAttributeValue("target");
-  },
-
-  get target_obj() {
-    return $(this.target);
-  },
+  // The @relationship element will define source_id and target_id
+  // attributes, leading to source & target being defined automatically
 
   get inverse() {
-    return this.game.getRelationship(this.target, this.source);
+    return this.game.getRelationship(this.target_id, this.source_id);
   }
-};
+}
 
 window.Rez.RezRelationship = RezRelationship;

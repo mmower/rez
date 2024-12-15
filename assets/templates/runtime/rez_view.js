@@ -703,7 +703,7 @@ window.Rez.RezBindingTransformer = RezBindingTransformer;
 class RezView {
   #container;
   #layout;
-  #layout_stack;
+  #layoutStack;
   #bindings;
   #receiver;
   #transformers;
@@ -716,7 +716,7 @@ class RezView {
 
     this.#container = document.getElementById(container_id);
     this.#layout = layout;
-    this.#layout_stack = [];
+    this.#layoutStack = [];
     this.#bindings = new Map();
     this.#receiver = receiver;
     this.#transformers = transformers ?? this.defaultTransformers();
@@ -734,13 +734,17 @@ class RezView {
     this.#layout = layout;
   }
 
+  get layoutStack() {
+    return this.#layoutStack;
+  }
+
   pushLayout(layout) {
-    this.layout_stack.push(this.layout);
+    this.layoutStack.push(this.layout);
     this.layout = layout;
   }
 
   popLayout() {
-    this.layout = this.layout_stack.pop();
+    this.layout = this.layoutStack.pop();
   }
 
   addLayoutContent(content) {

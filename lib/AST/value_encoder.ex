@@ -25,7 +25,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:undefined, _}) do
-    "no_value"
+    "noValue"
   end
 
   def encode_value({:number, n}) do

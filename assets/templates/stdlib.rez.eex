@@ -32,6 +32,13 @@
   tags: #{}
 }
 
+@defaults list {
+  $cycles: {}
+  $bags: {}
+  $walks: {}
+  tags: #{}
+}
+
 @defaults plot {
   tags: #{}
 }
@@ -1082,9 +1089,9 @@
   impl: (asset_id) => {
     const asset = $(asset_id);
     if(asset == null) {
-      throw "Attempt to retrieve asset with id '" + asset_id + "' not found!";
-    } else if(asset.game_object_type != "asset") {
-      throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
+      throw new Error(`Attempt to retrieve unknown asset |${asset_id}|!`);
+    } else if(asset.type != "asset") {
+      throw new Error(`Attempt to retrieve asset |${asset_id}| but found ${asset.type}`);
     } else {
       return asset.tag();
     }
@@ -1099,9 +1106,9 @@
   impl: (asset_id) => {
     const asset = $(asset_id);
     if(asset == null) {
-      throw "Attempt to retrieve asset with id '" + asset_id + "' not found!";
-    } else if(asset.game_object_type != "asset") {
-      throw "Attempt to retrieve asset with id '" + asset_id + "' but found '" + asset.game_object_type + "'!";
+      throw new Error(`Attempt to retrieve unknown asset |${asset_id}|!`);
+    } else if(asset.type != "asset") {
+      throw new Error(`Attempt to retrieve asset |${asset_id}| but found ${asset.type}`);
     } else {
       return asset.path;
     }

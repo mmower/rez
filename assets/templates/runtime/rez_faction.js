@@ -2,17 +2,10 @@
 // Faction
 //-----------------------------------------------------------------------------
 
-function RezFaction(id, attributes) {
-  this.id = id;
-  this.game_object_type = "faction";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
+class RezFaction extends RezBasicObject {
+  constructor(id, attributes) {
+    super("faction", id, attributes);
+  }
 }
-
-RezFaction.prototype = {
-  __proto__: basic_object,
-  constructor: RezFaction
-};
 
 window.Rez.RezFaction = RezFaction;

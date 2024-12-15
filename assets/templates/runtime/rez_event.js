@@ -2,221 +2,265 @@
 // Event Handling SubSystem
 //-----------------------------------------------------------------------------
 
-function RezEvent() {
-  this.params = {};
-  this.flash_messages = [];
-  this.card_id = null;
-  this.scene_id = null;
-  this.scene_change_event = false;
-  this.scene_interlude_event = false;
-  this.scene_resume_event = false;
-  this.render_event = false;
-  this.error_message = null;
-}
+class RezEvent {
+  #params;
+  #flashMessages;
+  #cardId;
+  #sceneId;
+  #sceneChangeEvent;
+  #sceneInterludeEvent;
+  #sceneResumeEvent;
+  #renderEvent;
+  #errorMessage;
 
-RezEvent.prototype = {
-  constructor: RezEvent,
+  constructor() {
+    this.#params = {};
+    this.#flashMessages = [];
+    this.#cardId = null;
+    this.#sceneId = null;
+    this.#sceneChangeEvent = false;
+    this.#sceneInterludeEvent = false;
+    this.#sceneResumeEvent = false;
+    this.#renderEvent = false;
+    this.#errorMessage = null;
+  }
+
+  get params() {
+    return this.#params;
+  }
+
+  get flashMessages() {
+    return this.#flashMessages;
+  }
+
+  get cardId() {
+    return this.#cardId;
+  }
+
+  get sceneId() {
+    return this.#sceneId;
+  }
+
+  get sceneChangeEvent() {
+    return this.#sceneChangeEvent;
+  }
+
+  get sceneInterludeEvent() {
+    return this.#sceneInterludeEvent;
+  }
+
+  get sceneResumeEvent() {
+    return this.#sceneResumeEvent;
+  }
+
+  get renderEvent() {
+    return this.#renderEvent;
+  }
+
+  get errorMessage() {
+    return this.#errorMessage;
+  }
 
   setParam(name, value ) {
-    this.params[name] = value;
+    this.#params[name] = value;
     return this;
-  },
+  }
 
   setParams(params) {
-    this.params = params;
+    this.#params = params;
     return this;
-  },
+  }
 
   get hasFlash() {
-    return this.flash_messages.length > 0;
-  },
+    return this.#flashMessages.length > 0;
+  }
 
   flash(message) {
-    this.flash_messages.push(message);
+    this.#flashMessages.push(message);
     return this;
-  },
+  }
 
   get shouldPlayCard() {
-    return this.card_id != null;
-  },
+    return this.#cardId != null;
+  }
 
-  playCard(card_id) {
-    this.card_id = card_id;
+  playCard(cardId) {
+    this.#cardId = cardId;
     return this;
-  },
+  }
 
   get shouldRender() {
-    return this.render_event;
-  },
+    return this.#renderEvent;
+  }
 
   render() {
-    this.render_event = true;
+    this.#renderEvent = true;
     return this;
-  },
+  }
 
   get shouldChangeScene() {
-    return this.scene_change_event;
-  },
+    return this.#sceneChangeEvent;
+  }
 
-  sceneChange(scene_id) {
-    this.scene_change_event = true;
-    this.scene_id = scene_id;
+  sceneChange(sceneId) {
+    this.#sceneChangeEvent = true;
+    this.#sceneId = sceneId;
     return this;
-  },
+  }
 
   get shouldInterludeScene() {
-    return this.scene_interlude_event;
-  },
+    return this.#sceneInterludeEvent;
+  }
 
-  sceneInterlude(scene_id) {
-    this.scene_interlude_event = true;
-    this.scene_id = scene_id;
+  sceneInterlude(sceneId) {
+    this.#sceneInterludeEvent = true;
+    this.#sceneId = sceneId;
     return this;
-  },
+  }
 
   get shouldResumeScene() {
-    return this.scene_resume_event;
-  },
+    return this.#sceneResumeEvent;
+  }
 
   sceneResume() {
-    this.scene_resume_event = true;
+    this.#sceneResumeEvent = true;
     return this;
-  },
+  }
 
   get isError() {
-    return this.error_message != null;
-  },
+    return this.#errorMessage != null;
+  }
 
   error(message) {
-    this.error_message = message;
+    this.#errorMessage = message;
     return this;
-  },
+  }
 
   noop() {
     return this;
   }
-}
 
-RezEvent.built_in = function() {
-  return new RezEvent().noop();
-}
+  static built_in() {
+    return new RezEvent();
+  }
 
-RezEvent.flash = function(message) {
-  return new RezEvent().flash(message);
-}
+  static flash(message) {
+    return new RezEvent().flash(message);
+  }
 
-RezEvent.playCard = function(card_id) {
-  return new RezEvent().playCard(card_id);
-}
+  static playCard(cardId) {
+    return new RezEvent().playCard(cardId);
+  }
 
-RezEvent.render = function() {
-  return new RezEvent().render();
-}
+  static render() {
+    return new RezEvent().render();
+  }
 
-RezEvent.sceneChange = function(scene_id) {
-  return new RezEvent().sceneChange(scene_id);
-}
+  static sceneChange(sceneId) {
+    return new RezEvent().sceneChange(sceneId);
+  }
 
-RezEvent.sceneInterlude = function(scene_id) {
-  return new RezEvent().sceneInterlude(scene_id);
-}
+  static sceneInterlude(sceneId) {
+    return new RezEvent().sceneInterlude(sceneId);
+  }
 
-RezEvent.sceneResume = function() {
-  return new RezEvent().sceneResume();
-}
+  static sceneResume() {
+    return new RezEvent().sceneResume();
+  }
 
-RezEvent.noop = function() {
-  return new RezEvent().noop();
-}
+  static noop() {
+    return new RezEvent();
+  }
 
-RezEvent.error = function(message) {
-  return new RezEvent().error(message);
+  static error(message) {
+    return new RezEvent().error(message);
+  }
 }
 
 window.Rez.RezEvent = RezEvent;
 
-function RezEventProcessor(game) {
-  this.game = game;
-}
+class RezEventProcessor {
+  #game;
 
-RezEventProcessor.prototype = {
-  constructor: RezEventProcessor,
+  constructor(game) {
+    this.#game = game;
+  }
 
   get scene() {
-    return this.game.current_scene;
-  },
+    return this.#game.current_scene;
+  }
 
   get card() {
-    return this.scene.current_card;
-  },
+    return this.#game.current_card;
+  }
 
   dispatchResponse(response) {
     if(response instanceof RezEvent) {
-      if (response.hasFlash) {
-        for(let message of response.flash_messages) {
-          this.game.addFlashMessage(message);
+      if(response.hasFlash) {
+        for(let message of response.flashMessages) {
+          this.#game.addFlashMessage(message);
         }
       }
 
       if(response.shouldChangeScene) {
-        this.game.startSceneWithId(response.scene_id, response.params);
+        this.#game.startSceneWithId(response.sceneId, response.params);
       } else if(response.shouldInterludeScene) {
-        this.game.interludeSceneWithId(response.scene_id, response.params);
+        this.#game.interludeSceneWithId(response.sceneId, response.params);
       } else if(response.shouldResumeScene) {
-        this.game.resumePrevScene();
+        this.#game.resumePrevScene();
       }
 
       if(response.shouldPlayCard) {
-        this.scene.playCardWithId(response.card_id, response.params);
+        this.scene.playCardWithId(response.cardId, response.params);
       }
 
-      if (response.shouldRender) {
-        this.game.updateView();
+      if(response.shouldRender) {
+        this.#game.updateView();
       }
 
-      if (response.isError) {
-        console.log(`Error: ${response.error_message}`);
+      if(response.isError) {
+        console.log(`Error: ${response.errorMessage}`);
       }
     } else {
-      throw "Event handlers must return a RezEvent object!";
+      throw new Error("Event handlers must return a RezEvent object!");
     }
-  },
+  }
 
   beforeEventProcessing(evt) {
-    const systems = this.game.getEnabledSystems();
+    const systems = this.#game.getEnabledSystems();
 
-    return systems.reduce((i_evt, system) => {
+    return systems.reduce((eventInProgress, system) => {
       const handler = system.before_event;
-      const h_evt = handler ? handler(system, i_evt) : i_evt;
-      if(typeof(h_evt) === "undefined") {
-        throw `before_event handler of system |${system.id}| has not returned a valid evt object!`;
+      const handledEvent = handler ? handler(system, eventInProgress) : eventInProgress;
+      if(typeof(handledEvent) === "undefined") {
+        throw new Error(`before_event handler of system |${system.id}| has not returned a valid evt object!`);
       }
-      return h_evt;
+      return handledEvent;
     }, evt);
-  },
+  }
 
   afterEventProcessing(evt, result) {
-    const systems = this.game.getEnabledSystems();
+    const systems = this.#game.getEnabledSystems();
 
-    return systems.reduce((i_result, system) => {
+    return systems.reduce((intermediateResult, system) => {
       const handler = system.after_event;
-      const h_result = handler ? handler(system, evt, i_result) : i_result;
-      if(typeof(h_result) === "undefined") {
-        throw `after_event handler of system |${system.id}| has not returned a valid result object!`;
+      const handledResult = handler ? handler(system, evt, intermediateResult) : intermediateResult;
+      if(typeof(handledResult) === "undefined") {
+        throw new Error(`after_event handler of system |${system.id}| has not returned a valid result object!`);
       }
-      return h_result;
+      return handledResult;
     }, result);
-  },
+  }
 
   raiseTimerEvent(timer) {
     const evt = new CustomEvent('timer', {detail: {timer: timer}});
     return this.handleBrowserEvent(evt);
-  },
+  }
 
   raiseKeyBindingEvent(event_name) {
     const evt = new CustomEvent("key_binding", {detail: {event_name: event_name}});
     return this.handleBrowserEvent(evt);
-  },
+  }
 
   handleBrowserEvent(evt) {
     evt = this.beforeEventProcessing(evt);
@@ -238,12 +282,12 @@ RezEventProcessor.prototype = {
     }
 
     return this.afterEventProcessing(evt, result);
-  },
+  }
 
   decodeEvent(evt) {
     const { event, target, ...params } = evt.currentTarget.dataset;
     return [event.toLowerCase(), target, params];
-  },
+  }
 
   handleTimerEvent(evt) {
     const timer = evt.detail.timer;
@@ -253,7 +297,7 @@ RezEventProcessor.prototype = {
     } else {
       return result;
     }
-  },
+  }
 
   handleKeyBindingEvent(evt) {
     const result = this.handleCustomEvent(evt.detail.event_name, {});
@@ -262,109 +306,108 @@ RezEventProcessor.prototype = {
     } else {
       return result;
     }
-  },
+  }
 
   handleBrowserClickEvent(evt) {
-    const [event_name, target, params] = this.decodeEvent(evt);
+    const [eventName, target, params] = this.decodeEvent(evt);
 
-    if(typeof(event_name) === "undefined") {
+    if(typeof(eventName) === "undefined") {
       console.log("Received click event without an event name!");
       return false;
     }
 
-    if (event_name === "card") {
+    if (eventName === "card") {
       return this.handleCardEvent(target, params);
-    } else if (event_name === "switch") {
+    } else if (eventName === "switch") {
       return this.handleSwitchEvent(target, params);
-    } else if (event_name === "interlude") {
+    } else if (eventName === "interlude") {
       return this.handleInterludeEvent(target, params);
-    } else if (event_name === "resume") {
+    } else if (eventName === "resume") {
       return this.handleResumeEvent(params);
     } else {
-      return this.handleCustomEvent(event_name, params);
+      return this.handleCustomEvent(eventName, params);
     }
-  },
+  }
 
-  getReceiverEventHandler(receiver, event_name) {
-    let handler = receiver.eventHandler(event_name);
+  getReceiverEventHandler(receiver, eventname) {
+    let handler = receiver.eventHandler(eventname);
     if(handler && typeof(handler) === "function") {
       return handler;
     } else {
       return null;
     }
-  },
+  }
 
-  getEventHandler(event_name) {
+  getEventHandler(eventName) {
     const receivers = [this.card, this.scene, this.game];
-    const handlers = receivers.map((receiver) => [receiver, this.getReceiverEventHandler(receiver, event_name)]);
+    const handlers = receivers.map((receiver) => [receiver, this.getReceiverEventHandler(receiver, eventName)]);
     return handlers.find(([receiver, handler]) => handler) ?? [null, null];
-  },
+  }
 
-  handleCustomEvent(event_name, params) {
-    const [receiver, handler] = this.getEventHandler(event_name);
+  handleCustomEvent(eventName, params) {
+    const [receiver, handler] = this.getEventHandler(eventName);
     if(!handler) {
-      return RezEvent.error(`Unable to find an event handler for |${event_name}|`);
+      return RezEvent.error(`Unable to find an event handler for |${eventName}|`);
     } else {
-      console.log(`Routing event |${event_name}| to |${receiver.id}|`);
+      console.log(`Routing event |${eventName}| to |${receiver.id}|`);
       return handler(receiver, params);
     }
-  },
+  }
 
   handleCardEvent(target, params) {
     console.log(`Handle card event: |${target}|`);
     return RezEvent.playCard(target).setParams(params);
-  },
+  }
 
   handleSwitchEvent(target, params) {
     console.log(`Handle switch event: |${target}|`);
     return RezEvent.sceneChange(target).setParams(params);
-  },
+  }
 
   handleInterludeEvent(target, params) {
     console.log(`Handle interlude event: |${target}|`);
     return RezEvent.sceneInterlude(target).setParams(params);
-  },
+  }
 
   handleResumeEvent(params) {
     console.log("Handle resume event");
     return RezEvent.sceneResume().setParams(params);
-  },
+  }
 
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
     const card_div = evt.target.closest("div.card");
-    if (!card_div) {
-      throw "Cannot find div for input " + evt.target.id + "!";
+    if(!card_div) {
+      throw new Error(`Cannot find div for input |${evt.target.id}|`);
     }
 
-    const card_id = card_div.dataset.card;
-    if (!card_id) {
-      throw "Cannot get card id for input" + evt.target.id + "!";
+    const cardId = card_div.dataset.card;
+    if(!cardId) {
+      throw new Error(`Cannot get card id for input |${evt.target.id}|`);
     }
 
-    const card = $(card_id);
+    const card = $(cardId);
     return card.runEvent("input", { evt: evt });
-  },
+  }
 
   handleBrowserSubmitEvent(evt) {
     console.log("Handle submit event");
 
-    const form_name = evt.target.getAttribute("name");
-    if (!form_name) {
-      throw "Cannot get form name!";
+    const formName = evt.target.getAttribute("name");
+    if (!formName) {
+      throw new Error("Cannot get form name!");
     }
 
-    const card_div = evt.target.closest("div.card");
-    if (!card_div) {
-      throw "Cannot find div for form: " + form_name + "!";
+    const cardDiv = evt.target.closest("div.rez-card");
+    if (!cardDiv) {
+      throw new Error(`Cannot find div for form: |${formName}|`);
     }
 
-    const card_id = card_div.dataset.card;
-    const card = $(card_id);
+    const cardId = cardDiv.dataset.card;
+    const card = $(cardId);
 
-    return card.runEvent(form_name, { form: evt.target });
-  },
-
-};
+    return card.runEvent(formName, { form: evt.target });
+  }
+}
 
 window.Rez.RezEventProcessor = RezEventProcessor;

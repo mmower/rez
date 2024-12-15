@@ -35,14 +35,14 @@ defimpl Rez.AST.Node, for: Rez.AST.Relationship do
   def validators(_relationship) do
     [
       attribute_present?(
-        "source",
+        "source_id",
         attribute_has_type?(
           :elem_ref,
           validate_is_elem?()
         )
       ),
       attribute_present?(
-        "target",
+        "target_id",
         attribute_has_type?(
           :elem_ref,
           validate_is_elem?()

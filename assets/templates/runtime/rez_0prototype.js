@@ -1,91 +1,97 @@
-/**
- * @namespace basic_object
- * @description The basic_object is the common prototype of all in-game objects.
+class RezBasicObject {
+  static #game;
 
-  It keeps a reference to the singleton Game object allowing that to be looked
-  up from any other object.
+  #id;
+  #element;
+  #attributes;
+  #changedAttributes;
+  #initialized;
 
-  It handles getting attribute values.
+  constructor(element, id, attributes) {
+    this.#element = element;
+    this.#id = id;
+    this.#attributes = attributes;
+    this.#changedAttributes = [];
+    this.#initialized = false;
+  }
 
-  It handles execution of named event handler.
-*/
+  static set game(game) {
+    RezBasicObject.#game = game;
+  }
 
-const basic_object = {
-  game: null,
-  initialised: false,
+  static get game() {
+    return RezBasicObject.#game;
+  }
 
-  /**
-   * Performs the specified level of initialization on this game object.
-   *
-   * This is called automatically by the framework when the game is starting.
-   *
-   * @memberof basic_object
-   * @param {number} level - the initialization level (0+) to perform
-   */
+  get game() {
+    return RezBasicObject.game;
+  }
+
+  get element() {
+    return this.#element;
+  }
+
+  get id() {
+    return this.#id;
+  }
+
+  get attributes() {
+    return this.#attributes;
+  }
+
+  set attributes(newAttributes) {
+    this.#attributes = newAttributes;
+  }
+
+  get changedAttributes() {
+    return this.#changedAttributes;
+  }
+
+  set id(new_id) {
+    this.#id = new_id;
+  }
+
+  get initialized() {
+    return this.#initialized;
+  }
+
+  set initialized(value) {
+    this.#initialized = value;
+  }
+
+  initAll() {
+    for (let initLevel of this.game.initLevels()) {
+      this.init(initLevel);
+    }
+  }
+
   init(level) {
-    const init_method = "init_" + level;
-    if (typeof this[init_method] == "function") {
-      this[init_method]();
+    const initMethod = `init${level}`;
+    if (typeof this[initMethod] == "function") {
+      this[initMethod]();
     }
-  },
+  }
 
-  /**
-   * Perform all initialization levels from 0..max_level as defined by RezGame.
-   *
-   * This is intended for the author to call on a dynamically created object to ensure it is properly initialized before use.
-   *
-   * @memberof basic_object
-   */
-  init_all() {
-    for (let init_level of this.game.initLevels()) {
-      this.init(init_level);
-    }
-  },
-
-  /**
-   * Initialize all static and dynamic properties
-   *
-   * @memberof basic_object
-   */
-  init_0() {
+  init0() {
     this.createStaticProperties();
     this.createDynamicProperties();
-  },
+  }
 
-  /**
-   * Initialize all dynamic attributes.
-   *
-   * @memberof basic_object
-   */
-  init_1() {
+  init1() {
     this.initDynamicAttributes();
-  },
+  }
 
-  /**
-   * For game objects that do not define $template: true run the element initializer
-   * and the per-object init event.
-   *
-   * @memberof basic_object
-   */
-  init_2() {
-    if (!this.initialised) {
-      if (!this.isTemplateObject()) {
-        // Templates don't initialise like regular objects
-        this.elementInitializer();
-        this.runEvent("init", {});
-      }
-      this.initialised = true;
+  init2() {
+    // Templates don't initialise like regular objects
+    if (!this.isTemplateObject()) {
+      this.elementInitializer();
+      this.runEvent("init", {});
     }
-  },
+  }
 
-  /**
-   * Mark the object has having been fully initialized.
-   *
-   * @memberof basic_object
-   */
-  init_3() {
+  init3() {
     this.initialised = true;
-  },
+  }
 
   /**
    * @function createStaticProperty
@@ -93,33 +99,33 @@ const basic_object = {
    * @param {string} attr_name - name of the attribute to create a corresponding property for
    * @description use this to create a JS property backed by a Rez attribute
    */
-  createStaticProperty(attr_name) {
-    Object.defineProperty(this, attr_name, {
+  createStaticProperty(attrName) {
+    Object.defineProperty(this, attrName, {
       get: function () {
-        return this.getAttribute(attr_name);
+        return this.getAttribute(attrName);
       },
       set: function (value) {
-        this.setAttribute(attr_name, value);
+        this.setAttribute(attrName, value);
       },
       configurable: true,
     });
 
-    if (attr_name.endsWith("_id")) {
-      const direct_attr_name = attr_name.slice(0, -3);
-      Object.defineProperty(this, direct_attr_name, {
+    if (attrName.endsWith("_id")) {
+      const directAttrName = attrName.slice(0, -3);
+      Object.defineProperty(this, directAttrName, {
         get: function () {
-          const ref_id = this.getAttribute(attr_name);
+          const ref_id = this.getAttribute(attrName);
           return $(ref_id);
         },
         set: function (ref) {
-          if(ref === null) {
-            throw "Cannot assign an empty ID ref";
+          if(ref === null || typeof(ref.id) === "undefined") {
+            throw new Error("Cannot assign an empty ID ref");
           }
-          this.setAttribute(attr_name, ref.id);
+          this.setAttribute(attrName, ref.id);
         },
       });
     }
-  },
+  }
 
   /**
    * @function createStaticProperties
@@ -127,10 +133,10 @@ const basic_object = {
    * @description uses basic_object.createStaticProperty to create static properties for all of the objects declared Rez attributes
    */
   createStaticProperties() {
-    for (let [attr_name, _] of Object.entries(this.attributes)) {
-      this.createStaticProperty(attr_name);
+    for (let [attrName, _] of Object.entries(this.attributes)) {
+      this.createStaticProperty(attrName);
     }
-  },
+  }
 
   /**
    * @function createDynamicProperties
@@ -142,149 +148,149 @@ const basic_object = {
       return;
     }
 
-    for (let attr_name of Object.keys(this.attributes)) {
-      const value = this.getAttribute(attr_name);
+    for (let attrName of Object.keys(this.attributes)) {
+      const value = this.getAttribute(attrName);
       if (typeof value == "object") {
         if (value.hasOwnProperty("ptable")) {
-          this.createProbabilityTable(attr_name, value);
+          this.createProbabilityTable(attrName, value);
         } else if (value.hasOwnProperty("property")) {
-          this.createCustomProperty(attr_name, value);
+          this.createCustomProperty(attrName, value);
         } else if (value.hasOwnProperty("attr_ref")) {
-          this.createReferenceAttribute(attr_name, value);
+          this.createReferenceAttribute(attrName, value);
         } else if (value.hasOwnProperty("dynamic_value")) {
-          this.createDynamicValueAttribute(attr_name, value);
+          this.createDynamicValueAttribute(attrName, value);
         } else if (value.hasOwnProperty("tracery_grammar")) {
-          this.createTraceryGrammarAttribute(attr_name, value);
+          this.createTraceryGrammarAttribute(attrName, value);
         } else if (value.hasOwnProperty("bht")) {
-          this.createBehaviourTreeAttribute(attr_name, value);
+          this.createBehaviourTreeAttribute(attrName, value);
         }
       }
     }
-  },
+  }
 
   initDynamicAttributes() {
-    if (this.getAttributeValue("$template", false)) {
+    if(this.getAttributeValue("$template", false)) {
       return;
     }
 
-    for (let attr_name of Object.keys(this.attributes)) {
-      const value = this.getAttribute(attr_name);
-      if (typeof value == "object") {
-        if (value.hasOwnProperty("initializer")) {
-          this.createDynamicallyInitializedAttribute(attr_name, value);
+    for(let attrName of Object.keys(this.attributes)) {
+      const value = this.getAttribute(attrName);
+      if(typeof value == "object") {
+        if(value.hasOwnProperty("initializer")) {
+          this.createDynamicallyInitializedAttribute(attrName, value);
         }
       }
     }
-  },
+  }
 
-  createProbabilityTable(attr_name, value) {
-    delete this[attr_name];
+  createProbabilityTable(attrName, value) {
+    delete this[attrName];
 
-    const ptable = JSON.parse(value["ptable"]);
+    const pTable = JSON.parse(value["ptable"]);
 
-    Object.defineProperty(this, attr_name, {
+    Object.defineProperty(this, attrName, {
       get: function () {
         const p = Math.random();
-        const idx = ptable.findIndex((pair) => p <= pair[1]);
+        const idx = pTable.findIndex((pair) => p <= pair[1]);
         if (idx == -1) {
-          throw "Invalid p_table. Must contain range 0<n<1";
+          throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
-        return ptable[idx][0];
+        return pTable[idx][0];
       },
     });
 
-    Object.defineProperty(this, `${attr_name}_roll`, {
+    Object.defineProperty(this, `${attrName}_roll`, {
       get: function () {
         const p = Math.random();
-        const idx = ptable.findIndex((pair) => p <= pair[1]);
-        if (idx == -1) {
-          throw "Invalid p_table. Must contain range 0<n<1";
+        const idx = pTable.findIndex((pair) => p <= pair[1]);
+        if(idx == -1) {
+          throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
-        return { p: p, obj: ptable[idx][0] };
+        return { p: p, obj: pTable[idx][0] };
       },
     });
-  },
+  }
 
-  createCustomProperty(attr_name, value) {
-    delete this[attr_name];
-    const property_def = value["property"];
-    const property_src = `function() {${property_def}}`;
-    eval(`Object.defineProperty(this, "${attr_name}", {get: ${property_src}})`);
-  },
+  createCustomProperty(attrName, value) {
+    delete this[attrName];
+    const propertyDef = value["property"];
+    const propertySrc = `function() {${propertyDef}}`;
+    eval(`Object.defineProperty(this, "${attrName}", {get: ${propertySrc}})`);
+  }
 
-  createDynamicallyInitializedAttribute(attr_name, value) {
-    if (value.constructor == RezDie) {
-      this.setAttribute(attr_name, value.roll(), false);
+  createDynamicallyInitializedAttribute(attrName, value) {
+    if(value.constructor == RezDie) {
+      this.setAttribute(attrName, value.roll(), false);
     } else {
       const initializer = value["initializer"];
-      this.setAttribute(attr_name, eval(initializer), false);
+      this.setAttribute(attrName, eval(initializer), false);
     }
-  },
+  }
 
-  createReferenceAttribute(attr_name, value) {
-    delete this[attr_name];
+  createReferenceAttribute(attrName, value) {
+    delete this[attrName];
     const ref = value["attr_ref"];
 
-    Object.defineProperty(this, attr_name, {
+    Object.defineProperty(this, attrName, {
       get: function () {
-        return $(ref.elem_id).getAttributeValue(ref.attr_name);
+        return $(ref.elem_id).getAttributeValue(ref.attrName);
       },
     });
-  },
+  }
 
-  createDynamicValueAttribute(attr_name, value) {
-    delete this[attr_name];
+  createDynamicValueAttribute(attrName, value) {
+    delete this[attrName];
 
-    const val_gen = value["dynamic_value"];
-    const src = `(${this.id}) => {return ${val_gen};}`;
+    const valGen = value["dynamic_value"];
+    const src = `(${this.id}) => {return ${valGen};}`;
     const f = eval(src);
-    Object.defineProperty(this, attr_name, {
+    Object.defineProperty(this, attrName, {
       get: function () {
         return f(this);
       },
     });
-  },
+  }
 
-  createBehaviourTreeAttribute(attr_name, value) {
-    delete this[attr_name];
+  createBehaviourTreeAttribute(attrName, value) {
+    delete this[attrName];
 
     const tree = this.instantiateBehaviourTree(value["bht"]);
-    Object.defineProperty(this, attr_name, {
+    Object.defineProperty(this, attrName, {
       get: function() {
         return tree;
       }
     });
-  },
+  }
 
-  instantiateBehaviourTree(tree_spec) {
-    const behaviour_template = $(tree_spec["behaviour"], true);
-    const options = tree_spec["options"];
-    const children = tree_spec["children"].map((spec) => this.instantiateBehaviourTree(spec));
+  instantiateBehaviourTree(treeSpec) {
+    const behaviour_template = $(treeSpec["behaviour"], true);
+    const options = treeSpec["options"];
+    const children = treeSpec["children"].map((spec) => this.instantiateBehaviourTree(spec));
 
     return behaviour_template.instantiate(this, options, children);
-  },
+  }
 
-  createTraceryGrammarAttribute(attr_name, value) {
-    delete this[attr_name];
+  createTraceryGrammarAttribute(attrName, value) {
+    delete this[attrName];
 
     const grammar = tracery.createGrammar(JSON.parse(value.tracery_grammar));
     grammar.addModifiers(tracery.baseEngModifiers);
 
-    Object.defineProperty(this, attr_name, {
+    Object.defineProperty(this, attrName, {
       get: function () {
         return grammar.flatten("#origin#");
       },
     });
-  },
+  }
 
   /**
    * @function elementInitializer
    * @memberof basic_object
    * @description objects using basic_object as a prototype should define their own elementInitializer function to handle any element-specific initialization
    */
-  elementInitializer() {},
+  elementInitializer() {}
 
   /**
    * @function copyAssigningId
@@ -299,10 +305,10 @@ const basic_object = {
     copy.setAttribute("$auto_id_idx", 0, false);
     copy.setAttribute("$template", false, false);
     copy.setAttribute("$original_id", this.id, false);
-    copy.init_all();
+    copy.initAll();
     copy.runEvent("copy", { original: this });
     return copy;
-  },
+  }
 
   /**
    * @function getNextAutoId
@@ -310,11 +316,11 @@ const basic_object = {
    * @description returns the next auto id in the sequence
    */
   getNextAutoId() {
-    const last_id = this.getAttribute("$auto_id_idx");
-    const next_id = last_id + 1;
-    this.setAttribute("$auto_id_idx", next_id);
-    return this.id + "_" + next_id;
-  },
+    const lastId = this.getAttribute("$auto_id_idx");
+    const nextId = lastId + 1;
+    this.setAttribute("$auto_id_idx", nextId);
+    return this.id + "_" + nextId;
+  }
 
   /**
    * @function copyWithAutoId
@@ -324,7 +330,7 @@ const basic_object = {
    */
   copyWithAutoId() {
     return this.copyAssigningId(this.getNextAutoId());
-  },
+  }
 
   /**
    * @function isTemplateObject
@@ -334,7 +340,7 @@ const basic_object = {
    */
   isTemplateObject() {
     return this.getAttributeValue("$template", false);
-  },
+  }
 
   /**
    * @function eventHandler
@@ -343,9 +349,9 @@ const basic_object = {
    * @returns {function|undefined} event handle function or undefined
    * @description Returns the event handler function stored in attribute "on_<event_name>" or undefined if no handler is present
    */
-  eventHandler(event_name) {
-    return this.getAttribute(`on_${event_name}`);
-  },
+  eventHandler(eventName) {
+    return this.getAttribute(`on_${eventName}`);
+  }
 
   /**
    * @function willHandleEvent
@@ -354,11 +360,11 @@ const basic_object = {
    * @returns {boolean} true if this object handles the specified event
    * @description Returns `true` if this object defines an event handler function for the given event_name
    */
-  willHandleEvent(event_name) {
-    const handler = this.eventHandler(event_name);
-    const does_handle_event = handler != null && typeof handler == "function";
-    return does_handle_event;
-  },
+  willHandleEvent(eventName) {
+    const handler = this.eventHandler(eventName);
+    const doesHandleEvent = handler != null && typeof handler == "function";
+    return doesHandleEvent;
+  }
 
   /**
    * @function runEvent
@@ -368,15 +374,15 @@ const basic_object = {
    * @returns {*|boolean} returns a response object, or false if the event was not handled
    * @description attempts to run the event handler function for the event name, passing the specified params to the handler
    */
-  runEvent(event_name, params) {
-    console.log("Run on_" + event_name + " handler on " + this.id);
-    let handler = this.eventHandler(event_name);
-    if (handler != null && typeof handler == "function") {
+  runEvent(eventName, params) {
+    console.log("Run on_" + eventName + " handler on " + this.id);
+    let handler = this.eventHandler(eventName);
+    if(handler != null && typeof handler == "function") {
       return handler(this, params);
     } else {
       return false;
     }
-  },
+  }
 
   /**
    * @function hasAttribute
@@ -384,9 +390,9 @@ const basic_object = {
    * @param {string} name name of the attribute
    * @returns {boolean} true if the object defines the specified attribute
    */
-  hasAttribute(name) {
-    return !!this.attributes[name];
-  },
+  hasAttribute(attrName) {
+    return this.attributes.hasOwnProperty(attrName);
+  }
 
   /**
    * @function getAttribute
@@ -398,7 +404,7 @@ const basic_object = {
   getAttribute(name) {
     const attr = this.attributes[name];
     return attr;
-  },
+  }
 
   /**
    * @function getAttributeValue
@@ -408,28 +414,22 @@ const basic_object = {
    * @returns {*} attribute value
    * @description returns the value of the attribute with the given name. If no such value is present it returns the default value. If no default value is given it throws an exception.
    */
-  getAttributeValue(name, default_value) {
+  getAttributeValue(name, defaultValue) {
     const attr = this.getAttribute(name);
-    if (typeof attr == "undefined") {
-      if (typeof default_value == "undefined") {
-        throw (
-          "Attempt to get value of attribute |" +
-          name +
-          "| which is not defined on |#" +
-          this.id +
-          "|"
-        );
+    if(typeof attr == "undefined") {
+      if(typeof defaultValue == "undefined") {
+        throw new Error(`Attempt to get value of attribute |${this.name}| which is not defined on |${this.id}|`);
       } else {
-        return default_value;
+        return defaultValue;
       }
-    } else if (typeof attr == "function") {
+    } else if(typeof attr == "function") {
       return attr(this);
-    } else if (attr.constructor == RezDie) {
+    } else if(attr.constructor == RezDie) {
       return attr.roll();
     } else {
       return attr;
     }
-  },
+  }
 
   /**
    * @function getObjectViaAttribute
@@ -437,10 +437,10 @@ const basic_object = {
    * @param {string} name attribute name
    * @param {*} default_value
    */
-  getObjectViaAttribute(name, default_value) {
-    const id = this.getAttributeValue(name, default_value);
-    return $(id);
-  },
+  getObjectViaAttribute(name, defaultValue) {
+    const id = this.getAttributeValue(name, defaultValue);
+    return this.game.getGameObject(id);
+  }
 
   /**
    * @function setAttribute
@@ -449,27 +449,27 @@ const basic_object = {
    * @param {*} new_value value for attribute
    * @param {boolean} notify_observers whether observers should be notified that the value has changed
    */
-  setAttribute(attr_name, new_value, notify_observers = true) {
-    if (typeof new_value == "undefined") {
-      throw "Call to setAttribute with undefined value!";
+  setAttribute(attrName, newValue, notifyObservers = true) {
+    if(typeof newValue == "undefined") {
+      throw new Error(`Call to setAttribute(${attrName}, …) with undefined value!`);
     }
 
-    const old_value = this.attributes[attr_name];
-    this.attributes[attr_name] = new_value;
-    this.changed_attributes.push(attr_name);
-    if (notify_observers) {
+    const oldValue = this.attributes[attrName];
+    this.attributes[attrName] = newValue;
+    this.changedAttributes.push(attrName);
+    if(notifyObservers) {
       this.game.elementAttributeHasChanged(
         this,
-        attr_name,
-        old_value,
-        new_value
+        attrName,
+        oldValue,
+        newValue
       );
     }
-  },
+  }
 
   addTag(tag) {
     let tags = this.getAttribute("tags");
-    if (!tags) {
+    if(!tags) {
       tags = new Set([tag]);
     } else {
       tags.add(tag);
@@ -477,11 +477,11 @@ const basic_object = {
 
     this.setAttribute("tags", tags);
     this.game.indexObjectForTag(this, tag);
-  },
+  }
 
   removeTag(tag) {
     let tags = this.getAttribute("tags");
-    if (!tags) {
+    if(!tags) {
       tags = new Set();
     } else {
       tags.delete(tag);
@@ -489,27 +489,27 @@ const basic_object = {
 
     this.setAttribute("tags", tags);
     this.game.unindexObjectForTag(this, tag);
-  },
+  }
 
   /**
    * @function setTags
    * @memberof basic_object
    * @param {set} tags tags the object should have after the call
    */
-  setTags(new_tags) {
-    new_tags = new Set(new_tags); // Just in case they are passed as an array
-    const old_tags = this.getAttributeValue("tags", new Set());
+  setTags(newTags) {
+    newTags = new Set(newTags); // Just in case they are passed as an array
+    const oldTags = this.getAttributeValue("tags", new Set());
 
-    const to_remove = old_tags.difference(new_tags);
-    to_remove.forEach((tag) => this.removeTag(tag));
+    const tagsToRemove = oldTags.difference(newTags);
+    tagsToRemove.forEach((tag) => this.removeTag(tag));
 
-    const to_add = new_tags.difference(old_tags);
-    to_add.forEach((tag) => this.addTag(tag));
-  },
+    const tagsToAdd = newTags.difference(oldTags);
+    tagsToAdd.forEach((tag) => this.addTag(tag));
+  }
 
-  getRelationshipWith(target_id) {
-    return this.game.getRelationship(this.id, target_id);
-  },
+  getRelationshipWith(targetId) {
+    return this.game.getRelationship(this.id, targetId);
+  }
 
   /**
    * @function applyEffect
@@ -518,36 +518,36 @@ const basic_object = {
    * @param {string} slot_id
    * @param {string} item_id
    */
-  applyEffect(effect_id, slot_id, item_id) {
+  applyEffect(effectId, slotId, itemId) {
     console.log(
       "Been asked to apply effect |" +
-        effect_id +
+        effectId +
         "| from item |" +
-        item_id +
+        itemId +
         "| to |" +
         this.id +
         "|"
     );
-  },
+  }
 
   /**
    * @function removeEffect
    * @memberof basic_object
    * @param {string} effect_id
-   * @param {string} slot_id
-   * @param {string} item_id
+   * @param {string} slotId
+   *itemId {string} item_id
    */
-  removeEffect(effect_id, slot_id, item_id) {
+   removeEffect(effectId, slotId, itemId) {
     console.log(
       "Been asked to remove effect |" +
-        effect_id +
+        effectId +
         "| from item |" +
-        item_id +
+        itemId +
         "| to |" +
         this.id +
         "|"
     );
-  },
+  }
 
   /**
    * @function needsArchiving
@@ -555,43 +555,30 @@ const basic_object = {
    * @returns {boolean} true if this object requires archiving
    */
   needsArchiving() {
-    return (
-      this.changed_attributes.length > 0 ||
-      this.properties_to_archive.length > 0
-    );
-  },
+    return this.#changedAttributes.length > 0;
+  }
 
   archiveDataContainer() {
     return {
       id: this.id,
-      type: this.game_object_type,
+      element: this.element,
     };
-  },
+  }
 
   dataWithArchivedAttributes(data) {
     const obj = this;
-    return this.changed_attributes.reduce(function (data, key) {
+    return this.#changedAttributes.reduce(function (data, key) {
       data["attrs"] = data["attrs"] || {};
       data["attrs"][key] = obj.getAttribute(key);
       return data;
     }, data);
-  },
-
-  dataWithArchivedProperties(data) {
-    const obj = this;
-    return this.properties_to_archive.reduce(function (data, key) {
-      data["props"] = data["props"] || {};
-      data["props"][key] = obj[key];
-      return data;
-    }, data);
-  },
+  }
 
   toJSON() {
     let data = this.archiveDataContainer();
-    data = this.dataWithArchivedProperties(data);
     data = this.dataWithArchivedAttributes(data);
     return data;
-  },
+  }
 
   loadData(data) {
     const attrs = data["attrs"];
@@ -600,23 +587,10 @@ const basic_object = {
         this.setAttribute(k, v);
       }
     }
+  }
+}
 
-    const props = data["props"];
-    if (typeof props == "object") {
-      for (const [k, v] of Object.entries(props)) {
-        this[k] = v;
-      }
-    }
-  },
-};
-
-const no_value = {
-  __proto__: basic_object,
-};
-
-window.isGameObject = function (v) {
-  return basic_object.isPrototypeOf(v);
-};
+const noValue = new RezBasicObject("nothing", "nothing", {});
 
 window.Rez ??= {};
-window.Rez.basic_object = basic_object;
+window.Rez.RezBasicObject = RezBasicObject;

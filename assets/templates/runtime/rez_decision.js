@@ -10,13 +10,13 @@
  * `no(reason)` to instruct the calling code about what to do.
  */
 class RezDecision {
-  #purpose
-  #made
-  #result
-  #hidden
-  #reason
-  #data
-  #used_default
+  #purpose;
+  #made;
+  #result;
+  #hidden;
+  #reason;
+  #data;
+  #used_default;
 
   constructor(purpose, data = {}) {
     this.#purpose = purpose;

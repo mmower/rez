@@ -5,49 +5,41 @@
 // include_tag and exclude_tag attributes.
 //-----------------------------------------------------------------------------
 
-function RezGroup(id, attributes) {
-  this.id = id;
-  this.game_object_type = "group";
-  this.attributes = attributes;
-  this.assets = [];
-  this.properties_to_archive = ["assets"];
-  this.changed_attributes = [];
-}
-
-RezGroup.prototype = {
-  __proto__: basic_object,
-  constructor: RezGroup,
+class RezGroup extends RezBasicObject {
+  constructor(id, attributes) {
+    super("group", id, attributes);
+  }
 
   elementInitializer() {
     this.filterAssets();
-  },
+  }
 
   filterAssets() {
     // Start with all assets
     let assets = this.game.getAll("asset");
 
     // Does the asset have the right type
-    const selected_type = this.getAttributeValue("type");
-    assets = assets.filter((asset) => {return asset.type == selected_type});
+    const selectedType = this.getAttributeValue("type");
+    assets = assets.filter((asset) => asset.type === selectedType);
 
     // Assets without tags can't be in a group
-    assets = assets.filter((asset) => {return asset.hasAttribute("tags") && asset.getAttributeValue("tags").size > 0});
+    assets = assets.filter((asset) => asset.hasAttribute("tags") && asset.getAttributeValue("tags").size > 0);
 
     // If there is an include filter, filter those without the relevant tags
-    const include_tags = this.getAttributeValue("include_tags", new Set());
-    if(include_tags.size > 0) {
+    const includeTags = this.getAttributeValue("include_tags", new Set());
+    if(includeTags.size > 0) {
       assets = assets.filter((asset) => {
         const tags = asset.getAttributeValue("tags");
-        return tags.hasSubset(include_tags);
+        return tags.hasSubset(includeTags);
       });
     }
 
     // If there is an exclude filter, filter those with the relevant tags
-    const exclude_tags = this.getAttributeValue("exclude_tags", new Set());
-    if(exclude_tags.size > 0) {
+    const excludeTags = this.getAttributeValue("exclude_tags", new Set());
+    if(excludeTags.size > 0) {
       assets = assets.filter((asset) => {
         const tags = asset.getAttributeValue("tags");
-        return tags.intersection(exclude_tags).size == 0;
+        return tags.intersection(excludeTags).size == 0;
       });
     }
 
@@ -55,23 +47,25 @@ RezGroup.prototype = {
       console.log("Attempt to create group that matches 0 assets!");
     }
 
-    assets = assets.map((asset) => {return asset.id}).fy_shuffle();
+    assets = assets.map((asset) => asset.id).fy_shuffle();
 
     this.setAttribute("assets", assets);
-  },
+  }
 
   randomAssetId() {
     if(this.assets.size == 0) {
       this.filterAssets();
     }
 
-    const asset_id = this.assets.shift();
-    if(typeof(asset_id) == "undefined") {
-      throw "Attempt to get random asset from Group " + this.id + " with no matching assets!";
+    const assetId = this.assets.shift();
+    if(typeof(assetId) === "undefined") {
+      throw new Error(`Attempt to get random asset from Group |${this.id}| with no matching assets!`);
     }
 
-    return asset_id;
+    return assetId;
   }
-};
+}
+
+// this.properties_to_archive = ["assets"];
 
 window.Rez.RezGroup = RezGroup;

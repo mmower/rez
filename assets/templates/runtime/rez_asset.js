@@ -2,61 +2,54 @@
 // Asset
 //-----------------------------------------------------------------------------
 
-function RezAsset(id, attributes) {
-  this.id = id;
-  this.game_object_type = "asset";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-  if (!this.isTemplateObject()) {
-    this.setAttribute("$type", this.assetType(), false);
+class RezAsset extends RezBasicObject {
+  constructor(id, attributes) {
+    super("asset", id, attributes);
   }
-}
 
-RezAsset.prototype = {
-  __proto__: basic_object,
-  constructor: RezAsset,
-
-  elementInitializer() {},
+  elementInitializer() {
+    if(!this.isTemplateObject()) {
+      this.setAttribute("$type", this.assetType(), false);
+    }
+  }
 
   tag() {
     const type = this.getAttribute("$type");
     const generator = this.tagGenerators[type];
-    if (generator) {
+    if(generator) {
       return generator.call(this);
     } else {
-      throw "No tag generator implementated for MIME type: " + type + "!";
+      throw new Error(`No tag generator implementated for MIME type: ${type}!`);
     }
-  },
+  }
 
   assetType() {
     const mime_type = this.getAttributeValue("$detected_mime_type");
     if (typeof mime_type == "undefined") {
-      throw "No MIME information available for asset: " + this.id;
+      throw new Error(`No MIME information available for asset: ${this.id}`);
     }
     return mime_type.split("/")[0];
-  },
+  }
 
   isImage() {
-    return this.getAttribute("$type") == "image";
-  },
+    return this.getAttribute("$type") === "image";
+  }
 
   isAudio() {
-    return this.getAttribute("$type") == "audio";
-  },
+    return this.getAttribute("$type") === "audio";
+  }
 
   isVideo() {
-    return this.getAttribute("$type") == "video";
-  },
+    return this.getAttribute("$type") === "video";
+  }
 
   isText() {
-    return this.getAttribute("$type") == "text";
-  },
+    return this.getAttribute("$type") === "text";
+  }
 
   audioTag() {
-    console.log("Audio tags not implemented");
-    return "";
-  },
+    throw new Error(`Audio tags not implemented |${this.id})|`);
+  }
 
   getWidth(w) {
     if (typeof w != "undefined") {
@@ -68,12 +61,8 @@ RezAsset.prototype = {
       return width;
     }
 
-    throw (
-      "Asked for width of asset " +
-      this.id +
-      " which is not defined and no default was specified."
-    );
-  },
+    throw new Error(`Asked for width of asset |${this.id}| which is not defined and no default was specified.`);
+  }
 
   getHeight(h) {
     if (typeof h != "undefined") {
@@ -85,12 +74,8 @@ RezAsset.prototype = {
       return height;
     }
 
-    throw (
-      "Asked for height of asset " +
-      this.id +
-      " which is not defined and no default was specified."
-    );
-  },
+    throw new Error(`Asked for height of asset ${this.id} which is not defined and no default was specified.`);
+  }
 
   imageElement(w, h) {
     const el = document.createElement("img");
@@ -98,28 +83,15 @@ RezAsset.prototype = {
     el.setAttribute("width", this.getWidth(w));
     el.setAttribute("height", this.getHeight(h));
     return el;
-  },
+  }
 
   imageTag(w, h) {
     return this.imageElement(w, h).outerHTML;
-  },
+  }
 
   videoTag() {
-    console.log("Video tags not implemented");
-    return "";
-  },
-
-  tagGenerators: {
-    image: function (asset) {
-      return this.imageTag();
-    },
-    audio: function (asset) {
-      return this.audioTag();
-    },
-    video: function (asset) {
-      return this.videoTag();
-    },
-  },
-};
+    throw new Error(`Video tags not implemented |${this.id}|`);
+  }
+}
 
 window.Rez.RezAsset = RezAsset;

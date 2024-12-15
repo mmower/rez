@@ -40,8 +40,8 @@ defmodule Rez.Parser.RelationshipParsers do
 
         attributes =
           attr_list_to_map(attr_list)
-          |> Map.put("source", Attribute.elem_ref("source", source_id))
-          |> Map.put("target", Attribute.elem_ref("target", target_id))
+          |> Map.put("source_id", Attribute.elem_ref("source_id", source_id))
+          |> Map.put("target_id", Attribute.elem_ref("target_id", target_id))
 
         block =
           StructureParsers.create_block(

@@ -2,72 +2,66 @@
 // Scene
 //-----------------------------------------------------------------------------
 
-function RezScene(id, attributes) {
-  this.id = id;
-  this.game_object_type = "scene";
-  this.attributes = attributes;
-  this.properties_to_archive = [];
-  this.changed_attributes = [];
-  this.reset();
-}
+class RezScene extends RezBasicObject {
+  constructor(id, attributes) {
+    super("scene", id, attributes);
+    this.reset();
+  }
 
-RezScene.prototype = {
-  __proto__: basic_object,
-  constructor: RezScene,
+  targetType = "scene";
 
   get isStackLayout() {
     return this.layout_mode === "stack";
-  },
+  }
 
   get current_block() {
     return this.getViewLayout()
-  },
-
-  targetType: "scene",
+  }
 
   bindAs() {
     return "scene";
-  },
+  }
 
   getViewTemplate(flipped) {
+    // TODO: Why don't we use the flipped parameter?
     return this.$layout_template;
-  },
+  }
 
   getViewLayout() {
     this.$viewLayout = this.$viewLayout ?? this.createViewLayout();
     return this.$viewLayout;
-  },
+  }
 
   createViewLayout() {
-    if (this.isStackLayout) {
+    if(this.isStackLayout) {
       return new RezStackLayout("scene", this);
     } else {
       return new RezSingleLayout("scene", this);
     }
-  },
+  }
 
-  playCardWithId(card_id, params = {}) {
-    this.playCard($(card_id, true), params);
-  },
+  playCardWithId(cardId, params = {}) {
+    this.playCard($t(cardId, "card", true), params);
+  }
 
-  playCard(new_card, params = {}) {
+  playCard(newCard, params = {}) {
     this.finishCurrentCard();
 
-    this.startNewCard(new_card, params);
+    this.startNewCard(newCard, params);
     this.game.updateView();
     this.current_card.runEvent("ready", {});
-  },
+  }
 
   finishCurrentCard() {
-    if (this.current_card) {
+    if(this.current_card) {
       this.current_card.runEvent("finish", {});
       this.runEvent("finish_card", {});
-      if (this.isStackLayout) {
+      if(this.isStackLayout) {
         this.current_card.current_block.flipped = true;
       }
       this.current_card_id = "";
     }
-  },
+  }
 
   startNewCard(card, params = {}) {
     card.scene = this;
@@ -78,40 +72,40 @@ RezScene.prototype = {
     const block = new RezBlock("card", card, params);
     card.current_block = block;
     this.getViewLayout().addContent(block);
-  },
+  }
 
   reset() {
     this.current_card_id = "";
     this.$viewLayout = null;
     this.$running = false;
-  },
+  }
 
   interrupt() {
     console.log(`Interrupting scene |${this.id}|`);
     this.runEvent("interrupt", {});
-  },
+  }
 
   resume(params = {}) {
     console.log(`Resuming scene |${this.id}|`);
     this.runEvent("resume", params);
-  },
+  }
 
   start() {
     this.init();
     this.runEvent("start", {});
     this.$running = true;
     this.playCard(this.initial_card);
-  },
+  }
 
   ready() {
     this.runEvent("ready", {});
-  },
+  }
 
   finish() {
     this.finishCurrentCard();
     this.runEvent("finish", {});
     this.reset();
-  },
-};
+  }
+}
 
 window.Rez.RezScene = RezScene;
