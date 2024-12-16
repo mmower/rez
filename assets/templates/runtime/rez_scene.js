@@ -67,10 +67,30 @@ class RezScene extends RezBasicObject {
     card.scene = this;
     this.current_card = card;
 
+    this.addContentToViewLayout(params);
+
     this.runEvent("start_card", {});
     card.runEvent("start", {});
-    const block = new RezBlock("card", card, params);
-    card.current_block = block;
+
+  }
+
+  resumeFromLoad() {
+    if(!(this.current_card instanceof RezCard)) {
+      throw new Error("Attempting to resume scene after reload but there is no current card!");
+    }
+
+    this.addContentToViewLayout({});
+  }
+
+  addContentToViewLayout(params = {}) {
+    console.log("RezScene.addContentToViewLayout(params->)");
+    console.dir(params);
+
+    const block = new RezBlock("card", this.current_card, params);
+    console.log("/block->");
+    console.dir(block);
+
+    this.current_card.current_block = block;
     this.getViewLayout().addContent(block);
   }
 

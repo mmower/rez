@@ -1129,7 +1129,7 @@
 
 @card $load_game_form {
   content: ```
-  <form name="load_form">
+  <form rez-live name="load_form">
     <input type="file" name="data"/>
     <input type="submit"/>
   </form>
@@ -1142,10 +1142,10 @@
     const [file] = file_input.files;
     const reader = new FileReader();
     reader.addEventListener("load", function() {
-      window.game.load(reader.result);
-      window.game.render();
+      $game.load(reader.result);
     });
     reader.readAsText(file);
+    return RezEvent.noop();
   }
 }
 

@@ -7,23 +7,7 @@ class RezAsset extends RezBasicObject {
     super("asset", id, attributes);
   }
 
-  elementInitializer() {
-    if(!this.isTemplateObject()) {
-      this.setAttribute("$type", this.assetType(), false);
-    }
-  }
-
-  tag() {
-    const type = this.getAttribute("$type");
-    const generator = this.tagGenerators[type];
-    if(generator) {
-      return generator.call(this);
-    } else {
-      throw new Error(`No tag generator implementated for MIME type: ${type}!`);
-    }
-  }
-
-  assetType() {
+  get assetType() {
     const mime_type = this.getAttributeValue("$detected_mime_type");
     if (typeof mime_type == "undefined") {
       throw new Error(`No MIME information available for asset: ${this.id}`);
@@ -32,19 +16,19 @@ class RezAsset extends RezBasicObject {
   }
 
   isImage() {
-    return this.getAttribute("$type") === "image";
+    return this.assetType === "image";
   }
 
   isAudio() {
-    return this.getAttribute("$type") === "audio";
+    return this.assetType === "audio";
   }
 
   isVideo() {
-    return this.getAttribute("$type") === "video";
+    return this.assetType === "video";
   }
 
   isText() {
-    return this.getAttribute("$type") === "text";
+    return this.assetType === "text";
   }
 
   audioTag() {

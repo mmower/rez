@@ -11,7 +11,7 @@ class RezBasicObject {
     this.#element = element;
     this.#id = id;
     this.#attributes = attributes;
-    this.#changedAttributes = [];
+    this.#changedAttributes = new Set();
     this.#initialized = false;
   }
 
@@ -39,24 +39,62 @@ class RezBasicObject {
     return this.#attributes;
   }
 
-  set attributes(newAttributes) {
-    this.#attributes = newAttributes;
-  }
-
   get changedAttributes() {
     return this.#changedAttributes;
   }
 
-  set id(new_id) {
-    this.#id = new_id;
-  }
-
-  get initialized() {
+  get isInitialized() {
     return this.#initialized;
   }
 
-  set initialized(value) {
-    this.#initialized = value;
+  /**
+   * @function needsArchiving
+   * @memberof basic_object
+   * @returns {boolean} true if this object requires archiving
+   */
+  get needsArchiving() {
+    return this.#changedAttributes.size > 0;
+  }
+
+  archiveInto(archive) {
+    if(this.needsArchiving) {
+      archive[this.id] = [... this.#changedAttributes].reduce((archive, attrName) => {
+        let value = this.getAttribute(attrName);
+        if(typeof(value) === "function") {
+          value = {
+            json$safe: true,
+            type: "function",
+            value: value.toString()
+          }
+        }
+        archive[attrName] = value;
+        return archive;
+      }, {});
+    }
+  }
+
+  loadData(attrs) {
+    if(typeof attrs !== "object") {
+      throw new Error("Attempting to load attributes from improper object!");
+    }
+    for (const [attrName, attrValue] of Object.entries(attrs)) {
+      if(typeof(attrValue) === "object" && attrValue.hasOwnProperty("json$safe")) {
+        if(attrValue["type"] === "function") {
+          const functionBody = attrValue.value;
+          try {
+            // Use the Function constructor to create a new function
+            const restoredFunction = new Function(`return (${functionBody})`)();
+            this.setAttribute(attrName, restoredFunction);
+          } catch (error) {
+            console.error(`Failed to restore function for attribute '${attrName}':`, error);
+          }
+        } else {
+          console.error(`Failed to restore unknwon type for attribute '${attrName}' (${attrValue["type"]})`);
+        }
+      } else {
+        this.setAttribute(attrName, attrValue);
+      }
+    }
   }
 
   initAll() {
@@ -90,7 +128,7 @@ class RezBasicObject {
   }
 
   init3() {
-    this.initialised = true;
+    this.#initialized = true;
   }
 
   /**
@@ -375,7 +413,9 @@ class RezBasicObject {
    * @description attempts to run the event handler function for the event name, passing the specified params to the handler
    */
   runEvent(eventName, params) {
-    console.log("Run on_" + eventName + " handler on " + this.id);
+    if(RezBasicObject.game.$debug_events) {
+      console.log("Run on_" + eventName + " handler on " + this.id);
+    }
     let handler = this.eventHandler(eventName);
     if(handler != null && typeof handler == "function") {
       return handler(this, params);
@@ -456,7 +496,7 @@ class RezBasicObject {
 
     const oldValue = this.attributes[attrName];
     this.attributes[attrName] = newValue;
-    this.changedAttributes.push(attrName);
+    this.changedAttributes.add(attrName);
     if(notifyObservers) {
       this.game.elementAttributeHasChanged(
         this,
@@ -514,9 +554,9 @@ class RezBasicObject {
   /**
    * @function applyEffect
    * @memberof basic_object
-   * @param {string} effect_id
-   * @param {string} slot_id
-   * @param {string} item_id
+   * @param {string} effectId
+   * @param {string} slotId
+   * @param {string} itemId
    */
   applyEffect(effectId, slotId, itemId) {
     console.log(
@@ -535,7 +575,7 @@ class RezBasicObject {
    * @memberof basic_object
    * @param {string} effect_id
    * @param {string} slotId
-   *itemId {string} item_id
+   * @param {string} itemId
    */
    removeEffect(effectId, slotId, itemId) {
     console.log(
@@ -548,49 +588,8 @@ class RezBasicObject {
         "|"
     );
   }
-
-  /**
-   * @function needsArchiving
-   * @memberof basic_object
-   * @returns {boolean} true if this object requires archiving
-   */
-  needsArchiving() {
-    return this.#changedAttributes.length > 0;
-  }
-
-  archiveDataContainer() {
-    return {
-      id: this.id,
-      element: this.element,
-    };
-  }
-
-  dataWithArchivedAttributes(data) {
-    const obj = this;
-    return this.#changedAttributes.reduce(function (data, key) {
-      data["attrs"] = data["attrs"] || {};
-      data["attrs"][key] = obj.getAttribute(key);
-      return data;
-    }, data);
-  }
-
-  toJSON() {
-    let data = this.archiveDataContainer();
-    data = this.dataWithArchivedAttributes(data);
-    return data;
-  }
-
-  loadData(data) {
-    const attrs = data["attrs"];
-    if (typeof attrs == "object") {
-      for (const [k, v] of Object.entries(attrs)) {
-        this.setAttribute(k, v);
-      }
-    }
-  }
 }
 
 const noValue = new RezBasicObject("nothing", "nothing", {});
 
-window.Rez ??= {};
 window.Rez.RezBasicObject = RezBasicObject;

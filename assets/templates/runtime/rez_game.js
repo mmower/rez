@@ -3,12 +3,14 @@
 //-----------------------------------------------------------------------------
 
 class RezGame extends RezBasicObject {
+  #containerId;
   #undoManager;
   #eventProcessor;
   #tagIndex;
   #attrIndex;
-  #wmem;
+  // #wmem;
   #gameObjects;
+  #view;
 
   constructor(id, attributes) {
     super("game", id, attributes);
@@ -17,7 +19,7 @@ class RezGame extends RezBasicObject {
     this.#eventProcessor = new RezEventProcessor(this);
     this.#tagIndex = {};
     this.#attrIndex = {};
-    this.#wmem = {game: this};
+    // this.#wmem = {game: this};
     this.#gameObjects = new Map();
     this.$ = this.getGameObject;
     this.addGameObject(this);
@@ -66,84 +68,25 @@ class RezGame extends RezBasicObject {
     return prefix.toSnakeCase() + "_" + dateJoined + ".json";
   }
 
-  dataWithArchivedObjects(data) {
-    console.dir(this);
-    console.log(`Checking ${this.gameObjects.size} objects.`);
-    this.gameObjects.forEach(function (obj, id) {
-      console.log(`${id} -> ${obj.needsArchiving()}`);
-      if(obj.needsArchiving()) {
-        data["objs"] = data["objs"] || {};
-        data["objs"][obj.id] = obj;
-      }
-    });
-    console.log("Done");
-    return data;
+  dataArchive() {
+    const archive = {};
+    this.gameObjects.forEach((obj, id) => {obj.archiveInto(archive)});
+    return archive;
   }
 
-  toJSON() {
-    let data = this.archiveDataContainer();
-    data = this.dataWithArchivedAttributes(data);
-    // data = this.dataWithArchivedProperties(data);
-    data = this.dataWithArchivedObjects(data);
-
+  gameArchive() {
     return {
       archive_format: this.archive_format,
-      data: data,
-    };
+      data: this.dataArchive()
+    }
   }
 
-  archive() {
-    const archived = {};
+  saveData() {
+    return JSON.stringify(this.gameArchive());
+  }
 
-    return JSON.stringify(this, function (key, value) {
-      console.log("archive: [" + key + "]");
-
-      if(key === "" || value === null) {
-        // This is the game itself
-        archived["game"] = true;
-        return value;
-      } else if(value instanceof RezBasicObject) {
-        // This is a game object
-        const goid = value.id; // GameObjectID
-        console.log("<- is a game object: " + goid);
-        if(archived[goid]) {
-          console.log("<- is already archived");
-          return {
-            json$safe: true,
-            type: "ref",
-            element_name: value.element_name,
-            game_object_id: value.id,
-          };
-        } else {
-          console.log("<- archived");
-          archived[goid] = true;
-          return value;
-        }
-      } else if(isObject(value)) {
-        return value.obj_map((v) => {
-          if(v instanceof RezBasicObject) {
-            return {
-              json$safe: true,
-              type: "ref",
-              element_name: value.element_name,
-              game_object_id: value.id,
-            };
-          } else {
-            return v;
-          }
-        });
-      } else if(typeof value == "function") {
-        return {
-          json$safe: true,
-          type: "function",
-          value: value.toString(),
-        };
-      } else {
-        console.log("<- value:" + value);
-        return value;
-      }
-      return value;
-    });
+  get canSave() {
+    return this.#view.layoutStack.length == 0;
   }
 
    /**
@@ -159,7 +102,7 @@ class RezGame extends RezBasicObject {
     this.getAll().forEach((obj) => {obj.runEvent("save_game")});
 
     const file = new File(
-      [this.archive()],
+      [this.saveData()],
       this.saveFileName(this.getAttribute("name")),
       { type: "application/json" }
     );
@@ -191,25 +134,31 @@ class RezGame extends RezBasicObject {
       throw new Error("JSON does not represent a Rez game archive!");
     } else if(archiveFormat != currentFormat) {
       throw new Error(`JSON version v${archiveFormat} different to current v${currentFormat})!`);
+    } else {
+      console.log(`Matching archive format: ${archiveFormat}`);
     }
 
     const data = wrapper["data"];
     if(typeof data === "undefined") {
       throw new Error("JSON does not contain data archive!");
+    } else {
+      console.log("Found data");
     }
 
     // Load the game's attributes and properties
-    this.loadData(data);
-
-    const objs = data["objs"];
-    if (typeof objs == "object") {
-      for (const [id, obj_data] of Object.entries(objs)) {
-        const obj = this.getGameObject(id);
-        obj.loadData(obj_data);
-      }
+    for(const [id, obj_data] of Object.entries(data)) {
+      console.log(`Loading data for ${id}`);
+      const obj = this.getGameObject(id);
+      obj.loadData(obj_data);
+      obj.runEvent("reloaded");
     }
 
-    this.getAll().forEach((obj) => obj.runEvent("game_loaded"));
+    // Restore the game state
+    this.runEvent("load_complete");
+
+    this.current_scene.resumeFromLoad();
+    this.updateViewContent();
+    this.updateView();
   }
 
   /**
@@ -392,8 +341,8 @@ class RezGame extends RezBasicObject {
       this.undoManager.recordChange(elem.id, attrName, oldValue);
     }
 
-    if(this.view) {
-      this.view.updateBoundControls(elem.id, attrName, newValue);
+    if(this.#view) {
+      this.#view.updateBoundControls(elem.id, attrName, newValue);
     }
   }
 
@@ -470,10 +419,8 @@ class RezGame extends RezBasicObject {
 
     this.current_scene = scene;
 
-    const layout = scene.getViewLayout();
-    layout.params = params;
+    this.updateViewContent(params);
 
-    this.setViewContent(layout);
     this.clearFlashMessages();
     scene.start();
     scene.ready();
@@ -495,12 +442,9 @@ class RezGame extends RezBasicObject {
 
     this.current_scene = scene;
 
-    const layout = scene.getViewLayout();
-    layout.params = params;
+    this.updateViewContent(params);
 
-    this.setViewContent(scene.getViewLayout());
     this.clearFlashMessages();
-
     scene.start();
     scene.ready();
   }
@@ -534,7 +478,19 @@ class RezGame extends RezBasicObject {
    * @param {Object} content block to be added to the view
    */
   setViewContent(content) {
-    this.view.addLayoutContent(content);
+    console.log("RezGame.setViewContent(->)");
+    console.dir(content);
+    this.#view.addLayoutContent(content);
+  }
+
+  updateViewContent(params = {}) {
+    console.log("RezGame.updateViewContent(->)");
+    console.dir(params);
+    const layout = this.current_scene.getViewLayout();
+    console.log("/layout=(->)");
+    console.dir(layout);
+    layout.params = params;
+    this.setViewContent(layout);
   }
 
   /**
@@ -544,9 +500,9 @@ class RezGame extends RezBasicObject {
    * game event handlers
    */
   updateView() {
-    console.log("Updating the view");
+    console.log("RezGame.updateView()");
     this.runEvent("before_render", {});
-    this.view.update();
+    this.#view.update();
     this.runEvent("after_render", {});
     this.clearFlashMessages();
   }
@@ -570,7 +526,7 @@ class RezGame extends RezBasicObject {
     // current_scene is an attribute defined on @game
     this.current_scene.interrupt();
     this.$scene_stack.push(this.current_scene_id);
-    this.view.pushLayout(new RezSingleLayout("scene", this));
+    this.#view.pushLayout(new RezSingleLayout("scene", this));
   }
 
   /**
@@ -580,7 +536,7 @@ class RezGame extends RezBasicObject {
    * @description removes the top object of the scene stack and makes it the current scene
    */
   popScene(params = {}) {
-    this.view.popLayout();
+    this.#view.popLayout();
     this.current_scene_id = this.$scene_stack.pop();
     this.current_scene.resume(params);
   }
@@ -592,7 +548,9 @@ class RezGame extends RezBasicObject {
    * @description ???
    */
   setViewLayout(layout) {
-    this.view.setLayout(layout);
+    console.log("RezGame.setViewLayout(->)");
+    console.dir(layout);
+    this.#view.setLayout(layout);
   }
 
   /**
@@ -605,8 +563,10 @@ class RezGame extends RezBasicObject {
   start(containerId) {
     console.log("> Game.start");
 
+    this.#containerId = containerId;
+
     // Init every object, will also trigger on_init for any object that defines it
-    for (let init_level of this.initLevels()) {
+    for(let init_level of this.initLevels()) {
       console.log("init/" + init_level);
 
       this.init(init_level);
@@ -623,13 +583,18 @@ class RezGame extends RezBasicObject {
       obj.runEvent("game_started", {})
     });
 
-    this.view = new RezView(
-      containerId,
+    this.buildView();
+
+    this.startSceneWithId(this.initial_scene_id);
+  }
+
+  buildView() {
+    console.log("RezGame.buildView()");
+    this.#view = new RezView(
+      this.#containerId,
       this.#eventProcessor,
       new RezSingleLayout("game", this)
     );
-
-    this.startSceneWithId(this.initial_scene_id);
   }
 
   /**

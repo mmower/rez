@@ -186,12 +186,16 @@ class RezEventProcessor {
     this.#game = game;
   }
 
+  get game() {
+    return this.#game;
+  }
+
   get scene() {
     return this.#game.current_scene;
   }
 
   get card() {
-    return this.#game.current_card;
+    return this.#game.current_scene.current_card;
   }
 
   dispatchResponse(response) {
@@ -376,7 +380,7 @@ class RezEventProcessor {
 
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
-    const card_div = evt.target.closest("div.card");
+    const card_div = evt.target.closest("div.rez-active-card div[data-card]");
     if(!card_div) {
       throw new Error(`Cannot find div for input |${evt.target.id}|`);
     }
@@ -398,7 +402,7 @@ class RezEventProcessor {
       throw new Error("Cannot get form name!");
     }
 
-    const cardDiv = evt.target.closest("div.rez-card");
+    const cardDiv = evt.target.closest("div.rez-active-card div[data-card]");
     if (!cardDiv) {
       throw new Error(`Cannot find div for form: |${formName}|`);
     }
