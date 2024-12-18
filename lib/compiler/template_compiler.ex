@@ -223,7 +223,7 @@ defmodule Rez.Compiler.TemplateCompiler do
   defp component_assigns(attributes) do
     Enum.map_join(attributes, ",", fn
       {key, {:attr_expr, expr}} ->
-        ~s|#{key}: eval("#{expr}")|
+        ~s|#{key}: bindings.#{expr}|
 
       {key, value} ->
         ~s|#{key}: #{ValueEncoder.encode_value(value)}|

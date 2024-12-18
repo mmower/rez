@@ -145,7 +145,7 @@ class RezBlock {
         } else {
           console.log("Binding prefix: " + prefix);
           console.dir(value);
-          throw `Invalid binding type: ${typeof(value)}!`;
+          throw new Error(`Invalid binding type: ${typeof(value)}!`);
         }
       }
 
@@ -294,22 +294,14 @@ class RezSingleLayout extends RezLayout {
   }
 
   set content(content) {
-    console.log("RezSingleLayout.content=(->)");
-    console.dir(content);
     this.#content = content;
   }
-
-  // get sourceName() {
-  //   return this.#sourceName;
-  // }
 
   bindAs() {
     return this.sourceName;
   }
 
   addContent(block) {
-    console.log("RezSingleLayout.addContent(->)");
-    console.dir(block);
     block.parentBlock = this;
     this.content = block;
   }
@@ -679,7 +671,7 @@ class RezBindingTransformer extends RezTransformer {
     ) {
       this.transformSelect(view, input, binding_id, binding_attr);
     } else {
-      console.log(`Unsupported input type: ${input.type}`);
+      throw new Error(`Unsupported input type: ${input.type}`);
     }
   }
 }
@@ -699,8 +691,6 @@ class RezView {
   #transformers;
 
   constructor(container_id, receiver, layout, transformers) {
-    console.log("RezView.constructor()");
-
     const container = document.getElementById(container_id);
     if(typeof(container) === "undefined") {
       throw Error(`Cannot get container |${container_id}|`);
@@ -723,8 +713,6 @@ class RezView {
   }
 
   set layout(layout) {
-    console.log("RezView.layout=");
-    console.dir(layout);
     this.#layout = layout;
   }
 
@@ -733,21 +721,15 @@ class RezView {
   }
 
   pushLayout(layout) {
-    console.log("RezView.pushLayout()");
-    console.dir(layout);
-
     this.layoutStack.push(this.layout);
     this.layout = layout;
   }
 
   popLayout() {
-    console.log(`RezView.popLayout()`);
-
     this.layout = this.layoutStack.pop();
   }
 
   addLayoutContent(content) {
-    console.log(`RezView.addLayoutContent(${content})`);
     this.layout.addContent(content);
   }
 
@@ -764,8 +746,6 @@ class RezView {
   }
 
   render() {
-    console.log("RezView.render()");
-
     const html = this.layout.html();
     this.container.innerHTML = html;
   }
@@ -807,8 +787,6 @@ class RezView {
   }
 
   update() {
-    console.log("RezView.update()");
-
     this.clearBindings();
     this.render();
     this.transform();

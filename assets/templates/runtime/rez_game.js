@@ -31,6 +31,10 @@ class RezGame extends RezBasicObject {
     return this.#undoManager;
   }
 
+  get eventProcessor() {
+    return this.#eventProcessor;
+  }
+
   get gameObjects() {
     return this.#gameObjects;
   }
@@ -478,17 +482,11 @@ class RezGame extends RezBasicObject {
    * @param {Object} content block to be added to the view
    */
   setViewContent(content) {
-    console.log("RezGame.setViewContent(->)");
-    console.dir(content);
     this.#view.addLayoutContent(content);
   }
 
   updateViewContent(params = {}) {
-    console.log("RezGame.updateViewContent(->)");
-    console.dir(params);
     const layout = this.current_scene.getViewLayout();
-    console.log("/layout=(->)");
-    console.dir(layout);
     layout.params = params;
     this.setViewContent(layout);
   }
@@ -500,7 +498,6 @@ class RezGame extends RezBasicObject {
    * game event handlers
    */
   updateView() {
-    console.log("RezGame.updateView()");
     this.runEvent("before_render", {});
     this.#view.update();
     this.runEvent("after_render", {});
@@ -548,8 +545,6 @@ class RezGame extends RezBasicObject {
    * @description ???
    */
   setViewLayout(layout) {
-    console.log("RezGame.setViewLayout(->)");
-    console.dir(layout);
     this.#view.setLayout(layout);
   }
 
@@ -589,7 +584,6 @@ class RezGame extends RezBasicObject {
   }
 
   buildView() {
-    console.log("RezGame.buildView()");
     this.#view = new RezView(
       this.#containerId,
       this.#eventProcessor,

@@ -5,7 +5,7 @@ function rez_keybinding_listener(event) {
     return;
   }
 
-  const ep = $game.event_processor;
+  const ep = $game.eventProcessor;
   let pred;
 
 <%= for {:keybinding, _, _, {:keyword, event_name}} = binding <- @game.keybindings do %>

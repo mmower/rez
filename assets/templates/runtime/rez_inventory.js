@@ -13,11 +13,18 @@ class RezInventory extends RezBasicObject {
    * @description called as part of the init process this creates the inital inventory slots
    */
   elementInitializer() {
+    this.addSlots();
+    this.addInitialContents();
+  }
+
+  addSlots() {
     const slots = this.getAttribute("slots");
     for (const slotId of slots) {
       this.addSlot(slotId);
     }
+  }
 
+  addInitialContents() {
     const initialContents = this.getAttribute("initial_contents");
     if(typeof(initialContents) === "object") {
       for(const [slotId, contents] of Object.entries(initialContents)) {

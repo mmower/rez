@@ -71,7 +71,6 @@ class RezScene extends RezBasicObject {
 
     this.runEvent("start_card", {});
     card.runEvent("start", {});
-
   }
 
   resumeFromLoad() {
@@ -83,13 +82,7 @@ class RezScene extends RezBasicObject {
   }
 
   addContentToViewLayout(params = {}) {
-    console.log("RezScene.addContentToViewLayout(params->)");
-    console.dir(params);
-
     const block = new RezBlock("card", this.current_card, params);
-    console.log("/block->");
-    console.dir(block);
-
     this.current_card.current_block = block;
     this.getViewLayout().addContent(block);
   }

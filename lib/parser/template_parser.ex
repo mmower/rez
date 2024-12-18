@@ -11,7 +11,8 @@ defmodule Rez.Parser.TemplateParser do
       many: 1,
       many: 2,
       replace: 2,
-      not_lookahead: 1
+      not_lookahead: 1,
+      transform: 2
     ]
 
   import Ergo.Meta, only: [commit: 0, capture: 2]
@@ -92,8 +93,6 @@ defmodule Rez.Parser.TemplateParser do
       ast: fn [expr, body] ->
         case TemplateParser.parse(body) do
           {:error, errors} ->
-            IO.puts("Error compiling subtemplate for condition: #{inspect(expr)}")
-            IO.puts(body)
             Enum.each(errors, fn error -> IO.inspect(error) end)
             {:error, "Cannot compile sub-template"}
 
@@ -372,10 +371,10 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
-  # defp dynamic_attr_value() do
-  #   DP.text_delimited_by_nested_parsers(open_brace(), close_brace())
-  #   |> transform(fn expr -> {:attr_expr, expr} end)
-  # end
+  defp dynamic_attr_value() do
+    DP.text_delimited_by_nested_parsers(open_brace(), close_brace())
+    |> transform(fn expr -> {:attr_expr, expr} end)
+  end
 
   defp user_component_attr() do
     sequence(
@@ -385,7 +384,7 @@ defmodule Rez.Parser.TemplateParser do
         ignore(equals()),
         choice([
           number_value(),
-          # dynamic_attr_value(),
+          dynamic_attr_value(),
           string_value()
         ])
       ],
