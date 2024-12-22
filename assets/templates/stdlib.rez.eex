@@ -41,6 +41,8 @@
 
 @defaults plot {
   tags: #{}
+  active: false
+  stage: 0
 }
 
 @defaults rel {
@@ -1113,6 +1115,27 @@
       return asset.path;
     }
   }
+}
+
+%% ----------------------------------------------------------------------------
+%% Useful components
+%% ----------------------------------------------------------------------------
+
+@component embed_card (bindings, assigns, content) => {
+  let blockSource;
+  if(typeof(assigns.card) === "string") {
+    // We expect the id of a card
+    blockSource = $t(assigns.card, "card", true);
+  } else if(typeof(assigns.card) === "object" && assigns.card instanceof RezCard) {
+    // Otherwise it should be a reference to a card
+    blockSource = assigns.card;
+  } else {
+    throw new Error(`Attempt to embed card with bad 'card' assign! (${typeof(assigns.card)})`);
+  }
+  blockSource.$parent = bindings.card;
+  const block = new RezBlock("block", blockSource);
+  block.parentBlock = bindings.card.parentBlock;
+  return block.html();
 }
 
 %% ----------------------------------------------------------------------------

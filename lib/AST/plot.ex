@@ -41,8 +41,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
 
   def default_attributes(_plot),
     do: %{
-      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
-      "cur_stage" => Attribute.number("cur_stage", 0)
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
     }
 
   def pre_process(plot), do: plot

@@ -7,17 +7,13 @@ class RezPlot extends RezBasicObject {
     super("plot", id, attributes);
   }
 
-  get isActive() {
-    return this.cur_stage > 0;
-  }
-
   get isComplete() {
-    return this.cur_stage == this.stages;
+    return this.stage == this.stages;
   }
 
   advance() {
-    if(this.cur_stage < this.stages) {
-      this.cur_stage += 1;
+    if(this.stage < this.stages) {
+      this.stage += 1;
       this.runEvent("advance", {});
     }
   }

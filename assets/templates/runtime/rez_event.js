@@ -202,16 +202,16 @@ class RezEventProcessor {
     if(response instanceof RezEvent) {
       if(response.hasFlash) {
         for(let message of response.flashMessages) {
-          this.#game.addFlashMessage(message);
+          this.game.addFlashMessage(message);
         }
       }
 
       if(response.shouldChangeScene) {
-        this.#game.startSceneWithId(response.sceneId, response.params);
+        this.game.startSceneWithId(response.sceneId, response.params);
       } else if(response.shouldInterludeScene) {
-        this.#game.interludeSceneWithId(response.sceneId, response.params);
+        this.game.interludeSceneWithId(response.sceneId, response.params);
       } else if(response.shouldResumeScene) {
-        this.#game.resumePrevScene();
+        this.game.resumePrevScene();
       }
 
       if(response.shouldPlayCard) {
@@ -219,7 +219,7 @@ class RezEventProcessor {
       }
 
       if(response.shouldRender) {
-        this.#game.updateView();
+        this.game.updateView();
       }
 
       if(response.isError) {
@@ -231,7 +231,7 @@ class RezEventProcessor {
   }
 
   beforeEventProcessing(evt) {
-    const systems = this.#game.getEnabledSystems();
+    const systems = this.game.getEnabledSystems();
 
     return systems.reduce((eventInProgress, system) => {
       const handler = system.before_event;
@@ -244,7 +244,7 @@ class RezEventProcessor {
   }
 
   afterEventProcessing(evt, result) {
-    const systems = this.#game.getEnabledSystems();
+    const systems = this.game.getEnabledSystems();
 
     return systems.reduce((intermediateResult, system) => {
       const handler = system.after_event;

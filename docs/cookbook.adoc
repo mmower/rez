@@ -369,3 +369,42 @@ Although most objects support copying, by specifying `$template: true` you will 
   $template: true
 end
 ....
+
+
+== Common Problems
+
+=== Accidentally assigning to window.location ([object%20Object] in the URL bar)
+
+When writing event handlers you might do as I did:
+
+....
+@card c_search {
+  on_start: (card) => {
+    location = $player.location
+    // Nothing matters from this point...
+  }
+}
+....
+
+It looks pretty inoccuous but this is accidentally assigning the location object to the Javascript `window.location` property rather than a locally scoped `location` variable.
+
+Rather unexpected this will change the browser URL by appending `[object Object]` to it (the string representation of most objects) so you will end up with something like:
+
+....
+file:///Users/matt/Projects/Gaming/NarrativeDrift/cloak_of_darkness/dist/[object%20Object]
+....
+
+And now your game is broken. That was a bit of a headscratcher the first time it happened to me.
+
+This is a weakness of the Javascript model that we might be able to work around in future (e.g. using `strict` mode).
+
+The fix is simple, make sure you scope your variables in event handlers.
+
+....
+@card c_search {
+  on_start: (card) => {
+    const location = $player.location
+    ...
+  }
+}
+....

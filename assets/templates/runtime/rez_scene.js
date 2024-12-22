@@ -103,11 +103,11 @@ class RezScene extends RezBasicObject {
     this.runEvent("resume", params);
   }
 
-  start() {
+  start(params = {}) {
     this.init();
     this.runEvent("start", {});
     this.$running = true;
-    this.playCard(this.initial_card);
+    this.playCard(this.initial_card, params);
   }
 
   ready() {
@@ -117,6 +117,7 @@ class RezScene extends RezBasicObject {
   finish() {
     this.finishCurrentCard();
     this.runEvent("finish", {});
+    this.$running = false;
     this.reset();
   }
 }

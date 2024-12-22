@@ -423,10 +423,10 @@ class RezGame extends RezBasicObject {
 
     this.current_scene = scene;
 
-    this.updateViewContent(params);
+    this.updateViewContent();
 
     this.clearFlashMessages();
-    scene.start();
+    scene.start(params);
     scene.ready();
   }
 
@@ -446,10 +446,10 @@ class RezGame extends RezBasicObject {
 
     this.current_scene = scene;
 
-    this.updateViewContent(params);
+    this.updateViewContent();
 
     this.clearFlashMessages();
-    scene.start();
+    scene.start(params);
     scene.ready();
   }
 
