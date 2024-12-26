@@ -47,10 +47,12 @@ defmodule Rez.Parser.CollectionParser do
   import Rez.Parser.JSBindingParser
 
   def collection_value() do
-    choice([
-      collection(),
-      value()
-    ])
+    ParserCache.get_parser("collection_value", fn ->
+      choice([
+        value(),
+        collection()
+      ])
+    end)
   end
 
   # Set
@@ -90,39 +92,73 @@ defmodule Rez.Parser.CollectionParser do
   # value that are used for value binding
 
   def bound_literal() do
-    choice(
-      [
-        string_value(),
-        number_value(),
-        bool_value()
-      ],
-      label: "bound-literal",
-      ast: fn value ->
-        {:literal, value}
-      end
-    )
+    ParserCache.get_parser("bound_literal", fn ->
+      choice(
+        [
+          string_value(),
+          number_value(),
+          bool_value()
+        ],
+        label: "bound-literal",
+        ast: fn value ->
+          {:literal, value}
+        end
+      )
+    end)
   end
 
   def bound_source() do
-    sequence(
-      [
-        optional(star()),
-        choice([
-          elem_ref_value(),
-          binding_path(),
-          code_block_value(),
-          function_value()
-        ])
-      ],
-      label: "bound-source",
-      ast: fn
-        [source] ->
-          {:source, false, source}
+    ParserCache.get_parser("bound_source", fn ->
+      sequence(
+        [
+          optional(star()),
+          choice([
+            elem_ref_value(),
+            binding_path(),
+            code_block_value(),
+            function_value()
+          ])
+        ],
+        label: "bound-source",
+        ast: fn
+          [source] ->
+            {:source, false, source}
 
-        [_star, source] ->
-          {:source, true, source}
-      end
-    )
+          [_star, source] ->
+            {:source, true, source}
+        end
+      )
+    end)
+  end
+
+  # Lists
+
+  def list() do
+    ParserCache.get_parser("list", fn ->
+      sequence(
+        [
+          ignore(open_bracket()),
+          iows(),
+          optional(
+            sequence([
+              collection_value(),
+              many(
+                sequence([
+                  iws(),
+                  ignore(optional(sequence([comma(), iws()]))),
+                  collection_value()
+                ])
+              )
+            ])
+          ),
+          iows(),
+          ignore(close_bracket())
+        ],
+        label: "list-value",
+        debug: true,
+        ast: fn ast -> {:list, List.flatten(ast)} end
+      )
+    end)
   end
 
   def list_binding() do
@@ -144,38 +180,28 @@ defmodule Rez.Parser.CollectionParser do
     end)
   end
 
-  # List
-
-  def list_value() do
-    choice([
-      collection_value(),
-      list_binding()
-    ])
-  end
-
-  def list() do
-    ParserCache.get_parser("list", fn ->
+  def binding_list() do
+    ParserCache.get_parser("binding_list", fn ->
       sequence(
         [
           ignore(open_bracket()),
-          iows(),
-          optional(
+          many(
             sequence([
-              list_value(),
-              many(
-                sequence([
-                  iws(),
-                  ignore(optional(sequence([comma(), iws()]))),
-                  list_value()
-                ])
-              )
+              iows(),
+              ignore(
+                optional(
+                  sequence([
+                    comma(),
+                    iows()
+                  ])
+                )
+              ),
+              list_binding()
             ])
           ),
           iows(),
           ignore(close_bracket())
         ],
-        label: "list-value",
-        debug: true,
         ast: fn ast -> {:list, List.flatten(ast)} end
       )
     end)
@@ -212,20 +238,22 @@ defmodule Rez.Parser.CollectionParser do
   # Table
 
   def table_attribute() do
-    sequence(
-      [
-        js_identifier(),
-        ignore(colon()),
-        iws(),
-        commit(),
-        collection_value()
-      ],
-      label: "attribute",
-      debug: true,
-      ast: fn [id, {type, value}] ->
-        %Rez.AST.Attribute{name: id, type: type, value: value}
-      end
-    )
+    ParserCache.get_parser("table_attribute", fn ->
+      sequence(
+        [
+          js_identifier(),
+          ignore(colon()),
+          iws(),
+          commit(),
+          collection_value()
+        ],
+        label: "attribute",
+        debug: true,
+        ast: fn [id, {type, value}] ->
+          %Rez.AST.Attribute{name: id, type: type, value: value}
+        end
+      )
+    end)
   end
 
   def table() do
@@ -263,11 +291,14 @@ defmodule Rez.Parser.CollectionParser do
   # Collection
 
   def collection() do
-    choice([
-      lazy(set()),
-      lazy(list()),
-      lazy(table()),
-      probability_table()
-    ])
+    ParserCache.get_parser("collection", fn ->
+      choice([
+        lazy(binding_list()),
+        lazy(list()),
+        lazy(set()),
+        lazy(table()),
+        probability_table()
+      ])
+    end)
   end
 end

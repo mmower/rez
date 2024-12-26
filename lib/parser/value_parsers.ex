@@ -370,10 +370,12 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def function_value() do
-    choice([
-      traditional_function_value(),
-      arrow_function_value()
-    ])
+    ParserCache.get_parser("function_value", fn ->
+      choice([
+        traditional_function_value(),
+        arrow_function_value()
+      ])
+    end)
   end
 
   # Dice
@@ -520,21 +522,21 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("value", fn ->
       choice(
         [
-          dice_value(),
-          number_value(),
           bool_value(),
-          template_value(),
-          tracery_grammar_value(),
-          heredoc_value(),
+          number_value(),
           string_value(),
-          elem_ref_value(),
           keyword_value(),
-          code_block_value(),
+          template_value(),
           function_value(),
-          dynamic_initializer_value(),
           property_value(),
+          dice_value(),
+          heredoc_value(),
+          elem_ref_value(),
+          code_block_value(),
+          dynamic_initializer_value(),
           attr_ref_value(),
           file_value(),
+          tracery_grammar_value(),
           undefined_value()
         ],
         label: "value",

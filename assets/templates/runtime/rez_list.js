@@ -79,9 +79,9 @@ class RezList extends RezBasicObject {
   // Bag
   //---------------------------------------------------------------------------
 
-  randomFromBag(bagId = "default_bag") {
+  randomFromBag(bagId = "$default") {
     const item = this.randomRemaining(bagId);
-    this.take_from(bagId, item);
+    this.takeFrom(bagId, item);
     return item;
   }
 
@@ -89,11 +89,11 @@ class RezList extends RezBasicObject {
 
   /*
    * Returns a random element from among those left in the bag. If the bag
-   * is empty, returns null.
+   * is empty, returns undefined.
    */
-  randomRemaining(badId) {
-    let bag = this.getBag(badId);
-    if (bag.length == 0) {
+  randomRemaining(bagId) {
+    let bag = this.getBag(bagId);
+    if(bag.length === 0) {
       return undefined;
     } else {
       return bag.randomElement();
@@ -103,24 +103,26 @@ class RezList extends RezBasicObject {
   /*
    * Removes the specified value from those in the bag
    */
-  take_from(bagId, value) {
+  takeFrom(bagId, value) {
     let bag = this.getBag(bagId);
     bag = bag.filter((elem) => elem != value);
     this.setBag(bagId, bag);
   }
 
   getBag(bagId) {
-    return this.bags[bagId] ?? this.create_bag(bagId);
+    return this.$bags[bagId] ?? this.createBag(bagId);
   }
 
   setBag(bagId, bag) {
-    this.bags[bagId] = bag;
+    const bags = this.$bags;
+    bags[bagId] = bag;
+    this.$bags = bags;
   }
 
-  create_bag(bagId) {
+  createBag(bagId) {
     const values = this.getAttribute("values");
     const bag = Array.from(values);
-    this.bags[bagId] = bag;
+    this.setBag(bagId, bag);
     return bag;
   }
 
