@@ -39,10 +39,10 @@ defmodule Rez.Parser.Parser do
         iows(),
         lookahead(at()),
         choice([
-          directive(),
           element(),
-          alias_directive(),
           aliased_element(),
+          directive(),
+          alias_directive(),
           bad_element()
         ])
       ],

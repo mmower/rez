@@ -35,6 +35,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.NodeCheck,
     # Everything in the Game needs to be ready at this point
     Rez.Compiler.CreateRuntime,
+    Rez.Compiler.WriteObjMap,
     Rez.Compiler.WriteGameFile,
     Rez.Compiler.CopyAssets,
     Rez.Compiler.Reports
@@ -94,7 +95,7 @@ defmodule Rez.Compiler do
     :fprof.profile()
 
     IO.puts("Writing analysis")
-    :fprof.analyse(dest: 'fprof_analysis.txt')
+    :fprof.analyse(dest: ~c"fprof_analysis.txt")
 
     data = :file.consult("fprof_analysis.txt")
     File.write!("fprof_analysis.ans", Apex.Format.format(data))

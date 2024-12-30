@@ -95,15 +95,14 @@ defmodule Rez.Parser.ElementsParser do
   def element() do
     choice(
       [
+        card_element(),
         actor_element(),
         asset_element(),
         behaviour_element(),
-        card_element(),
         effect_element(),
         faction_element(),
         filter_element(),
         generator_element(),
-        game_element(),
         group_element(),
         inventory_element(),
         item_element(),
@@ -117,7 +116,8 @@ defmodule Rez.Parser.ElementsParser do
         slot_element(),
         styles_element(),
         system_element(),
-        timer_element()
+        timer_element(),
+        game_element()
       ],
       label: "element"
     )
