@@ -71,22 +71,26 @@
 %% ----------------------------------------------------------------------------
 
 @asset _ALPINE_JS {
+  $built_in: true
   file_name: "alpinejs.min.js"
   $js_defer: true
   $pre_runtime: true
 }
 
 @asset _BULMA_CSS {
+  $built_in: true
   file_name: "bulma.min.css"
 }
 
 @asset _PLURALIZE_JS {
+  $built_in: true
   file_name: "pluralize.js"
   $js_defer: false
   $pre_runtime: true
 }
 
 @asset _TRACERY_JS {
+  $built_in: true
   file_name: "tracery.js"
   $js_defer: false
   $pre_runtime: true
@@ -103,6 +107,7 @@
 }
 
 @patch PATCH_BOOLEAN_RAND {
+  $built_in: true
   patch: "Boolean"
   function: "rand"
   impl: function() {
@@ -111,6 +116,7 @@
 }
 
 @patch PATCH_OBJECT_DEEP_COPY {
+  $built_in: true
   patch: "Object"
   method: "copy"
   impl: function() {
@@ -145,6 +151,7 @@
 }
 
 @patch PATCH_OBJECT_OBJ_MAP {
+  $built_in: true
   patch: "Object"
   method: "obj_map"
   impl: function(f) {
@@ -155,6 +162,7 @@
 }
 
 @patch PATCH_OBJECT_DQ_WRAP {
+  $built_in: true
   patch: "Object"
   method: "dq_wrap"
   impl: function() {
@@ -163,6 +171,7 @@
 }
 
 @patch PATCH_ARRAY_ENGLISH_LIST {
+  $built_in: true
   patch: "Array"
   method: "englishList"
   impl: function() {
@@ -180,6 +189,7 @@
 }
 
 @patch PATCH_ARRAY_REMOVE {
+  $built_in: true
   patch: "Array"
   method: "remove"
   impl: function(elem) {
@@ -191,6 +201,7 @@
 }
 
 @patch PATCH_ARRAY_FY_SHUFFLE {
+  $built_in: true
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
   method: "fy_shuffle"
@@ -205,6 +216,7 @@
 }
 
 @patch PATCH_ARRAY_RANDOM_ELEMENT {
+  $built_in: true
   patch: "Array"
   method: "randomElement"
   impl: function() {
@@ -213,6 +225,7 @@
 }
 
 @patch PATCH_ARRAY_RANDOM_INDEX {
+  $built_in: true
   patch: "Array"
   method: "randomIndex"
   impl: function() {
@@ -221,6 +234,7 @@
 }
 
 @patch PATCH_ARRAY_FREQUENCIES {
+  $built_in: true
   patch: "Array"
   method: "frequencies"
   impl: function() {
@@ -239,6 +253,7 @@
 }
 
 @patch PATCH_ARRAY_SUM {
+  $built_in: true
   patch: "Array"
   method: "sum"
   impl: function() {
@@ -247,6 +262,7 @@
 }
 
 @patch PATCH_ARRAY_EQUALS {
+  $built_in: true
   patch: "Array"
   function: "equals"
   impl: function(a, b) {
@@ -258,6 +274,7 @@
 }
 
 @patch PATCH_ARRAY_STARTS_WITH_SEQUENCE {
+  $built_in: true
   patch: "Array"
   method: "startsWithSequence"
   impl: function(sequence) {
@@ -266,6 +283,7 @@
 }
 
 @patch PATCH_ARRAY_PAIRS {
+  $built_in: true
   patch: "Array"
   method: "to_pairs"
   impl: function() {
@@ -280,6 +298,7 @@
 }
 
 @patch PATCH_ARRAY_TAKE {
+  $built_in: true
   patch: "Array"
   method: "take"
   impl: function(n) {
@@ -292,6 +311,7 @@
 }
 
 @patch PATCH_ARRAY_REFS {
+  $built_in: true
   patch: "Array"
   method: "refs"
   impl: function() {
@@ -300,6 +320,7 @@
 }
 
 @patch PATCH_ARRAY_IDS {
+  $built_in: true
   patch: "Array"
   method: "ids"
   impl: function() {
@@ -308,6 +329,7 @@
 }
 
 @patch PATCH_ARRAY_N_OF {
+  $built_in: true
   patch: "Array"
   function: "n_of"
   impl: function(length, def_value) {
@@ -316,6 +338,7 @@
 }
 
 @patch PATCH_ARRAY_SAMPLE {
+  $built_in: true
   patch: "Array"
   method: "sample"
   impl: function(percentage) {
@@ -340,6 +363,7 @@
 }
 
 @patch PATCH_STRING_BEGINS_WITH_CONSONANT {
+  $built_in: true
   patch: "String"
   method: "beginsWithConsonant"
   impl: function() {
@@ -348,6 +372,7 @@
 }
 
 @patch PATCH_STRING_BEGINS_WITH_VOWEL {
+  $built_in: true
   patch: "String"
   method: "beginsWithVowel"
   impl: function() {
@@ -356,6 +381,7 @@
 }
 
 @patch PATCH_STRING_CAPITALIZE {
+  $built_in: true
   patch: "String"
   method: "capitalize"
   impl: function(s) {
@@ -364,6 +390,7 @@
 }
 
 @patch PATCH_STRING_INTERPOLATE {
+  $built_in: true
   patch: "String"
   method: "interpolate"
   impl: function(game) {
@@ -372,6 +399,7 @@
 }
 
 @patch PATCH_STRING_POSSESSIVE {
+  $built_in: true
   patch: "String"
   method: "possessive"
   impl: function() {
@@ -384,6 +412,7 @@
 }
 
 @patch PATCH_STRING_CAMELIZE {
+  $built_in: true
   patch: "String"
   method: "camelize"
   impl: function() {
@@ -394,6 +423,7 @@
 }
 
 @patch PATCH_STRING_SNAKE_TO_KEBAB_CASE {
+  $built_in: true
   patch: "String"
   method: "snakeToKebabCase"
   impl: function() {
@@ -402,6 +432,7 @@
 }
 
 @patch PATCH_STRING_KEBEB_TO_SNAKE_CASE {
+  $built_in: true
   patch: "String"
   method: "kebabToSnakeCase"
   impl: function() {
@@ -410,6 +441,7 @@
 }
 
 @patch PATCH_STRING_TO_SNAKE_CASE {
+  $built_in: true
   patch: "String"
   method: "toSnakeCase"
   impl: function() {
@@ -421,6 +453,7 @@
 }
 
 @patch PATCH_STRING_PARSE_TIME {
+  $built_in: true
   patch: "String"
   method: "parseTime"
   impl: function() {
@@ -449,6 +482,7 @@
 }
 
 @patch PATCH_STRING_RANDOM_ID {
+  $built_in: true
   patch: "String"
   function: "randomId"
   impl: function() {
@@ -458,6 +492,7 @@
 }
 
 @patch PATCH_STRING_WRAP_WITH {
+  $built_in: true
   patch: "String"
   method: "wrapWith"
   impl: function(prefix, suffix) {
@@ -466,6 +501,7 @@
 }
 
 @patch PATCH_STRING_INDEFINITE_ARTICLE {
+  $built_in: true
   patch: "String"
   method: "indefiniteArticle"
   impl: function() {
@@ -478,6 +514,7 @@
 %% https://stackoverflow.com/a/31129384/7518
 
 @patch PATCH_SET_UNION {
+  $built_in: true
   patch: "Set"
   method: "union"
   impl: function(otherSet) {
@@ -486,6 +523,7 @@
 }
 
 @patch PATCH_SET_INTERSECTION {
+  $built_in: true
   patch: "Set"
   method: "intersection"
   impl: function(otherSet) {
@@ -494,6 +532,7 @@
 }
 
 @patch PATCH_SET_DIFFERENCE {
+  $built_in: true
   patch: "Set"
   method: "difference"
   impl: function(otherSet) {
@@ -502,6 +541,7 @@
 }
 
 @patch PATCH_SET_EQUALS {
+  $built_in: true
   patch: "Set"
   method: "equals"
   impl: function(otherSet) {
@@ -511,6 +551,7 @@
 }
 
 @patch PATCH_SET_HAS_SUBSET {
+  $built_in: true
   patch: "Set"
   method: "hasSubset"
   impl: function(otherSet) {
@@ -519,6 +560,7 @@
 }
 
 @patch PATCH_NUMBER_ORDINAL {
+  $built_in: true
   patch: "Number"
   method: "ordinal"
   impl: function() {
@@ -538,6 +580,7 @@
 }
 
 @patch PATCH_NUMBER_ROUNDP {
+  $built_in: true
   %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
   patch: "Number"
   method: "roundp"
@@ -548,6 +591,7 @@
 }
 
 @patch PATCH_NUMBER_CL_AVG {
+  $built_in: true
   patch: "Number"
   method: "cl_avg"
   impl: function(rounds) {
@@ -558,6 +602,7 @@
 }
 
 @patch PATCH_NUMBER_ROUND_TO_NEAREST_HALF {
+  $built_in: true
   %% rounds a number to the nearest 0.5
   patch: "Number"
   method: "r2nh"
@@ -567,6 +612,7 @@
 }
 
 @patch PATCH_NUMBER_DIST_ROUND {
+  $built_in: true
   patch: "Number"
   method: "dist_round"
   impl: function() {
@@ -575,6 +621,7 @@
 }
 
 @patch PATCH_NUMBER_CHANCE {
+  $built_in: true
   patch: "Number"
   method: "chance"
   impl: function() {
@@ -583,6 +630,7 @@
 }
 
 @patch PATH_MATH_DIV {
+  $built_in: true
   patch: "Math"
   function: "div"
   impl: function(n, d) {
@@ -591,6 +639,7 @@
 }
 
 @patch PATCH_MATH_DIVMOD {
+  $built_in: true
   patch: "Math"
   function: "div_mod"
   impl: function(n, d) {
@@ -601,6 +650,7 @@
 }
 
 @patch PATCH_MATH_RANGE {
+  $built_in: true
   patch: "Math"
   function: "range"
   impl: function(from, to, step) {
@@ -617,6 +667,7 @@
 }
 
 @patch PATCH_MATH_DIST_ROUND {
+  $built_in: true
   %% Because JS only gives us random numbers as floating point we sometimes
   %% end up having to round when we want an. The question is whether we round
   %% up or round down which can create a bias. The dist_round function randomly
@@ -633,6 +684,7 @@
 }
 
 @patch PATCH_MATH_RAND_INT {
+  $built_in: true
   patch: "Math"
   function: "rand_int"
   impl: function(lim) {
@@ -641,6 +693,7 @@
 }
 
 @patch PATCH_MATH_RND_INT_BETWEEN {
+  $built_in: true
   patch: "Math"
   function: "rand_int_between"
   impl: function(min, max) {
@@ -652,6 +705,7 @@
 }
 
 @patch PATCH_MATH_RAND_F_BETWEEN {
+  $built_in: true
   patch: "Math"
   function: "rand_f_between"
   impl: function(min, max) {
@@ -664,6 +718,7 @@
 }
 
 @patch PATCH_MATH_CL_RAND_F_BETWEEN {
+  $built_in: true
   patch: "Math"
   function: "cl_rand_f_between"
   impl: function(min, max, rounds) {
@@ -677,6 +732,7 @@
 }
 
 @patch PATCH_MATH_CL_RAND_INT {
+  $built_in: true
   patch: "Math"
   function: "cl_rand_int"
   impl: function(lim) {
@@ -687,6 +743,7 @@
 }
 
 @patch PATCH_MATH_CLRAND_INT_BETWEEN {
+  $built_in: true
   patch: "Math"
   function: "cl_rand_int_between"
   impl: function(lo, hi) {
@@ -697,6 +754,7 @@
 }
 
 @patch PATCH_MATH_CLAMPED_SUB {
+  $built_in: true
   patch: "Math"
   function: "clamped_sub"
   impl: function(value, sub, min) {
@@ -705,6 +763,7 @@
 }
 
 @patch PATCH_MATH_CLAMPED_ADD {
+  $built_in: true
   patch: "Math"
   function: "clamped_add"
   impl: function(value, add, max) {
@@ -717,253 +776,290 @@
 %% ----------------------------------------------------------------------------
 
 @filter COMPARE_EQ_FILTER {
-  %% v -> v -> bool
+  $built_in: true
 
+  %% v -> v -> bool
   name: "eq"
   impl: (v1, v2) => {return v1 === v2;}
 }
 
 @filter COMPARE_NE_FILTER {
-  %% v -> v -> bool
+  $built_in: true
 
+  %% v -> v -> bool
   name: "ne"
   impl: (v1, v2) => {return !(v1 === v2);}
 }
 
 @filter COMPARE_GT_FILTER {
-  %% n -> n -> bool
+  $built_in: true
 
+  %% n -> n -> bool
   name: "gt"
   impl: (n1, n2) => {return n1 > n2;}
 }
 
 @filter COMPARE_GTE_FILTER {
-  %% n -> n -> bool
+  $built_in: true
 
+  %% n -> n -> bool
   name: "gte"
   impl: (n1, n2) => {return n1 >= n2;}
 }
 
 @filter COMPARE_LT_FILTER {
-  %% n -> n -> bool
+  $built_in: true
 
+  %% n -> n -> bool
   name: "lt"
   impl: (n1, n2) => {return n1 < n2;}
 }
 
 @filter COMPARE_LTE_FILTER {
-  %% n -> n -> bool
+  $built_in: true
 
+  %% n -> n -> bool
   name: "lte"
   impl: (n1, n2) => {return n1 <= n2;}
 }
 
 @filter BSEL_FILTER {
-  %% bool -> array -> any
+  $built_in: true
 
+  %% bool -> array -> any
   name: "bsel"
   impl: (sel, options) => {return options[sel ? 0 : 1];}
 }
 
 @filter SEL_FILTER {
-  %% n -> array -> any
+  $built_in: true
 
+  %% n -> array -> any
   name: "sel"
   impl: (idx, options) => {return options[idx];}
 }
 
 @filter ADD_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "add"
   impl: (n, x) => {return n+x;}
 }
 
 @filter SUB_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "sub"
   impl: (n, x) => {return n-x;}
 }
 
 @filter MUL_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "mul"
   impl: (n, x) => {return n*x;}
 }
 
 @filter DIV_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "div"
   impl: (n, x) => {return n/x;}
 }
 
 @filter MOD_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "mod"
   impl: (n, x) => {return n % x;}
 }
 
 @filter ABS_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "abs"
   impl: (n) => {return Math.abs(n)}
 }
 
 @filter NEG_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "neg"
   impl: (n) => {return -n;}
 }
 
 @filter INC_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "inc"
   impl: (n) => {return n+1;}
 }
 
 @filter DEC_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "dec"
   impl: (n) => {return n-1;}
 }
 
 @filter ROUND_FILTER {
-  %% n -> n
+  $built_in: true
 
+  %% n -> n
   name: "round"
   impl: (n, dp) => {return n.roundp(dp);}
 }
 
 @filter STRING_CHAR_AT_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "char_at"
   impl: (s, i) => {return s.charAt(i);}
 }
 
 @filter STRING_MAKE_FILTER {
-  %% any -> String
+  $built_in: true
 
+  %% any -> String
   name: "string"
   impl: (s) => {return ""+s;}
 }
 
 @filter STRING_APPEND_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "append"
   impl: (s, t) => {return s + t;}
 }
 
 @filter STRING_CAMELIZE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "camelize"
   impl: (s) => {return s.camelize();}
 }
 
 @filter STRING_TRIM_FILTER {
-  %% String -> String
-  %% ${"  Foo  " | trim} => foo
+  $built_in: true
 
+  %% String -> String
+  %% ${"  Foo  " | trim} = "foo"
   name: "trim"
   impl: (s) => {return s.trim();}
 }
 
 @filter STRING_CAPITALIZE_FILTER {
+  $built_in: true
+
   %% String -> String
   name: "capitalize"
   impl: (s) => {return s.capitalize();}
 }
 
 @filter STRING_DOWNCASE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "downcase"
   impl: (s) => {return s.toLowerCase();}
 }
 
 @filter STRING_PREPEND_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "prepend"
   impl: (s, t) => {return t + s;}
 }
 
 @filter STRING_UPCASE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "upcase"
   impl: (s) => {return s.toUpperCase();}
 }
 
 @filter STRING_PLURALIZE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "pluralize"
   impl: (s) => {return pluralize(s);}
 }
 
 @filter STRING_POSSESSIVE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "possessive"
   impl: (s) => {return s.possessive();}
 }
 
 @filter STRING_SPLIT_FILTER {
-  %% String -> Array
+  $built_in: true
 
+  %% String -> Array
   name: "split"
   impl: (s, p) => {return s.split(p);}
 }
 
 @filter STRING_STARTS_WITH_FILTER {
-  %% String -> Bool
+  $built_in: true
 
+  %% String -> Bool
   name: "starts_with"
   impl: (s, search) => {return s.startsWith(search);}
 }
 
 @filter STRING_ENDS_WITH_FILTER {
-  %% String -> Bool
+  $built_in: true
 
+  %% String -> Bool
   name: "ends_with"
   impl: (s, search) => {return s.endsWith(search);}
 }
 
 @filter STRING_CONTAINS_FILTER {
-  %% String -> Bool
+  $built_in: true
 
+  %% String -> Bool
   name: "contains"
   impl: (s, search) => {return s.includes(search);}
 }
 
 @filter STRING_QUOTED_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "quoted"
   impl: (s) => {return `'${s}'`;}
 }
 
 @filter STRING_DOUBLE_QUOTED_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "dquoted"
   impl: (s) => {return `"${s}"`;}
 }
 
 @filter STRING_INDEFINITE_ARTICLE_FILTER {
-  %% String -> String
+  $built_in: true
 
+  %% String -> String
   name: "i_article"
   impl: (s) => {
     const article = s.indefiniteArticle();
@@ -972,22 +1068,28 @@
 }
 
 @filter ARRAY_LENGTH_FILTER {
-  %% Array -> Integer
+  $built_in: true
 
+  %% Array -> Integer
   name: "length"
   impl: (arr) => {return arr.length;}
 }
 
 @filter ARRAY_TAKE_FILTER {
-  %% Array, n -> Array
+  $built_in: true
 
+  %% Array, n -> Array
   name: "take"
   impl: (arr, n) => {return arr.take(n);}
 }
 
-@filter EVENT_LINK_FILTER {
-  %% String -> Link
+%% Most of the following filters have been superceded either by the revised
+%% link syntax, or components.
 
+@filter EVENT_LINK_FILTER {
+  $built_in: true
+
+  %% String -> Link
   %% ${<Title> | event: <event-id>}
   %% ${"Go here" | event: "fudge"}
 
@@ -998,9 +1100,10 @@
 }
 
 @filter DYN_LINK_FILTER {
+  $built_in: true
+
   %% ${card | dyn_link: <action>}
   %% ${card | dyn_link: "can_attack"}
-
   name: "dyn_link"
   impl: (card, action) => {
     const link_handler = card.getAttribute(action);
@@ -1022,6 +1125,8 @@
 }
 
 @filter RENDER {
+  $built_in: true
+
   %% Template, View -> String
 
   %% The render filter bends the renderer to allow inline rendering of templates
@@ -1047,6 +1152,8 @@
 }
 
 @filter CARD_LINK_FILTER {
+  $built_in: true
+
   name: "card_link"
   impl: (card_id, title, css_class) => {
     css_class = css_class ?? "";
@@ -1055,6 +1162,8 @@
 }
 
 @filter SCENE_SWITCH_FILTER {
+  $built_in: true
+
   %% ${card | scene_switch: <scene_id>, <title>}
   %% ${card | scene_switch: "new_scene_id", "Action leading to a new scene"}
 
@@ -1065,6 +1174,8 @@
 }
 
 @filter SCENE_INTERLUDE_FILTER {
+  $built_in: true
+
   %% ${card | scene_interlude: <scene_id>, <title>}
   %% ${card | scene_interlude: "new_scene_id", "Action leading to a scene interrupt"}
 
@@ -1075,6 +1186,8 @@
 }
 
 @filter SCENE_RESUME_FILTER {
+  $built_in: true
+
   %% ${card | scene_resume: <title>}
   %% ${card | scene_resume "Back to game"}
 
@@ -1085,6 +1198,8 @@
 }
 
 @filter ASSET_TAG_FILTER {
+  $built_in: true
+
   %% ${asset_id | asset_tag}
 
   name: "asset_tag"
@@ -1101,6 +1216,8 @@
 }
 
 @filter ASSET_PATH_FILTER {
+  $built_in: true
+
   %% ${asset_id | asset_path}
   %% ${"image_01" | asset_path}
 
@@ -1143,14 +1260,18 @@
 %% ----------------------------------------------------------------------------
 
 @scene $load_game {
-    initial_card_id: #$load_game_form
-    layout: ```
-    ${content}
-    ```
-    layout_mode: :single
-  }
+  $built_in: true
+
+  initial_card_id: #$load_game_form
+  layout: ```
+  ${content}
+  ```
+  layout_mode: :single
+}
 
 @card $load_game_form {
+  $built_in: true
+
   content: ```
   <form rez-live name="load_form">
     <input type="file" name="data"/>
@@ -1177,6 +1298,8 @@
 %% ----------------------------------------------------------------------------
 
 @system $actor_behaviours {
+  $built_in: true
+
   enabled: false
   priority: 10
   after_event: (system, evt, result) => {
@@ -1207,6 +1330,7 @@
   %% The $select behaviour executes it's children in turn until one of them
   %% succeeds, then $select succeeds. If no child succeeeds then $select fails.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 2
@@ -1227,6 +1351,7 @@
   %% The $select_r behaviour is similar to $select except that each time it
   %% executes, it executes its children in random order.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 2
@@ -1251,6 +1376,7 @@
   %% it ticks the child, otherwise it moves on to the next child. If a child
   %% succeeds $select_p succeeds. If no child succeeds, $select_p fails.
 
+  $built_in: true
   $template: true
   options: [:p]
   min_children: 2
@@ -1283,6 +1409,7 @@
   %% then the $sequence succeeds. If a child fails the $sequence fails and does
   %% not execute any further children.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 2
@@ -1305,6 +1432,7 @@
   %% succeeds on every repetition the $loop succeeds. If the child ever fails
   %% the $loop fails.
 
+  $built_in: true
   $template: true
   options: [:count]
   min_children: 1
@@ -1330,6 +1458,7 @@
   %% executed. If the child ever succeeds, $loop_until succeeds. If the
   %% child doesn't succeed in the number of attempts then $loop_until fails.
 
+  $built_in: true
   $template: true
   options: [:attempts]
   min_children: 1
@@ -1355,6 +1484,7 @@
   %% if the child succeeds or fails if the child fails. If it doesn't execute
   %% the child then $maybe fails.
 
+  $built_in: true
   $template: true
   options: [:p]
   min_children: 1
@@ -1378,6 +1508,7 @@
   %% Having decided which child to execute $either succeeds or fails based
   %% on whether the selected child succeeds or fails.
 
+  $built_in: true
   $template: true
   options: [:p]
   min_children: 2
@@ -1401,6 +1532,7 @@
   %% executes it selects a child at random and executes it. If that child
   %% succeeds then $random_choice succeeds, otherwise it fails.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 2
@@ -1419,6 +1551,7 @@
   %% fails. Without replacement means that no child can be selected twice
   %% until all children have been selected at least once.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 2
@@ -1442,6 +1575,7 @@
   %% The $always behaviour takes one child and executes it, $always succeeds
   %% regardless of whether the child succeeds.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 1
@@ -1458,6 +1592,7 @@
   %% The $never behaviour takes one child and executes it, $never fails regardless
   %% of whether the child fails.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 1
@@ -1474,6 +1609,7 @@
   %% The $invert behaviour takes one child and executes it. If the child succeeds
   %% then $invert will fail. If the child fails then $invert will succeed.
 
+  $built_in: true
   $template: true
   options: []
   min_children: 1
@@ -1489,6 +1625,7 @@
 @behaviour $fail {
   %% The $fail behaviour automatically fails.
 
+  $built_in: true
   $template: true
   options: []
   max_children: 0
@@ -1501,6 +1638,7 @@
 @behaviour $succeed {
   %% The $succeed behaviour automatically succeeds.
 
+  $built_in: true
   $template: true
   options: []
   max_children: 0

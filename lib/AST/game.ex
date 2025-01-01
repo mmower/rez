@@ -17,6 +17,29 @@ defmodule Rez.AST.Game do
 
   import Rez.Utils
 
+  @coll_keys [
+    :actors,
+    :assets,
+    :behaviours,
+    :cards,
+    :effects,
+    :factions,
+    :filters,
+    :generators,
+    :groups,
+    :inventories,
+    :items,
+    :lists,
+    :user_components,
+    :objects,
+    :plots,
+    :relationships,
+    :scenes,
+    :slots,
+    :systems,
+    :timers
+  ]
+
   defstruct status: :ok,
             game_element: true,
             position: {nil, 0, 0},
@@ -306,6 +329,14 @@ defmodule Rez.AST.Game do
         %{game | status: {:error, "Cannot generate initialization order (#{message})!"}}
     end
   end
+
+  def rebuild_id_map(%Game{} = game) do
+    Enum.reduce(@coll_keys, game, fn key, game ->
+      Enum.reduce(Map.get(game, key), game, fn {id, node}, %Game{by_id: id_map} = game ->
+        %{game | by_id: Map.put(id_map, id, node)}
+      end)
+    end)
+  end
 end
 
 defmodule InitOrder do
@@ -404,6 +435,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> NodeHelper.process_collection(:scenes, resources)
     |> NodeHelper.process_collection(:systems, resources)
     |> NodeHelper.process_collection(:timers, resources)
+    |> Game.rebuild_id_map()
     |> Game.set_init_order()
   end
 
