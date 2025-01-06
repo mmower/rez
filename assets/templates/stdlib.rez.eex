@@ -620,6 +620,19 @@
   }
 }
 
+@patch PATCH_NUMBER_ROUND_TO_NEAREST {
+  $built_in: true
+  patch: "Number"
+  method: "round_to_nearest"
+  impl: function(n) {
+    if(n === 0) {
+      return this;
+    } else {
+      return Math.round(this / n) * n;
+    }
+  }
+}
+
 @patch PATCH_NUMBER_CHANCE {
   $built_in: true
   patch: "Number"

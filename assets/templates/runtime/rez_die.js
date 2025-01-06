@@ -16,6 +16,17 @@ class RezDie {
   roll() {
     return Math.rand_int_between(1, this.sides);
   }
+
+  open_roll() {
+    let roll, total = 0;
+
+    do {
+      roll = this.roll();
+      total += roll;
+    } while(roll == this.sides);
+
+    return total;
+  }
 }
 
 window.Rez.RezDie = RezDie;

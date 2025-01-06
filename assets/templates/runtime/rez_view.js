@@ -69,6 +69,10 @@ class RezBlock {
     return this.#flipped;
   }
 
+  set flipped(is_flipped) {
+    this.#flipped = is_flipped;
+  }
+
   get params() {
     return this.#params;
   }
@@ -329,6 +333,10 @@ class RezStackLayout extends RezLayout {
     this.#contents = [];
   }
 
+  get contents() {
+    return this.#contents;
+  }
+
   // get sourceName() {
   //   return this.#sourceName;
   // }
@@ -501,7 +509,7 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 class RezEventLinkTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.front-face a[data-event]", "click", receiver);
+    super("div.rez-front-face a[data-event]", "click", receiver);
   }
 }
 
@@ -513,7 +521,7 @@ window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
 
 class RezButtonTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.front-face button[data-event]:not(.inactive)", "click", receiver);
+    super("div.rez-front-face button[data-event]:not(.inactive)", "click", receiver);
   }
 }
 
@@ -525,7 +533,7 @@ window.Rez.RezButtonTransformer = RezButtonTransformer;
 
 class RezFormTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.front-face form[rez-live]", "submit", receiver);
+    super("div.rez-front-face form[rez-live]", "submit", receiver);
   }
 }
 
@@ -537,7 +545,7 @@ window.Rez.RezFormTransformer = RezFormTransformer;
 
 class RezInputTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.front-face input[rez-live]", "input", receiver);
+    super("div.rez-front-face input[rez-live]", "input", receiver);
   }
 }
 
@@ -549,7 +557,7 @@ window.Rez.RezInputTransformer = RezInputTransformer;
 
 class RezBindingTransformer extends RezTransformer {
   constructor(receiver) {
-    super("div.front-face input[rez-bind], select[rez-bind], textarea[rez-bind]");
+    super("div.rez-front-face input[rez-bind], select[rez-bind], textarea[rez-bind]");
   }
 
   decodeBinding(binding_expr) {

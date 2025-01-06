@@ -262,8 +262,9 @@ class RezBasicObject {
     if(value.constructor == RezDie) {
       this.setAttribute(attrName, value.roll(), false);
     } else {
-      const initializer = value["initializer"];
-      this.setAttribute(attrName, eval(initializer), false);
+      const initializerDef = value["initializer"];
+      const initializerSrc = `(function() {${initializerDef}}).call(this)`;
+      this.setAttribute(attrName, eval(initializerSrc), false);
     }
   }
 

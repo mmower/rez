@@ -313,8 +313,8 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |`^{Math.rand_int(1,10)}`
 
 |Dynamic Initializer
-|A Javascript expression that is evaluated when the game starts
-|`^i{Math.rand_int(1,10)}`
+|A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`
+|`^i{return Math.rand_int(1,10)}`
 
 |Dynamic Property
 |A Javascript function expression that is converted into an object property

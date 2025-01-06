@@ -217,7 +217,7 @@ defmodule Rez.AST.Game do
         NodeHelper.get_attr_value(game, "layout"),
         fn html ->
           custom_css_class = NodeHelper.get_attr_value(game, "css_class", "")
-          css_classes = add_css_class("game", custom_css_class)
+          css_classes = add_css_class("rez-game", custom_css_class)
 
           ~s|<div id="game" data-game=true class="#{css_classes}">#{html}</div>|
         end

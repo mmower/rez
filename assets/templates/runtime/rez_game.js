@@ -416,6 +416,7 @@ class RezGame extends RezBasicObject {
     // current_scene is a Rez attribute defined by @scene
 
     if(this.current_scene) {
+      this.runEvent("scene_end", {});
       this.current_scene.finish();
     }
 
@@ -441,6 +442,7 @@ class RezGame extends RezBasicObject {
   interludeSceneWithId(sceneId, params = {}) {
     // current_scene is a Rez attribute defined by @scene
 
+    this.runEvent("scene_pause", {});
     this.pushScene();
 
     const scene = this.getTypedGameObject(sceneId, "scene", true);
@@ -466,8 +468,10 @@ class RezGame extends RezBasicObject {
       throw new Error("Cannot resume without a scene on the stack!");
     } else {
       // Let the interlude know we're done
+      this.runEvent("scene_end", {});
       this.current_scene.finish();
       this.popScene(params);
+      this.runEvent("scene_resume", {});
 
       const layout = this.current_scene.getViewLayout();
       // Merge any new params into the existing params

@@ -31,7 +31,7 @@ defmodule Rez.AST.Scene do
         NodeHelper.get_attr_value(scene, "layout"),
         fn content ->
           custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
-          css_classes = Utils.add_css_class("scene", custom_css_class)
+          css_classes = Utils.add_css_class("rez-scene", custom_css_class)
 
           ~s|<div id="scene_#{id}" data-scene="#{id}" class="#{css_classes}">#{content}</div>|
         end

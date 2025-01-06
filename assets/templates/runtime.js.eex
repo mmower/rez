@@ -44,9 +44,4 @@
       evt.returnValue = "";
     });
   }
-
-  const player = $("player", false);
-  if(player) {
-    window.$player = player;
-  }
 })();

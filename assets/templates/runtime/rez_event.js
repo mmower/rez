@@ -391,7 +391,7 @@ class RezEventProcessor {
     }
 
     const card = $(cardId);
-    return card.runEvent("input", { evt: evt });
+    return card.runEvent("input", { evt: evt }) || RezEvent.noop();
   }
 
   handleBrowserSubmitEvent(evt) {
@@ -410,7 +410,7 @@ class RezEventProcessor {
     const cardId = cardDiv.dataset.card;
     const card = $(cardId);
 
-    return card.runEvent(formName, { form: evt.target });
+    return card.runEvent(formName, { form: evt.target }) || RezEvent.noop();
   }
 }
 
