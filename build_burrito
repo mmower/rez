@@ -1,3 +1,7 @@
 patch mix.exs patch_burrito
 MIX_ENV=prod mix release --overwrite
 patch -R mix.exs patch_burrito
+rm burrito_out/*.zip
+zip -j burrito_out/rez_linux.zip burrito_out/rez_linux
+zip -j burrito_out/rez_macos.zip burrito_out/rez_macos
+zip -j burrito_out/rez_windows.exe.zip burrito_out/rez_windows.exe

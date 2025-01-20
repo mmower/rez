@@ -106,10 +106,53 @@ class RezBlock {
     return path_fn(bindings);
   }
 
-  // bindings are key-value pairs of the form {name, expr}
-  // where an expression is either the id of an element
-  // or a function. The result of instantiation is either
-  // {name, element_ref} or {name, func_result}
+  resolveBindingValue(bindings, bindingObject) {
+    const { source, literal, deref } = bindingObject;
+
+    // Handle literal values first
+    if (literal !== undefined) {
+      return literal;
+    }
+
+    // Validate source
+    if (source === undefined || source === null) {
+      throw new Error('Binding source is undefined or null');
+    }
+
+    // Resolve binding based on source type
+    return this.extractBindingValue(bindings, source, deref);
+  }
+
+  extractBindingValue(bindings, source, deref = false) {
+    let value;
+    if (typeof source === "string") {
+      value = this.instantiateIdBinding(source);
+    } else if (typeof source === "function") {
+      value = this.instantiateFunctionBinding(bindings, source);
+    } else if (source && typeof source.binding === "function") {
+      value = this.instantiatePathBinding(source.binding, bindings);
+      
+      // Apply dereferencing only for path bindings when deref is true
+      if (deref) {
+        value = this.dereferenceBoundValue(value);
+      }
+    } else {
+      // Detailed error for unrecognized source type
+      throw new Error(`Invalid binding source type: ${typeof source}. 
+        Expected string, function, or object with binding function.`);
+    }
+
+    return value;
+  }
+
+  dereferenceBoundValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(id => $(id));
+    }
+
+    return $(value);
+  }
+
   getBindings(initialBindings) {
     const sourceBindings = this.source.getAttributeValue("bindings", []);
 
@@ -124,34 +167,7 @@ class RezBlock {
 
     return sourceBindings.reduce((bindings, bindingObject) => {
       const prefix = bindingObject["prefix"];
-      const source = bindingObject["source"];
-      const literal = bindingObject["literal"];
-      const deref = bindingObject["deref"];
-
-      let value;
-
-      if(typeof(literal) !== "undefined") {
-        value = literal
-      } else {
-        if(typeof(source) === "string") {
-          value = this.instantiateIdBinding(source);
-        } else if(typeof(source) === "function") {
-          value = this.instantiateFunctionBinding(bindings, source);
-        } else if(typeof(source.binding) === "function") {
-          value = this.instantiatePathBinding(source.binding, bindings);
-          if(deref) {
-            if(Array.isArray(value)) {
-              value = value.map((id) => $(id));
-            } else {
-              value = $(value)
-            }
-          }
-        } else {
-          console.log("Binding prefix: " + prefix);
-          console.dir(value);
-          throw new Error(`Invalid binding type: ${typeof(value)}!`);
-        }
-      }
+      const value = this.resolveBindingValue(bindings, bindingObject);
 
       bindings[prefix] = value;
       return bindings;

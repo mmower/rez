@@ -459,7 +459,7 @@ class RezBasicObject {
     const attr = this.getAttribute(name);
     if(typeof attr == "undefined") {
       if(typeof defaultValue == "undefined") {
-        throw new Error(`Attempt to get value of attribute |${this.name}| which is not defined on |${this.id}|`);
+        throw new Error(`Attempt to get value of attribute |${name}| which is not defined on |${this.id}|`);
       } else {
         return defaultValue;
       }

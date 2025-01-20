@@ -125,6 +125,10 @@
         return this;
     }
 
+    if(this instanceof Set) {
+      return new Set([...this]);
+    }
+
     // Handle array
     if (Array.isArray(this)) {
         const copiedArr = [];
@@ -333,7 +337,11 @@
   patch: "Array"
   function: "n_of"
   impl: function(length, def_value) {
-    return Array.from({length: length}, () => def_value);
+    if(typeof(def_value) === "function") {
+      return Array.from({length: length}, def_value);
+    } else {
+      return Array.from({length: length}, () => def_value);
+    }
   }
 }
 

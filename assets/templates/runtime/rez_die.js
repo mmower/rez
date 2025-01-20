@@ -76,7 +76,7 @@ class RezDieRoll {
     if(this.rounds == 1) {
       return this.rollRound();
     } else {
-      const sum = Number.range(1, this.rounds)
+      const sum = Math.range(1, this.rounds)
         .map(() => this.rollRound())
         .reduce((sum, round) => sum + round, 0);
       return sum.cl_avg(this.rounds);
