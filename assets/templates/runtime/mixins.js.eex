@@ -1,0 +1,9 @@
+window.Rez.mixins = {};
+
+<% import Rez.AST.ValueEncoder %>
+
+<% alias Rez.AST.Mixin %>
+
+<%= for %Mixin{id: id, attributes: attributes} <- Map.get(@game, :mixins) |> Map.values() do %>
+  window.Rez.mixins["<%= id %>"] = <%= encode_attributes(attributes) %>;
+<% end %>

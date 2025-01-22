@@ -90,9 +90,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
 
   def pre_process(card), do: card
 
-  def process(%Card{status: :ok} = card, %{by_id: node_map}) do
+  def process(%Card{status: :ok} = card, _node_map) do
     card
-    |> NodeHelper.copy_attributes(node_map)
     |> Card.build_templates()
     |> TemplateHelper.compile_template_attributes()
   end

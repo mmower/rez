@@ -68,7 +68,7 @@ defmodule Rez.AST.Game do
             items: %{},
             keybindings: [],
             lists: %{},
-            user_components: %{},
+            mixins: %{},
             objects: %{},
             patches: [],
             plots: %{},
@@ -78,7 +78,8 @@ defmodule Rez.AST.Game do
             slots: %{},
             styles: [],
             systems: %{},
-            timers: %{}
+            timers: %{},
+            user_components: %{}
 
   def add_child(%Script{} = script, %Game{scripts: scripts} = game) do
     %{game | scripts: append_list(scripts, script)}
@@ -135,6 +136,10 @@ defmodule Rez.AST.Game do
     %{game | user_components: Map.put(user_components, name, impl_fn)}
   end
 
+  def add_child(%Rez.AST.Mixin{id: id} = mixin, %Game{mixins: mixins} = game) do
+    %{game | mixins: Map.put(mixins, id, mixin)}
+  end
+
   def add_child(%{} = child, %Game{} = game) do
     add_dynamic_child(game, child)
   end
@@ -167,7 +172,6 @@ defmodule Rez.AST.Game do
       |> Map.merge(alias_default_attributes)
       |> Map.merge(attributes)
 
-    # new_attributes = Map.merge(default_attributes, attributes)
     child = %{child | attributes: attributes}
 
     nodes = Map.put(content, child_id, child)
@@ -352,12 +356,14 @@ defmodule InitOrder do
     objs
     |> Enum.filter(fn obj -> Map.has_key?(obj, :id) end)
     |> Enum.map(fn obj ->
-      parents =
-        obj
-        |> NodeHelper.get_attr_value("_parents", [])
-        |> Enum.map(fn {:keyword, k} -> to_string(k) end)
+      {obj.id, []}
+      # case NodeHelper.get_attr_value(obj, "$parent", nil) do
+      #   nil ->
+      #     {obj.id, []}
 
-      {obj.id, parents}
+      #   parent_id ->
+      #     {obj.id, [to_string(parent_id)]}
+      # end
     end)
   end
 

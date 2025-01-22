@@ -36,7 +36,6 @@ defmodule Rez.AST.NodeValidator do
   alias Rez.AST.NodeHelper
   alias Rez.AST.Game
   alias Rez.AST.NodeValidator.Validation
-  alias Rez.Utils.Search
 
   def validate_root(%Game{} = game) do
     validate(game, game)
@@ -52,41 +51,58 @@ defmodule Rez.AST.NodeValidator do
 
   def validate(%Validation{} = validation) do
     validation
-    |> validate_parents()
+    |> validate_mixins()
     |> validate_specification()
     |> validate_enums()
     |> validate_children()
     |> record_validation()
   end
 
-  def validate_parents(%Validation{errors: [_head | _tail]} = validation) do
-    validation
-  end
-
-  def validate_parents(%Validation{game: %Game{} = game, node: node} = validation) do
-    case NodeHelper.get_attr_value(node, "_parents", []) do
+  def validate_mixins(%Validation{game: %Game{mixins: mixins}, node: node} = validation) do
+    case NodeHelper.get_attr_value(node, "$mixins", []) do
       [] ->
         validation
 
-      parents ->
-        unknown_parents =
-          parents
-          |> Enum.map(fn {:keyword, parent_id} -> parent_id end)
-          |> Enum.filter(fn parent_id -> !Game.recognises_id?(game, parent_id) end)
-
-        case unknown_parents do
+      mixin_list ->
+        case Enum.reject(mixin_list, fn {:elem_ref, mixin_id} ->
+               Map.has_key?(mixins, mixin_id)
+             end) do
           [] ->
             validation
 
-          unknown_parents ->
-            Validation.add_error(
-              validation,
-              node,
-              "#{NodeHelper.description(node)} references unknown parents: #{Enum.join(unknown_parents, ", ")}"
-            )
+          unknown ->
+            Enum.reduce(unknown, validation, fn {:elem_ref, mixin_id}, validation ->
+              Validation.add_error(
+                validation,
+                node,
+                "#{NodeHelper.description(node)} references unknown mixin: #{mixin_id}"
+              )
+            end)
         end
     end
   end
+
+  # def validate_parent(%Validation{errors: [_head | _tail]} = validation) do
+  #   validation
+  # end
+
+  # def validate_parent(%Validation{game: %Game{} = game, node: node} = validation) do
+  #   case NodeHelper.get_attr_value(node, "$parent", nil) do
+  #     nil ->
+  #       validation
+
+  #     parent_id ->
+  #       if Game.recognises_id?(game, parent_id) do
+  #         validation
+  #       else
+  #         Validation.add_error(
+  #           validation,
+  #           node,
+  #           "#{NodeHelper.description(node)} references unknown parent element: #{parent_id}"
+  #         )
+  #       end
+  #   end
+  # end
 
   def validate_specification(%Validation{errors: [_head | _tail]} = validation) do
     validation
@@ -185,36 +201,17 @@ defmodule Rez.AST.NodeValidator do
     end
   end
 
-  def find_attribute_in_node(attr_key) do
-    fn %{attributes: attributes} = _node ->
-      case Map.get(attributes, attr_key) do
-        nil ->
-          :not_found
-
-        %Attribute{} = attr ->
-          {:found, attr}
-      end
-    end
-  end
-
-  def get_parents_of_node(node_map) do
-    fn %{attributes: attributes} = _node ->
-      attributes
-      |> Map.get("_parents", Attribute.list("_parents", []))
-      |> Map.get(:value)
-      |> Enum.map(fn {:keyword, parent_id} ->
-        Map.get(node_map, to_string(parent_id))
-      end)
-    end
-  end
-
-  def find_attribute(%Game{by_id: node_map}, %{} = node, attr_key)
+  def find_attribute(%Game{} = game, %{} = node, attr_key)
       when is_binary(attr_key) do
-    Search.search(
-      node,
-      find_attribute_in_node(attr_key),
-      get_parents_of_node(node_map)
-    )
+    case NodeHelper.get_attr(node, attr_key) do
+      nil ->
+        with parent when not is_nil(parent) <- NodeHelper.get_attr_value(node, "$parent", nil) do
+          find_attribute(game, parent, attr_key)
+        end
+
+      %Attribute{} = attr ->
+        attr
+    end
   end
 
   # The first two attribute validations establish an attribute that is the
@@ -334,6 +331,18 @@ defmodule Rez.AST.NodeValidator do
 
         value ->
           {:error, "#{attr_key} is not permitted (was: #{value})"}
+      end
+    end
+  end
+
+  def attributes_are_functions?() do
+    fn %{attributes: attributes} = _node, _game ->
+      if Enum.reduce(attributes, true, fn {_name, %{type: type}}, acc ->
+           acc && (type == :function || type == :property)
+         end) do
+        :ok
+      else
+        {:error, "Attributes must be functions or properties"}
       end
     end
   end

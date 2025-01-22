@@ -40,9 +40,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   def pre_process(group), do: group
 
-  def process(%Group{} = group, %{by_id: node_map}) do
+  def process(%Group{} = group, _node_map) do
     group
-    |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()
   end
 

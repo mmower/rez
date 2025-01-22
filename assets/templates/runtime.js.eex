@@ -15,6 +15,9 @@
   // JS userlib
   <%= @js_userlib %>
 
+  // Mixins
+  <%= @mixins %>
+
   // Expression Filters
   <%= @register_expression_filters %>
 

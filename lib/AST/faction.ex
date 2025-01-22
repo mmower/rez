@@ -33,9 +33,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Faction do
 
   def pre_process(faction), do: faction
 
-  def process(faction, %{by_id: node_map}) do
+  def process(faction, _node_map) do
     faction
-    |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()
   end
 

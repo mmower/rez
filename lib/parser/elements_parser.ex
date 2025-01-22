@@ -56,6 +56,10 @@ defmodule Rez.Parser.ElementsParser do
     block_with_id("list", Rez.AST.List)
   end
 
+  def mixin_element() do
+    block_with_id("mixin", Rez.AST.Mixin)
+  end
+
   def object_element() do
     block_with_id("object", Rez.AST.Object)
   end
@@ -107,6 +111,7 @@ defmodule Rez.Parser.ElementsParser do
         inventory_element(),
         item_element(),
         list_element(),
+        mixin_element(),
         object_element(),
         patch_element(),
         plot_element(),

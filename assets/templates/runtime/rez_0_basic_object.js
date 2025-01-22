@@ -120,6 +120,23 @@ class RezBasicObject {
   }
 
   init2() {
+    // Initialize Mixins
+    for(let mixin_id of this.getAttributeValue("$mixins", [])) {
+      const mixin = window.Rez.mixins[mixin_id];
+
+      // Apply properties
+      for (let [propName, propDef] of Object.entries(mixin)) {
+        if(propDef.property) {
+          this.createCustomProperty(propName, propDef);
+        } else if (typeof propDef === 'function') {
+          // Apply methods directly
+          this[propName] = propDef.bind(this);
+        }
+      }
+    }
+  }
+
+  init3() {
     // Templates don't initialise like regular objects
     if (!this.isTemplateObject()) {
       this.elementInitializer();
@@ -127,7 +144,7 @@ class RezBasicObject {
     }
   }
 
-  init3() {
+  init4() {
     this.#initialized = true;
   }
 
@@ -156,7 +173,7 @@ class RezBasicObject {
           return $(ref_id);
         },
         set: function (ref) {
-          if(ref === null || typeof(ref.id) === "undefined") {
+          if(ref?.id == null) {
             throw new Error("Cannot assign an empty ID ref");
           }
           this.setAttribute(attrName, ref.id);
@@ -171,7 +188,7 @@ class RezBasicObject {
    * @description uses basic_object.createStaticProperty to create static properties for all of the objects declared Rez attributes
    */
   createStaticProperties() {
-    for (let [attrName, _] of Object.entries(this.attributes)) {
+    for(let [attrName, _] of Object.entries(this.attributes)) {
       this.createStaticProperty(attrName);
     }
   }

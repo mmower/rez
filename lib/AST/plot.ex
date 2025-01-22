@@ -46,9 +46,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Plot do
 
   def pre_process(plot), do: plot
 
-  def process(plot, %{by_id: node_map}) do
+  def process(plot, _node_map) do
     plot
-    |> NodeHelper.copy_attributes(node_map)
     |> TemplateHelper.compile_template_attributes()
   end
 

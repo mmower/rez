@@ -130,35 +130,6 @@ defmodule Rez.Utils do
   def add_css_class(classes, ""), do: classes
   def add_css_class(classes, new_class), do: "#{classes} #{new_class}"
 
-  defmodule Search do
-    @doc """
-    Searches a node and it's tree of children.
-
-    The search_fn/1 takes a node and determines whether it matches the search
-    critera. If so it returns {:found, result} otherwise :not_found
-    """
-    def search(%{} = node, search_fn, child_fn) do
-      case search_fn.(node) do
-        :not_found ->
-          find_in_children(node, search_fn, child_fn)
-
-        {:found, result} ->
-          result
-      end
-    end
-
-    defp find_in_children(node, search_fn, child_fn) when not is_nil(node) do
-      children = child_fn.(node)
-
-      Enum.find_value(
-        children,
-        fn child when not is_nil(child) ->
-          search(child, search_fn, child_fn)
-        end
-      )
-    end
-  end
-
   @doc """
   The `dummy_source/3` function converts a string into a `LogicalFile` with
   a fake file name (defaults to 'test.rez') and path (defaults to '.').

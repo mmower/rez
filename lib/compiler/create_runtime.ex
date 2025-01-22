@@ -55,6 +55,13 @@ defmodule Rez.Compiler.CreateRuntime do
 
   EEx.function_from_file(
     :def,
+    :mixins,
+    Path.expand("assets/templates/runtime/mixins.js.eex"),
+    [:assigns]
+  )
+
+  EEx.function_from_file(
+    :def,
     :render_runtime,
     Path.expand("assets/templates/runtime.js.eex"),
     [
@@ -92,6 +99,7 @@ defmodule Rez.Compiler.CreateRuntime do
         patch_js_objects: patch_js_objects(game: game),
         bind_keys: bind_keys(game: game),
         user_components: user_components(game: game),
+        mixins: mixins(game: game),
         init_game_objects: init_game_objects(game: game),
         register_expression_filters: register_expression_filters(game: game)
       )

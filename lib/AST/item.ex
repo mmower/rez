@@ -101,9 +101,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
 
   def pre_process(item), do: item
 
-  def process(item, %{by_id: node_map}) do
+  def process(item, _node_map) do
     item
-    |> NodeHelper.copy_attributes(node_map)
     |> Item.build_template()
     |> TemplateHelper.compile_template_attributes()
   end

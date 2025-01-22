@@ -17,6 +17,7 @@ defmodule Rez.Parser.StructureParsers do
   import Rez.Parser.{UtilityParsers, AttributeParser, DelimitedParser}
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Parser.DefaultParser, only: [default: 2]
+  import Rez.Parser.ValueParsers, only: [elem_ref_value: 0]
 
   import Rez.Utils, only: [attr_list_to_map: 1]
 
@@ -33,20 +34,24 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def merge_attributes(default_attributes, attributes, parent_objects) do
+  def merge_attributes(default_attributes, attributes, []) do
+    Map.merge(default_attributes, attributes)
+  end
+
+  def merge_attributes(default_attributes, attributes, mixins) do
     merge_list = fn _key, old, new -> old ++ new end
 
     default_attributes
     |> Map.merge(attributes)
-    |> Map.merge(%{"_parents" => Attribute.list("_parents", parent_objects)}, merge_list)
+    |> Map.merge(%{"$mixins" => Attribute.list("$mixins", mixins)}, merge_list)
   end
 
   @doc """
   `create_block` returns a struct instance filling in the meta attributes
   related to parsing.
   """
-  def create_block(block_struct, id, parent_objects, attributes, source_file, source_line, col)
-      when is_list(parent_objects) and is_map(attributes) and is_binary(source_file) do
+  def create_block(block_struct, id, mixins, attributes, source_file, source_line, col)
+      when is_list(mixins) and is_map(attributes) and is_binary(source_file) do
     node =
       struct(
         block_struct,
@@ -60,7 +65,7 @@ defmodule Rez.Parser.StructureParsers do
           merge_attributes(
             Node.default_attributes(node),
             attributes,
-            parent_objects
+            mixins
           )
     })
   end
@@ -142,36 +147,31 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def parents(parent_ast) do
-    parent_ast
-    |> List.flatten()
-    |> Enum.map(fn elem -> {:keyword, elem} end)
-  end
-
-  def parent_objects() do
+  def mixins() do
     optional(
       sequence(
         [
           ignore(left_angle_bracket()),
           iows(),
-          elem_tag() |> atom(),
+          commit(),
+          elem_ref_value(),
           many(
             sequence([
               iows(),
               ignore(comma()),
               iows(),
-              elem_tag() |> atom()
+              elem_ref_value()
             ])
           ),
           iows(),
           ignore(right_angle_bracket())
         ],
         ast: fn ast ->
-          {:parent_objects, parents(ast)}
+          {:mixins, ast |> List.flatten()}
         end
       )
     )
-    |> default({:parent_objects, []})
+    |> default({:mixins, []})
   end
 
   def block_with_id(label, block_struct) do
@@ -181,7 +181,7 @@ defmodule Rez.Parser.StructureParsers do
         iws(),
         commit(),
         js_identifier("#{label}_id"),
-        parent_objects(),
+        mixins(),
         iws(),
         block_begin(),
         attribute_list(),
@@ -192,7 +192,7 @@ defmodule Rez.Parser.StructureParsers do
       debug: true,
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
-                ast: [id, {:parent_objects, parent_objects}, attr_list | []],
+                ast: [id, {:mixins, mixins}, attr_list | []],
                 data: %{source: source}
               } = ctx ->
         attributes = attr_list_to_map(attr_list)
@@ -202,7 +202,7 @@ defmodule Rez.Parser.StructureParsers do
           create_block(
             block_struct,
             id,
-            parent_objects,
+            mixins,
             attributes,
             source_file,
             source_line,
@@ -221,62 +221,62 @@ defmodule Rez.Parser.StructureParsers do
     )
   end
 
-  def block_with_id_opt_attributes(label, block_struct) do
-    sequence(
-      [
-        iliteral("@#{label}"),
-        iws(),
-        commit(),
-        js_identifier("#{label}_id"),
-        parent_objects(),
-        optional(
-          sequence(
-            [
-              iws(),
-              block_begin(),
-              attribute_list(),
-              iws(),
-              block_end()
-            ],
-            ast: &List.first/1
-          )
-        )
-      ],
-      label: "#{label}-block",
-      debug: true,
-      ctx: fn %Context{entry_points: [{line, col} | _], ast: ast, data: %{source: source}} = ctx ->
-        {source_file, source_line} = LogicalFile.resolve_line(source, line)
+  # def block_with_id_opt_attributes(label, block_struct) do
+  #   sequence(
+  #     [
+  #       iliteral("@#{label}"),
+  #       iws(),
+  #       commit(),
+  #       js_identifier("#{label}_id"),
+  #       parent_objects(),
+  #       optional(
+  #         sequence(
+  #           [
+  #             iws(),
+  #             block_begin(),
+  #             attribute_list(),
+  #             iws(),
+  #             block_end()
+  #           ],
+  #           ast: &List.first/1
+  #         )
+  #       )
+  #     ],
+  #     label: "#{label}-block",
+  #     debug: true,
+  #     ctx: fn %Context{entry_points: [{line, col} | _], ast: ast, data: %{source: source}} = ctx ->
+  #       {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-        {id, block} =
-          case ast do
-            [id, {:parent_objects, parent_objects}] ->
-              {id,
-               create_block(block_struct, id, parent_objects, %{}, source_file, source_line, col)}
+  #       {id, block} =
+  #         case ast do
+  #           [id, {:parent_objects, parent_objects}] ->
+  #             {id,
+  #              create_block(block_struct, id, parent_objects, %{}, source_file, source_line, col)}
 
-            [id, {:parent_objects, parent_objects}, attr_list] ->
-              {id,
-               create_block(
-                 block_struct,
-                 id,
-                 parent_objects,
-                 attr_list_to_map(attr_list),
-                 source_file,
-                 source_line,
-                 col
-               )}
-          end
+  #           [id, {:parent_objects, parent_objects}, attr_list] ->
+  #             {id,
+  #              create_block(
+  #                block_struct,
+  #                id,
+  #                parent_objects,
+  #                attr_list_to_map(attr_list),
+  #                source_file,
+  #                source_line,
+  #                col
+  #              )}
+  #         end
 
-        ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
-      end,
-      err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
-        Context.add_error(
-          ctx,
-          :block_not_matched,
-          "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
-        )
-      end
-    )
-  end
+  #       ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
+  #     end,
+  #     err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
+  #       Context.add_error(
+  #         ctx,
+  #         :block_not_matched,
+  #         "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
+  #       )
+  #     end
+  #   )
+  # end
 
   def delimited_block(label, id_fn, block_struct) do
     sequence(

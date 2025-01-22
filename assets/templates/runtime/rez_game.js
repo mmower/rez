@@ -48,7 +48,7 @@ class RezGame extends RezBasicObject {
   }
 
   initLevels() {
-    return [0, 1, 2, 3];
+    return [0, 1, 2, 3, 4];
   }
 
   saveFileName(prefix) {
@@ -574,7 +574,7 @@ class RezGame extends RezBasicObject {
 
       const game_objects = this.getAttribute("$init_order");
 
-      this.$init_order.forEach(function (obj_id) {
+      game_objects.forEach(function (obj_id) {
         const obj = this.getGameObject(obj_id);
         obj.init(init_level);
       }, this);

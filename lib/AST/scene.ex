@@ -58,7 +58,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
   alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
   alias Rez.AST.TemplateHelper
-
   alias Rez.AST.Scene
 
   defdelegate js_initializer(scene), to: NodeHelper
@@ -78,9 +77,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
 
   def pre_process(scene), do: scene
 
-  def process(scene, %{by_id: node_map}) do
+  def process(scene, _node_map) do
     scene
-    |> NodeHelper.copy_attributes(node_map)
     |> Scene.build_template()
     |> TemplateHelper.compile_template_attributes()
   end

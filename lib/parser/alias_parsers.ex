@@ -40,7 +40,7 @@ defmodule Rez.Parser.AliasParsers do
         ignore(equals()),
         iows(),
         elem_tag(),
-        parent_objects()
+        mixins()
       ],
       label: "alias",
       ctx: fn %Context{
@@ -105,7 +105,7 @@ defmodule Rez.Parser.AliasParsers do
           nil ->
             Context.add_error(ctx, :undefined_alias, "Undefined alias #{alias_tag} found.")
 
-          {target_tag, {:parent_objects, parent_objects}} ->
+          {target_tag, {:mixins, mixins}} ->
             target_module = NodeHelper.node_for_tag(target_tag)
             attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
             {source_file, source_line} = LogicalFile.resolve_line(source, line)
@@ -114,7 +114,7 @@ defmodule Rez.Parser.AliasParsers do
               create_block(
                 target_module,
                 alias_id,
-                parent_objects,
+                mixins,
                 attributes,
                 source_file,
                 source_line,
