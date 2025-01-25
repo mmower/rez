@@ -467,6 +467,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
     |> Utils.append_list(Map.values(game.slots))
     |> Utils.append_list(Map.values(game.items))
     |> Utils.append_list(Map.values(game.lists))
+    |> Utils.append_list(Map.values(game.mixins))
     |> Utils.append_list(Map.values(game.objects))
     |> Utils.append_list(Map.values(game.plots))
     |> Utils.append_list(Map.values(game.relationships))

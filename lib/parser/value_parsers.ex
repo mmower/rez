@@ -532,7 +532,6 @@ defmodule Rez.Parser.ValueParsers do
           dice_value(),
           heredoc_value(),
           elem_ref_value(),
-          code_block_value(),
           dynamic_initializer_value(),
           attr_ref_value(),
           file_value(),

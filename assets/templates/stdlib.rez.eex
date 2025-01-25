@@ -650,6 +650,17 @@
   }
 }
 
+@patch PATCH_NUMBER_TIMES {
+  $built_in: true
+  patch: "Number"
+  method: "times"
+  impl: function(f) {
+    for(let ix = 0; ix < this; ix++) {
+      f();
+    }
+  }
+}
+
 @patch PATH_MATH_DIV {
   $built_in: true
   patch: "Math"

@@ -39,6 +39,10 @@ class RezGame extends RezBasicObject {
     return this.#gameObjects;
   }
 
+  get objectCount() {
+    return this.#gameObjects.size;
+  }
+
   bindAs() {
     return "game";
   }
@@ -184,6 +188,8 @@ class RezGame extends RezBasicObject {
   /**
    * For each attribute defined on this game object, add it to the game-wide
    * index for that attribute.
+   * @TODO: Consider this may not work with mixed in properties as they do
+   * not appear in #attributes
    *
    * @param {basic_object} elem element whose attributes are to be indexed
    */
@@ -191,6 +197,12 @@ class RezGame extends RezBasicObject {
     Object.entries(elem.attributes).forEach(([k, v]) => {
       this.indexAttribute(elem.id, k);
     });
+  }
+
+  removeFromAttrIndex(elem) {
+    Object.entries(elem.attributes).forEach(([k, v]) => {
+      this.unindexAttribute(elem.id, k);
+    })
   }
 
   /**
@@ -203,6 +215,19 @@ class RezGame extends RezBasicObject {
     let index = this.#attrIndex[attrName] ?? new Set();
     index.add(elemId);
     this.#attrIndex[attrName] = index;
+  }
+
+  unindexAttribute(elemId, attrName) {
+    let index = this.#attrIndex[attrName];
+    if(index !== undefined) {
+      index.delete(elemId);
+
+      if(index.size == 0) {
+        this.#attrIndex.delete(attrName);
+      } else {
+        this.#attrIndex[attrName] = index;
+      }
+    }
   }
 
   /**
@@ -277,13 +302,27 @@ class RezGame extends RezBasicObject {
   */
   addGameObject(obj) {
     if(!(obj instanceof RezBasicObject)) {
-      console.dir(obj);
       throw new Error("Attempt to register non-game object!");
     }
 
     this.#gameObjects.set(obj.id, obj);
     this.addToTagIndex(obj);
     this.addToAttrIndex(obj);
+
+    return obj;
+  }
+
+  unmapObject(obj) {
+    if(!(obj instanceof RezBasicObject)) {
+      throw new Error("Atttempt to unmap non-game object!");
+    }
+
+    obj.runEvent("unmap", {});
+
+    if(this.#gameObjects.delete(obj.id)) {
+      this.removeFromAttrIndex(obj);
+      this.removeFromTagIndex(obj);
+    }
   }
 
   /**

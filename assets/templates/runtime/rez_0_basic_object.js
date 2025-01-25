@@ -348,6 +348,11 @@ class RezBasicObject {
    */
   elementInitializer() {}
 
+  addToGame() {
+    $game.addGameObject(this);
+    return this;
+  }
+
   /**
    * @function copyAssigningId
    * @memberof basic_object
@@ -388,6 +393,15 @@ class RezBasicObject {
     return this.copyAssigningId(this.getNextAutoId());
   }
 
+  addCopy() {
+    return this.copyWithAutoId().addToGame();
+  }
+
+  unmap() {
+    $game.unmapObject(this);
+    return this;
+  }
+
   /**
    * @function isTemplateObject
    * @memberof basic_object
@@ -406,7 +420,7 @@ class RezBasicObject {
    * @description Returns the event handler function stored in attribute "on_<event_name>" or undefined if no handler is present
    */
   eventHandler(eventName) {
-    return this.getAttribute(`on_${eventName}`);
+    return this[`on_${eventName}`];
   }
 
   /**

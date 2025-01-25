@@ -36,12 +36,14 @@ class RezDieRoll {
   #count;
   #modifier;
   #rounds;
+  #exploding;
 
   constructor(count, sides = 6, modifier = 0, rounds = 1) {
     this.#die = new RezDie(sides);
     this.#count = count;
     this.#modifier = modifier;
     this.#rounds = rounds;
+    this.#exploding = false;
   }
 
   get count() {
@@ -64,10 +66,19 @@ class RezDieRoll {
     return this.#rounds;
   }
 
+  set exploding(exploding) {
+    this.#exploding = exploding;
+  }
+
   rollRound() {
     let sum = this.modifier;
     for (let i = 0; i < this.count; i++) {
-      sum += this.die.roll();
+      if(this.#exploding) {
+        sum += this.die.open_roll();
+      } else {
+        sum += this.die.roll();
+      }
+
     }
     return sum;
   }
