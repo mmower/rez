@@ -248,9 +248,21 @@ defmodule Rez.Parser.ValueParsers do
         [
           ignore(caret()),
           ignore(char(?i)),
+          optional(
+            sequence(
+              [
+                ignore(colon()),
+                number()
+              ],
+              ast: fn [prio] -> prio end
+            )
+          )
+          |> default(10),
           text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
-        ast: fn [f] -> {:dynamic_initializer, f} end
+        ast: fn
+          [prio, initializer] -> {:dynamic_initializer, {initializer, bounded(prio, 1, 10)}}
+        end
       )
     end)
   end

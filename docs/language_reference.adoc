@@ -308,12 +308,8 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |Used within `bindings` to specify an object via a property path.
 |``source.exits`
 
-|Code Block
-|A Javascript expression. It is converted into an expression `function(obj) {return (<block>);}`
-|`^{Math.rand_int(1,10)}`
-
 |Dynamic Initializer
-|A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`
+|A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`. Has an optional `:prio` suffix where prio is an integer between 1-10. Initializer are run in order of increasing priority so ^i:1 runs before ^i:2. The default priority is 10.
 |`^i{return Math.rand_int(1,10)}`
 
 |Dynamic Property

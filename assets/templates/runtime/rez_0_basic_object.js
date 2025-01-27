@@ -228,14 +228,23 @@ class RezBasicObject {
       return;
     }
 
+    // Priority is fixed by the Rez compiler to be between 1 & 10
+    const initializers = [[], [], [], [], [], [], [], [], [], []];
+
     for(let attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
       if(typeof value == "object") {
         if(value.hasOwnProperty("initializer")) {
-          this.createDynamicallyInitializedAttribute(attrName, value);
+          const prio = parseInt(value["priority"]);
+          initializers[prio-1].push([attrName, value]);
         }
       }
     }
+
+    const initializer_in_prio_order = initializers.flat();
+    initializer_in_prio_order.forEach(
+      ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
+    );
   }
 
   createProbabilityTable(attrName, value) {

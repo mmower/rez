@@ -4,6 +4,10 @@ defmodule Rez.Utils do
   strings, list, and so on.
   """
 
+  def bounded(value, lower_bound, upper_bound) do
+    max(lower_bound, min(upper_bound, value))
+  end
+
   def ellipsize(str, max \\ 40) when is_binary(str) and max > 3 do
     if String.length(str) > max do
       String.slice(str, 0..(max - 4)) <> "..."

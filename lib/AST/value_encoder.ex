@@ -75,8 +75,8 @@ defmodule Rez.AST.ValueEncoder do
     "{dynamic_value: #{Poison.encode!(f)}}"
   end
 
-  def encode_value({:dynamic_initializer, i}) do
-    "{initializer: #{Poison.encode!(i)}}"
+  def encode_value({:dynamic_initializer, {initializer, prio}}) do
+    "{initializer: #{Poison.encode!(initializer)}, priority: #{prio}}"
   end
 
   def encode_value({:property, f}) do
