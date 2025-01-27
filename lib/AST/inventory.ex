@@ -47,6 +47,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
 
   def validators(_inventory) do
     [
+      attribute_if_present?(
+        "$init_after",
+        attribute_has_type?(:list, attribute_coll_of?(:elem_ref))
+      ),
       attribute_present?(
         "slots",
         attribute_has_type?(

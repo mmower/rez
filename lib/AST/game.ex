@@ -356,14 +356,13 @@ defmodule InitOrder do
     objs
     |> Enum.filter(fn obj -> Map.has_key?(obj, :id) end)
     |> Enum.map(fn obj ->
-      {obj.id, []}
-      # case NodeHelper.get_attr_value(obj, "$parent", nil) do
-      #   nil ->
-      #     {obj.id, []}
+      case NodeHelper.get_attr_value(obj, "$init_after", []) do
+        [] ->
+          {obj.id, []}
 
-      #   parent_id ->
-      #     {obj.id, [to_string(parent_id)]}
-      # end
+        ancestors ->
+          {obj.id, Enum.map(ancestors, fn {:elem_ref, ancestor_id} -> to_string(ancestor_id) end)}
+      end
     end)
   end
 

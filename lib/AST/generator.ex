@@ -40,6 +40,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
 
   def validators(_generator) do
     [
+      attribute_if_present?(
+        "$init_after",
+        attribute_has_type?(:list, attribute_coll_of?(:elem_ref))
+      ),
       attribute_present?(
         "priority",
         attribute_has_type?(

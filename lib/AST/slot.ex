@@ -53,6 +53,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Slot do
   def validators(_slot) do
     [
       attribute_if_present?(
+        "$init_after",
+        attribute_has_type?(:list, attribute_coll_of?(:elem_ref))
+      ),
+      attribute_if_present?(
         "tags",
         attribute_is_keyword_set?()
       ),

@@ -49,6 +49,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Behaviour do
   def validators(_behaviour) do
     [
       attribute_if_present?(
+        "$init_after",
+        attribute_has_type?(:list, attribute_coll_of?(:elem_ref))
+      ),
+      attribute_if_present?(
         "options",
         attribute_has_type?(
           :list,

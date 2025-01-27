@@ -49,6 +49,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Group do
 
   def validators(_group) do
     [
+      attribute_if_present?(
+        "$init_after",
+        attribute_has_type?(:list, attribute_coll_of?(:elem_ref))
+      ),
       attribute_present?(
         "type",
         attribute_value_is_one_of?(["image", "audio", "video"])
