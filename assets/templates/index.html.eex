@@ -43,4 +43,9 @@
     </script>
   </body>
   <script>$game.start("game-container");</script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      $game.eventProcessor.handleCustomEvent("document_loaded", {});
+    });
+  </script>
 </html>

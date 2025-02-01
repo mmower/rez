@@ -192,3 +192,11 @@ window.Rez.makeDie = function(diceStr) {
 
   return die;
 }
+
+window.Rez.D4 = Rez.makeDie("d4");
+window.Rez.D6 = Rez.makeDie("d6");
+window.Rez.D8 = Rez.makeDie("d8");
+window.Rez.D10 = Rez.makeDie("d10");
+window.Rez.D12 = Rez.makeDie("d12");
+window.Rez.D20 = Rez.makeDie("d20");
+window.Rez.D100 = Rez.makeDie("d100");

@@ -411,6 +411,21 @@ class RezBasicObject {
     return this;
   }
 
+  unmap_attr(attr_name) {
+    if(!attr_name.endsWith("_id")) {
+      throw new Error("Cannot unmap attributes that do not relate to an element id!");
+    }
+
+    if(!this.hasOwnProperty(attr_name)) {
+      throw new Error("Cannot unmap attribute not defined on this object!");
+    }
+
+    const related_obj = $(this[attr_name], true);
+
+    this[attr_name] = null;
+    related_obj.unmap();
+  }
+
   /**
    * @function isTemplateObject
    * @memberof basic_object
@@ -538,7 +553,9 @@ class RezBasicObject {
     const oldValue = this.attributes[attrName];
     this.attributes[attrName] = newValue;
     this.changedAttributes.add(attrName);
+
     if(notifyObservers) {
+      this.runEvent("set_attr", {attrName: attrName, oldValue: oldValue, newValue: newValue});
       this.game.elementAttributeHasChanged(
         this,
         attrName,
