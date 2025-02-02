@@ -42,10 +42,14 @@
       <% end %>
     </script>
   </body>
-  <script>$game.start("game-container");</script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      $game.eventProcessor.handleCustomEvent("document_loaded", {});
-    });
+    $game.start("game-container");
+  </script>
+  <script>
+    <%= for {_, %{name: js_event_name, value: rez_event_name}} <- NodeHelper.get_attr_value(@game, "$start_events") do %>
+      document.addEventListener('<%= js_event_name %>', () => {
+        $game.eventProcessor.handleCustomEvent("<%= rez_event_name %>", {});
+      });
+    <% end %>
   </script>
 </html>

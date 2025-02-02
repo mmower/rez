@@ -409,7 +409,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
       "current_scene_id" => Attribute.string("current_scene_id", ""),
       "$scene_stack" => Attribute.list("$scene_stack", []),
       "$flash_messages" => Attribute.list("$flash_messages", []),
-      "layout" => Attribute.source_template("layout", "${content}")
+      "layout" => Attribute.source_template("layout", "${content}"),
+      "$start_events" => Attribute.table("$start_events", %{})
     }
   end
 
@@ -507,6 +508,10 @@ defimpl Rez.AST.Node, for: Rez.AST.Game do
             "Game layout attribute is expected to include a ${content} expression!"
           )
         )
+      ),
+      attribute_if_present?(
+        "$start_events",
+        attribute_has_type?(:table)
       ),
       attribute_present?(
         "initial_scene_id",

@@ -241,7 +241,10 @@ defmodule Rez.Parser.CollectionParser do
     ParserCache.get_parser("table_attribute", fn ->
       sequence(
         [
-          js_identifier(),
+          choice([
+            js_identifier(),
+            string_value() |> transform(fn {:string, id} -> id end)
+          ]),
           ignore(colon()),
           iws(),
           commit(),

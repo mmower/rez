@@ -194,9 +194,16 @@ window.Rez.makeDie = function(diceStr) {
 }
 
 window.Rez.D4 = Rez.makeDie("d4");
+window.Rez.rollD4 = () => window.Rez.D4.roll();
 window.Rez.D6 = Rez.makeDie("d6");
+window.Rez.rollD6 = () => window.Rez.D6.roll();
 window.Rez.D8 = Rez.makeDie("d8");
+window.Rez.rollD8 = () => window.Rez.D8.roll();
 window.Rez.D10 = Rez.makeDie("d10");
+window.Rez.rollD10 = () => window.Rez.D10.roll();
 window.Rez.D12 = Rez.makeDie("d12");
+window.Rez.rollD12 = () => window.Rez.D12.roll();
 window.Rez.D20 = Rez.makeDie("d20");
+window.Rez.rollD20 = () => window.Rez.D20.roll();
 window.Rez.D100 = Rez.makeDie("d100");
+window.Rez.rollD100 = () => window.Rez.D100.roll();
