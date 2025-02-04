@@ -50,6 +50,8 @@ defmodule Rez.AST.Game do
             is_a: TypeHierarchy.new(),
             init_order: [],
             attributes: %{},
+            defaults: %{},
+            elems: %{},
             by_id: %{},
             enums: %{},
             actors: %{},
@@ -57,7 +59,6 @@ defmodule Rez.AST.Game do
             behaviours: %{},
             behaviour_templates: %{},
             cards: %{},
-            defaults: %{},
             effects: %{},
             factions: %{},
             filters: %{},
@@ -107,6 +108,13 @@ defmodule Rez.AST.Game do
     %{game | defaults: Map.put(defaults, elem, new_defaults)}
   end
 
+  def add_child(
+        {:elem, element_name, {_target_name, _mixins} = elem_def},
+        %Game{elems: elems} = game
+      ) do
+    %{game | elems: Map.put(elems, element_name, elem_def)}
+  end
+
   #
   # We use a Map->MapSet here because a keyword might be derived from more than
   # one parent keyword, e.g.
@@ -144,40 +152,71 @@ defmodule Rez.AST.Game do
     add_dynamic_child(game, child)
   end
 
+  def get_aliases_and_mixins(%Game{} = game, node) do
+    base_element = Node.node_type(node)
+    initial_alias = NodeHelper.get_attr_value(node, "$alias")
+
+    {chain, mixins} = build_chain(game, initial_alias, base_element)
+    {List.flatten(chain), mixins}
+  end
+
+  defp build_chain(_game, nil, base_element), do: {[base_element], MapSet.new()}
+
+  defp build_chain(%{elems: elems} = game, current_elem, base_element) do
+    case Map.get(elems, current_elem) do
+      {parent_element, {:mixins, mixin_list}} ->
+        current_mixins = MapSet.new(mixin_list)
+
+        case Map.get(elems, parent_element) do
+          nil ->
+            {[base_element, current_elem], current_mixins}
+
+          {_next_element, _next_mixins} ->
+            {parent_chain, parent_mixins} = build_chain(game, parent_element, base_element)
+            {parent_chain ++ [current_elem], MapSet.union(parent_mixins, current_mixins)}
+        end
+
+      nil ->
+        {[base_element, current_elem], MapSet.new()}
+    end
+  end
+
   defp add_dynamic_child(
          %Game{by_id: by_id, defaults: defaults} = game,
          %{id: child_id, attributes: attributes} = child
        ) do
+    # Which content collection is this, "scenes", "cards", "items" etc…
     content_key = struct_key(child)
-
     content = Map.get(game, content_key)
 
     if is_nil(content) do
-      IO.puts("Failed to get content: #{content_key}. Did you rename and not change all uses?")
+      raise "Failed to get content: #{content_key}. Did you rename the collection and not change all uses?"
     end
 
-    default_attributes = Map.get(defaults, Node.node_type(child), %{})
+    {alias_chain, mixins} = get_aliases_and_mixins(game, child)
 
-    alias_default_attributes =
-      case Map.fetch(attributes, "$alias") do
-        :error ->
-          %{}
+    # Walk the alias chain from the element upwards gathering defaults
+    # later aliases will override attributes defined as defaults in
+    # earlier aliases, all the way up to the attributes of the element
+    # itself
 
-        {:ok, %Attribute{value: alias_elem}} ->
-          Map.get(defaults, alias_elem, %{})
+    base_attributes =
+      Enum.reduce(alias_chain, %{}, fn alias, attrs ->
+        Map.merge(attrs, Map.get(defaults, alias, %{}))
+      end)
+
+    full_attributes = Map.merge(base_attributes, attributes)
+
+    child =
+      if Enum.empty?(mixins) do
+        %{child | attributes: full_attributes}
+      else
+        %{child | attributes: full_attributes} |> NodeHelper.set_set_attr("$mixins", mixins)
       end
 
-    attributes =
-      default_attributes
-      |> Map.merge(alias_default_attributes)
-      |> Map.merge(attributes)
-
-    child = %{child | attributes: attributes}
-
-    nodes = Map.put(content, child_id, child)
-
+    # Put the content back with its new item
     game
-    |> Map.put(content_key, nodes)
+    |> Map.put(content_key, Map.put(content, child_id, child))
     |> Map.put(:by_id, Map.put(by_id, child_id, child))
   end
 

@@ -45,62 +45,19 @@ Elements describe in-game concepts.
 
 Directives modify in-game concepts.
 
-* <<Alias (Directive), Alias>>
 * <<Behaviour Template (Directive), Behaviour Template>>
 * <<Component (Directive), Component>>
 * <<Declare (Directive), Declare>>
 * <<Defaults (Directive), Defaults>>
 * <<Derive (Directive), Derive>>
+* <<Elem (Directive), Elem>>
 * <<Enum (Directive), Enum>>
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
+* <<Mixin (Directive), Mixin>>
 * <<Keybinding (Directive), Keybinding>>
 * <<Script (Directive), Script>>
 * <<Style (Directive), Style>>
-
-== Alias (Directive)
-
-The `@alias` directive allows the author to refer to a particular kind of element using a convenient and meaningful name. It is usually used in conjunction with parent specifiers. For example it might be more meaningful to define `@sword` and `@shield` as aliases for particular kinds of `@item`.
-
-=== Example
-
-In our Maltese Parrot game hats are a big deal and a range of hat items will be needed but we don't want to repeat ourselves defining each one using `@item` so we can create an alias that specifies that a hat is an item and how hats are, generally, configured. Then our hat definition just needs to supply what's different about _that_ hat.
-
-Here's an example:
-
-....
-@item hat {
-  type: :hat
-  wearable: true
-  usable: false
-  bogie_would_approve: false
-}
-
-@alias hat = item<hat>
-
-@hat wool_fedora {
-  material: :wool
-  colour: :black
-  description: "A Messer black wool fedora hat"
-  bogie_would_approve: true
-}
-
-@hat brown_derby {
-  material: :felt
-  colour: :brown
-  description: "Battered brown derby"
-}
-....
-
-In this example we have made an alias, `@hat` for `@item` specifying a parent id `hat`. Using `@hat` creates new `@item`s that specify the `hat` item as their parent. Equalivent to:
-
-....
-@item wool_fedora<hat> {
-  ...
-}
-....
-
-Note that an alias can specify multiple parents.
 
 == Actor (Element)
 
@@ -725,6 +682,64 @@ started.
 If the game turn mechanism is being used this callback will be received on each
 game turn. This allows an effect to, for example, grow or decline over time.
 
+== Elem (Directive)
+
+The `@elem` directive allows the author to create a specialised alias for a particular kind of element, using a convenient and meaningful name.
+
+For example, it may be desirable to be able use `@sword` and `@watch` instead of `@item` and customise those items using `@defaults`. We can apply `@defaults` to custom elements.
+
+=== Example
+
+In our Maltese Parrot game hats are a big deal and a range of hat items will be needed and will include a range of hat-specific attributes but we don't want to repeat ourselves. Using `@elem` we can create an alias that specifies that a hat is an item and how hats are, generally, configured. Then our hat definition just needs to supply what's different about _that_ hat.
+
+Here's an example:
+
+....
+@elem hat = item
+
+@defaults hat {
+  type: :hat
+  wearable: true
+  usable: false
+  bogie_would_approve: false
+}
+
+@hat wool_fedora {
+  material: :wool
+  colour: :black
+  description: "A Messer black wool fedora hat"
+  bogie_would_approve: true
+}
+....
+
+Is equivalent to:
+
+....
+@item wool_fedora {
+  type: :hat
+  wearable: true
+  usable: false
+  material: :wool
+  colour: :black
+  description: "A Messer black wool fedora hat"
+  bogie_would_approve: true
+}
+....
+
+Attributes defined in `#wool_fedora` override their defaults from `@hat` or `@item` so that `bogie_would_approve:` is `true`.
+
+Where appropriate you can layer one `@elem` upon another to any depth. So the following is legal:
+
+....
+@elem woollen_hat = hat
+
+@defaults woollen_hat {
+  material: :wool
+}
+....
+
+Ultimately all `@elem` definitions resolve to one of the built-in elements such as `@actor` or `@item` and at runtime become one of the Rez objects.
+
 == Faction (Element)
 
 Factions represent in-game groups with their own agenda, reputation, and views
@@ -1148,6 +1163,18 @@ The run-time API supports selecting randomly from lists including with & without
 : `(list, event = {}) => {...}`
 
 This script will be called during game initialization and before the game has started.
+
+== Mixin (Directive)
+
+A `@mixin` defines attributes that can be included into an object at runtime. This differs from `@defaults` which are applied to an element at compile time and become attributes of that object. Essentially each object gets a copy of their defaults. By contrast using a mixin there is only one copy which is shared by all instances using it.
+
+....
+@mixin named {
+  name: ^p{return `${this.given_name} ${this.family_name}`}
+}
+....
+
+Now that `@elem` supports arbitrary nesting it is possible that `@mixin` is not required.
 
 == Object (Element)
 

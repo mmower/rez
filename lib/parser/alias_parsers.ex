@@ -7,6 +7,7 @@ defmodule Rez.Parser.AliasParsers do
   alias Ergo.Context
   import Ergo.Combinators, only: [ignore: 1, sequence: 2]
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
 
   import Rez.Parser.StructureParsers
@@ -26,14 +27,69 @@ defmodule Rez.Parser.AliasParsers do
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Utils, only: [attr_list_to_map: 1]
 
-  def is_reserved_tag_name?(name) when is_binary(name) do
-    NodeHelper.tag_defined?(name)
+  # The "right" way of doing this is still pretty brittle so I accept that
+  # I will at some point forget to update this when I add a new element.
+  @legal_targets [
+    "asset",
+    "actor",
+    "behaviour",
+    "card",
+    "effect",
+    "faction",
+    "generator",
+    "group",
+    "inventory",
+    "item",
+    "list",
+    "object",
+    "plot",
+    "scene",
+    "slot",
+    "system",
+    "timer"
+  ]
+
+  @reserved_names [
+    "asset",
+    "actor",
+    "behaviour",
+    "card",
+    "effect",
+    "faction",
+    "filter",
+    "game",
+    "generator",
+    "group",
+    "inventory",
+    "item",
+    "list",
+    "mixin",
+    "object",
+    "patch",
+    "plot",
+    "rel",
+    "scene",
+    "script",
+    "slot",
+    "style",
+    "system",
+    "timer"
+  ]
+
+  def legal_alias_name?(name, defined_aliases)
+      when is_binary(name) and is_list(defined_aliases) do
+    not (name in @reserved_names || name in defined_aliases)
+  end
+
+  def legal_alias_target?(name, defined_aliases)
+      when is_binary(name) and is_list(defined_aliases) do
+    name in @legal_targets || name in defined_aliases
   end
 
   def alias_directive() do
     sequence(
       [
-        iliteral("@alias"),
+        iliteral("@elem"),
         iws(),
         elem_tag(),
         iows(),
@@ -42,33 +98,38 @@ defmodule Rez.Parser.AliasParsers do
         elem_tag(),
         mixins()
       ],
-      label: "alias",
+      label: "elem",
       ctx: fn %Context{
-                ast: [alias_tag, target_tag, parent_objects],
+                ast: [alias_tag, target_tag, mixins],
                 data: %{aliases: aliases} = data
               } = ctx ->
-        case {not is_reserved_tag_name?(alias_tag), is_reserved_tag_name?(target_tag)} do
+        existing_aliases = Map.keys(aliases)
+
+        case {legal_alias_name?(alias_tag, existing_aliases),
+              legal_alias_target?(target_tag, existing_aliases)} do
           {false, _} ->
-            Context.add_error(
-              ctx,
+            ctx
+            |> Context.add_error(
               :illegal_tag_name,
-              "#{alias_tag} is not a legal tag for an alias"
+              "#{alias_tag} is not a legal tag for an @elem alias"
             )
+            |> Context.make_error_fatal()
 
           {_, false} ->
-            Context.add_error(
-              ctx,
+            ctx
+            |> Context.add_error(
               :illegal_tag_name,
-              "#{target_tag} is not a valid target to be aliased"
+              "#{target_tag} is not a valid target to be aliased as an @elem"
             )
+            |> Context.make_error_fatal()
 
           _ ->
             %{
               ctx
-              | ast: nil,
+              | ast: {:elem, alias_tag, {target_tag, mixins}},
                 data: %{
                   data
-                  | aliases: Map.put(aliases, alias_tag, {target_tag, parent_objects})
+                  | aliases: Map.put(aliases, alias_tag, {target_tag, mixins})
                 }
             }
         end
@@ -76,7 +137,15 @@ defmodule Rez.Parser.AliasParsers do
     )
   end
 
-  alias Rez.AST.Attribute
+  def aliased_struct(tag, aliases) when is_binary(tag) and is_map(aliases) do
+    case Map.get(aliases, tag) do
+      nil ->
+        NodeHelper.node_for_tag(tag)
+
+      {alias, _} ->
+        aliased_struct(alias, aliases)
+    end
+  end
 
   @doc """
   The `aliased_element/0` parser
@@ -103,10 +172,12 @@ defmodule Rez.Parser.AliasParsers do
               } = ctx ->
         case Map.get(aliases, alias_tag) do
           nil ->
-            Context.add_error(ctx, :undefined_alias, "Undefined alias #{alias_tag} found.")
+            ctx
+            |> Context.add_error(:undefined_alias, "Undefined alias #{alias_tag} found.")
+            |> Context.make_error_fatal()
 
           {target_tag, {:mixins, mixins}} ->
-            target_module = NodeHelper.node_for_tag(target_tag)
+            target_module = aliased_struct(target_tag, aliases)
             attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
             {source_file, source_line} = LogicalFile.resolve_line(source, line)
 

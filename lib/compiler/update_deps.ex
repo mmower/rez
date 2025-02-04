@@ -1,6 +1,7 @@
 defmodule Rez.Compiler.UpdateDeps do
   alias Rez.Compiler.Compilation
   alias Rez.Utils
+  alias Rez.Compiler.IOError
 
   @external_resource "node_modules/alpinejs/dist/cdn.min.js"
   @alpine_js File.read!("node_modules/alpinejs/dist/cdn.min.js")
@@ -39,8 +40,15 @@ defmodule Rez.Compiler.UpdateDeps do
         ctime
       ) do
     if asset_requires_update?(folder, file_name, ctime) do
-      File.write!(Path.join(["assets", folder, file_name]), content)
-      %{compilation | progress: ["Updated #{file_name}" | progress]}
+      dest_path = Path.join(["assets", folder, file_name])
+
+      case File.write!(dest_path, content) do
+        :ok ->
+          %{compilation | progress: ["Updated #{file_name}" | progress]}
+
+        {:error, code} ->
+          IOError.file_write_error(compilation, code, "Asset #{file_name}", dest_path)
+      end
     else
       %{compilation | progress: ["#{file_name} is up to date" | progress]}
     end
