@@ -838,6 +838,15 @@
   }
 }
 
+@patch PATCH_MATH_ALTER {
+  $built_in: true
+  patch: "Math"
+  function: "alter"
+  impl: function(value, change, min, max) {
+    return Math.max(Math.min(value+change, max), min);
+  }
+}
+
 %% ----------------------------------------------------------------------------
 %% Template Filters
 %% ----------------------------------------------------------------------------

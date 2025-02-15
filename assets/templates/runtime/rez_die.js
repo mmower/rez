@@ -184,9 +184,6 @@ window.Rez.makeDie = function(diceStr) {
   } else if(special === "d") {
     die.disadvantage = true;
   } else if(special === "!") {
-    if(numDice > 1) {
-      throw new Error("Cannot specify multiple dice and exploding");
-    }
     die.exploding = true
   };
 

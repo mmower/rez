@@ -1,6 +1,7 @@
 defmodule Rez.AST.LinkTransformerTest do
   use ExUnit.Case
-  doctest LinkTransformer
+  doctest Rez.AST.LinkTransformer
+  alias Rez.AST.LinkTransformer
 
   @test_html """
   <a href="https://www.example.com">Link</a>
@@ -27,7 +28,7 @@ defmodule Rez.AST.LinkTransformerTest do
   test "replaces scene=\"scene-id\" with data-event=\"scene\" and data-target=\"scene-id\"" do
     assert "<a scene=\"scene-id\">Link</a>"
            |> LinkTransformer.transform() ==
-             "<a data-event=\"scene\" data-target=\"scene-id\" href=\"javascript:void(0)\">Link</a>"
+             "<a data-event=\"switch\" data-target=\"scene-id\" href=\"javascript:void(0)\">Link</a>"
   end
 
   test "replaces interlude=\"scene-id\" with data-event=\"interlude\" and data-target=\"scene-id\"" do

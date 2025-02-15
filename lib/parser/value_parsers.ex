@@ -29,6 +29,7 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("string", fn ->
       sequence(
         [
+          not_lookahead(literal("\"\"\"")),
           ignore(double_quote()),
           many(not_double_quote()) |> string,
           ignore(double_quote())

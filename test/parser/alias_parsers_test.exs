@@ -6,7 +6,7 @@ defmodule Rez.Parser.AliasParsesTest do
 
   test "parse empty alias definition" do
     input = """
-    @alias standard_scene = scene
+    @elem standard_scene = scene
     """
 
     source = dummy_source(input)
@@ -14,27 +14,13 @@ defmodule Rez.Parser.AliasParsesTest do
 
     assert %{
              status: :ok,
-             data: %{aliases: %{"standard_scene" => {"scene", {:parent_objects, []}}}}
-           } = ctx
-  end
-
-  test "parse alternate empty alias definition" do
-    input = """
-    @alias standard_scene = scene<>
-    """
-
-    source = dummy_source(input)
-    ctx = Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
-
-    assert %{
-             status: :ok,
-             data: %{aliases: %{"standard_scene" => {"scene", {:parent_objects, []}}}}
+             data: %{aliases: %{"standard_scene" => {"scene", {:mixins, []}}}}
            } = ctx
   end
 
   test "parse alias definition with parents" do
     input = """
-    @alias standard_scene = scene<foo, bar>
+    @elem standard_scene = scene<#foo, #bar>
     """
 
     source = dummy_source(input)
@@ -43,8 +29,7 @@ defmodule Rez.Parser.AliasParsesTest do
              Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
 
     assert %{
-             "standard_scene" =>
-               {"scene", {:parent_objects, [{:keyword, :foo}, {:keyword, :bar}]}}
+             "standard_scene" => {"scene", {:mixins, [{:elem_ref, "foo"}, {:elem_ref, "bar"}]}}
            } = aliases
   end
 
@@ -62,13 +47,13 @@ defmodule Rez.Parser.AliasParsesTest do
                data: %{
                  id_map: %{},
                  source: source,
-                 aliases: %{"ring" => {"item", {:parent_objects, [{:keyword, :ring}]}}}
+                 aliases: %{"ring" => {"item", {:mixins, [{:elem_ref, "ring"}]}}}
                }
              )
 
     assert %Rez.AST.Item{id: "magic_ring"} = ast
     assert %Rez.AST.Attribute{value: true} = NodeHelper.get_attr(ast, "magic")
-    assert %Rez.AST.Attribute{value: [{:keyword, :ring}]} = NodeHelper.get_attr(ast, "_parents")
+    assert %Rez.AST.Attribute{value: [{:elem_ref, "ring"}]} = NodeHelper.get_attr(ast, "$mixins")
   end
 
   # test "parse merges default & defined tags" do

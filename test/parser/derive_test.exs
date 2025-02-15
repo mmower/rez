@@ -23,9 +23,9 @@ defmodule Rez.Parser.DeriveTest do
     source = dummy_source(input)
 
     ctx = Ergo.parse(top_level(), input, data: %{source: source, id_map: %{}})
-    assert %{status: :ok, ast: content} = ctx
+    assert %{status: :ok, ast: content, data: %{id_map: id_map}} = ctx
 
-    game = Rez.Compiler.ParseSource.build_game(content)
+    game = Rez.Compiler.ParseSource.build_game(content, id_map)
     assert %Rez.AST.Game{} = game
 
     types = %{

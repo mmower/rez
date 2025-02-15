@@ -37,13 +37,13 @@ defmodule Rez.Parser.ParserTest do
 
     # Tests items have been pulled in from the included file
     items = Enum.filter(rest, &is_struct(&1, Rez.AST.Item))
-    assert Enum.count(items) == 4
+    assert Enum.count(items) == 3
 
     assert [%Rez.AST.Item{attributes: attributes}] =
              Enum.filter(items, &(NodeHelper.get_attr_value(&1, "name") == "Orcrist"))
 
-    assert %Rez.AST.Attribute{name: "_parents", type: :list, value: [{:keyword, :sword}]} =
-             Map.get(attributes, "_parents")
+    assert %Rez.AST.Attribute{name: "$alias", type: :string, value: "sword"} =
+             Map.get(attributes, "$alias")
   end
 
   test "parses script element" do
@@ -65,13 +65,13 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses style element" do
     input = """
-    @stylesheet {
+    @styles {
       # CSS styles go here
     }
     """
 
     %Context{status: status, ast: ast} =
-      Ergo.parse(style_element(), input, data: %{id_map: %{}, source: dummy_source(input)})
+      Ergo.parse(styles_element(), input, data: %{id_map: %{}, source: dummy_source(input)})
 
     assert :ok = status
 

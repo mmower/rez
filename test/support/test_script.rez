@@ -4,14 +4,6 @@
   initial_scene_id: #cards
 }
 
-@item sword {
-  $template: true
-  category: :equipment
-  slot: #sword_slot
-}
-
-@alias sword = item<sword>
-
 @actor player {
   name: "The Adventurer"
 }
@@ -65,6 +57,13 @@
   race: #wizard
 }
 
+@elem sword = item
+
+@defaults sword {
+  category: :equipment
+  slot: #sword_slot
+}
+
 %% This is a line comment, the next line is an include macro
 %(items.rez)
 
@@ -87,9 +86,9 @@
 }
 
 @card psg1 {
-  template: """
+  content: ```
   Markdown here!
-  """
+  ```
 }
 
 @asset img1 {
@@ -114,6 +113,6 @@
   // Javascript code goes here
 }
 
-@stylesheet {
+@styles {
   /* CSS goes here */
 }
