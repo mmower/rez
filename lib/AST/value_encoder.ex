@@ -121,7 +121,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:roll, {count, sides, modifier, rounds}}) do
-    "new RezDieRoll(#{sides}, #{count}, #{modifier}, #{rounds})"
+    "new RezDieRoll(#{count}, #{sides}, #{modifier}, #{rounds})"
   end
 
   def encode_value({:list, l}) do

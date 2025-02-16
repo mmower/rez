@@ -97,6 +97,14 @@ class RezDieRoll {
     return this;
   }
 
+  copy() {
+    const die = new RezDieRoll(this.count, this.sides, this.modifier, this.rounds);
+    die.#exploding = this.#exploding;
+    die.#advantage = this.#advantage;
+    die.#disadvantage = this.#disadvantage;
+    return die;
+  }
+
   rollDice() {
     let sum = this.modifier;
     for (let i = 0; i < this.count; i++) {

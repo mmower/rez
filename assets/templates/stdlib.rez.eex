@@ -120,22 +120,28 @@
   patch: "Object"
   method: "copy"
   impl: function() {
+    const deepCopy = (value) => {
+      if(value === null || value === undefined || typeof(value) !== 'object') {
+        return value;
+      } else if(typeof(value.copy) === 'function') {
+        return value.copy();
+      } else {
+        return Object.copy.call(value);
+      }
+    };
+
     // Handle null or undefined
     if (this === null || typeof this === 'undefined') {
         return this;
     }
 
     if(this instanceof Set) {
-      return new Set([...this]);
+      return new Set([...this].map(item => deepCopy(item)));
     }
 
     // Handle array
     if (Array.isArray(this)) {
-        const copiedArr = [];
-        for (let i = 0; i < this.length; i++) {
-            copiedArr[i] = this[i].copy();
-        }
-        return copiedArr;
+      return this.map(item => deepCopy(item));
     }
 
     // Handle object
@@ -143,7 +149,7 @@
         const copiedObj = {};
         for (const key in this) {
             if (this.hasOwnProperty(key)) {
-                copiedObj[key] = this[key].copy();
+                copiedObj[key] = deepCopy(this[key]);
             }
         }
         return copiedObj;

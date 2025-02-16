@@ -179,6 +179,15 @@ class RezBasicObject {
           this.setAttribute(attrName, ref.id);
         },
       });
+    } else if(attrName.endsWith("_die")) {
+      const directAttrName = attrName.slice(0, -4);
+      const syntheticAttrName = `${directAttrName}_roll`;
+      Object.defineProperty(this, syntheticAttrName, {
+        get: function() {
+          const attr = this.getAttribute(attrName);
+          return attr.roll();
+        }
+      })
     }
   }
 

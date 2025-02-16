@@ -294,7 +294,7 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 
 |Dice
 |a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
-|`2d6+1`, `d4`, `3d6-1`, `2d10`
+|`^r:2d6+1`, `^r:d4`, `^r:3d6-1`, `^r:2d10`
 
 |Probability Table
 |A list of pairs wrapped in `\|` that becomes a generator property.

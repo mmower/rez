@@ -398,7 +398,10 @@ defmodule Rez.Parser.ValueParsers do
     ParserCache.get_parser("dice", fn ->
       sequence(
         [
-          number_value(),
+          ignore(caret()),
+          ignore(char(?r)),
+          ignore(colon()),
+          optional(number_value()) |> default({:number, 1}),
           ignore(char(?d)),
           number_value(),
           optional(

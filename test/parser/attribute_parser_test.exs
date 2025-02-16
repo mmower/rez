@@ -163,7 +163,7 @@ defmodule Rez.Parser.AttributeParserTest do
   end
 
   test "parse dice" do
-    input = "1d6"
+    input = "^r:1d6"
     assert %Context{status: :ok, ast: {:roll, {1, 6, 0, 1}}} = Ergo.parse(dice_value(), input)
   end
 
