@@ -220,14 +220,86 @@ defmodule Rez.Compiler.TemplateCompiler do
     }|
   end
 
+  alias Rez.Compiler.TemplateCompiler.JSTypeIdentifier
+
   defp component_assigns(attributes) do
     Enum.map_join(attributes, ",", fn
       {key, {:attr_expr, expr}} ->
-        ~s|#{key}: bindings.#{expr}|
+        case JSTypeIdentifier.identify(expr) do
+          {:literal, lit} ->
+            ~s|#{key}: #{lit}|
+
+          {:expression, expr} ->
+            ~s|#{key}: bindings.#{expr}|
+        end
 
       {key, value} ->
         ~s|#{key}: #{ValueEncoder.encode_value(value)}|
     end)
+  end
+
+  defmodule JSTypeIdentifier do
+    @moduledoc """
+    Module to differentiate between JavaScript literal values and expressions/identifiers
+    """
+
+    @doc """
+    Takes a string and determines if it represents a JavaScript literal value
+    (number, string, boolean) or if it's an expression/identifier.
+
+    Returns either :literal or :expression with the original string value.
+
+    ## Examples
+
+        iex> JSTypeIdentifier.identify("42")
+        {:literal, "42"}
+
+        iex> JSTypeIdentifier.identify("'hello'")
+        {:literal, "'hello'"}
+
+        iex> JSTypeIdentifier.identify("true")
+        {:literal, "true"}
+
+        iex> JSTypeIdentifier.identify("myVariable")
+        {:expression, "myVariable"}
+
+        iex> JSTypeIdentifier.identify("user.name")
+        {:expression, "user.name"}
+    """
+    def identify(input) when is_binary(input) do
+      cond do
+        # Check for booleans
+        input == "true" ->
+          {:literal, input}
+
+        input == "false" ->
+          {:literal, input}
+
+        input == "null" ->
+          {:literal, input}
+
+        # Check for strings (with quotes)
+        (String.starts_with?(input, "\"") and String.ends_with?(input, "\"")) or
+            (String.starts_with?(input, "'") and String.ends_with?(input, "'")) ->
+          {:literal, input}
+
+        # Check for numbers
+        literal_number?(input) ->
+          {:literal, input}
+
+        # If none of the above, it's an expression
+        true ->
+          {:expression, input}
+      end
+    end
+
+    # Helper to check if a string can be parsed as a valid JS number
+    defp literal_number?(str) do
+      case Float.parse(str) do
+        {_, ""} -> true
+        _ -> false
+      end
+    end
   end
 
   defmodule Values do
