@@ -116,37 +116,6 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
-  def tracery_grammar_value() do
-    ParserCache.get_parser("tracery_grammar", fn ->
-      Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("G``"), literal("```"))
-      |> transform(&convert_doc_fragments_to_string/1)
-      |> transform(fn grammar -> {:tracery_grammar, grammar} end)
-    end)
-  end
-
-  def heredoc_value() do
-    ParserCache.get_parser("heredoc", fn ->
-      here_boundary_parser = literal("\"\"\"")
-
-      sequence(
-        [
-          ignore(here_boundary_parser),
-          many(
-            sequence([
-              not_lookahead(here_boundary_parser),
-              any()
-            ]),
-            ast: fn chars -> convert_doc_fragments_to_string(chars) end
-          ),
-          ignore(here_boundary_parser)
-        ],
-        label: "here-doc",
-        debug: true,
-        ast: fn [str] -> {:string, str} end
-      )
-    end)
-  end
-
   # Bool
 
   @doc """
@@ -546,12 +515,10 @@ defmodule Rez.Parser.ValueParsers do
           function_value(),
           property_value(),
           dice_value(),
-          heredoc_value(),
           elem_ref_value(),
           dynamic_initializer_value(),
           attr_ref_value(),
           file_value(),
-          tracery_grammar_value(),
           undefined_value()
         ],
         label: "value",

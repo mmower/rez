@@ -256,10 +256,6 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |References an attribute in another element
 |`&sauron.location`
 
-|Heredoc String
-|a text value that can span across multiple lines
-|`"""it's a plaster bust of a parrot"""`
-
 |File
 |a string value that is imported from a file
 |`+<<<FILE_NAME>>>+`
@@ -300,21 +296,17 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |A list of pairs wrapped in `\|` that becomes a generator property.
 |\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
 
-|Tracery Grammar
-|a text value whose contents should be a https://github.com/galaxykate/tracery[Tracery] grammar
-|`+G``{origin: ...}```+`
-
 |Binding Path
 |Used within `bindings` to specify an object via a property path.
 |``source.exits`
 
 |Dynamic Initializer
 |A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`. Has an optional `:prio` suffix where prio is an integer between 1-10. Initializer are run in order of increasing priority so ^i:1 runs before ^i:2. The default priority is 10.
-|`^i{return Math.rand_int(1,10)}`
+|`^i{return Math.rand_int(1,10)}`, ^i:1{return $x_list.randomElement();}
 
 |Dynamic Property
 |A Javascript function expression that is converted into an object property
-|`^p{return this.first_name + " " + this.last_name}`
+|`^p{return \`${this.given_name} ${this.family_name}\`;}`
 
 |===
 
@@ -353,10 +345,6 @@ The underlying data representation is a Javascript string.
 An attribute alias is used to refer to an attribute of a specific element. It is prefixed with an ampersand (`&`) and consists of `elem_id.attr_name` where `elem_id` is an element id and `attr_name` is the name of an attribute of that element.
 
 The underlying representation is a Javascript object `{elem_id: <elem_id> attr_name: <attr_name>}`.
-
-=== Heredoc String
-
-A heredoc string is a multi-line capable string that is whitespace aware.
 
 === File String
 
@@ -448,38 +436,28 @@ At the moment, due to a lack of JSON support, it is not possible to use attribut
 
 It's not elegant but it's feasible. This will likely get cleaned up in a future version.
 
-=== Tracery Grammar
-
-* TODO
-
-=== Code Block
-
-A code block uses the form `^{...}` and can contain a legal Javascript expression.
-
-The code block is implicitly transformed into a function of 1 argument `obj` and that returns the value of the expression.
-
 === Dynamic Initializer
 
-A dynamic initializer uses the form `^i{...}` to run an expression once at the time the object is created.
+A dynamic initializer is a value in the form `^i{js_expr}` that is used to set the attribute value when the object is created using a dynamic Javascript expression. This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
 
-This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
+Initializer are run in increasing order of priority from 1 to 10. This allows one initializer value to depend upon a previously initialized value. To specify a priority use the form `^i:<prio>{...}` for example `^i:5{...}`. Initializers that do not specify a priority get the default value of 10 and run last.
 
-Note that this is not a function, the initializer uses the last expression as the value. In the following example we name an actor using a randomly generated given & family name.
+An `^i` initializer expects its Javascript expression to explicitly return the value that is used to initialize the attribute.
 
+In the following example we name an actor using a randomly generated given & family name.
 ....
 @actor random_npc {
-  name: ^i{
-    const given_name = $("given_names").randomElement();
-    const family_name = $("family_names").randomElement();
-    `${given_name} ${family_name}`;
-  }
+  given_name: ^i:1{return $("given_names").randomElement();}
+  family_name: ^i:1{return $("family_names").randomElement();}
+  name: ^i{return `${this.given_name} ${this.family_name}`;}
 }
 ....
 
 === Dynamic Property
 
-A dynamic property is a property generated from an expression in the form `^p{}` for example:
+A dynamic property is a value in the form `^p{js_expr}` that is used to create an attribute that doesn't have a stored value but is evaluated by evaluating the Javascript expression each time it is accessed.
 
+For example:
 ....
 @actor random_npc {
   class_name: ^p{

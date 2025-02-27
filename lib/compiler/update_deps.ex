@@ -15,10 +15,6 @@ defmodule Rez.Compiler.UpdateDeps do
   @pluralize_js File.read!("node_modules/pluralize/pluralize.js")
   @pluralize_js_time Utils.file_ctime!("node_modules/pluralize/pluralize.js")
 
-  @external_resource "assets/scripts/tracery.js"
-  @tracery_js File.read!("assets/scripts/tracery.js")
-  @tracery_js_time Utils.file_ctime!("assets/scripts/tracery.js")
-
   def asset_requires_update?(folder, file_name, stored_ctime) do
     file_path = Path.join(["assets", folder, file_name])
 
@@ -59,7 +55,6 @@ defmodule Rez.Compiler.UpdateDeps do
     |> conditionally_write_asset("js", "alpinejs.min.js", @alpine_js, @alpine_js_time)
     |> conditionally_write_asset("css", "bulma.min.css", @bulma_css, @bulma_css_time)
     |> conditionally_write_asset("js", "pluralize.js", @pluralize_js, @pluralize_js_time)
-    |> conditionally_write_asset("js", "tracery.js", @tracery_js, @tracery_js_time)
   end
 
   def run_phase(compilation) do

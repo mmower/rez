@@ -85,7 +85,7 @@ class RezList extends RezBasicObject {
     return item;
   }
 
-  // Low-level interface, you should need to call these directly
+  // Low-level interface, you should not need to call these directly
 
   /*
    * Returns a random element from among those left in the bag. If the bag

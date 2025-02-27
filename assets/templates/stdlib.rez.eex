@@ -89,13 +89,6 @@
   $pre_runtime: true
 }
 
-@asset _TRACERY_JS {
-  $built_in: true
-  file_name: "tracery.js"
-  $js_defer: false
-  $pre_runtime: true
-}
-
 %% ----------------------------------------------------------------------------
 %% JS Library Patches
 %% ----------------------------------------------------------------------------
