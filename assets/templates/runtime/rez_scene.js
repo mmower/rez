@@ -59,6 +59,7 @@ class RezScene extends RezBasicObject {
       if(this.isStackLayout) {
         this.current_card.current_block.flipped = true;
       }
+      this.last_card_id = this.current_card_id;
       this.current_card_id = "";
     }
   }

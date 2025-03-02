@@ -72,6 +72,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Scene do
     do: %{
       "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
       "current_card_id" => Attribute.string("current_card_id", ""),
+      "last_card_id" => Attribute.string("last_card_id", ""),
       "$running" => Attribute.boolean("$running", false)
     }
 

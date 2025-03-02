@@ -1550,31 +1550,78 @@ However in many cases it might be easier to use a "do block" inline in the templ
 
 === User Components
 
-Sometimes you want to be able to hide away some of the complexity of what you are doing behind a clean syntax. That is what `@components` are for.
+Sometimes it is advantageous to be able to be able to create new tags that hide some of the complexity of your HTML/CSS. That is what user components are for.
 
-For example let's say we are writing a lot of event buttons like this:
+Here is a very simple example. Bulma CSS provides the `block` class that you may wish to apply to your paragraphs:
 
 ....
-<button class="button is-small" data-event="reload">…</button>
+@card c_demo {
+  content: ```
+  <p class="block">Your text goes here.</p>
+  ```
+}
+....
+
+There's nothing particularly complex about this but if you are using this everywhere it can get tedious to write every time and noisy to read. Here is a component that simplifies this situation:
+
+....
+@component p (bindings, assigns, content) => {
+  return `<p class="block">${content}</p>`;
+}
+
+@card c_demo {
+  content: ```
+  <.p>Your text goes here</.p>
+  ```
+}
+....
+
+User components are always written in markup with a `.` in front of their name. So the component `p` becomes the tag `<.p>`.
+
+A user component is implemented by a Javascript function that receives three parameters:
+
+* bindings — all of the in-scope bindings from the `@card` being rendered
+* assigns - all of the attribute values passed to the component (in this example above there aren't any)
+* content - for container tags, the content between the open and closing tag
+
+The return value of the component is expected to be the markup the component emits.
+
+Let's look at another example. Let's say we are writing a lot of event buttons like this:
+
+....
+<button class="button is-small" data-event="reload">Reload</button>
 ....
 
 The boilerplate to make a button can be a bit tiresome and it obscures the most important thing about this button, that pressing it triggers the `reload` event. Let's make a component:
 
 ....
-@component event_button (bindings, assigns, content) => {
-  return `<button class="button is-small" data-event="${assigns["event"]}">${content}</button>`;
+@component evt_btn (bindings, assigns, content) => {
+  const event = assigns["event"];
+  return `<button class="button is-small" data-event="${event}">${content}</button>`;
 }
 ....
 
 Now we can write:
 
 ....
-<.event_button event="reload">…</.event_button>
+<.evt_btn event="reload">Reload</.evt_btn>
 ....
 
-And things are neater. Note that the component tag has a `.` prefix which is what Rez uses to identify `event_button` as a user component and look for its `@component` definition.
+Because `evt_btn` is a container tag the value of the `content` argument is the string `"Reload"`. For self-closing tags the value of `content` will be `null`.
 
-Because `<.event_button>` is a container tag it has a `content` argument containing all the rendered content that goes inside the tag. For self-closing tags `content` is undefined.
+The `event` attribute above is an example of a static assign but we can also pass dynamic expressions:
+
+....
+<.evt_btn event={event_name}>${event_action}</.evt_btn>
+....
+
+In this case the expression `event_name` is going to be evaluated and that value will be passed to the assigns map under the `event` key. Any Javascript expression is permitted here and all in-scope bindings are available so:
+
+....
+<.buy_button amount={item.cost * vendor.discount}>${item.name}<.buy_button>
+....
+
+Is legal.
 
 == Behaviour Trees
 
