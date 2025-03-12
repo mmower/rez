@@ -27,7 +27,8 @@ defmodule Rez.Compiler.CopyAssets do
   end
 
   def ignore_asset?(asset) do
-    NodeHelper.get_attr_value(asset, "_ignore_missing") ||
+    NodeHelper.get_attr_value(asset, "$inline") ||
+      NodeHelper.get_attr_value(asset, "_ignore_missing") ||
       NodeHelper.get_attr_value(asset, "$js_runtime", false)
   end
 

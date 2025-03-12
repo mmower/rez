@@ -118,7 +118,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
 
   def default_attributes(_asset),
     do: %{
-      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0)
+      "$auto_id_idx" => Attribute.number("$auto_id_idx", 0),
+      "$inline" => Attribute.boolean("$inline", false)
     }
 
   def pre_process(asset) do
@@ -138,10 +139,21 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
       "assets/#{NodeHelper.get_attr_value(asset, "file_name")}"
     )
     |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
+    |> conditionally_set_content(path)
     |> TemplateHelper.compile_template_attributes()
   end
 
   def process(%Asset{} = asset, _node_map), do: asset
+
+  def conditionally_set_content(%Asset{} = asset, path) do
+    if NodeHelper.get_attr_value(asset, "$inline") do
+      with {:ok, content} <- File.read(path) do
+        NodeHelper.set_string_attr(asset, "content", content)
+      end
+    else
+      asset
+    end
+  end
 
   def children(_asset), do: []
 
