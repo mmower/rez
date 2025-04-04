@@ -1,6 +1,6 @@
 defmodule Rez.Parser.ElementsParser do
   import Ergo.Combinators, only: [choice: 2]
-  import Rez.Utils, only: [random_str: 0]
+  import Rez.Utils, only: [random_str: 0, file_name_to_js_identifier: 1]
   import Rez.Parser.StructureParsers, only: [block: 3, block_with_id: 2, delimited_block: 3]
   import Rez.Parser.RelationshipParsers, only: [relationship_elem: 0]
 
@@ -10,6 +10,13 @@ defmodule Rez.Parser.ElementsParser do
 
   def asset_element() do
     block_with_id("asset", Rez.AST.Asset)
+  end
+
+  def auto_asset_element() do
+    block("auto_asset", Rez.AST.Asset, fn attrs ->
+      %{value: file_name} = Map.get(attrs, "file_name")
+      ("asset_" <> file_name) |> Path.basename() |> file_name_to_js_identifier()
+    end)
   end
 
   def behaviour_element() do
@@ -102,6 +109,7 @@ defmodule Rez.Parser.ElementsParser do
         card_element(),
         actor_element(),
         asset_element(),
+        auto_asset_element(),
         behaviour_element(),
         effect_element(),
         faction_element(),

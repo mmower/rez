@@ -1330,6 +1330,25 @@
   return block.html();
 }
 
+@component img (bindings, assigns, content) => {
+  const asset = $(assigns["name"]);
+  const path = asset.$dist_path;
+
+  // Use assigns width/height if provided, otherwise use asset dimensions
+  const w = assigns["width"] || asset.width;
+  const h = assigns["height"] || asset.height;
+
+  // Extract name, width and height from assigns so we don't duplicate them
+  const { name, width, height, ...otherAssigns } = assigns;
+
+  // Build additional attributes string from remaining assigns
+  const otherAttributes = Object.entries(otherAssigns)
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(" ");
+
+  return `<img src="${path}" width="${w}" height="${h}" ${otherAttributes} />`;
+}
+
 %% ----------------------------------------------------------------------------
 %% A scene that handles loading a game
 %% ----------------------------------------------------------------------------

@@ -198,26 +198,20 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
         "$js_runtime",
         attribute_has_type?(:boolean)
       ),
-      # attribute_if_present?(
-      #   "$js_runtime",
-      #   attribute_has_type?(
-      #     :boolean,
-      #     other_attributes_present?(["$js_depends"])
-      #   )
-      # ),
-      # attribute_if_present?(
-      #   "$js_depends",
-      #   attribute_coll_of?(:string)
-      # ),
+      attribute_if_present?(
+        "$js_defer",
+        attribute_has_type?(:boolean)
+      ),
       attribute_if_present?(
         "$pre_runtime",
         attribute_has_type?(:boolean)
       ),
       attribute_if_present?(
-        "$js_defer",
-        attribute_has_type?(:boolean)
+        "folder_path",
+        attribute_has_type?(:string)
       ),
-      attribute_present?(
+      attribute_one_of_present?(["file_name", "folder_path"], true),
+      attribute_if_present?(
         "file_name",
         attribute_has_type?(
           :string,

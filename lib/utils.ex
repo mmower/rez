@@ -143,4 +143,92 @@ defmodule Rez.Utils do
     section = LogicalFile.Section.new(file, 1..Enum.count(lines), lines, 0)
     LogicalFile.assemble(base_path, [section])
   end
+
+  @js_reserved_keywords [
+    "abstract",
+    "arguments",
+    "await",
+    "boolean",
+    "break",
+    "byte",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "eval",
+    "export",
+    "extends",
+    "false",
+    "final",
+    "finally",
+    "float",
+    "for",
+    "function",
+    "goto",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "instanceof",
+    "int",
+    "interface",
+    "let",
+    "long",
+    "native",
+    "new",
+    "null",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "short",
+    "static",
+    "super",
+    "switch",
+    "synchronized",
+    "this",
+    "throw",
+    "throws",
+    "transient",
+    "true",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "volatile",
+    "while",
+    "with",
+    "yield"
+  ]
+
+  @doc """
+  Converts a Unix file name into a legal JavaScript identifier.
+  - Removes file extension
+  - Replaces invalid characters with underscores
+  - Ensures it doesn't start with a digit
+  - Ensures it's not a JavaScript reserved keyword
+  """
+  def file_name_to_js_identifier(file_name) do
+    # Remove file extension if present
+    base_name = file_name |> String.split(".") |> List.first()
+
+    # Replace invalid characters with underscores
+    identifier = Regex.replace(~r/[^a-zA-Z0-9_$]/, base_name, "_")
+
+    # Ensure it doesn't start with a digit
+    identifier = if Regex.match?(~r/^\d/, identifier), do: "_" <> identifier, else: identifier
+
+    # Check if it's a reserved keyword and prefix with underscore if needed
+    if identifier in @js_reserved_keywords, do: "_" <> identifier, else: identifier
+  end
 end
