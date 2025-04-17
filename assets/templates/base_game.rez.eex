@@ -1,0 +1,63 @@
+%%
+%% Game created with Rez <%= Rez.version %>
+%% http://rez-lang.com/
+%% By Matt Mower <self@mattmower.com>
+%% Released 2022-2025 under the GPLv3 license
+%%
+
+%(../lib/stdlib.rez)
+
+@asset _ALPINE_JS {
+  $built_in: true
+  file_name: "alpinejs.min.js"
+  $js_defer: true
+  $pre_runtime: true
+}
+
+@asset _BULMA_CSS {
+  $built_in: true
+  file_name: "bulma.min.css"
+}
+
+@game {
+  name: "<%= @name %>"
+  title: "<%= @game_title %>"
+  author: "<%= @author_name %>"
+  author_email: "<%= @author_email %>"
+  game_homepage: "<%= @game_homepage %>"
+
+  IFID: "<%= @ifid %>"
+  archive_format: 1
+
+  version: "1.0"
+  created: "<%= @created %>"
+
+  initial_scene_id: #sc_main
+
+  layout: ```
+  <!-- Main Content -->
+  <section class="main-content is-fullheight">
+    <div class="container">${content}</div>
+  </section>
+  <!-- End -->
+  ```
+}
+
+@scene sc_main {
+  initial_card_id: #c_intro
+}
+
+@card c_intro {
+  content: ```
+  <section class="hero">
+    <div class="hero-body">
+      <p class="title">${card.game.title}</p>
+      <p class="subtitle">From <span class="has-text-primary">${card.game.author}</span></p>
+    </div>
+    <div class="box">
+      <p>Start adding your content…</p>
+      <p>See the <a href="http://rez-lang.com/" target="_blank">online documentation</a> for more information.</p>
+    </div>
+  </section>
+  ```
+}

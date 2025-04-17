@@ -70,17 +70,19 @@
 %% Head Assets
 %% ----------------------------------------------------------------------------
 
-@asset _ALPINE_JS {
-  $built_in: true
-  file_name: "alpinejs.min.js"
-  $js_defer: true
-  $pre_runtime: true
-}
+%% Moved these to the base_game template so that users can override
 
-@asset _BULMA_CSS {
-  $built_in: true
-  file_name: "bulma.min.css"
-}
+%%@asset _ALPINE_JS {
+%%  $built_in: true
+%%  file_name: "alpinejs.min.js"
+  %% $js_defer: true
+  %% $pre_runtime: true
+%% }
+
+%% @asset _BULMA_CSS {
+  %% $built_in: true
+  %% file_name: "bulma.min.css"
+%% }
 
 @asset _PLURALIZE_JS {
   $built_in: true

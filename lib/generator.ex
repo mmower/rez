@@ -14,13 +14,14 @@ defmodule Rez.Generator do
   @external_resource "node_modules/bulma/css/bulma.min.css"
   @bulma_css File.read!("node_modules/bulma/css/bulma.min.css")
 
-  EEx.function_from_file(:def, :render_hello, Path.expand("assets/templates/hello.rez.eex"), [
-    :assigns
-  ])
-
-  EEx.function_from_file(:def, :render_game, Path.expand("assets/templates/source.rez.eex"), [
-    :assigns
-  ])
+  EEx.function_from_file(
+    :def,
+    :render_base_game,
+    Path.expand("assets/templates/base_game.rez.eex"),
+    [
+      :assigns
+    ]
+  )
 
   EEx.function_from_file(:def, :render_stdlib, Path.expand("assets/templates/stdlib.rez.eex"), [
     :assigns
@@ -34,12 +35,10 @@ defmodule Rez.Generator do
     overwrite = Map.get(options, :overwrite, false)
 
     author_name = Map.get(options, :author_name, "Author Name")
-    author_email = Map.get(options, :author_email, "author.email@domain.foo")
+    author_email = Map.get(options, :author_email, "author.email@their.domain")
 
-    game_title = Map.get(options, :game_title, "Twisty Maze Adventure")
+    game_title = Map.get(options, :game_title, "My First Rez Game")
     game_homepage = Map.get(options, :game_homepage, "https://rez-lang.com/")
-
-    sample_game = Map.get(options, :sample, false)
 
     [name | _args] = args
 
@@ -62,27 +61,15 @@ defmodule Rez.Generator do
       created = DateTime.utc_now() |> DateTime.to_string()
 
       source =
-        if sample_game do
-          render_game(
-            name: name,
-            author_name: author_name,
-            author_email: author_email,
-            game_title: game_title,
-            game_homepage: game_homepage,
-            ifid: ifid,
-            created: created
-          )
-        else
-          render_hello(
-            name: name,
-            author_name: author_name,
-            author_email: author_email,
-            game_title: game_title,
-            game_homepage: game_homepage,
-            ifid: ifid,
-            created: created
-          )
-        end
+        render_base_game(
+          name: name,
+          author_name: author_name,
+          author_email: author_email,
+          game_title: game_title,
+          game_homepage: game_homepage,
+          ifid: ifid,
+          created: created
+        )
 
       File.write!(
         game_source_path,
