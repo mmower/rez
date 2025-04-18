@@ -309,6 +309,8 @@ class RezGame extends RezBasicObject {
     this.addToTagIndex(obj);
     this.addToAttrIndex(obj);
 
+    this.#undoManager?.recordNewElement(obj.id);
+
     return obj;
   }
 
@@ -323,6 +325,8 @@ class RezGame extends RezBasicObject {
       this.removeFromAttrIndex(obj);
       this.removeFromTagIndex(obj);
     }
+
+    this.#undoManager?.recordRemoveElement(obj);
   }
 
   /**
@@ -380,9 +384,7 @@ class RezGame extends RezBasicObject {
    * Currently this function notifies the undo manager and the view
    */
   elementAttributeHasChanged(elem, attrName, oldValue, newValue) {
-    if(this.undoManager) {
-      this.undoManager.recordChange(elem.id, attrName, oldValue);
-    }
+    this.undoManager?.recordAttributeChange(elem.id, attrName, oldValue);
 
     if(this.#view) {
       this.#view.updateBoundControls(elem.id, attrName, newValue);
@@ -626,6 +628,8 @@ class RezGame extends RezBasicObject {
     this.buildView();
 
     this.startSceneWithId(this.initial_scene_id);
+
+    this.undoManager.startChange();
   }
 
   buildView() {

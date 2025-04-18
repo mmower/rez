@@ -1,36 +1,138 @@
+// Obvious deficiencies:
+// We don't consider what happens if an element gets removed, we should bring
+// it back during undo.
 class RezUndoManager {
-  #prev_changes;
-  #changes;
+  #changeList;
+  #inUndo;  // Flag to track if we're currently in an undo operation
 
   constructor() {
-    this.#prev_changes = [];
-    this.#changes = [];
+    this.reset();
   }
 
-  newTurn() {
-    this.#prev_changes.push(this.#changes);
-    this.#changes = [];
+  reset() {
+    this.#changeList = [];
+    this.#inUndo = false;
   }
 
-  recordChange(el_id, attr_name, prev_value) {
-    this.#changes.push({
-      el_id: el_id,
-      attr_name: attr_name,
-      prev_value: prev_value,
+  get canUndo() {
+    return !this.#inUndo && this.#changeList.length > 0;
+  }
+
+  get historySize() {
+    return this.#changeList.length;
+  }
+
+  get curChange() {
+    return this.#changeList.length > 0 ? this.#changeList[this.#changeList.length - 1] : null;
+  }
+
+  get inUndo() {
+    return this.#inUndo;
+  }
+
+  startChange() {
+    // Don't start a new change record if we're in the middle of an undo operation
+    if(this.#inUndo) {
+      console.log("RezUndoManager: Skipping startChange during undo");
+      return;
+    }
+
+    console.log("RezUndoManager: Starting change");
+    this.#changeList.push([]);
+  }
+
+  recordNewElement(elemId) {
+    if (this.#inUndo) return;
+
+    this.curChange?.unshift({
+      changeType: "newElement",
+      elemId: elemId
+    });
+  }
+
+  recordRemoveElement(elem) {
+    if (this.#inUndo) return;
+
+    this.curChange?.unshift({
+      changeType: "removeElement",
+      elem: elem
+    });
+  }
+
+  recordAttributeChange(elemId, attrName, oldValue) {
+    if (this.#inUndo) return;
+
+    console.log(`RezUndoManager: record '${elemId}' changed '${attrName}' from '${oldValue}'`);
+    this.curChange?.unshift({
+      changeType: "setAttribute",
+      elemId: elemId,
+      attrName: attrName,
+      oldValue: oldValue
     });
   }
 
   undo() {
-    this.#changes.forEach((change) => {
-      const el = $(change.el_id);
-      el.setAttribute(change.attr_name, change.prev_value, false);
-    });
-
-    if (this.#prev_changes.length >= 1) {
-      this.#changes = this.#prev_changes.pop();
-    } else {
-      this.#changes = [];
+    if (!this.canUndo) {
+      console.log("RezUndoManager: Cannot undo - no more history");
+      return;
     }
+
+    // Set flag to prevent recording changes during undo
+    this.#inUndo = true;
+
+    try {
+      console.log("RezUndoManager: Starting undo operation");
+      const changes = this.#changeList.pop();
+
+      // Skip empty change records
+      if (changes.length === 0) {
+        console.log("RezUndoManager: Skipping empty change record");
+        // If this was an empty change, try again with the next one
+        if (this.canUndo) {
+          return this.undo();
+        }
+        return;
+      }
+
+      console.log(`RezUndoManager: Undoing ${changes.length} changes`);
+
+      // Apply all regular changes
+      changes.forEach((change) => {
+        if (change.changeType === "newElement") {
+          this.#undoNewElement(change);
+        } else if (change.changeType === "setAttribute") {
+          this.#undoSetAttribute(change);
+        } else if (change.changeType === "removeElement") {
+          this.#undoRemoveElement(change);
+        } else {
+          console.warn(`Unknown change type: ${change.changeType}`);
+        }
+      });
+
+      // Ensure the view gets updated
+      $game.updateView();
+
+    } finally {
+      // Clear the flag when we're done
+      this.#inUndo = false;
+    }
+  }
+
+  #undoNewElement({elemId}) {
+    console.log(`RezUndoManager: Undo new element: ${elemId}`);
+    const elem = $(elemId, true);
+    elem.unmap();
+  }
+
+  #undoRemoveElement({elem}) {
+    console.log(`RezUndoManager: Undo remove element: ${elem.id}`);
+    $game.addGameObject(elem);
+  }
+
+  #undoSetAttribute({elemId, attrName, oldValue}) {
+    console.log(`RezUndoManager: Undo set ${elemId} attribute ${attrName} -> ${oldValue}`);
+    const elem = $(elemId, true);
+    elem.setAttribute(attrName, oldValue, false);
   }
 }
 

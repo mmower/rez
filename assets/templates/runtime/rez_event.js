@@ -267,6 +267,10 @@ class RezEventProcessor {
   }
 
   handleBrowserEvent(evt) {
+    console.log("HandleBrowserEvent");
+
+    this.game.undoManager.startChange();
+
     evt = this.beforeEventProcessing(evt);
 
     let result;
