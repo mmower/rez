@@ -102,9 +102,6 @@ class RezUndoManager {
           }
         });
 
-        // Ensure the view gets updated
-        $game.updateView();
-
       } finally {
         // Clear the flag when we're done
         this.#performingUndo = false;
