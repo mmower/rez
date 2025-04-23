@@ -521,6 +521,21 @@ class RezGame extends RezBasicObject {
     }
   }
 
+  get canUndo() {
+    return this.#undoManager.canUndo;
+  }
+
+  undo() {
+    if(this.canUndo) {
+      this.#undoManager.undo();
+      // At this point the data model should be reverted to how it was after
+      // the previous event executed.
+      this.current_scene.createViewLayout();
+      this.updateViewContent();
+      this.updateView();
+    }
+  }
+
   /**
    * Informs the view of new content to be rendered. It is left up to the view
    * & its layout to determine how this affects any existing content of the view.
