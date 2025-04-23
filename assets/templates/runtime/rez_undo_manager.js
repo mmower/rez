@@ -3,7 +3,7 @@
 // it back during undo.
 class RezUndoManager {
   #changeList;
-  #inUndo;  // Flag to track if we're currently in an undo operation
+  #performingUndo;  // Flag to track if we're currently in an undo operation
 
   constructor() {
     this.reset();
@@ -11,11 +11,11 @@ class RezUndoManager {
 
   reset() {
     this.#changeList = [];
-    this.#inUndo = false;
+    this.#performingUndo = false;
   }
 
   get canUndo() {
-    return !this.#inUndo && this.#changeList.length > 0;
+    return !this.#performingUndo && this.#changeList.length > 0;
   }
 
   get historySize() {
@@ -23,116 +23,105 @@ class RezUndoManager {
   }
 
   get curChange() {
-    return this.#changeList.length > 0 ? this.#changeList[this.#changeList.length - 1] : null;
+    return this.#changeList.length > 0 ? this.#changeList.at(-1) : null;
   }
 
-  get inUndo() {
-    return this.#inUndo;
+  get performingUndo() {
+    return this.#performingUndo;
   }
 
   startChange() {
     // Don't start a new change record if we're in the middle of an undo operation
-    if(this.#inUndo) {
-      console.log("RezUndoManager: Skipping startChange during undo");
-      return;
+    if(!this.#performingUndo) {
+      this.#changeList.push([]);
     }
-
-    console.log("RezUndoManager: Starting change");
-    this.#changeList.push([]);
   }
 
   recordNewElement(elemId) {
-    if (this.#inUndo) return;
+    if(!this.#performingUndo) {
+      this.curChange?.unshift({
+        changeType: "newElement",
+        elemId: elemId
+      });
+    }
+  }
 
-    this.curChange?.unshift({
-      changeType: "newElement",
-      elemId: elemId
-    });
+  /**
+   * Discard the most recent change. This is used during an undo when the event
+   * the triggers the undo has started a new change.
+   */
+  #discardChange() {
+    this.#changeList.pop();
   }
 
   recordRemoveElement(elem) {
-    if (this.#inUndo) return;
-
-    this.curChange?.unshift({
-      changeType: "removeElement",
-      elem: elem
-    });
+    if(!this.#performingUndo) {
+      this.curChange?.unshift({
+        changeType: "removeElement",
+        elem: elem
+      });
+    }
   }
 
   recordAttributeChange(elemId, attrName, oldValue) {
-    if (this.#inUndo) return;
-
-    console.log(`RezUndoManager: record '${elemId}' changed '${attrName}' from '${oldValue}'`);
-    this.curChange?.unshift({
-      changeType: "setAttribute",
-      elemId: elemId,
-      attrName: attrName,
-      oldValue: oldValue
-    });
+    if(!this.#performingUndo) {
+      this.curChange?.unshift({
+        changeType: "setAttribute",
+        elemId: elemId,
+        attrName: attrName,
+        oldValue: oldValue
+      });
+    }
   }
 
   undo() {
-    if (!this.canUndo) {
-      console.log("RezUndoManager: Cannot undo - no more history");
-      return;
-    }
+    if(this.canUndo) {
 
-    // Set flag to prevent recording changes during undo
-    this.#inUndo = true;
+      // Set flag to prevent recording changes during undo
+      this.#performingUndo = true;
 
-    try {
-      console.log("RezUndoManager: Starting undo operation");
-      const changes = this.#changeList.pop();
+      try {
+        console.log("RezUndoManager: Starting undo operation");
 
-      // Skip empty change records
-      if (changes.length === 0) {
-        console.log("RezUndoManager: Skipping empty change record");
-        // If this was an empty change, try again with the next one
-        if (this.canUndo) {
-          return this.undo();
-        }
-        return;
+        this.#discardChange();
+        const changes = this.#changeList.pop();
+
+        console.log(`RezUndoManager: Undoing ${changes.length} changes`);
+        console.dir(changes);
+
+        // Apply all regular changes
+        changes.forEach((change) => {
+          if (change.changeType === "newElement") {
+            this.#undoNewElement(change);
+          } else if (change.changeType === "setAttribute") {
+            this.#undoSetAttribute(change);
+          } else if (change.changeType === "removeElement") {
+            this.#undoRemoveElement(change);
+          } else {
+            throw new Error(`Unknown change type: ${change.changeType}`);
+          }
+        });
+
+        // Ensure the view gets updated
+        $game.updateView();
+
+      } finally {
+        // Clear the flag when we're done
+        this.#performingUndo = false;
       }
-
-      console.log(`RezUndoManager: Undoing ${changes.length} changes`);
-
-      // Apply all regular changes
-      changes.forEach((change) => {
-        if (change.changeType === "newElement") {
-          this.#undoNewElement(change);
-        } else if (change.changeType === "setAttribute") {
-          this.#undoSetAttribute(change);
-        } else if (change.changeType === "removeElement") {
-          this.#undoRemoveElement(change);
-        } else {
-          console.warn(`Unknown change type: ${change.changeType}`);
-        }
-      });
-
-      // Ensure the view gets updated
-      $game.updateView();
-
-    } finally {
-      // Clear the flag when we're done
-      this.#inUndo = false;
     }
   }
 
   #undoNewElement({elemId}) {
-    console.log(`RezUndoManager: Undo new element: ${elemId}`);
-    const elem = $(elemId, true);
-    elem.unmap();
+    $(elemId, true).unmap();
   }
 
   #undoRemoveElement({elem}) {
-    console.log(`RezUndoManager: Undo remove element: ${elem.id}`);
     $game.addGameObject(elem);
   }
 
   #undoSetAttribute({elemId, attrName, oldValue}) {
-    console.log(`RezUndoManager: Undo set ${elemId} attribute ${attrName} -> ${oldValue}`);
-    const elem = $(elemId, true);
-    elem.setAttribute(attrName, oldValue, false);
+    $(elemId, true).setAttribute(attrName, oldValue);
   }
 }
 
