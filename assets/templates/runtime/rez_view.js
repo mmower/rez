@@ -61,8 +61,16 @@ class RezBlock {
     return this.#blockType;
   }
 
+  set blockType(type) {
+    this.#blockType = type;
+  }
+
   get source() {
     return this.#source;
+  }
+
+  set source(source) {
+    this.#source = source;
   }
 
   get flipped() {
@@ -131,14 +139,14 @@ class RezBlock {
       value = this.instantiateFunctionBinding(bindings, source);
     } else if (source && typeof source.binding === "function") {
       value = this.instantiatePathBinding(source.binding, bindings);
-      
+
       // Apply dereferencing only for path bindings when deref is true
       if (deref) {
         value = this.dereferenceBoundValue(value);
       }
     } else {
       // Detailed error for unrecognized source type
-      throw new Error(`Invalid binding source type: ${typeof source}. 
+      throw new Error(`Invalid binding source type: ${typeof source}.
         Expected string, function, or object with binding function.`);
     }
 
@@ -255,6 +263,20 @@ class RezBlock {
       return `<div class="${this.css_classes()}">${blockContent}</div>`;
     }
   }
+
+  _copyInto(target) {
+    target.parentBlock = this.parentBlock;
+    target.blockType = this.blockType;
+    target.source = this.source;
+    target.flipped = this.flipped;
+    target.params = this.params;
+    return target;
+  }
+
+  copy() {
+    const copiedBlock = new this.constructor();
+    return this._copyInto(copiedBlock);
+  }
 };
 
 window.Rez.RezBlock = RezBlock;
@@ -301,33 +323,35 @@ class RezLayout extends RezBlock {
 
 class RezSingleLayout extends RezLayout {
   #content;
-  #sourceName;
 
   constructor(sourceName, source) {
     super(sourceName, source);
-    this.#sourceName = sourceName;
     this.#content = null;
   }
 
-  get content() {
-    return this.#content;
-  }
-
-  set content(content) {
-    this.#content = content;
-  }
-
   bindAs() {
-    return this.sourceName;
+    return this.blockType;
   }
 
   addContent(block) {
     block.parentBlock = this;
-    this.content = block;
+    this.#content = block;
   }
 
   renderContents() {
-    return this.content.html();
+    return this.#content.html();
+  }
+
+  _copyInto(target) {
+    target.#content = this.#content;
+    return target;
+  }
+
+  copy() {
+    const copiedLayout = new this.constructor();
+    super._copyInto(copiedLayout)
+    copiedLayout.#content = this.#content.copy();
+    return copiedLayout;
   }
 }
 
@@ -340,25 +364,15 @@ window.Rez.RezSingleLayout = RezSingleLayout;
 //-----------------------------------------------------------------------------
 
 class RezStackLayout extends RezLayout {
-  #sourceName;
   #contents;
 
   constructor(sourceName, source) {
-    super("scene", source);
-    this.#sourceName = sourceName;
+    super(sourceName, source);
     this.#contents = [];
   }
 
-  get contents() {
-    return this.#contents;
-  }
-
-  // get sourceName() {
-  //   return this.#sourceName;
-  // }
-
   bindAs() {
-    return this.sourceName;
+    return this.blockType;
   }
 
   get reversed() {
@@ -369,9 +383,9 @@ class RezStackLayout extends RezLayout {
     block.parentBlock = this;
 
     if (this.reversed) {
-      this.contents.unshift(block);
+      this.#contents.unshift(block);
     } else {
-      this.contents.push(block);
+      this.#contents.push(block);
     }
   }
 
@@ -381,7 +395,14 @@ class RezStackLayout extends RezLayout {
       separator = this.source.layout_separator;
     }
 
-    return this.contents.map((block) => block.html()).join(separator);
+    return this.#contents.map((block) => block.html()).join(separator);
+  }
+
+  copy() {
+    const copiedLayout = new this.constructor();
+    super._copyInto(copiedLayout);
+    copiedLayout.#contents = this.#contents.copy();
+    return copiedLayout;
   }
 };
 
@@ -814,6 +835,21 @@ class RezView {
     this.clearBindings();
     this.render();
     this.transform();
+  }
+
+  _copyInto(target) {
+    target.#container = this.#container;
+    target.#layout = this.#layout.copy();
+    target.#layoutStack = this.#layoutStack.copy();
+    target.#bindings = this.#bindings.copy();
+    target.#receiver = this.#receiver;
+    target.#transformers = this.#transformers;
+  }
+
+  copy() {
+    const copiedView = new this.constructor();
+    this._copyInto(copiedView);
+    return copiedView;
   }
 }
 

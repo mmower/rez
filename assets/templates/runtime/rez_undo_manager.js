@@ -74,6 +74,15 @@ class RezUndoManager {
     }
   }
 
+  recordViewChange(view) {
+    if(!this.#performingUndo) {
+      this.curChange?.unshift({
+        changeType: "view",
+        view: view
+      });
+    }
+  }
+
   undo() {
     if(this.canUndo) {
 
@@ -97,6 +106,8 @@ class RezUndoManager {
             this.#undoSetAttribute(change);
           } else if (change.changeType === "removeElement") {
             this.#undoRemoveElement(change);
+          } else if (change.changeType === "view") {
+            this.#undoViewChange(change);
           } else {
             throw new Error(`Unknown change type: ${change.changeType}`);
           }
@@ -119,6 +130,10 @@ class RezUndoManager {
 
   #undoSetAttribute({elemId, attrName, oldValue}) {
     $(elemId, true).setAttribute(attrName, oldValue);
+  }
+
+  #undoViewChange({view}) {
+    $game.restoreView(view)
   }
 }
 

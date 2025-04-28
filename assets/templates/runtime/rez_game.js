@@ -43,6 +43,10 @@ class RezGame extends RezBasicObject {
     return this.#gameObjects.size;
   }
 
+  get view() {
+    return this.#view;
+  }
+
   bindAs() {
     return "game";
   }
@@ -528,11 +532,6 @@ class RezGame extends RezBasicObject {
   undo() {
     if(this.canUndo) {
       this.#undoManager.undo();
-      // At this point the data model should be reverted to how it was after
-      // the previous event executed.
-      this.current_scene.createViewLayout();
-      this.updateViewContent();
-      this.updateView();
     }
   }
 
@@ -564,6 +563,11 @@ class RezGame extends RezBasicObject {
     this.#view.update();
     this.runEvent("after_render", {});
     this.clearFlashMessages();
+  }
+
+  restoreView(view) {
+    this.#view = view;
+    this.updateView();
   }
 
   /**
@@ -640,13 +644,16 @@ class RezGame extends RezBasicObject {
       obj.runEvent("game_started", {})
     });
 
+
     this.buildView();
 
     this.startSceneWithId(this.initial_scene_id);
-
-    this.undoManager.startChange();
   }
 
+  /**
+   * Assigns the #view private attribute with a RezView that is initialized
+   * with a single layout.
+   */
   buildView() {
     this.#view = new RezView(
       this.#containerId,

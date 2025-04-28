@@ -141,12 +141,64 @@
 
     // Handle object
     if (typeof this === 'object') {
-        const copiedObj = {};
+        // Use the same constructor as the original object to preserve prototype chain
+        let copiedObj;
+
+        try {
+            // Try to create a new instance using the constructor
+            copiedObj = new this.constructor();
+        } catch (e) {
+            // If constructor fails, fall back to creating object with same prototype
+            copiedObj = Object.create(Object.getPrototypeOf(this));
+        }
+
+        // Copy all enumerable properties
         for (const key in this) {
             if (this.hasOwnProperty(key)) {
                 copiedObj[key] = deepCopy(this[key]);
             }
         }
+
+        // Copy non-enumerable properties
+        Object.getOwnPropertyNames(this).forEach(key => {
+            if (!copiedObj.hasOwnProperty(key)) {
+                const descriptor = Object.getOwnPropertyDescriptor(this, key);
+                if (descriptor) {
+                    // For accessor properties (getters/setters), preserve them
+                    if (descriptor.get || descriptor.set) {
+                        Object.defineProperty(copiedObj, key, descriptor);
+                    } else {
+                        // For data properties, deep copy the value
+                        Object.defineProperty(copiedObj, key, {
+                            value: deepCopy(descriptor.value),
+                            writable: descriptor.writable,
+                            enumerable: descriptor.enumerable,
+                            configurable: descriptor.configurable
+                        });
+                    }
+                }
+            }
+        });
+
+        // Copy symbol properties
+        Object.getOwnPropertySymbols(this).forEach(sym => {
+            const descriptor = Object.getOwnPropertyDescriptor(this, sym);
+            if (descriptor) {
+                // For accessor properties (getters/setters), preserve them
+                if (descriptor.get || descriptor.set) {
+                    Object.defineProperty(copiedObj, sym, descriptor);
+                } else {
+                    // For data properties, deep copy the value
+                    Object.defineProperty(copiedObj, sym, {
+                        value: deepCopy(descriptor.value),
+                        writable: descriptor.writable,
+                        enumerable: descriptor.enumerable,
+                        configurable: descriptor.configurable
+                    });
+                }
+            }
+        });
+
         return copiedObj;
     }
 

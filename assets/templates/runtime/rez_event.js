@@ -270,6 +270,7 @@ class RezEventProcessor {
     console.log("HandleBrowserEvent");
 
     this.game.undoManager.startChange();
+    this.game.undoManager.recordViewChange(this.game.view.copy());
 
     evt = this.beforeEventProcessing(evt);
 
