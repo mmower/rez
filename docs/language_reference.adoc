@@ -2,7 +2,7 @@
 title = "Language Guide"
 author = "Matt Mower"
 draft = false
-date = 2024-05-13
+date = 2025-04-29
 +++
 :relfileprefix: ../
 :relfilesuffix: /
@@ -56,14 +56,34 @@ Compiles the sources into a game in the `dist` sub-folder. It creates an `index.
 
 To distribute your game you distribute the contents of the `dist` folder. For example by compressing it into a `.zip` file or wrapping it in an https://www.electronjs.org/[Electron] app.
 
-=== Frameworks
+=== Javascript & CSS Frameworks
 
 Rez includes two default frameworks:
 
 * https://bulma.io/[Bulma CSS] for stylesheet support
 * https://alpinejs.dev/[Apline.js] for dynamic UI support
 
-The files for these will automatically be copied into your `dist` folder when you compile the game.
+The files for these are included within the Rez compiler and will be automatically copied into your `assets` folder when you create or update the game. However whether you choose to use them or not is down to you. The new game template includes them as follows:
+
+....
+@asset _ALPINE_JS {
+  $built_in: true
+  file_name: "alpinejs.min.js"
+  $js_defer: true
+  $pre_runtime: true
+}
+
+@asset _BULMA_CSS {
+  $built_in: true
+  file_name: "bulma.min.css"
+}
+....
+
+If you remove these lines from your game file those assets will not be included in the compiled game and you can replace them with other assets of your own. Rez does not, by itself, make use of any of their features so replacing them is intended to have no side effects.
+
+The `$pre_runtime` attribute controls whether an asset is loaded before the compiled `runtime.js` (that includes the Rez standard library and your own elements and event handlers) or after. The `$js_defer` attribute controls whether JS attributes should be included using the `<script>` tag `defer` attribute that ensures it will only be run after the page has loaded.
+
+The `$built_in` attribute is purely to help differentiate between things defined by Rez itself and things defined by the author. It has no in-game purpose.
 
 === Source code format
 

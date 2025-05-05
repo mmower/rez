@@ -266,11 +266,18 @@ class RezEventProcessor {
     return this.handleBrowserEvent(evt);
   }
 
+  isAutoUndoEvent(evt) {
+    const evtTypes = ["click", "input", "submit", "key_binding"];
+    return evtTypes.includes(evt.type);
+  }
+
   handleBrowserEvent(evt) {
     console.log("HandleBrowserEvent");
 
-    this.game.undoManager.startChange();
-    this.game.undoManager.recordViewChange(this.game.view.copy());
+    if(this.isAutoUndoEvent(evt)) {
+      this.game.undoManager.startChange();
+      this.game.undoManager.recordViewChange(this.game.view.copy());
+    }
 
     evt = this.beforeEventProcessing(evt);
 

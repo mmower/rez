@@ -3,9 +3,11 @@
 // it back during undo.
 class RezUndoManager {
   #changeList;
+  #maxSize;
   #performingUndo;  // Flag to track if we're currently in an undo operation
 
-  constructor() {
+  constructor(maxSize = 16) {
+    this.#maxSize = maxSize;
     this.reset();
   }
 
@@ -33,6 +35,9 @@ class RezUndoManager {
   startChange() {
     // Don't start a new change record if we're in the middle of an undo operation
     if(!this.#performingUndo) {
+      if(this.#changeList.length >= this.#maxSize) {
+        this.#changeList.shift(); // Remove the first (oldest) element
+      }
       this.#changeList.push([]);
     }
   }
@@ -83,7 +88,7 @@ class RezUndoManager {
     }
   }
 
-  undo() {
+  undo(manualUndo = false) {
     if(this.canUndo) {
 
       // Set flag to prevent recording changes during undo
@@ -92,7 +97,9 @@ class RezUndoManager {
       try {
         console.log("RezUndoManager: Starting undo operation");
 
-        this.#discardChange();
+        if(!manualUndo) {
+          this.#discardChange();
+        }
         const changes = this.#changeList.pop();
 
         console.log(`RezUndoManager: Undoing ${changes.length} changes`);

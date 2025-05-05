@@ -5,3 +5,6 @@ rm burrito_out/*.zip
 zip -j burrito_out/rez_linux.zip burrito_out/rez_linux
 zip -j burrito_out/rez_macos.zip burrito_out/rez_macos
 zip -j burrito_out/rez_windows.exe.zip burrito_out/rez_windows.exe
+rm burrito_out/rez_linux
+rm burrito_out/rez_macos
+rm burrito_out/rez_windows.exe
