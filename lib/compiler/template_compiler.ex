@@ -231,6 +231,9 @@ defmodule Rez.Compiler.TemplateCompiler do
   end
 
   defmodule Values do
+    @moduledoc """
+    Javascript code generation for bound values
+    """
     def js_make_fn(bindings_map_name, expr),
       do: ~s|function(#{bindings_map_name}) {return #{expr};}|
 
@@ -258,6 +261,9 @@ defmodule Rez.Compiler.TemplateCompiler do
   end
 
   defmodule Filters do
+    @moduledoc """
+    Javascript code generation for handling filters for template expressions
+    """
     alias Rez.Compiler.TemplateCompiler.Values
 
     def js_function([], body) do

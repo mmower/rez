@@ -298,7 +298,13 @@ class RezInventory extends RezBasicObject {
    * @description adds the given item to the given slot, notifying inventory, slot & item and applying effects
    */
   addItemToSlot(slotId, itemId) {
-    const item = $t(itemId, "item");
+    const item = $(itemId);
+
+    // Anything can be added to an inventory provided it has an `inv_type`
+    // attribute to work with the slot accepts
+    if(!item.hasAttribute("inv_type")) {
+      throw new Error(`Attempt to add ${itemId} to inventory, which does not define an 'inv_type'!`);
+    }
 
     this.appendItemToSlot(slotId, itemId);
 

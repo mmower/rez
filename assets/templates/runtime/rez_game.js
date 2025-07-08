@@ -472,7 +472,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_start", {});
+    this.runEvent("scene_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -497,7 +497,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_start", {});
+    this.runEvent("scene_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -643,7 +643,6 @@ class RezGame extends RezBasicObject {
     this.getAll().forEach((obj) => {
       obj.runEvent("game_started", {})
     });
-
 
     this.buildView();
 

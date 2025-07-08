@@ -2,6 +2,8 @@ defmodule Rez.Compiler.Compilation do
   alias __MODULE__
   alias Rez.AST.Game
 
+  alias Rez.AST.TypeHierarchy
+
   @moduledoc """
   `Rez.Compiler.Compilation` defines the `Compilation` struct.
 
@@ -15,7 +17,13 @@ defmodule Rez.Compiler.Compilation do
             path: nil,
             dist_path: nil,
             cache_path: nil,
-            game: nil,
+            content: [],
+            id_map: %{},
+            type_map: %{},
+            type_hierarchy: TypeHierarchy.new(),
+            defaults: %{},
+            aliases: %{},
+            schema: nil,
             progress: [],
             errors: []
 

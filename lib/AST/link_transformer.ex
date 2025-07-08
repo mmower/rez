@@ -18,15 +18,13 @@ defmodule Rez.AST.LinkTransformer do
     parts = String.split(html, ~r{(<a\s[^>]*>|<a>|</a>)}, include_captures: true)
 
     # Process each part
-    parts
-    |> Enum.map(fn part ->
+    Enum.map_join(parts, "", fn part ->
       case part do
         "<a" <> _rest -> transform_opening_tag(part)
         "</a>" -> part
         _ -> part
       end
     end)
-    |> Enum.join("")
   end
 
   defp transform_opening_tag(tag) do

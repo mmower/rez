@@ -1,4 +1,11 @@
 defmodule Rez.Parser.CollectionParser do
+  @moduledoc """
+  Defines the parsers that parse collection values
+  * binding_list
+  * list
+  * set
+  * probability_table
+  """
   alias Rez.Parser.ParserCache
 
   import Ergo.Combinators,
@@ -11,10 +18,11 @@ defmodule Rez.Parser.CollectionParser do
       optional: 1,
       sequence: 1,
       sequence: 2,
-      transform: 2
+      # transform: 2,
+      replace: 2
     ]
 
-  import Ergo.Meta, only: [commit: 0]
+  # import Ergo.Meta, only: [commit: 0]
 
   import Rez.Parser.UtilityParsers,
     only: [
@@ -25,6 +33,7 @@ defmodule Rez.Parser.CollectionParser do
       comma: 0,
       pipe: 0,
       star: 0,
+      plus: 0,
       open_brace: 0,
       close_brace: 0,
       open_bracket: 0,
@@ -45,6 +54,8 @@ defmodule Rez.Parser.CollectionParser do
     ]
 
   import Rez.Parser.JSBindingParser
+
+  import Rez.Parser.DefaultParser
 
   def collection_value() do
     ParserCache.get_parser("collection_value", fn ->
@@ -80,7 +91,7 @@ defmodule Rez.Parser.CollectionParser do
         ],
         label: "set-value",
         debug: true,
-        ast: fn ast -> {:set, MapSet.new(List.flatten(ast))} end
+        ast: fn set -> {:set, MapSet.new(List.flatten(set))} end
       )
     end)
   end
@@ -156,7 +167,7 @@ defmodule Rez.Parser.CollectionParser do
         ],
         label: "list-value",
         debug: true,
-        ast: fn ast -> {:list, List.flatten(ast)} end
+        ast: fn list -> {:list, List.flatten(list)} end
       )
     end)
   end
@@ -237,59 +248,59 @@ defmodule Rez.Parser.CollectionParser do
 
   # Table
 
-  def table_attribute() do
-    ParserCache.get_parser("table_attribute", fn ->
-      sequence(
-        [
-          choice([
-            js_identifier(),
-            string_value() |> transform(fn {:string, id} -> id end)
-          ]),
-          ignore(colon()),
-          iws(),
-          commit(),
-          collection_value()
-        ],
-        label: "attribute",
-        debug: true,
-        ast: fn [id, {type, value}] ->
-          %Rez.AST.Attribute{name: id, type: type, value: value}
-        end
-      )
-    end)
-  end
+  # def table_attribute() do
+  #   ParserCache.get_parser("table_attribute", fn ->
+  #     sequence(
+  #       [
+  #         choice([
+  #           js_identifier(),
+  #           string_value() |> transform(fn {:string, id} -> id end)
+  #         ]),
+  #         ignore(colon()),
+  #         iws(),
+  #         commit(),
+  #         collection_value()
+  #       ],
+  #       label: "attribute",
+  #       debug: true,
+  #       ast: fn [id, {type, value}] ->
+  #         %Rez.AST.Attribute{name: id, type: type, value: value}
+  #       end
+  #     )
+  #   end)
+  # end
 
-  def table() do
-    ParserCache.get_parser("table", fn ->
-      sequence(
-        [
-          ignore(open_brace()),
-          iows(),
-          optional(
-            many(
-              sequence(
-                [
-                  iows(),
-                  table_attribute()
-                ],
-                ast: fn [attribute] -> attribute end
-              )
-            )
-          ),
-          iows(),
-          ignore(close_brace())
-        ],
-        label: "table-value",
-        debug: true,
-        ast: fn [ast] ->
-          Enum.reduce(ast, %{}, fn %Rez.AST.Attribute{name: name} = attr, table ->
-            Map.put(table, name, attr)
-          end)
-        end
-      )
-      |> transform(fn table -> {:table, table} end)
-    end)
-  end
+  # def table() do
+  #   ParserCache.get_parser("table", fn ->
+  #     sequence(
+  #       [
+  #         ignore(open_brace()),
+  #         iows(),
+  #         optional(
+  #           many(
+  #             sequence(
+  #               [
+  #                 iows(),
+  #                 table_attribute()
+  #               ],
+  #               ast: fn [attribute] -> attribute end
+  #             )
+  #           )
+  #         ),
+  #         iows(),
+  #         ignore(close_brace())
+  #       ],
+  #       label: "table-value",
+  #       debug: true,
+  #       ast: fn [ast] ->
+  #         Enum.reduce(ast, %{}, fn %Rez.AST.Attribute{name: name} = attr, table ->
+  #           Map.put(table, name, attr)
+  #         end)
+  #       end
+  #     )
+  #     |> transform(fn table -> {:table, table} end)
+  #   end)
+  # end
 
   # Collection
 
@@ -299,7 +310,7 @@ defmodule Rez.Parser.CollectionParser do
         lazy(binding_list()),
         lazy(list()),
         lazy(set()),
-        lazy(table()),
+        # lazy(table()),
         probability_table()
       ])
     end)

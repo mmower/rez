@@ -1,4 +1,8 @@
 defmodule Rez.Parser.ValueParsers do
+  @moduledoc """
+  Defines the parses to parse non-collection values such as strings, booleans,
+  keywords, functions, templates, etc…
+  """
   alias Ergo.Context
 
   import Ergo.Combinators
@@ -187,24 +191,6 @@ defmodule Rez.Parser.ValueParsers do
         ast: fn
           [elem_id] -> {:elem_ref, elem_id}
           [_bang, elem_id] -> {:clone_ref, elem_id}
-        end
-      )
-    end)
-  end
-
-  # Attr Ref
-  # &elem_id.attr_name
-  def attr_ref_value() do
-    ParserCache.get_parser("attr_ref", fn ->
-      sequence(
-        [
-          ignore(amp()),
-          js_identifier(),
-          ignore(dot()),
-          js_identifier()
-        ],
-        ast: fn [elem_id, attr_name] ->
-          {:attr_ref, {elem_id, attr_name}}
         end
       )
     end)
@@ -495,9 +481,9 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
-  def undefined_value() do
-    ParserCache.get_parser("undefined_value", fn ->
-      char(?_) |> transform(fn _ast -> {:undefined, nil} end)
+  def placeholder_value() do
+    ParserCache.get_parser("placeholder_value", fn ->
+      char(?_) |> replace({:placeholder, nil})
     end)
   end
 
@@ -517,9 +503,8 @@ defmodule Rez.Parser.ValueParsers do
           dice_value(),
           elem_ref_value(),
           dynamic_initializer_value(),
-          attr_ref_value(),
           file_value(),
-          undefined_value()
+          placeholder_value()
         ],
         label: "value",
         debug: true

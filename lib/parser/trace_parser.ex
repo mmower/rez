@@ -1,4 +1,9 @@
 defmodule Rez.Parser.Trace do
+  @moduledoc """
+  Defines parsers used for debugging the parser flow such as trace_out(),
+  trace_input() and so on. Although generally harmless it is not recommended
+  to include these in a production build.
+  """
   alias Ergo.Parser
   alias Ergo.Context
 

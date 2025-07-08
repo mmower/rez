@@ -18,32 +18,52 @@ defmodule Rez.Compiler do
   See also: the Rez.Compiler.Config module
   """
 
+  alias Rez.AST.NodeHelper
   alias Rez.Compiler.Compilation
   import Rez.Debug
 
   @compiler_phases [
-    Rez.Compiler.GetWorkingDirectory,
-    Rez.Compiler.MakeDistPath,
-    Rez.Compiler.MakeAssetPath,
-    Rez.Compiler.MakeCachePath,
-    Rez.Compiler.UpdateDeps,
-    Rez.Compiler.CopyStdlib,
-    Rez.Compiler.ReadSource,
-    Rez.Compiler.ParseSource,
-    Rez.Compiler.ValidateNodes,
-    Rez.Compiler.ProcessAST,
-    Rez.Compiler.NodeCheck,
+    Rez.Compiler.Phases.GetWorkingDirectory,
+    Rez.Compiler.Phases.MakeDistPath,
+    Rez.Compiler.Phases.MakeAssetPath,
+    Rez.Compiler.Phases.MakeCachePath,
+    Rez.Compiler.Phases.UpdateDeps,
+    Rez.Compiler.Phases.CopyStdlib,
+    Rez.Compiler.Phases.ReadSource,
+    Rez.Compiler.Phases.ParseSource,
+    Rez.Compiler.Phases.ConsolidateNodes,
+    Rez.Compiler.Phases.ValidateMixins,
+    Rez.Compiler.Phases.BuildSchema,
+    Rez.Compiler.Phases.ApplyDefaults,
+    Rez.Compiler.Phases.ApplySchema,
+    Rez.Compiler.Phases.CompileTemplates,
+    Rez.Compiler.Phases.ProcessAST,
+    Rez.Compiler.Phases.CreateTypeHierarchy,
+    Rez.Compiler.Phases.InitializationOrder,
+    Rez.Compiler.Phases.DumpStructures,
     # Everything in the Game needs to be ready at this point
-    Rez.Compiler.CreateRuntime,
-    Rez.Compiler.WriteObjMap,
-    Rez.Compiler.WriteGameFile,
-    Rez.Compiler.CopyAssets,
-    Rez.Compiler.Reports
+    Rez.Compiler.Phases.CreateRuntime,
+    Rez.Compiler.Phases.WriteObjMap,
+    Rez.Compiler.Phases.WriteGameFile,
+    Rez.Compiler.Phases.CopyAssets,
+    Rez.Compiler.Phases.GenerateReports
   ]
 
   def run_phase(phase, compilation) do
     v_log("Running phase: #{to_string(phase)}")
-    apply(phase, :run_phase, [compilation])
+    compilation = apply(phase, :run_phase, [compilation])
+
+    if compilation.content && length(compilation.content) > 0 do
+      # Assuming there is content, automatically (re-)build the
+      # id & type mappings after each phase has modified the content
+      %{
+        compilation
+        | type_map: NodeHelper.build_type_map(compilation.content),
+          id_map: NodeHelper.build_id_map(compilation.content)
+      }
+    else
+      compilation
+    end
   end
 
   def dbg_run_phase(phase, compilation) do

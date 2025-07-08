@@ -7,32 +7,25 @@ draft = false
 
 A system for creating choice-based HTML games & interactive fiction. Written in Elixir & Javascript by Matt Mower.
 
-<table>
-  <thead>
-  <tr>
-    <th>Version</th>
-    <th>Date</th>
-    <th>Milestone</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>0.8</td>
-      <td>24 Oct 2022</td>
-      <td>First public build</td>
-    </tr>
-    <tr>
-      <td>1.0</td>
-      <td>14 Nov 2023</td>
-      <td>Went 1.0</td>
-    </tr>
-    <tr>
-      <td>1.4.6</td>
-      <td>28 Nov 2024</td>
-      <td>Current build</td>
-    </tr>
-  </tbody>
-</table>
+|===
+|Version |Date |Milestone
+
+|0.8
+|24 Oct 2022
+|First public build
+
+|1.0
+|14 Nov 2023
+|Went 1.0
+
+|1.6.14
+|17 Apr 2025
+|Previous Major Release
+
+|1.7.1
+|5 May 2025
+|Current Release
+|===
 
 == Introduction
 
@@ -58,7 +51,7 @@ Rez is written in the Elixir programming language and requires both Elixir and E
 
 Rez targets Elixir v1.16/OTP-26 but should be compilable with previous versions back to 1.13/OTP-25.
 
-https://github.com/mmower/rez/releases/tag/v1.4.6[Binary releases] are available.
+https://github.com/mmower/rez/releases/latest[Binary releases] are available.
 
 To build it yourself:
 

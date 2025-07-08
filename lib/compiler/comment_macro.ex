@@ -1,10 +1,13 @@
 defmodule Rez.Compiler.CommentMacro do
+  @moduledoc """
+  A LogicalFile macro that implements Rez comments.
+
+  It modifies any line containing the '%%' sequence and replaces the sequence
+  and anything that follows with an equivalent number of spaces.
+  """
   @behaviour LogicalFile.Macro
 
   alias LogicalFile.Section
-
-  @moduledoc """
-  """
 
   @impl LogicalFile.Macro
   def apply_macro(%LogicalFile{} = file, _options \\ []) do

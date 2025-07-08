@@ -1,3 +1,5 @@
+<% alias Rez.AST.KeyBinding %>
+
 // Bind keyboard event generators
 function rez_keybinding_listener(event) {
   const targetTag = event.target.tagName.toLowerCase();
@@ -8,11 +10,11 @@ function rez_keybinding_listener(event) {
   const ep = $game.eventProcessor;
   let pred;
 
-<%= for {:keybinding, _, _, {:keyword, event_name}} = binding <- @game.keybindings do %>
-  pred = <%= Rez.Compiler.JsUtils.key_test_fn(binding) %>;
+<%= for %KeyBinding{} = key_binding <- @keybindings do %>
+  pred = <%= KeyBinding.key_test_fn(key_binding) %>;
   if(pred(event)) {
-    console.log("Dispatching: <%= event_name %>");
-    ep.dispatchResponse(ep.raiseKeyBindingEvent("<%= event_name %>"));
+    console.log("Dispatching: <%= key_binding.event %>");
+    ep.dispatchResponse(ep.raiseKeyBindingEvent("<%= key_binding.event %>"));
   }
 <% end %>
 }

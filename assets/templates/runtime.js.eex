@@ -3,31 +3,15 @@
 
 (function() {
   "use strict";
-
   window.Rez = window.Rez ?? {};
 
-  // Patch JS objects
   <%= @patch_js_objects %>
-
-  // JS stdlib
   <%= @js_stdlib %>
-
-  // JS userlib
   <%= @js_userlib %>
-
-  // Mixins
   <%= @mixins %>
-
-  // Expression Filters
   <%= @register_expression_filters %>
-
-  // Initialise Game Objects
   <%= @init_game_objects %>
-
-  // Bind Keys
   <%= @bind_keys %>
-
-  // User Macros
   <%= @user_components %>
 
   window.$ = (id, show_throw = false) => game.getGameObject(id, show_throw);

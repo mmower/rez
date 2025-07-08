@@ -1,9 +1,10 @@
 //-----------------------------------------------------------------------------
 // Extend JS objects
 //-----------------------------------------------------------------------------
-<% alias Rez.AST.{Game, Patch, ValueEncoder} %>
+<% alias Rez.AST.Patch %>
+<% alias Rez.AST.ValueEncoder %>
 
-<%= for %Patch{} = patch <- Game.patch_list(@game) do %>
+<%= for %Patch{} = patch <- @patches do %>
   <% encoded_function = ValueEncoder.encode_function(Patch.impl(patch)) %>
   <%= case Patch.type(patch) do %>
     <% :function -> %>

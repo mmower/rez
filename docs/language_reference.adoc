@@ -186,20 +186,28 @@ The most important thing when you are writing an element is its attributes. Thes
 ....
 is_a: :ring
 magic: true
-material: gold
-owners: 5
-belongs_to: #sauron
+material: :gold
+owners: 7
+wearer_id: _
+belongs_to_id: #sauron
 inscription: "Please return to Mordor",
 wear: (actor) => {
   if(actor.id == "sauron") {
-    actor.game.sauron_victory = true;
+    $game.sauron_wins();
   } else {
     actor.makeInvisible();
   }
 }
+destroy: function(mount_id) {
+  if(mount_id != "mount_doom") {
+    return false;
+  } else {
+    $game.sauron_loses();
+  }
+}
 ....
 
-There are seven attributes defined here:
+There are eight attributes defined here:
 
 [cols="1,2"]
 |===
@@ -207,7 +215,7 @@ There are seven attributes defined here:
 |a keyword, a symbol often used when there are a few legal values
 
 |`magic`
-|a boolean
+|a boolean (true/false, yes/no)
 
 |`material`
 |another keyword
@@ -215,14 +223,20 @@ There are seven attributes defined here:
 |`owners`
 |a number
 
-|`belongs_to`
-|a reference to the ID of an element
+|`wearer_id`
+|a reference to the ID of the actor who holds the ring
+
+|`belongs_to_id`
+|a reference to the ID of the actor the ring belongs to
 
 |`inscription`
 |a string
 
 |`wear`
 |an event script in Javascript arrow function format
+
+|`destroy`
+|an action script in Javascript standard function format
 |===
 
 The pattern for any attribute is `<name>: <value>`. The space after the colon is required and note that there is no `,` or `;` at the end as you may be familiar with from other programming languages.
@@ -244,11 +258,11 @@ Attribute names follow the rule for Javascript identifiers:
 * must begin with a letter, underscore `_`, or dollar `$`
 * can only contain letters, numbers, underscores, or dollar signs
 
-Note that attribute names with a leading underscore (`_`) are considered to be 'internal' to the Rez compiler. These attributes are not converted into runtime attributes and are, therefore, not available.
+Note that attribute names with a leading underscore `_` are considered to be 'internal' to the Rez compiler. These attributes are not converted into runtime attributes and are, therefore, not available. In general you should not use the `_` prefix in your attribute names.
 
-Attribute names with a leading dollar (`$`) are considered to be 'special' and it is not advised to use them yourself unless you know what you are doing. Rez itself makes use of attributes with the `$` prefix for housekeeping and you could, inadvertently, trample these.
+Attribute names with a leading dollar `$` are considered to be 'special'. Rez makes use of a number of these for its own workings. In general you are not advised to use the `$` prefix unless you know what you are doing.
 
-Rez defines many attribute types, some simple and some more complicated. The more complicated types are generally related to creating dynamic behaviour and may require additional Javascript knowledge:
+There is also a special rule for attributes that end with an `_id` suffix. Rez will assume any attribute with the `_id` suffix is an element reference. Such attributes get special treatment to make them more convenient to use.
 
 [cols="1,2,2"]
 |===
@@ -271,10 +285,6 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |Element Reference
 |an identifier referring to the unique id of an element
 |`#sauron`, `#gandalf`, `#the_ring`
-
-|Attribute Alias
-|References an attribute in another element
-|`&sauron.location`
 
 |File
 |a string value that is imported from a file
@@ -316,7 +326,7 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 |A list of pairs wrapped in `\|` that becomes a generator property.
 |\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
 
-|Binding Path
+|Binding Path (Deprecated)
 |Used within `bindings` to specify an object via a property path.
 |``source.exits`
 
@@ -334,37 +344,21 @@ Rez defines many attribute types, some simple and some more complicated. The mor
 
 A boolean value is either `true` or `false` (alternatively we can use `yes` and `no`) and is often used for flags.
 
-The underlying data representation is a Javascript boolean.
-
 === Number
 
-A number value can represent either integers or floating point values.
-
-The underlying data representation is a Javascript number.
+A number value can any integers or floating point value.
 
 === String
 
 A string value is text enclosed with double-quote (`"`) characters used for descriptive properties. Typically single lines, where multiple lines need to be used the suggestion is to use the Heredoc string instead.
 
-The underlying data representation is a Javascript string.
-
 === Keyword
 
-A keyword value is a special kind of string primarily used for identifier values. It is prefixed with a colon (`:`) and must obey Javascript identifier rules.
-
-The underlying data representation is a Javascript string.
+A keyword value is an identifer (that follows Javascript identifier rules) that is prefixed with a colon (`:`), e.g. `:gold`. Keywords are useful for enumerated values or symbolic constants.
 
 === Element Reference
 
-An element reference is used to refer to the id of a game element. It is prefixed with a hash (`#`) and must obey Javascript identifier rules. Although it acts like a string part of the value of element references is that the compiler will attempt to verify that they refer to an existing object.
-
-The underlying data representation is a Javascript string.
-
-=== Attribute Alias (Deprecated)
-
-An attribute alias is used to refer to an attribute of a specific element. It is prefixed with an ampersand (`&`) and consists of `elem_id.attr_name` where `elem_id` is an element id and `attr_name` is the name of an attribute of that element.
-
-The underlying representation is a Javascript object `{elem_id: <elem_id> attr_name: <attr_name>}`.
+An element reference is used to refer to the id of a game element. It is prefixed with a hash (`#`) and must obey Javascript identifier rules. The compiler will attempt to verify that they refer to an existing element.
 
 === File String
 
@@ -372,7 +366,7 @@ A file string is a string value whose content is stored and read in from an exte
 
 === Template
 
-A template is a kind of string value that supports dynamic content that is interpolated at run-time. This is controlled by the use of expressions such as `${...}`, `$if() {% ... %}`, and `$foreach(x: xs) {% %}`. See template expressions for more.
+A template is a kind of string value that supports dynamic content that is interpolated at run-time. This is controlled by the use of expressions such as `${...}`, `$if() {% ... %}`, and `$foreach(x: xs) {% %}`. See the template expressions section details.
 
 === List
 
@@ -386,7 +380,7 @@ A set of whitespace separated values that can include any of the other attribute
 
 A series of `key:` `value` pairs where the key should be a Javascript id and the value can be any of the other attribute types including another table.
 
-However it is worth noting that using deeply nested tables is not advised. It does work, but the entire set of tables is the attribute making working with nested values more complicated.
+It is worth noting that the use of deeply nested tables is not advised, rather prefer creating separate elements and use composition.
 
 === Event Script
 
@@ -420,7 +414,7 @@ We can also use `#id`'s as the key:
 meet_on_the_road: |#ranger 15 #wizard 10 #traveller 45 #evil 30|
 ....
 
-At the moment, due to a lack of JSON support, it is not possible to use attribute refs or functions as entries. A work around looks like this:
+At the moment, due to a lack of JSON support, it is not possible to use functions as table entries. A work around looks like this:
 
 ....
 @card card1 {
@@ -481,24 +475,44 @@ For example:
 ....
 @actor random_npc {
   class_name: ^p{
-    return this.class === "g" ? "Gunslinger" : class === "s" ? "Sleuth" : "Crook";
+    if(this.character_class === "g") {
+      return "Gunslinger";
+    } else if(this.character_class =="s") {
+      return "Sleuth";
+    } else {
+      return "Crook";
+    }
   }
 }
 ....
 
+In the same way as dynamic initializers the property code is expected to explicitly return the value for the property access.
+
 === Special Attributes
+
+* `_id` suffix attributes
+
+Any attribute with an `_id` suffix, such as `owner_id` is treated specially by Rez. It will automatically create a paired property (e.g. `owner`) that is a reference to the object implementing the element with the corresponding id. Assigning a new `id` automatically updates the associated reference and vice-verca.
 
 * `$global`:boolean
 
-Declaring an element as a global, Rez will create a global variable with the same name as the object id.
+Declaring an element as a global, Rez will create a global variable on the `Window` object with the same name as the object id and `$` prefix. For example:
+
+....
+@actor player {
+  $global: true
+}
+....
+
+Means that the `RezActor` object corresponding to this element can be referred to globally as `$player`.
 
 * `$template`:boolean
 
-Declaring an element a template means it is intended to be used as a template for objects created with Rez `copyAssigningId()` and `copyWithAutoId()` methods. A template does not the usual init system.
+Declaring an element a template means it is intended to be used as a template for objects created with Rez `copyAssigningId()` and `copyWithAutoId()` methods. Elements with `template: true` bypass much of the usual initialization rules and are not initialized by the `init` methods.
 
 * `$js_ctor`:string
 
-Using the `$js_ctor` attribute allows overriding of the JS prototype for a given element.
+Using the `$js_ctor` attribute allows overriding of the JS prototype for a given element. This is an advanced feature and is only necessary if you want to replace the underlying Javascript class that implements an elements behaviour.
 
 == What's in a Game?
 

@@ -4,6 +4,6 @@ window.Rez.mixins = {};
 
 <% alias Rez.AST.Mixin %>
 
-<%= for %Mixin{id: id, attributes: attributes} <- Map.get(@game, :mixins) |> Map.values() do %>
+<%= for %Mixin{id: id, attributes: attributes} <- @mixins do %>
   window.Rez.mixins["<%= id %>"] = <%= encode_attributes(attributes) %>;
 <% end %>

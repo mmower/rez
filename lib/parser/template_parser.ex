@@ -1,4 +1,8 @@
 defmodule Rez.Parser.TemplateParser do
+  @moduledoc """
+  Defines the parsers that parses source_template strings into the structure
+  used to build them at runtime. Returns a {:source_template, ast}
+  """
   import Ergo.Terminals, only: [literal: 1, any: 0, captured_literal: 1]
 
   import Ergo.Combinators,

@@ -209,7 +209,7 @@ class RezBlock {
   }
 
   bindBlocks() {
-    return this.getBlocks().obj_map((block) => block.html());
+    return this.getBlocks().objMap((block) => block.html());
   }
 
   getViewTemplate() {

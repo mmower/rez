@@ -1,4 +1,5 @@
 #!/bin/bash
 jsdoc --verbose -d docs/api assets/templates/runtime/*.js
-cp README.html docs/about.html
+#cp README.html docs/about.html
+#asciidoctor docs/*.adoc
 rsync -av --delete docs ../www/content/

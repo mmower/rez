@@ -1,5 +1,11 @@
 defmodule Rez.Parser.DelimitedParser do
-  import Ergo.{Terminals, Combinators}
+  @moduledoc """
+  Defines the parsers for parsing delimited text blocks:
+  * text_delimited_by_parsers
+  * text_delimited_by_nested_parsers
+  """
+  import Ergo.Terminals
+  import Ergo.Combinators
 
   alias Ergo.Context
 

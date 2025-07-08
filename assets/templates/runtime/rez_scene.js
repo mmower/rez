@@ -23,7 +23,7 @@ class RezScene extends RezBasicObject {
   }
 
   getViewTemplate(flipped) {
-    // TODO: Why don't we use the flipped parameter?
+    // Scenes can't be flipped, only cards
     return this.$layout_template;
   }
 
@@ -106,7 +106,7 @@ class RezScene extends RezBasicObject {
 
   start(params = {}) {
     this.init();
-    this.runEvent("start", {});
+    this.runEvent("start", params);
     this.$running = true;
     this.playCard(this.initial_card, params);
   }

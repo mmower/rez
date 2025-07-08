@@ -1,7 +1,12 @@
 defmodule Rez.Parser.ElementsParser do
+  @moduledoc """
+  Defines the parsers that parse the built-in elements such as @card, @game,
+  @scene and so on.
+  """
   import Ergo.Combinators, only: [choice: 2]
-  import Rez.Utils, only: [random_str: 0, file_name_to_js_identifier: 1]
-  import Rez.Parser.StructureParsers, only: [block: 3, block_with_id: 2, delimited_block: 3]
+
+  import Rez.Utils, only: [file_name_to_js_identifier: 1]
+  import Rez.Parser.StructureParsers, only: [block: 3, block_with_id: 2]
   import Rez.Parser.RelationshipParsers, only: [relationship_elem: 0]
 
   def actor_element() do
@@ -13,7 +18,7 @@ defmodule Rez.Parser.ElementsParser do
   end
 
   def auto_asset_element() do
-    block("auto_asset", Rez.AST.Asset, fn attrs ->
+    block("asset", Rez.AST.Asset, fn attrs ->
       %{value: file_name} = Map.get(attrs, "file_name")
       ("asset_" <> file_name) |> Path.basename() |> file_name_to_js_identifier()
     end)
@@ -40,7 +45,7 @@ defmodule Rez.Parser.ElementsParser do
   end
 
   def game_element() do
-    block("game", Rez.AST.Game, fn _attrs -> "game" end)
+    block("game", Rez.AST.Game, "game")
   end
 
   def generator_element() do
@@ -71,10 +76,6 @@ defmodule Rez.Parser.ElementsParser do
     block_with_id("object", Rez.AST.Object)
   end
 
-  def patch_element() do
-    block_with_id("patch", Rez.AST.Patch)
-  end
-
   def plot_element() do
     block_with_id("plot", Rez.AST.Plot)
   end
@@ -83,16 +84,8 @@ defmodule Rez.Parser.ElementsParser do
     block_with_id("scene", Rez.AST.Scene)
   end
 
-  def script_element() do
-    delimited_block("script", fn -> "script_" <> random_str() end, Rez.AST.Script)
-  end
-
   def slot_element() do
     block_with_id("slot", Rez.AST.Slot)
-  end
-
-  def styles_element() do
-    delimited_block("styles", fn -> "styles_" <> random_str() end, Rez.AST.Style)
   end
 
   def system_element() do
@@ -121,13 +114,10 @@ defmodule Rez.Parser.ElementsParser do
         list_element(),
         mixin_element(),
         object_element(),
-        patch_element(),
         plot_element(),
         relationship_elem(),
         scene_element(),
-        script_element(),
         slot_element(),
-        styles_element(),
         system_element(),
         timer_element(),
         game_element()

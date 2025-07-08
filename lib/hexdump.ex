@@ -16,8 +16,7 @@ defmodule Hexdump do
         [a, b] -> [a, b]
       end)
       |> Enum.with_index()
-      |> Enum.map(&line_to_string/1)
-      |> Enum.join("\n")
+      |> Enum.map_join("\n", &line_to_string/1)
 
   def to_string(data),
     do: Kernel.inspect(data)
@@ -34,25 +33,23 @@ defmodule Hexdump do
       parts
       |> Enum.map(fn bytes ->
         bytes
-        |> Enum.map(fn byte ->
+        |> Enum.map_join(" ", fn byte ->
           byte
           |> :binary.encode_unsigned()
           |> Base.encode16(case: :lower)
         end)
-        |> Enum.join(" ")
         |> String.pad_trailing(23, " ")
       end)
 
     ascii =
       parts
       |> List.flatten()
-      |> Enum.map(fn byte ->
+      |> Enum.map_join("", fn byte ->
         case byte <= 0x7E && byte >= 0x20 do
           true -> <<byte>>
           false -> "."
         end
       end)
-      |> Enum.join("")
 
     [count, bytes, ascii]
     |> List.flatten()

@@ -42,7 +42,7 @@ class RezList extends RezBasicObject {
   }
 
   randomWithoutStarvation(poolId = "$default") {
-    let stats = this.getAttributeValue(`$pool_${poolId}`, Array.n_of(this.list_length, 0));
+    let stats = this.getAttributeValue(`$pool_${poolId}`, Array.nOf(this.list_length, 0));
     const len = stats.length;
     const max = Math.floor(len + (len+2)/3);
     let choice = stats.findIndex((element) => element+1 >= max);
@@ -66,12 +66,11 @@ class RezList extends RezBasicObject {
    * is separate.
    */
   nextForCycle(cycleId) {
-    const cycles = this.getAttribute("$cycles");
-    const cycle_idx = cycles[cycleId] ?? 0;
+    const cycleIdx = this.getAttributeValue(`cycle_${cycleId}`, 0);
     const values = this.getAttribute("values");
     const value = values.at(cycle_idx);
-    cycles[cycleId] = (cycle_idx+1) % values.length;
-    this.setAttribute("$cycles", cycles);
+    cycleIdx = (cycleIdx + 1) % values.length;
+    this.setAttribute(`cycle_${cycleId}`, cycleIdx);
     return value;
   }
 
@@ -110,6 +109,7 @@ class RezList extends RezBasicObject {
   }
 
   getBag(bagId) {
+    this.getAttributeValue(`bag_${bagId}`, Array.from(this.values))
     return this.$bags[bagId] ?? this.createBag(bagId);
   }
 
@@ -147,17 +147,18 @@ class RezList extends RezBasicObject {
   }
 
   getWalk(walkId) {
-    let walk = this.walks[walkId];
-    if (typeof walk == "undefined") {
-      walk = this.resetWalk(walkId);
+    let walk = this.getAttributeValue(`walk_${walkId}`);
+    if(typeof(walk) === "undefined") {
+      return this.resetWalk();
+    } else {
+      return walk;
     }
-    return walk;
   }
 
   resetWalk(walkId) {
     const values = this.getAttribute("values");
     const walk = Array.from(values.keys()).fy_shuffle();
-    this.walks[walkId] = walk;
+    this.setAttribute(`walk_${walkId}`, walk);
     return walk;
   }
 }

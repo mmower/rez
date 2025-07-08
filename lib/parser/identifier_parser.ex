@@ -1,27 +1,11 @@
 defmodule Rez.Parser.IdentifierParser do
+  @moduledoc """
+  Implements a parser for legal Javascript identifiers.
+  """
   alias Ergo.Context
   import Ergo.Combinators
   import Ergo.Terminals
 
-  # alias Rez.Parser.ParserCache
-
-  # JSIdentifier
-
-  #
-  # Error Handling
-  #
-  # If you have an identifier like "a1" this fails in the many() parser
-  # since it has a min of 2. However this error is a bit inscrutable when
-  # you are at the top-level
-  #
-  # Suggestion: we add an 'err' handler to the Parser that consumes the
-  # low-level error and augments it.
-  #
-  # e.g.
-  #
-  # err: fn {:error, :many_less_than_min} -> blah
-  #         {:error, :unexpected_char} -> blah
-  #
   def js_identifier(label \\ "js_identifier") do
     Rez.Parser.ParserCache.get_parser("js_identifier##{label}", fn ->
       sequence(

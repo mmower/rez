@@ -1,0 +1,89 @@
+defmodule Rez.Parser.SpecialElementParsers do
+  @moduledoc """
+  Implements parsers for special elements that don't have a unique id and
+  therefore must be handled separately.
+  """
+  import Ergo.Combinators
+  import Ergo.Meta
+
+  alias Ergo.Context
+
+  import Rez.Parser.DelimitedParser
+  import Rez.Parser.UtilityParsers
+  import Rez.Parser.StructureParsers
+  import Rez.Parser.ParserTools
+
+  alias Rez.Utils
+
+  defp patch_element() do
+    sequence(
+      [
+        iliteral("@patch"),
+        iws(),
+        commit(),
+        block_begin(),
+        attribute_list(),
+        iws(),
+        block_end()
+      ],
+      label: "patch-block",
+      ctx: fn %Context{ast: [attr_list]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Patch{
+              position: resolve_position(ctx),
+              attributes: Utils.attr_list_to_map(attr_list)
+            }
+        }
+      end
+    )
+  end
+
+  defp script_element() do
+    sequence(
+      [
+        iliteral("@script"),
+        iws(),
+        text_delimited_by_nested_parsers(open_brace(), close_brace(), trim: true)
+      ],
+      label: "script-block",
+      ctx: fn %Context{ast: script} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Script{
+              position: resolve_position(ctx),
+              script: script
+            }
+        }
+      end
+    )
+  end
+
+  defp styles_element() do
+    sequence(
+      [
+        iliteral("@styles"),
+        iws(),
+        text_delimited_by_nested_parsers(open_brace(), close_brace(), trim: true)
+      ],
+      label: "styles-block",
+      ctx: fn %Context{ast: styles} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Style{
+              position: resolve_position(ctx),
+              styles: styles
+            }
+        }
+      end
+    )
+  end
+
+  def special_element() do
+    choice([
+      patch_element(),
+      script_element(),
+      styles_element()
+    ])
+  end
+end

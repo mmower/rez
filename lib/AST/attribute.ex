@@ -32,6 +32,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:table, values}), do: table(name, values)
   def create(name, {:set, values}), do: set(name, values)
   def create(name, {:compiled_template, value}), do: compiled_template(name, value)
+  def create(name, {:placeholder, _}), do: placeholder(name)
 
   def boolean(name, value) do
     %Attribute{name: name, type: :boolean, value: value}
@@ -73,7 +74,7 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :set, value: MapSet.new(values)}
   end
 
-  def set(name, values) do
+  def set(name, %MapSet{} = values) do
     %Attribute{name: name, type: :set, value: values}
   end
 
@@ -89,21 +90,7 @@ defmodule Rez.AST.Attribute do
     %Attribute{name: name, type: :compiled_template, value: value}
   end
 
-  def is_elem_ref?(%Attribute{type: :elem_ref}), do: true
-  def is_elem_ref?(%Attribute{}), do: false
-
-  def is_string?(%Attribute{type: :string}), do: true
-  def is_string?(%Attribute{}), do: false
-
-  def is_number?(%Attribute{type: :number}), do: true
-  def is_number?(%Attribute{}), do: false
-
-  def is_boolean?(%Attribute{type: :boolean}), do: true
-  def is_boolean?(%Attribute{}), do: false
-
-  def is_function?(%Attribute{type: :function}), do: true
-  def is_function?(%Attribute{}), do: false
-
-  def is_list?(%Attribute{type: :list}), do: true
-  def is_list?(%Attribute{}), do: false
+  def placeholder(name) do
+    %Attribute{name: name, type: :placeholder, value: nil}
+  end
 end

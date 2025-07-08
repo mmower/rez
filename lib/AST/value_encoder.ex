@@ -24,8 +24,9 @@ defmodule Rez.AST.ValueEncoder do
     {name, encode_value({type, value})}
   end
 
-  def encode_value({:undefined, _}) do
-    "noValue"
+  def encode_value({:placeholder, _}) do
+    # "_placeHolderValue"
+    ~s|""|
   end
 
   def encode_value({:number, n}) do
@@ -71,10 +72,6 @@ defmodule Rez.AST.ValueEncoder do
     }|
   end
 
-  def encode_value({:dynamic_value, f}) do
-    "{dynamic_value: #{Poison.encode!(f)}}"
-  end
-
   def encode_value({:dynamic_initializer, {initializer, prio}}) do
     "{initializer: #{Poison.encode!(initializer)}, priority: #{prio}}"
   end
@@ -100,16 +97,8 @@ defmodule Rez.AST.ValueEncoder do
     "{ptable: #{Poison.encode!(entries)}}"
   end
 
-  def encode_value({:tracery_grammar, g}) do
-    ~s|{tracery_grammar: #{Poison.encode!(g)}}|
-  end
-
   def encode_value({:elem_ref, r}) do
     ~s|"#{r}"|
-  end
-
-  def encode_value({:attr_ref, {elem_id, attr_name}}) do
-    ~s|{attr_ref: {elem_id: "#{elem_id}", attr_name: "#{attr_name}"}}|
   end
 
   def encode_value({:function, f}) do

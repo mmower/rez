@@ -9,7 +9,7 @@ defmodule Rez.Parser.ParserTest do
   alias Rez.AST.NodeHelper
   import Rez.Parser.Parser
   import Rez.Parser.ElementsParser
-  import Rez.Compiler.ReadSource
+  import Rez.Compiler.Phases.ReadSource
 
   @test_script_path "test/support/test_script.rez"
   @external_resource "test/support/test_script.rez"

@@ -1,4 +1,8 @@
 defmodule Rez.Parser.TemplateExpressionParser do
+  @moduledoc """
+  Defines the parser that parses a template expression used in a source template
+  for example "${content}"
+  """
   import Ergo.Combinators,
     only: [
       sequence: 1,

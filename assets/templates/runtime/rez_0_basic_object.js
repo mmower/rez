@@ -219,12 +219,6 @@ class RezBasicObject {
           this.createProbabilityTable(attrName, value);
         } else if (value.hasOwnProperty("property")) {
           this.createCustomProperty(attrName, value);
-        } else if (value.hasOwnProperty("attr_ref")) {
-          this.createReferenceAttribute(attrName, value);
-        } else if (value.hasOwnProperty("dynamic_value")) {
-          this.createDynamicValueAttribute(attrName, value);
-        } else if (value.hasOwnProperty("tracery_grammar")) {
-          this.createTraceryGrammarAttribute(attrName, value);
         } else if (value.hasOwnProperty("bht")) {
           this.createBehaviourTreeAttribute(attrName, value);
         }
@@ -303,30 +297,6 @@ class RezBasicObject {
     }
   }
 
-  createReferenceAttribute(attrName, value) {
-    delete this[attrName];
-    const ref = value["attr_ref"];
-
-    Object.defineProperty(this, attrName, {
-      get: function () {
-        return $(ref.elem_id).getAttributeValue(ref.attrName);
-      },
-    });
-  }
-
-  createDynamicValueAttribute(attrName, value) {
-    delete this[attrName];
-
-    const valGen = value["dynamic_value"];
-    const src = `(${this.id}) => {return ${valGen};}`;
-    const f = eval(src);
-    Object.defineProperty(this, attrName, {
-      get: function () {
-        return f(this);
-      },
-    });
-  }
-
   createBehaviourTreeAttribute(attrName, value) {
     delete this[attrName];
 
@@ -344,19 +314,6 @@ class RezBasicObject {
     const children = treeSpec["children"].map((spec) => this.instantiateBehaviourTree(spec));
 
     return behaviour_template.instantiate(this, options, children);
-  }
-
-  createTraceryGrammarAttribute(attrName, value) {
-    delete this[attrName];
-
-    const grammar = tracery.createGrammar(JSON.parse(value.tracery_grammar));
-    grammar.addModifiers(tracery.baseEngModifiers);
-
-    Object.defineProperty(this, attrName, {
-      get: function () {
-        return grammar.flatten("#origin#");
-      },
-    });
   }
 
   /**
@@ -657,6 +614,6 @@ class RezBasicObject {
   }
 }
 
-const noValue = new RezBasicObject("nothing", "nothing", {});
+const _placeHolderValue = new RezBasicObject("placeholder", "$place_holder_value", {});
 
 window.Rez.RezBasicObject = RezBasicObject;

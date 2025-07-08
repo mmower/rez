@@ -79,7 +79,7 @@ initial_scene_id: #s_first_scene
 
 Now when you compile you should see:
 
-> rez v1.2.6 — compiled to dist folder
+> rez v1.7.1 — compiled to dist folder
 
 Load the `dist/index.html` file in the browser and you should see something like:
 
@@ -91,7 +91,7 @@ Congratulations, you are now an author with Rez!
 
 How a game presents its content is a very important topic for authors and Rez gives you a lot of control over this. We mentioned that a scene can present a kind of "stage" upon which a part of your game plays out.
 
-A simple game might only use one scene but as your game grows more complex you might find need for a range of scenes. For a character screen, an inventory system, a planetary exploration, and an NPC dialog are likely to present very differently and have different kinds of interactions.
+A simple game might only use one scene but as your game grows more complex you might find need for a range of scenes. For example a character sheet, inventory, planetary survey, or NPC dialog might present very different kinds of interface and offer different kinds of interactions.
 
 Scenes lend themselves very naturally and support the idea both of changing from one scene to another (for example moving from an introduction or tutorial to the main game) as well as interludes where you switch to another scene and then back again (presenting an inventory or character screen) maintaining the players place.
 
@@ -212,7 +212,7 @@ The Scene layout is shared by the cards played into the scene. We don't have to 
 === Summary of Chapter 1
 
 * Rez is event-driven. What that means is that your game responds to events and then decides what to present to the player. For example clicking a link can generate the `card` event that loads a new card.
-* Rez is HTML based. You write using HTML markup. But it also has some convenients, for example it doesn't require the `href` attribute on `<a>` tags.
+* Rez is HTML based. You write using HTML markup. But it also has some conveniences, for example not requiring the `href` attribute on `<a>` tags.
 * You can include dynamically generated content using the `${...}` template expression syntax.
 * To load a different card we send the `card` event, and to do that we use an HTML `<a card='card_id'>` element as shown in the `content:` attribute of the `#c_entrance` entrance and HTML data-attributes.
 * You can add your own attributes to cards, scenes, and the game to do pretty much anything you can think of.
@@ -220,3 +220,152 @@ The Scene layout is shared by the cards played into the scene. We don't have to 
 * You can use `bindings:` to refer to any game elements whose content you want to include in a template
 * You can use `blocks:` on a card, scene, or game to include the content from other cards in their template
 * Scene layouts can use any legal HTML markup
+
+== Chapter 2: Using Scenes to Structure Your Game
+
+We mentioned before that scenes create a very natural way to present a different kind of interface to the player.
+
+If you think about the structure of a favourite novel, play, or film you are likely to find that it is composed of a series of interlinked scenes. Each scene may have a different backdrop, actors, and role in the story. Since these are linear mediums, we only experience each scene once.
+
+You don't have to make use of them (okay you have to have at least one) but Rez provides the concept of a scene which can be useful to help structure your game and also to vary the design/interface based on how you want the player to interact with it. Additionally because IF games are non-linear the player can experience the same scene more than once.
+
+A `@scene` element can have its own attributes, including event handlers, and visual layout. This makes it convenient to manage the state of player interactions and to present a contextual interface to the player, as well as allowing scenes to respond in different ways to events.
+
+We recommend that you use scenes liberally to break up your game and to put each scene in its own `.rez` source file, using the include macro `%()` to pull them all into the main source file. For example:
+....
+%(scenes/intro.rez)
+%(scenes/character_sheet.rez)
+%(scenes/inventory.rez)
+%(scenes/dialog.rez)
+....
+
+You don't have to make use of multiple scenes but there are very good reasons to do so and, as your game grows larger and more complex, you will be glad you did.
+
+=== How Scenes Affect Layout
+
+Because they can be used for a variety of different purposes, scenes support custom layout. In fact there are three levels of layout available to you.
+
+1. The `@game` element has a `layout:` attribute that is the "master" layout and is always present.
+2. A `@scene` element has a `layout:` that is embedded within the game layout
+3. A `@card` element has a `content:` attribute that is embedded within the scene layout.
+
+=== Game Layout
+
+The default `@game` layout is:
+....
+${content}
+....
+
+What this means is that the game, by default, does not include any layout at all. The `${content}` expression will render the current scene in place, i.e. it delegates layout to the scene.
+
+But we could change this, perhaps to add a title banner that will be shared across all scenes.
+
+....
+
+@styles {
+  .navbar.is-fixed-top {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+  }
+
+  body {
+    padding-top: 3.25rem;
+  }
+}
+
+@game {
+  layout: ```
+  <nav class="navbar is-fixed-top is-primary" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <div class="navbar-item">
+        <h1 class="title has-text-white">${game.title}</h1>
+      </div>
+    </div>
+  </nav>
+  <section class="main-content is-fullheight">
+    <div class="container">${content}</div>
+  </section>
+  ```
+}
+....
+
+Now whichever scene the player is currently in, the game title will be displayed in a banner that is fixed in place.
+
+The `@game` layout must **always** include the `${content}` expression somewhere as this is where the scene content gets placed. Rez will try to warn you if you forget this.
+
+=== Scene Layout
+
+By default the `@scene` element also has an "empty" layout of:
+
+....
+${content}
+....
+
+In the case of a scene, the `${content}` expression is the rendering of the current card (or cards, in the case of a stack layout. We'll come back to those later.)
+
+What this means is that in a new game there isn't any layout provided at all, everything that is displayed comes from the `@card` elements. This means you have complete freedom to implement any kind of layout you like.
+
+Let's say you wanted a 3-column layout for an "exploration" scene, with status information in the left-column, actions in the right-column, and content in the centre column. How would you do that?
+
+Here's one way:
+....
+@scene s_exploration {
+  blocks: [#c_sidebar #c_actions]
+  layout: ```
+  <div class="columns">
+    <div class="column is-one-fifth">${c_sidebar}</div>
+    <div class="column is-three-fifths"><div class="box">${content}</div></div>
+    <div class="column is-one-fifth">${c_actions}</div>
+  </div>
+  ```
+}
+
+@card c_sidebar {
+  content: ```
+  Sidebar content goes here
+  ```
+}
+
+@card c_actions {
+  content: ```
+  Action content goes here
+  ```
+}
+....
+
+This also introduces the concept of the `blocks:` attribute, available on `@game`, `@scene`, and  `@card` elements. Composed of a list of `@card` ids it specifies blocks that should be pre-rendered and made available during the rendering process.
+
+You can see that this scene specifies `#c_sidebar` and `#c_actions` and that these are then available as the expressions `${c_sidebar}` and `${c_actions}` respectively. That is, whenever you specify a block it will be rendered and put into a variable whose name is the id of the block.
+
+As of Rez v1.3.2, user components represent an alternative and in many cases better way of handling this case. We'll look at that later.
+
+=== Changing The Scene
+
+There are two ways of changing to another scene, you can **switch** or start an **interlude**.
+
+When you switch scenes the old scene is discarded in favour of the new scene. Later you can switch back to the scene but it will have been reinitialized 'as new'.
+
+When you start an interlude the old scene is kept in the background while the new scene plays out. Later you can **resume** and return to the previous scene, as it was when you left it.
+
+Switching and interludes/resumes work just the same was as loading a new card. We use an `<a>` link:
+
+....
+<a scene="s_exploration">Explore</a>
+<a interlude="s_inventory">Inventory</a>
+<a resume>Close</a>
+....
+
+=== Summary of Chapter 2
+
+* Rez uses a scene/card metaphor to structure games.
+* Each scene can represent a distinct part of the game.
+* Each scene can have its own attributes, event handlers, and layout
+* Page layout composes the `@game` and `@scene` layout and `@card` content.
+* When changing scenes you can **switch** or begin an **interlude** from which you can **resume** the previous scene.
+* Switch scenes using `<a scene="new_scene_id">Text</a>`
+* Interlude using `<a interlude="new_scene_id">Text</a>`
+* Resume the previous scene using `<a resume>Text</a>`
+* Layout can make use of a `blocks:` attribute to include other cards pre-rendered.

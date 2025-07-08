@@ -7,6 +7,7 @@ defmodule Rez.AST.TemplateHelper do
   import Rez.Utils
 
   alias Rez.AST.Attribute
+  alias Rez.AST.Node
   alias Rez.AST.NodeHelper
   alias Rez.AST.HtmlTransformer
 
@@ -58,11 +59,12 @@ defmodule Rez.AST.TemplateHelper do
         {_, %Attribute{name: name, type: :source_template, value: template_source}},
         node
       ) do
-    NodeHelper.set_compiled_template_attr(
-      node,
-      name,
-      compile_template(node.id, template_source)
+    node
+    |> NodeHelper.set_compiled_template_attr(
+      "$#{name}_template",
+      compile_template(node.id, template_source, Node.html_processor(node, name))
     )
+    |> NodeHelper.delete_attr(name)
   end
 
   def compile_template_attribute(_attribute, node) do

@@ -20,6 +20,21 @@ defmodule Rez.Utils do
     str <> tail
   end
 
+  def english_list(items, connector \\ ", ")
+
+  def english_list([item], _connector) do
+    item
+  end
+
+  def english_list([item1, item2], connector) do
+    "#{item1}#{connector}#{item2}"
+  end
+
+  def english_list(items, connector) when is_list(items) do
+    {first_items, [last_item]} = Enum.split(items, -1)
+    Enum.join(first_items, ", ") <> connector <> " " <> last_item
+  end
+
   @doc """
   Given a struct returns a lookup key for that struct type, e.g.
   Rez.AST.Scene becomes 'scenes' and Rez.AST.Inventory becomes 'inventories'
@@ -230,5 +245,18 @@ defmodule Rez.Utils do
 
     # Check if it's a reserved keyword and prefix with underscore if needed
     if identifier in @js_reserved_keywords, do: "_" <> identifier, else: identifier
+  end
+
+  def path_readable?(path) do
+    case File.stat(path) do
+      {:ok, %File.Stat{access: access}} when access in [:read, :read_write] ->
+        :ok
+
+      {:ok, %File.Stat{}} ->
+        {:error, "#{path} is unreadable"}
+
+      {:error, reason} ->
+        {:error, "#{path}: #{reason}"}
+    end
   end
 end

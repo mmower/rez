@@ -1,19 +1,23 @@
 defmodule Rez.Parser.DirectiveParsers do
-  alias Ergo.Context
-
+  @moduledoc """
+  Defines the parsers that parse special directives such as @component and
+  @key_binding which don't follow the normal element rules.
+  """
   import Ergo.Combinators
   import Ergo.Terminals
   import Ergo.Meta
+  alias Ergo.Context
 
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
   import Rez.Parser.ValueParsers
   import Rez.Parser.IdentifierParser
   import Rez.Parser.BTreeParser
-
+  import Rez.Parser.ParserTools
+  import Rez.Parser.SchemaParser, only: [schema_directive: 0]
   import Rez.Utils, only: [attr_list_to_map: 1]
 
-  defp behaviour_template() do
+  defp behaviour_template_directive() do
     sequence(
       [
         iliteral("@behaviour_template"),
@@ -24,8 +28,15 @@ defmodule Rez.Parser.DirectiveParsers do
         bt_parser()
       ],
       label: "@behaviour_template",
-      ast: fn [template_id, {:bht, bht}] ->
-        {:behaviour_template, template_id, bht}
+      ctx: fn %Context{ast: [template_id, {:bht, template}]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.BehaviourTemplate{
+              id: template_id,
+              position: resolve_position(ctx),
+              template: template
+            }
+        }
       end
     )
   end
@@ -40,43 +51,50 @@ defmodule Rez.Parser.DirectiveParsers do
         arrow_function_value()
       ],
       label: "@component",
-      ast: fn [name, impl_fn] ->
-        {:user_component, name, impl_fn}
+      ctx: fn %Context{ast: [name, impl_fn]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Component{
+              position: resolve_position(ctx),
+              name: name,
+              impl_fn: impl_fn
+            }
+        }
       end
     )
   end
 
-  defp declare_directive() do
-    sequence(
-      [
-        iliteral("@declare"),
-        iws(),
-        commit(),
-        js_identifier("declare")
-      ],
-      label: "@declare",
-      ctx: fn %Context{
-                entry_points: [{line, col} | _],
-                ast: [id],
-                data: %{source: source}
-              } = ctx ->
-        {source_file, source_line} = LogicalFile.resolve_line(source, line)
+  # defp declare_directive() do
+  #   sequence(
+  #     [
+  #       iliteral("@declare"),
+  #       iws(),
+  #       commit(),
+  #       js_identifier("declare")
+  #     ],
+  #     label: "@declare",
+  #     ctx: fn %Context{
+  #               entry_points: [{line, col} | _],
+  #               ast: [id],
+  #               data: %{source: source}
+  #             } = ctx ->
+  #       {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-        block =
-          create_block(
-            Rez.AST.Object,
-            id,
-            [],
-            %{},
-            source_file,
-            source_line,
-            col
-          )
+  #       block =
+  #         create_block(
+  #           Rez.AST.Object,
+  #           id,
+  #           [],
+  #           %{},
+  #           source_file,
+  #           source_line,
+  #           col
+  #         )
 
-        ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
-      end
-    )
-  end
+  #       ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
+  #     end
+  #   )
+  # end
 
   defp defaults_directive() do
     sequence(
@@ -92,8 +110,15 @@ defmodule Rez.Parser.DirectiveParsers do
         block_end()
       ],
       label: "@defaults",
-      ast: fn [elem, attributes] ->
-        {:defaults, elem, attr_list_to_map(attributes)}
+      ctx: fn %Context{ast: [elem, attributes]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Defaults{
+              position: resolve_position(ctx),
+              elem: elem,
+              attributes: attr_list_to_map(attributes)
+            }
+        }
       end
     )
   end
@@ -109,37 +134,44 @@ defmodule Rez.Parser.DirectiveParsers do
         keyword_value()
       ],
       label: "@derive",
-      ast: fn [{:keyword, tag}, {:keyword, parent}] ->
-        {:derive, tag, parent}
+      ctx: fn %Context{ast: [{:keyword, tag}, {:keyword, parent}]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.Derive{
+              position: resolve_position(ctx),
+              tag: tag,
+              parent: parent
+            }
+        }
       end
     )
   end
 
-  defp enum_directive() do
-    sequence(
-      [
-        iliteral("@enum"),
-        iws(),
-        commit(),
-        js_identifier("enum"),
-        iws(),
-        ignore(open_bracket()),
-        keyword_value() |> transform(fn {:keyword, keyword} -> keyword end),
-        many(
-          sequence([
-            iws(),
-            keyword_value() |> transform(fn {:keyword, keyword} -> keyword end)
-          ])
-        ),
-        iows(),
-        ignore(close_bracket())
-      ],
-      label: "@enum",
-      ast: fn [id, first_kw, other_kws] ->
-        {:enum, id, [first_kw | List.flatten(other_kws)]}
-      end
-    )
-  end
+  # defp enum_directive() do
+  #   sequence(
+  #     [
+  #       iliteral("@enum"),
+  #       iws(),
+  #       commit(),
+  #       js_identifier("enum"),
+  #       iws(),
+  #       ignore(open_bracket()),
+  #       keyword_value() |> transform(fn {:keyword, keyword} -> keyword end),
+  #       many(
+  #         sequence([
+  #           iws(),
+  #           keyword_value() |> transform(fn {:keyword, keyword} -> keyword end)
+  #         ])
+  #       ),
+  #       iows(),
+  #       ignore(close_bracket())
+  #     ],
+  #     label: "@enum",
+  #     ast: fn [id, first_kw, other_kws] ->
+  #       {:enum, id, [first_kw | List.flatten(other_kws)]}
+  #     end
+  #   )
+  # end
 
   defp modifier_key(modifier_name, event_name) do
     sequence([
@@ -203,8 +235,16 @@ defmodule Rez.Parser.DirectiveParsers do
         keyword_value()
       ],
       label: "@keybinding",
-      ast: fn [{:keybinding, modifiers, key}, event] ->
-        {:keybinding, modifiers, key, event}
+      ctx: fn %Context{ast: [{:keybinding, modifiers, key}, event]} = ctx ->
+        %{
+          ctx
+          | ast: %Rez.AST.KeyBinding{
+              position: resolve_position(ctx),
+              key: key,
+              modifiers: modifiers,
+              event: event
+            }
+        }
       end
     )
   end
@@ -212,13 +252,14 @@ defmodule Rez.Parser.DirectiveParsers do
   def directive() do
     choice(
       [
-        behaviour_template(),
+        behaviour_template_directive(),
         component_directive(),
-        declare_directive(),
+        # declare_directive(),
         defaults_directive(),
         derive_directive(),
-        enum_directive(),
-        keybinding_directive()
+        # enum_directive(),
+        keybinding_directive(),
+        schema_directive()
       ],
       label: "directive"
     )

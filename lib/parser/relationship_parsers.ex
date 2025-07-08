@@ -1,4 +1,27 @@
 defmodule Rez.Parser.RelationshipParsers do
+  @moduledoc """
+  Implements parsers for @rel relationship elements that have a different
+  syntax.
+
+  @rel source_id -> target_id {
+    ..attributes..
+  }
+
+  Such elements get an automatic id composed of
+  "rel_<source_id>_<target_id>
+
+  So
+  @rel player -> enemy {
+  }
+
+  get the id #rel_player_enemy
+
+  Since relationships are unidirectional, this would be different to
+
+  @rel enemy -> player
+
+  which would be #rel_enemy_player.
+  """
   alias Rez.AST.Attribute
   alias Ergo.Context
 

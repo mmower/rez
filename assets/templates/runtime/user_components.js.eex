@@ -1,6 +1,7 @@
 window.Rez.user_components = {};
 
+<% alias Rez.AST.Component %>
 <% alias Rez.AST.ValueEncoder %>
-<%= for {name, {:function, impl_fn}} <- @game.user_components do %>
+<%= for %Component{name: name, impl_fn: {:function, impl_fn}} <- @user_components do %>
   window.Rez.user_components.<%= name %> = <%= ValueEncoder.encode_function(impl_fn) %>;
 <% end %>

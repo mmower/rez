@@ -4,10 +4,13 @@ defmodule Rez.AST.NodeHelper do
   AST node structures in the `Rez.AST` namespace. They are assumed to
   implement the `Rez.AST.Node` protocol.
   """
-  import Rez.Utils, only: [map_to_map: 2]
   alias Rez.AST.Attribute
   alias Rez.AST.Node
   import Rez.AST.ValueEncoder, only: [encode_attributes: 1]
+
+  def has_id?(node) do
+    Map.has_key?(node, :id)
+  end
 
   def description(%{id: id, position: {file, line, col}} = node) when is_binary(file) do
     "#{Node.node_type(node)}/#{id} @ #{file}:#{line}:#{col}"
@@ -21,7 +24,8 @@ defmodule Rez.AST.NodeHelper do
     {Node.node_type(node), file, line}
   end
 
-  def get_attr(%{attributes: attributes} = _node, name) when is_binary(name) do
+  def get_attr(%{attributes: attributes} = _node, name)
+      when is_binary(name) and is_map(attributes) do
     Map.get(attributes, name)
   end
 
@@ -56,6 +60,58 @@ defmodule Rez.AST.NodeHelper do
       false ->
         setter.(node, name, value)
     end
+  end
+
+  def set_attr_value(node, name, {:boolean, value}) when is_boolean(value) do
+    set_boolean_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:string, value}) when is_binary(value) do
+    set_string_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:number, value}) when is_number(value) do
+    set_number_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:elem_ref, value}) when is_binary(value) do
+    set_elem_ref_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:keyword, value}) when is_binary(value) do
+    set_keyword_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:list, value}) when is_list(value) do
+    set_list_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:function, {:std, params, body}}) do
+    set_std_func_attr(node, name, {params, body})
+  end
+
+  def set_attr_value(node, name, {:function, {:arrow, params, body}}) do
+    set_arrow_func_attr(node, name, {params, body})
+  end
+
+  def set_attr_value(node, name, {:set, value}) do
+    set_set_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:table, value}) do
+    set_table_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:compiled_template, value}) do
+    set_compiled_template_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:bht, value}) do
+    set_bht_attr(node, name, value)
+  end
+
+  def set_attr_value(node, name, {:placeholder, _}) do
+    set_placeholder_attr(node, name)
   end
 
   def set_boolean_attr(%{attributes: attributes} = node, name, value)
@@ -100,6 +156,10 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.set(name, values))}
   end
 
+  def set_table_attr(%{attributes: attributes} = node, name, %{} = values) when is_binary(name) do
+    %{node | attributes: Map.put(attributes, name, Attribute.table(name, values))}
+  end
+
   def set_number_attr(%{attributes: attributes} = node, name, value)
       when is_binary(name) and is_number(value) do
     %{node | attributes: Map.put(attributes, name, Attribute.number(name, value))}
@@ -118,11 +178,91 @@ defmodule Rez.AST.NodeHelper do
     %{node | attributes: Map.put(attributes, name, Attribute.bht(name, value))}
   end
 
+  def set_placeholder_attr(%{attributes: attributes} = node, name) do
+    %{node | attributes: Map.put(attributes, name, Attribute.placeholder(name))}
+  end
+
   def delete_attr(%{attributes: attributes} = node, name) when is_binary(name) do
     %{node | attributes: Map.delete(attributes, name)}
   end
 
-  def is_template?(node), do: get_attr_value(node, "$template", false)
+  def template_node?(node), do: get_attr_value(node, "$template", false)
+  def instance_node?(node), do: !template_node?(node)
+
+  def inspect_value({:keyword, value}) do
+    ":#{value}"
+  end
+
+  def inspect_value({:string, value}) do
+    value
+  end
+
+  def inspect_value({:number, value}) do
+    to_string(value)
+  end
+
+  def inspect_value({:boolean, value}) do
+    to_string(value)
+  end
+
+  def inspect_value({:elem_ref, value}) do
+    "##{value}"
+  end
+
+  def inspect_value(:placeholder) do
+    "placeholder"
+  end
+
+  def inspect_value({_, value}) do
+    inspect(value)
+  end
+
+  def build_type_map(nodes) when is_list(nodes) do
+    nodes
+    |> Enum.group_by(&Node.node_type/1)
+    |> Map.update!("game", fn [game] -> game end)
+  end
+
+  def build_id_map(nodes) when is_list(nodes) do
+    nodes
+    |> Enum.filter(&Map.has_key?(&1, :id))
+    |> Enum.reduce(%{}, fn %{id: id} = node, map ->
+      Map.put(map, id, node)
+    end)
+  end
+
+  def first_elem(nodes, struct_module) do
+    filter_elem(nodes, struct_module) |> List.first()
+  end
+
+  def filter_elem(nodes, struct_module) when is_atom(struct_module) do
+    Enum.filter(nodes, fn node -> is_struct(node, struct_module) end)
+  end
+
+  def extract_nodes(nodes, struct_module) when is_atom(struct_module) do
+    Enum.split_with(nodes, fn node -> is_struct(node, struct_module) end)
+  end
+
+  @doc """
+  Returns {game_element, game_elements, auxilliary_elements}
+  """
+  def partition_elements(nodes) do
+    {game_elements, aux_elements} = Enum.split_with(nodes, & &1.game_element)
+    {[game_element], game_elements} = Enum.split_with(game_elements, &is_struct(&1, Rez.AST.Game))
+    {game_element, game_elements, aux_elements}
+  end
+
+  def reject_templates(nodes) do
+    Enum.filter(nodes, fn node -> instance_node?(node) end)
+  end
+
+  def get_meta(%{metadata: metadata}, meta_name, default \\ nil) do
+    Map.get(metadata, meta_name, default)
+  end
+
+  def set_meta(%{metadata: metadata} = node, meta_name, value) do
+    %{node | metadata: Map.put(metadata, meta_name, value)}
+  end
 
   @doc """
   Returns the Node struct for a given tag name.
@@ -164,45 +304,6 @@ defmodule Rez.AST.NodeHelper do
   end
 
   @doc """
-  This is called from the compiler before other processing happens, we delegate
-  to the nodes themselves for node-specific pre-processing steps.
-  """
-  def pre_process(node) do
-    node
-    |> Node.pre_process()
-  end
-
-  @doc """
-  Given a Node with a collection of Nodes under `coll_key` return a new Node
-  with the collection under `coll_key` having been passed through
-  `Node.process` themselves.
-  """
-  def process_collection(parent, coll_key, resources) do
-    case Map.get(parent, coll_key) do
-      nil ->
-        parent
-
-      coll ->
-        Map.put(
-          parent,
-          coll_key,
-          map_to_map(coll, fn child_node ->
-            process(child_node, resources)
-          end)
-        )
-    end
-  end
-
-  @doc """
-  Process the node, including type-specific processes
-  """
-  def process(node, resources) do
-    node
-    |> expand_behaviour_templates(resources.behaviour_templates)
-    |> Node.process(resources)
-  end
-
-  @doc """
   Given a node, search for behaviour-tree attributes and expand any templates used in the tree
   """
   def expand_behaviour_templates(node, templates) do
@@ -237,6 +338,8 @@ defmodule Rez.AST.NodeHelper do
     {behaviour_id, options, Enum.map(children, &expand_behaviour(&1, templates))}
   end
 
+  # Default implementations of Node protocol methods for defdelegate
+
   def js_initializer(node) do
     ~s"""
     new #{Node.js_ctor(node)}(
@@ -244,5 +347,9 @@ defmodule Rez.AST.NodeHelper do
       #{encode_attributes(node.attributes)}
     )
     """
+  end
+
+  def html_processor(_node, _attr) do
+    &Function.identity/1
   end
 end

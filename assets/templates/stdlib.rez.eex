@@ -7,63 +7,505 @@
 %% ----------------------------------------------------------------------------
 
 @defaults actor {
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+}
+
+@schema actor {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  container_id: {kind: :elem_ref, ref_elem: @inventory}
+  on_accept_item: {kind: :function, params: [actor event]}
+  on_enter: {kind: :function, params: [actor event]}
+  on_leave: {kind: :function, params: [actor event]}
+  on_turn: {kind: :function, params: [actor event]}
+  behaviours: {kind: :btree}
 }
 
 @defaults asset {
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idex: 0
+  $js_runtime: false
+  $js_defer: false
+  $pre_runtime: false
+  $inline: false
+}
+
+@schema asset {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :ref}
+  $js_ctor: {kind: :set, coll_kind: :keyword}
+  $js_runtime: {kind: :boolean}
+  $js_defer: {kind: :boolean}
+  $pre_runtime: {kind: :boolean}
+  $inline: {kind: :boolean}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  folder_path: {kind: :string, xor: file_path}
+  file_path: {kind: :string, xor: folder_path, file_exists}
+  width: {kind: [:string :number], and: height}
+  height: {kind: [:string :number], and: width}
+}
+
+@defaults behaviour {
+  $global: false
+  $template: false
+  $auto_id_idex: 0
+
+  options: []
+  min_children: 0
+  max_children: 0
+  owner_id: _
+}
+
+@schema behaviour {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  execute: {kind: :function, params: [owner behaviour wmem], required: true}
+
+  options: {kind: :list, coll_kind: :keyword}
+  expected_keys: {kind: :list, coll_kind: :keyword}
+  min_children: {kind: :number}
+  max_children: {kind: :number}
+  owner_id: {kind: :elem_ref}
 }
 
 @defaults card {
+  $global: false
+  $template: false
+  $auto_id_idex: 0
   $flipped: false
   $suppress_wrapper: false
-  tags: #{}
+}
+
+@schema card {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  content: {kind: :source_template, required: true}
+  flipped_content: {kind: :source_template}
+
+  $flipped: {kind: :boolean}
+  $suppress_wrapper: {kind: :boolean}
+
+  bindings: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  css_class: {kind: :string}
+
+  on_start: {kind: :function}
+  on_finish: {kind: :function}
+  on_render: {kind: :function}
+}
+
+@defaults effect {
+  $global: false
+  $template: false
+  $auto_id_idex: 0
+}
+
+@schema effect {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  on_apply: {kind: :function}
+  on_remove: {kind: :function}
 }
 
 @defaults faction {
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idex: 0
+}
+
+@schema faction {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+}
+
+@schema filter {
+  name: {kind: :string, required: true}
+  impl: {kind: :function, required: true}
+}
+
+@defaults game {
+  $global: true
+  $scene_stack: []
+  $flash_messages: []
+  start_events: []
+
+  current_scene_id: _
+  layout: ```
+  ${content}
+  ```
+}
+
+@schema game {
+  $global: {kind: :boolean}
+  $template: {allowed: false}
+  $js_ctor: {kind: :string}
+  $start_events: {kind: :table}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  name: {kind: :string, required: true}
+  title: {kind: :string, required: true}
+  archive_format: {kind: :number, required: true}
+  layout: {kind: :source_template, required: true, contains: "${content}"}
+  initial_scene_id: {kind: :elem_ref, ref_elem: @scene, required: true}
+  IFID: {kind: :string, required: true}
+
+  current_scene_id: {kind: :elem_ref}
+  $scene_stack: {kind: :list}
+  $flash_messages: {kind: :list}
+  start_events: {kind: :list, coll_kind: :list_binding}
+
+  bindings: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  links: {kind: :list, coll_kind: :string}
+  scripts: {kind: :list, coll_kind: :string}
+
+  on_init: {kind: :function}
+  on_start: {kind: :function}
+  on_save: {kind: :function}
+  on_load: {kind: :function}
+}
+
+@defaults generator {
+  $global: false
+  $template: false
+
+  customize: (obj) => {return obj;}
+}
+
+@schema generator {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  priority: {kind: :number, min: 1, max: 100, required: true}
+  source: {kind: :elem_ref, required: true}
+  copies: {kind: :number, min: 0}
+
+  customize: {kind: :function}
+}
+
+@defaults group {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+}
+
+@schema group {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  type: {kind: :keyword, in: [:image, :audio, :video], required: true}
+  include_tags: {kind: :set, coll_kind: :keyword, xor: exclude_tags}
+  exclude_tags: {kind: :set, coll_kind: :keyword, xor: include_tags}
 }
 
 @defaults inventory {
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
+  apply_effects: true
+}
+
+@schema inventory {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  owner: {kind: :elem_ref}
+  slots: {kind: :set, coll_kind: :elem_ref, ref_elem: @slot, required: true, min_length: 1}
+  apply_effects: {kind: :boolean}
+
+  on_insert: {kind: :function}
+  on_remove: {kind: :function}
 }
 
 @defaults item {
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+}
+
+@schema item {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  %% This does not preserve the item validation that determines whether the
+  %% type refers to an accept: for a slot
+  type: {kind: :keyword, required: true}
+
+  tags: {kind: :set, coll_kind: :keyword}
+  description: {kind: [:string :source_template]}
+  container: {kind: :elem_ref, ref_elem: @inventory}
+  size: {kind: :number, min: 0}
+  uses: {kind: :number, min: 0}
+  effects: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}
+
+  asset_id: {kind: :elem_ref, ref_elem: @asset}
 }
 
 @defaults list {
-  $cycles: {}
-  $bags: {}
-  $walks: {}
-  tags: #{}
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+}
+
+@schema list {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  values: {kind: :list, required: true}
+
+  tags: {kind: :set, coll_kind: :keyword}
+}
+
+@defaults object {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+}
+
+@schema object {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+}
+
+@schema patch {
+  patch: {kind: :string, required: true}
+  impl: {kind: :function, required: true}
+
+  function: {kind: :string, xor: method}
+  method: {kind: :string, xor: function}
 }
 
 @defaults plot {
-  tags: #{}
-  active: false
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
   stage: 0
+  active: false
+}
+
+@schema plot {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  stage: {kind: :number}
+  active: {kind: :boolean}
+
+  stages: {kind: :number, min: 1, required: true}
+  priority: {kind: :number, min: 1, max: 100, required: true}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  on_begin: {kind: :function}
+  on_tick: {kind: :function}
+  on_complete: {kind: :function}
 }
 
 @defaults rel {
-  tags: #{}
+  $global: false
+  $template: false
+}
+
+@schema rel {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  source_id: {kind: :ref, required: true}
+  target_id: {kind: :ref, required: true}
+
+  tags: {kind: :set, coll_kind: :keyword}
 }
 
 @defaults scene {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+  $running: false
+
+  current_card_id: _
+  last_card_id: _
+  layout: ```
+  ${content}
+  ```
   layout_mode: :single
-  layout_reverse: false
   layout_separator: ""
-  layout: ```${content}```
-  tags: #{}
+  layout_reverse: false
+}
+
+@schema scene {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+  $running: {kind: :boolean}
+
+  initial_card_id: {kind: :elem_ref, ref_elem: @card, required: true}
+  current_card_id: {kind: :elem_ref}
+  last_card_id: {kind: :elem_ref}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  layout: {kind: :source_template, contains: "${content}"}
+  layout_mode: {kind: :keyword, in: [:single :stack]}
+  layout_separator: {kind: :string}
+  layout_reverse: {kind: :boolean}
+  bindings: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+
+  on_init: {kind: :function}
+  on_start: {kind: :function}
+  on_finish: {kind: :function}
+  on_interrupt: {kind: :function}
+  on_resume: {kind: :function}
+  on_render: {kind: :function}
+  on_start_card: {kind: :function}
+  on_finish_card: {kind: :function}
 }
 
 @defaults slot {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
   apply_effects: true
-  tags: #{}
+}
+
+@schema slot {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  accepts: {kind: :keyword, required: true}
+  accessor: {kind: :keyword, required: true}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  name: {kind: :string}
+  apply_effects: {kind: :boolean}
+
+  capacity: {kind: :number, min: 0}
+
+  on_insert: {kind: :function}
+  on_remove: {kind: :function}
 }
 
 @defaults system {
-  tags: #{}
+  $global: true
+}
+
+@schema system {
+  $global: {kind: :boolean}
+  $template: {allowed: false}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  enabled: {kind: :boolean, required: true}
+  priority: {kind: :number, min: 0, required: true}
+
+  before_event: {kind: :function, param_count: 3, or: after_event}
+  after_event: {kind: :function, param_count: 3, or: before_event}
+}
+
+@defaults timer {
+  $global: false
+  $timer: ""
+
+  auto_start: true
+  repeats: true
+
+  on_game_started: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
+  on_game_loaded: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
+}
+
+@schema timer {
+  $global: {kind: :boolean}
+  $template: {allowed: false}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  $timer: {kind: :string}
+
+  interval: {kind: :number, min: 0, required: true}
+  event: {kind: :keyword, required: true} %% Could we support 'default: timer.id' ?
+
+  auto_start: {kind: :boolean}
+  repeats: {kind: :boolean}
+  count: {kind: :number, min: 1}
+
+  on_game_started: {kind: :function}
+  on_game_loaded: {kind: :function}
 }
 
 %% ----------------------------------------------------------------------------
@@ -71,18 +513,6 @@
 %% ----------------------------------------------------------------------------
 
 %% Moved these to the base_game template so that users can override
-
-%%@asset _ALPINE_JS {
-%%  $built_in: true
-%%  file_name: "alpinejs.min.js"
-  %% $js_defer: true
-  %% $pre_runtime: true
-%% }
-
-%% @asset _BULMA_CSS {
-  %% $built_in: true
-  %% file_name: "bulma.min.css"
-%% }
 
 @asset _PLURALIZE_JS {
   $built_in: true
@@ -101,7 +531,7 @@
   }
 }
 
-@patch PATCH_BOOLEAN_RAND {
+@patch {
   $built_in: true
   patch: "Boolean"
   function: "rand"
@@ -110,7 +540,7 @@
   }
 }
 
-@patch PATCH_OBJECT_DEEP_COPY {
+@patch {
   $built_in: true
   patch: "Object"
   method: "copy"
@@ -207,10 +637,10 @@
   }
 }
 
-@patch PATCH_OBJECT_OBJ_MAP {
+@patch {
   $built_in: true
   patch: "Object"
-  method: "obj_map"
+  method: "objMap"
   impl: function(f) {
     const entries = Object.entries(this);
     const new_entries = entries.map(([k, v]) => [k, f(v, k)]);
@@ -218,16 +648,16 @@
   }
 }
 
-@patch PATCH_OBJECT_DQ_WRAP {
+@patch {
   $built_in: true
-  patch: "Object"
-  method: "dq_wrap"
+  patch: "String"
+  method: "dqWrap"
   impl: function() {
-    return "\"" + this + "\"";
+    return `"${this}"`;
   }
 }
 
-@patch PATCH_ARRAY_MAX {
+@patch {
   $built_in: true
   patch: "Array"
   method: "max"
@@ -240,7 +670,7 @@
   }
 }
 
-@patch PATCH_ARRAY_MIN {
+@patch {
   $built_in: true
   patch: "Array"
   method: "min"
@@ -253,25 +683,33 @@
   }
 }
 
-@patch PATCH_ARRAY_ENGLISH_LIST {
+@patch {
   $built_in: true
   patch: "Array"
   method: "englishList"
-  impl: function() {
-    const length = this.length;
-    if (length === 0) {
+  impl: function(amp) {
+    let connector = "and";
+    if(amp != undefined && amp) {
+      connector = "&";
+    }
+
+    switch(this.length) {
+      case 0:
         return "";
-    } else if (length === 1) {
-        return this[0];
-    } else if (length === 2) {
-        return this.join(" and ");
-    } else {
-        return this.slice(0, -1).join(", ") + ", and " + this[length - 1];
+
+      case 1:
+        return `${this[0]}`;
+
+      case 2:
+        return this.join(` ${connector} `);
+
+      default:
+        return this.slice(0, -1).join(", ") + `, ${connector} ` + this[this.length - 1];
     }
   }
 }
 
-@patch PATCH_ARRAY_REMOVE {
+@patch {
   $built_in: true
   patch: "Array"
   method: "remove"
@@ -280,14 +718,15 @@
     if(idx !== -1) {
       this.splice(idx, 1);
     }
+    return this;
   }
 }
 
-@patch PATCH_ARRAY_FY_SHUFFLE {
+@patch {
   $built_in: true
   %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
   patch: "Array"
-  method: "fy_shuffle"
+  method: "fyShuffle"
   impl: function() {
     let idx = this.length;
     while(--idx > 0) {
@@ -298,7 +737,7 @@
   }
 }
 
-@patch PATCH_ARRAY_RANDOM_ELEMENT {
+@patch {
   $built_in: true
   patch: "Array"
   method: "randomElement"
@@ -307,7 +746,7 @@
   }
 }
 
-@patch PATCH_ARRAY_RANDOM_INDEX {
+@patch {
   $built_in: true
   patch: "Array"
   method: "randomIndex"
@@ -316,7 +755,7 @@
   }
 }
 
-@patch PATCH_ARRAY_FREQUENCIES {
+@patch {
   $built_in: true
   patch: "Array"
   method: "frequencies"
@@ -335,7 +774,7 @@
   }
 }
 
-@patch PATCH_ARRAY_SUM {
+@patch {
   $built_in: true
   patch: "Array"
   method: "sum"
@@ -344,7 +783,7 @@
   }
 }
 
-@patch PATCH_ARRAY_EQUALS {
+@patch {
   $built_in: true
   patch: "Array"
   function: "equals"
@@ -356,7 +795,7 @@
   }
 }
 
-@patch PATCH_ARRAY_STARTS_WITH_SEQUENCE {
+@patch {
   $built_in: true
   patch: "Array"
   method: "startsWithSequence"
@@ -365,7 +804,7 @@
   }
 }
 
-@patch PATCH_ARRAY_PAIRS {
+@patch {
   $built_in: true
   patch: "Array"
   method: "to_pairs"
@@ -380,7 +819,7 @@
   }
 }
 
-@patch PATCH_ARRAY_TAKE {
+@patch {
   $built_in: true
   patch: "Array"
   method: "take"
@@ -393,7 +832,7 @@
   }
 }
 
-@patch PATCH_ARRAY_REFS {
+@patch {
   $built_in: true
   patch: "Array"
   method: "refs"
@@ -402,7 +841,7 @@
   }
 }
 
-@patch PATCH_ARRAY_IDS {
+@patch {
   $built_in: true
   patch: "Array"
   method: "ids"
@@ -411,10 +850,10 @@
   }
 }
 
-@patch PATCH_ARRAY_N_OF {
+@patch {
   $built_in: true
   patch: "Array"
-  function: "n_of"
+  function: "nOf"
   impl: function(length, def_value) {
     if(typeof(def_value) === "function") {
       return Array.from({length: length}, def_value);
@@ -424,7 +863,7 @@
   }
 }
 
-@patch PATCH_ARRAY_SAMPLE {
+@patch {
   $built_in: true
   patch: "Array"
   method: "sample"
@@ -449,7 +888,7 @@
   }
 }
 
-@patch PATCH_ARRAY_ZIP {
+@patch {
   $built_in: true
   patch: "Array"
   function: "zip"
@@ -458,7 +897,22 @@
   }
 }
 
-@patch PATCH_STRING_BEGINS_WITH_CONSONANT {
+@patch {
+  $built_in: true
+  patch: "Array"
+  method: "splitWith"
+  impl: function(pred) {
+    return this.reduce(
+        (acc, item) => {
+          acc[pred(item) ? 0 : 1].push(item);
+          return acc;
+        },
+        [[], []]
+      );
+  }
+}
+
+@patch {
   $built_in: true
   patch: "String"
   method: "beginsWithConsonant"
@@ -467,7 +921,7 @@
   }
 }
 
-@patch PATCH_STRING_BEGINS_WITH_VOWEL {
+@patch {
   $built_in: true
   patch: "String"
   method: "beginsWithVowel"
@@ -476,7 +930,7 @@
   }
 }
 
-@patch PATCH_STRING_CAPITALIZE {
+@patch {
   $built_in: true
   patch: "String"
   method: "capitalize"
@@ -485,16 +939,16 @@
   }
 }
 
-@patch PATCH_STRING_INTERPOLATE {
-  $built_in: true
-  patch: "String"
-  method: "interpolate"
-  impl: function(game) {
-    return this;
-  }
-}
+%%@patch {
+%%  $built_in: true
+%%  patch: "String"
+%%  method: "interpolate"
+%%  impl: function(game) {
+%%    return this;
+%%  }
+%%}
 
-@patch PATCH_STRING_POSSESSIVE {
+@patch {
   $built_in: true
   patch: "String"
   method: "possessive"
@@ -507,7 +961,7 @@
   }
 }
 
-@patch PATCH_STRING_CAMELIZE {
+@patch {
   $built_in: true
   patch: "String"
   method: "camelize"
@@ -518,7 +972,7 @@
   }
 }
 
-@patch PATCH_STRING_SNAKE_TO_KEBAB_CASE {
+@patch {
   $built_in: true
   patch: "String"
   method: "snakeToKebabCase"
@@ -527,7 +981,7 @@
   }
 }
 
-@patch PATCH_STRING_KEBEB_TO_SNAKE_CASE {
+@patch {
   $built_in: true
   patch: "String"
   method: "kebabToSnakeCase"
@@ -536,7 +990,7 @@
   }
 }
 
-@patch PATCH_STRING_TO_SNAKE_CASE {
+@patch {
   $built_in: true
   patch: "String"
   method: "toSnakeCase"
@@ -548,7 +1002,7 @@
   }
 }
 
-@patch PATCH_STRING_PARSE_TIME {
+@patch {
   $built_in: true
   patch: "String"
   method: "parseTime"
@@ -577,7 +1031,7 @@
   }
 }
 
-@patch PATCH_STRING_RANDOM_ID {
+@patch {
   $built_in: true
   patch: "String"
   function: "randomId"
@@ -587,16 +1041,17 @@
   }
 }
 
-@patch PATCH_STRING_WRAP_WITH {
+@patch {
   $built_in: true
   patch: "String"
   method: "wrapWith"
   impl: function(prefix, suffix) {
-    return prefix + this + suffix;
+    suffix = suffix ?? prefix;
+    return `${prefix}${this}${suffix}`;
   }
 }
 
-@patch PATCH_STRING_INDEFINITE_ARTICLE {
+@patch {
   $built_in: true
   patch: "String"
   method: "indefiniteArticle"
@@ -609,7 +1064,7 @@
 %% https://medium.com/@alvaro.saburido/set-theory-for-arrays-in-es6-eb2f20a61848
 %% https://stackoverflow.com/a/31129384/7518
 
-@patch PATCH_SET_UNION {
+@patch {
   $built_in: true
   patch: "Set"
   method: "union"
@@ -618,7 +1073,7 @@
   }
 }
 
-@patch PATCH_SET_INTERSECTION {
+@patch {
   $built_in: true
   patch: "Set"
   method: "intersection"
@@ -627,7 +1082,7 @@
   }
 }
 
-@patch PATCH_SET_DIFFERENCE {
+@patch {
   $built_in: true
   patch: "Set"
   method: "difference"
@@ -636,7 +1091,7 @@
   }
 }
 
-@patch PATCH_SET_EQUALS {
+@patch {
   $built_in: true
   patch: "Set"
   method: "equals"
@@ -646,7 +1101,7 @@
   }
 }
 
-@patch PATCH_SET_HAS_SUBSET {
+@patch {
   $built_in: true
   patch: "Set"
   method: "hasSubset"
@@ -655,7 +1110,7 @@
   }
 }
 
-@patch PATCH_NUMBER_ORDINAL {
+@patch {
   $built_in: true
   patch: "Number"
   method: "ordinal"
@@ -675,7 +1130,7 @@
   }
 }
 
-@patch PATCH_NUMBER_ROUNDP {
+@patch {
   $built_in: true
   %% https://stackoverflow.com/questions/7342957/how-do-you-round-to-1-decimal-place-in-javascript
   patch: "Number"
@@ -686,7 +1141,7 @@
   }
 }
 
-@patch PATCH_NUMBER_CL_AVG {
+@patch {
   $built_in: true
   patch: "Number"
   method: "cl_avg"
@@ -697,7 +1152,7 @@
   }
 }
 
-@patch PATCH_NUMBER_ROUND_TO_NEAREST_HALF {
+@patch {
   $built_in: true
   %% rounds a number to the nearest 0.5
   patch: "Number"
@@ -707,7 +1162,7 @@
   }
 }
 
-@patch PATCH_NUMBER_DIST_ROUND {
+@patch {
   $built_in: true
   patch: "Number"
   method: "dist_round"
@@ -716,7 +1171,7 @@
   }
 }
 
-@patch PATCH_NUMBER_ROUND_TO_NEAREST {
+@patch {
   $built_in: true
   patch: "Number"
   method: "round_to_nearest"
@@ -729,18 +1184,19 @@
   }
 }
 
-@patch PATCH_NUMBER_TIMES {
+@patch {
+  %% See Array.nOf() for creating arrays with n items
   $built_in: true
   patch: "Number"
   method: "times"
   impl: function(f) {
     for(let ix = 0; ix < this; ix++) {
-      f();
+      f(ix);
     }
   }
 }
 
-@patch PATCH_MATH_PERC {
+@patch {
   $built_in: true
   patch: "Math"
   function: "perc"
@@ -749,7 +1205,7 @@
   }
 }
 
-@patch PATH_MATH_DIV {
+@patch {
   $built_in: true
   patch: "Math"
   function: "div"
@@ -758,7 +1214,7 @@
   }
 }
 
-@patch PATCH_MATH_DIVMOD {
+@patch {
   $built_in: true
   patch: "Math"
   function: "div_mod"
@@ -769,7 +1225,7 @@
   }
 }
 
-@patch PATCH_MATH_RANGE {
+@patch {
   $built_in: true
   patch: "Math"
   function: "range"
@@ -786,10 +1242,10 @@
   }
 }
 
-@patch PATCH_MATH_DIST_ROUND {
+@patch {
   $built_in: true
   %% Because JS only gives us random numbers as floating point we sometimes
-  %% end up having to round when we want an. The question is whether we round
+  %% end up having to round when we want an integer. The question is whether we round
   %% up or round down which can create a bias. The dist_round function randomly
   %% round up or down to distribute values evenly.
   patch: "Math"
@@ -803,7 +1259,7 @@
   }
 }
 
-@patch PATCH_MATH_RAND_INT {
+@patch {
   $built_in: true
   patch: "Math"
   function: "rand_int"
@@ -812,7 +1268,7 @@
   }
 }
 
-@patch PATCH_MATH_RND_INT_BETWEEN {
+@patch {
   $built_in: true
   patch: "Math"
   function: "rand_int_between"
@@ -824,7 +1280,7 @@
   }
 }
 
-@patch PATCH_MATH_RAND_F_BETWEEN {
+@patch {
   $built_in: true
   patch: "Math"
   function: "rand_f_between"
@@ -837,7 +1293,7 @@
   }
 }
 
-@patch PATCH_MATH_CL_RAND_F_BETWEEN {
+@patch {
   $built_in: true
   patch: "Math"
   function: "cl_rand_f_between"
@@ -851,7 +1307,7 @@
   }
 }
 
-@patch PATCH_MATH_CL_RAND_INT {
+@patch {
   $built_in: true
   patch: "Math"
   function: "cl_rand_int"
@@ -862,7 +1318,7 @@
   }
 }
 
-@patch PATCH_MATH_CLRAND_INT_BETWEEN {
+@patch {
   $built_in: true
   patch: "Math"
   function: "cl_rand_int_between"
@@ -873,7 +1329,7 @@
   }
 }
 
-@patch PATCH_MATH_CLAMPED_SUB {
+@patch {
   $built_in: true
   patch: "Math"
   function: "clamped_sub"
@@ -882,7 +1338,7 @@
   }
 }
 
-@patch PATCH_MATH_CLAMPED_ADD {
+@patch {
   $built_in: true
   patch: "Math"
   function: "clamped_add"
@@ -891,7 +1347,7 @@
   }
 }
 
-@patch PATCH_MATH_ALTER {
+@patch {
   $built_in: true
   patch: "Math"
   function: "alter"

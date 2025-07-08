@@ -25,14 +25,7 @@ class RezCard extends RezBasicObject {
   }
 
   getViewTemplate(flipped) {
-    if(flipped) {
-      if (!this.$flipped_template) {
-        throw new Error(`Card |${this.id}| was asked for its flipped_template but doesn't define one!`);
-      }
-      return this.$flipped_template;
-    } else {
-      return this.$content_template;
-    }
+    return flipped ? (this.$flipped_template || this.$content_template) : this.$content_template;
   }
 
   handleCustomEvent(event_name, evt) {

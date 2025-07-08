@@ -11,6 +11,7 @@ defmodule Rez.Parser.AliasParsers do
   alias Rez.AST.NodeHelper
 
   import Rez.Parser.StructureParsers
+  import Rez.Parser.ParserTools
 
   import Rez.Parser.UtilityParsers,
     only: [
@@ -124,9 +125,16 @@ defmodule Rez.Parser.AliasParsers do
             |> Context.make_error_fatal()
 
           _ ->
+            alias = %Rez.AST.Alias{
+              position: resolve_position(ctx),
+              name: alias_tag,
+              target: target_tag,
+              mixins: mixins
+            }
+
             %{
               ctx
-              | ast: {:elem, alias_tag, {target_tag, mixins}},
+              | ast: alias,
                 data: %{
                   data
                   | aliases: Map.put(aliases, alias_tag, {target_tag, mixins})
@@ -142,7 +150,7 @@ defmodule Rez.Parser.AliasParsers do
       nil ->
         NodeHelper.node_for_tag(tag)
 
-      {alias, _} ->
+      {alias, _mixins} ->
         aliased_struct(alias, aliases)
     end
   end

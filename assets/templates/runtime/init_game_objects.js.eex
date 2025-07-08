@@ -2,7 +2,10 @@
 // Initialize Game Objects
 //-----------------------------------------------------------------------------
 <% import Rez.AST.ValueEncoder %>
-<% alias Rez.AST.{Node, NodeHelper, Asset} %>
+
+<% alias Rez.AST.Node %>
+<% alias Rez.AST.NodeHelper %>
+<% alias Rez.AST.Asset %>
 
 const game = <%= Node.js_initializer(@game) %>;
 
@@ -10,12 +13,11 @@ RezBasicObject.game = game;
 
 /* Encode game objects */
 let el;
-<%= for collection <- Game.js_classes_to_init(),
-    {_id, obj} <- Map.get(@game, collection) do %>
-  el = <%= Node.js_initializer(obj) %>;
+<%= for node <- @game_elements do %>
+  el = <%= Node.js_initializer(node) %>;
   game.addGameObject(el);
-  <%= if NodeHelper.get_attr_value(obj, "$global", false) do %>
-    window.$<%= obj.id %> = el;
+  <%= if NodeHelper.get_attr_value(node, "$global", false) do %>
+    window.$<%= node.id %> = el;
   <% end %>
 <% end %>
 
@@ -24,13 +26,16 @@ let el;
     ["list", "event"],
     """
     {
+      // Lookup the object the generator is copying
       const source = $(list.getAttribute("source"));
       const copies = list.getAttribute("copies");
       const customize = list.getAttribute("customize");
       const objects = [];
       for(let idx = 0; idx < copies; idx += 1) {
         let copy = source.copyWithAutoId();
-        customize(copy);
+        if(typeof(customize) == "function") {
+          customize(copy);
+        }
         objects.push(copy);
         game.addGameObject(copy);
       }
@@ -40,7 +45,7 @@ let el;
   }
 %>
 
-<%= for {id, generator} <- @game.generators do %>
+<%= for generator <- @generators do %>
   <%
     generator = NodeHelper.set_std_func_attr(
       generator,
@@ -52,7 +57,7 @@ let el;
   (function() {
     game.addGameObject(
       new RezList(
-        "<%= id %>",
+        "<%= generator.id %>",
         <%= encode_attributes(generator.attributes) %>
       )
     )

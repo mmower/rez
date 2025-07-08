@@ -15,6 +15,7 @@ defmodule Rez.Parser.Parser do
 
   import Rez.Parser.AliasParsers
   import Rez.Parser.ElementsParser
+  import Rez.Parser.SpecialElementParsers
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DirectiveParsers
 
@@ -44,6 +45,7 @@ defmodule Rez.Parser.Parser do
         lookahead(at()),
         choice([
           element(),
+          special_element(),
           directive(),
           alias_directive(),
           aliased_element(),
@@ -74,8 +76,9 @@ defmodule Rez.Parser.Parser do
            data: %{source: source, aliases: %{}, id_map: %{}}
          ) do
       %Context{status: :ok, ast: ast, data: %{id_map: id_map}} ->
-        if(Debug.dbg_do?(:debug)) do
-          File.write!("ast.ans", Apex.Format.format(ast))
+        if Debug.dbg_do?(:debug) do
+          File.write!("idmap.exs", "id_map = " <> inspect(id_map, pretty: true, limit: :infinity))
+          File.write!("ast.exs", "ast = " <> inspect(ast, pretty: true, limit: :infinity))
         end
 
         {:ok, ast, id_map}
