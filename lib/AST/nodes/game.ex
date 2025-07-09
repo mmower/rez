@@ -7,7 +7,6 @@ defmodule Rez.AST.Game do
 
   alias Rez.AST.Node
   alias Rez.AST.NodeHelper
-  alias Rez.AST.TypeHierarchy
 
   defstruct status: :ok,
             game_element: true,
@@ -45,20 +44,6 @@ defmodule Rez.AST.Game do
         {[base_element, current_elem], MapSet.new()}
     end
   end
-
-  # Where has the use of this code been moved to?
-
-  # Search the is_a tree for a connection between "tag" and "parent"
-  # def is_a(_, tag, tag), do: true
-
-  # def is_a(%{is_a: is_a}, tag, parent)
-  #     when is_binary(tag) and is_binary(parent) and tag != parent do
-  #   TypeHierarchy.search_is_a(is_a, tag, parent)
-  # end
-
-  # def expand_type(%{is_a: is_a}, tag) do
-  #   TypeHierarchy.fan_out(is_a, tag)
-  # end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Game do

@@ -15,7 +15,7 @@ defmodule Rez.Parser.SpecialElementParsers do
 
   alias Rez.Utils
 
-  defp patch_element() do
+  def patch_element() do
     sequence(
       [
         iliteral("@patch"),
@@ -39,7 +39,7 @@ defmodule Rez.Parser.SpecialElementParsers do
     )
   end
 
-  defp script_element() do
+  def script_element() do
     sequence(
       [
         iliteral("@script"),
@@ -59,7 +59,7 @@ defmodule Rez.Parser.SpecialElementParsers do
     )
   end
 
-  defp styles_element() do
+  def styles_element() do
     sequence(
       [
         iliteral("@styles"),

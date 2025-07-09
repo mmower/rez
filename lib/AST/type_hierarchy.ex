@@ -11,6 +11,12 @@ defmodule Rez.AST.TypeHierarchy do
     %TypeHierarchy{}
   end
 
+  def is_a(_, tag, tag), do: true
+
+  def is_a(%TypeHierarchy{} = hierarchy, tag, parent) when is_binary(tag) and is_binary(parent) do
+    search_is_a(hierarchy, tag, parent)
+  end
+
   def add(%TypeHierarchy{is_a: is_a} = type_map, tag, parent) do
     parents =
       Map.get(is_a, tag, MapSet.new())

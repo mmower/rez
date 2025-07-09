@@ -17,9 +17,9 @@ defmodule Rez.Parser.CollectionParser do
       many: 1,
       optional: 1,
       sequence: 1,
-      sequence: 2,
+      sequence: 2
       # transform: 2,
-      replace: 2
+      # replace: 2
     ]
 
   # import Ergo.Meta, only: [commit: 0]
@@ -33,7 +33,7 @@ defmodule Rez.Parser.CollectionParser do
       comma: 0,
       pipe: 0,
       star: 0,
-      plus: 0,
+      # plus: 0,
       open_brace: 0,
       close_brace: 0,
       open_bracket: 0,
@@ -55,7 +55,7 @@ defmodule Rez.Parser.CollectionParser do
 
   import Rez.Parser.JSBindingParser
 
-  import Rez.Parser.DefaultParser
+  # import Rez.Parser.DefaultParser
 
   def collection_value() do
     ParserCache.get_parser("collection_value", fn ->

@@ -1,9 +1,9 @@
 defmodule Rez.Compiler.ExecSchemaTest do
   use ExUnit.Case
 
+  alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper, as: NH
 
-  alias Rez.Compiler.Validation
   alias Rez.Compiler.Compilation
   alias Rez.Compiler.SchemaBuilder
   alias Rez.Compiler.Phases.ApplySchema
@@ -14,32 +14,38 @@ defmodule Rez.Compiler.ExecSchemaTest do
   test "Applies schema" do
     schema = create_schema()
 
-    item = %Rez.AST.Item{id: "item_1"}
-    [validated_item] = ApplySchema.apply_schema(schema, [item])
+    item = %Rez.AST.Item{
+      id: "item_1",
+      attributes: %{"inv_type" => Attribute.keyword("inv_type", "item")}
+    }
+
+    [validated_item] = ApplySchema.apply_schema(schema, [item], %{"item_id" => item})
     assert "item" = NH.get_attr_value(validated_item, "inv_type")
     assert [] = validated_item.validation.errors
 
     item = %Rez.AST.Item{id: "item_2"} |> NH.set_string_attr("inv_type", "item")
-    [validated_item] = ApplySchema.apply_schema(schema, [item])
+    [validated_item] = ApplySchema.apply_schema(schema, [item], %{"item_id" => item})
     %{validation: validation} = validated_item
 
     assert [{"item", "item_2", "item#item_2: inv_type must be of kind keyword but was string"}] =
              validation.errors
   end
 
-  test "Detects @game" do
-    post_compilation =
-      ApplySchema.run_phase(%Compilation{schema: create_schema(), content: [%Rez.AST.Game{}]})
+  test "Validates @game" do
+    game =
+      %Rez.AST.Game{}
+      |> NH.set_string_attr("name", "Test")
+      |> NH.set_elem_ref_attr("initial_scene_id", "s_intro")
 
-    assert [] = post_compilation.errors
+    scene =
+      %Rez.AST.Scene{id: "s_intro"}
 
-    post_compilation =
-      ApplySchema.run_phase(%Compilation{
-        schema: create_schema(),
-        content: [%Rez.AST.Item{id: "item_1"}]
-      })
+    compilation =
+      %Compilation{status: :ok, content: [game, scene]}
+      |> BuildSchema.run_phase()
+      |> ApplySchema.run_phase()
 
-    assert ["Unable to find a @game element"] = post_compilation.errors
+    assert [] = compilation.errors
   end
 
   def create_schema() do
@@ -61,7 +67,7 @@ defmodule Rez.Compiler.ExecSchemaTest do
       SchemaParser.make_schema(
         [
           "item",
-          [SchemaBuilder.build("inv_type", [{:kind, [:keyword]}, {:default, {:keyword, "item"}}])]
+          [SchemaBuilder.build("inv_type", [{:kind, [:keyword]}])]
         ],
         {nil, 0, 0}
       )

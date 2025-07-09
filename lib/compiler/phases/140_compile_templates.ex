@@ -4,7 +4,6 @@ defmodule Rez.Compiler.Phases.CompileTemplates do
   @todo Something odd about this...
   """
   alias Rez.AST.TemplateHelper
-  alias Rez.AST.NodeHelper
 
   alias Rez.Compiler.Compilation
 

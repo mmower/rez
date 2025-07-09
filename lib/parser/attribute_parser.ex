@@ -25,7 +25,8 @@ defmodule Rez.Parser.AttributeParser do
           BTreeParser.bt_parser()
         ],
         err: fn ctx ->
-          Context.add_error(ctx, "Cannot read attribute value")
+          ctx
+          |> Context.add_error(:bad_value, "Cannot read attribute value")
         end,
         label: "attr-value"
       )
@@ -44,6 +45,10 @@ defmodule Rez.Parser.AttributeParser do
         ],
         label: "attribute",
         debug: true,
+        err: fn ctx ->
+          ctx
+          |> Context.add_error(:bad_attr, "Unable to read attribute")
+        end,
         ast: fn [id, {type, value}] ->
           %Rez.AST.Attribute{name: id, type: type, value: value}
         end

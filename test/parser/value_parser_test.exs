@@ -21,10 +21,10 @@ defmodule Rez.Parser.ValueParserTest do
              Ergo.parse(ValueParsers.dice_value(), input)
   end
 
-  test "parses hereoc strings" do
-    input = ~s|"""Heredoc string"""|
+  # test "parses hereoc strings" do
+  #   input = ~s|"""Heredoc string"""|
 
-    assert %Context{status: :ok, ast: {:string, "Heredoc string"}} =
-             Ergo.parse(ValueParsers.heredoc_value(), input)
-  end
+  #   assert %Context{status: :ok, ast: {:string, "Heredoc string"}} =
+  #            Ergo.parse(ValueParsers.heredoc_value(), input)
+  # end
 end

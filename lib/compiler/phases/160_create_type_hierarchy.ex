@@ -21,10 +21,10 @@ defmodule Rez.Compiler.Phases.CreateTypeHierarchy do
     content
     |> NodeHelper.filter_elem(Rez.AST.Derive)
     |> Enum.reduce(
-      %{},
+      TypeHierarchy.new(),
       fn
-        %Rez.AST.Derive{tag: tag, parent: parent_tag}, types ->
-          TypeHierarchy.add(types, tag, parent_tag)
+        %Rez.AST.Derive{tag: tag, parent: parent_tag}, hierarchy ->
+          TypeHierarchy.add(hierarchy, tag, parent_tag)
       end
     )
   end
