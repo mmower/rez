@@ -3,8 +3,6 @@ defmodule Rez.Compiler.Phases.ApplySchema do
   Compiler phase that applies the schema rules to all game elements for which
   a schema has been defined.
   """
-  alias Rez.Compiler.AliasChain
-  alias Rez.AST.Node
   alias Rez.AST.NodeHelper
 
   alias Rez.Compiler.Compilation
@@ -19,8 +17,8 @@ defmodule Rez.Compiler.Phases.ApplySchema do
           schema: schema
         } = compilation
       ) do
-    File.write!("content.exs", "content = " <> inspect(content, pretty: true, limit: :infinity))
-    File.write!("id_map.exs", "id_map = " <> inspect(id_map, pretty: true, limit: :infinity))
+    # File.write!("content.exs", "content = " <> inspect(content, pretty: true, limit: :infinity))
+    # File.write!("id_map.exs", "id_map = " <> inspect(id_map, pretty: true, limit: :infinity))
 
     content = apply_schema(schema, content, id_map)
     compilation = %{compilation | content: content}
@@ -73,5 +71,6 @@ defmodule Rez.Compiler.Phases.ApplySchema do
     node
     |> NodeHelper.get_meta("alias_chain", [])
     |> Enum.map(&Map.get(schema, &1))
+    |> Enum.reject(&is_nil(&1))
   end
 end

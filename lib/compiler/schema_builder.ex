@@ -494,7 +494,7 @@ defmodule Rez.Compiler.SchemaBuilder do
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} must be one of #{inspect(values)} was #{value}"
+                 ~s|#{attr_name} must be one of #{inspect(values)} was "#{value}"|
                )}
             end
         end

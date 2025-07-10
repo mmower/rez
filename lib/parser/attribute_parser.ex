@@ -46,8 +46,13 @@ defmodule Rez.Parser.AttributeParser do
         label: "attribute",
         debug: true,
         err: fn ctx ->
-          ctx
-          |> Context.add_error(:bad_attr, "Unable to read attribute")
+          case ctx.partial_ast do
+            [attr_name, nil, nil] ->
+              Context.add_error(ctx, :bad_attr, "Unable to read attribute #{attr_name}")
+
+            _ ->
+              Context.add_error(ctx, :bad_attr, "Unable to read attribute")
+          end
         end,
         ast: fn [id, {type, value}] ->
           %Rez.AST.Attribute{name: id, type: type, value: value}
