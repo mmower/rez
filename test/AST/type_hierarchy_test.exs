@@ -19,7 +19,7 @@ defmodule Rez.AST.TypeHierarchyTest do
           %Rez.AST.Derive{tag: "healing_potion", parent: "potion"}
         ]
       }
-      |> Rez.Compiler.Phases.CreateTypeHierarchy.run_phase()
+      |> Rez.Compiler.Phases.BuildSchema.run_phase()
 
     assert TypeHierarchy.is_a(type_hierarchy, "sword", "weapon")
     assert TypeHierarchy.is_a(type_hierarchy, "sword", "item")

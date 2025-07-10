@@ -7,13 +7,15 @@ defmodule Rez.Compiler.Phases.BuildSchema do
   """
   alias Rez.Compiler.Compilation
   alias Rez.AST.NodeHelper
+  alias Rez.AST.TypeHierarchy
 
   def run_phase(%Compilation{status: :ok, content: content, progress: progress} = compilation) do
-    # We don't want Schema, Alias, or Default nodes to be part of the content list after
-    # this step hence why we split rather than just filtering
+    # We don't want Schema, Alias, Default, or Derive nodes to be part of the
+    # content list after this step hence why we split rather than just filtering
     {schema_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Schema)
     {defaults_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Defaults)
     {alias_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Alias)
+    {derive_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Derive)
 
     %{
       compilation
@@ -21,6 +23,7 @@ defmodule Rez.Compiler.Phases.BuildSchema do
         defaults: build_defaults(defaults_nodes),
         aliases: build_aliases(alias_nodes),
         schema: build_schema(schema_nodes),
+        type_hierarchy: build_type_hierarchy(derive_nodes),
         progress: ["Built schema" | progress]
     }
   end
@@ -46,5 +49,16 @@ defmodule Rez.Compiler.Phases.BuildSchema do
     Enum.reduce(alias_nodes, %{}, fn %{name: name} = alias, alias_map ->
       Map.put(alias_map, name, alias)
     end)
+  end
+
+  def build_type_hierarchy(content) do
+    Enum.reduce(
+      content,
+      TypeHierarchy.new(),
+      fn
+        %Rez.AST.Derive{tag: tag, parent: parent_tag}, hierarchy ->
+          TypeHierarchy.add(hierarchy, tag, parent_tag)
+      end
+    )
   end
 end

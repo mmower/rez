@@ -175,7 +175,9 @@
   $global: {kind: :boolean}
   $template: {allowed: false}
   $js_ctor: {kind: :string}
-  $start_events: {kind: :table}
+  $scene_stack: {kind: :list}
+  $flash_messages: {kind: :list}
+  start_events: {kind: :list, coll_kind: :list_binding}
 
   tags: {kind: :set, coll_kind: :keyword}
 
@@ -187,9 +189,6 @@
   IFID: {kind: :string, required: true}
 
   current_scene_id: {kind: :elem_ref}
-  $scene_stack: {kind: :list}
-  $flash_messages: {kind: :list}
-  start_events: {kind: :list, coll_kind: :list_binding}
 
   bindings: {kind: :list, coll_kind: :list_binding}
   blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}

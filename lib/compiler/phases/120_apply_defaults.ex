@@ -7,23 +7,22 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
 
   Where the alias also has an alias it copies from the closest matching alias.
   """
-  alias Rez.Compiler.Compilation
-
-  alias Rez.AST.Node
   alias Rez.AST.NodeHelper
 
-  def run_phase(%Compilation{status: :ok, content: content} = compilation) do
+  alias Rez.Compiler.Compilation
+
+  def run_phase(%Compilation{status: :ok, content: content, defaults: defaults} = compilation) do
     %{
       compilation
-      | content: Enum.map(content, &apply_defaults(&1, compilation))
+      | content: Enum.map(content, &apply_defaults(&1, defaults))
     }
   end
 
   def run_phase(compilation), do: compilation
 
-  def apply_defaults(%{game_element: true} = node, compilation) do
-    Enum.reduce(alias_chain(node, compilation), node, fn elem, node ->
-      merge_defaults(node, elem, compilation.defaults)
+  def apply_defaults(%{game_element: true} = node, defaults) do
+    Enum.reduce(NodeHelper.get_meta(node, "alias_chain", []), node, fn elem, node ->
+      merge_defaults(node, elem, defaults)
     end)
   end
 
@@ -31,27 +30,7 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
     node
   end
 
-  def alias_chain(node, compilation) do
-    case NodeHelper.get_attr_value(node, "$alias") do
-      nil ->
-        [Node.node_type(node)]
-
-      alias_name ->
-        build_alias_chain(compilation.aliases, alias_name) ++ [Node.node_type(node)]
-    end
-  end
-
-  def build_alias_chain(aliases, alias_name) do
-    case Map.get(aliases, alias_name) do
-      nil ->
-        []
-
-      alias_node ->
-        [alias_name | build_alias_chain(aliases, alias_node.target)]
-    end
-  end
-
-  def merge_defaults(node, target, defaults) do
+  def merge_defaults(%{} = node, target, %{} = defaults) when is_binary(target) do
     case Map.get(defaults, target) do
       nil ->
         # No default, return unchanged

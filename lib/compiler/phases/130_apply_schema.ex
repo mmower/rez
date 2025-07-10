@@ -1,8 +1,9 @@
 defmodule Rez.Compiler.Phases.ApplySchema do
   @moduledoc """
-  Compiler phase that copies the stdlib.rez to the src folder
-  @todo Something odd about this...
+  Compiler phase that applies the schema rules to all game elements for which
+  a schema has been defined.
   """
+  alias Rez.Compiler.AliasChain
   alias Rez.AST.Node
   alias Rez.AST.NodeHelper
 
@@ -24,11 +25,19 @@ defmodule Rez.Compiler.Phases.ApplySchema do
     content = apply_schema(schema, content, id_map)
     compilation = %{compilation | content: content}
 
-    Enum.reduce(content, compilation, fn %{validation: validation} = _node, compilation ->
-      Enum.reduce(validation.errors, compilation, fn error, compilation ->
-        Compilation.add_error(compilation, error)
-      end)
-    end)
+    content
+    |> Enum.reduce(
+      compilation,
+      fn
+        %{validation: %Validation{} = validation} = _node, compilation ->
+          Enum.reduce(validation.errors, compilation, fn error, compilation ->
+            Compilation.add_error(compilation, error)
+          end)
+
+        _node, compilation ->
+          compilation
+      end
+    )
   end
 
   def run_phase(%Compilation{} = compilation) do
@@ -39,14 +48,14 @@ defmodule Rez.Compiler.Phases.ApplySchema do
     Enum.map(content, &apply_schema_to_node(&1, schema_for_node(&1, schema), id_map))
   end
 
-  def apply_schema_to_node(node, nil, _) do
+  def apply_schema_to_node(node, [], _) do
     node
   end
 
-  def apply_schema_to_node(node, rules, id_map) when is_list(rules) do
+  def apply_schema_to_node(node, schema_list, id_map) when is_list(schema_list) do
     {node, validation} =
       Enum.reduce(
-        rules,
+        List.flatten(schema_list),
         {node, %Validation{}},
         fn %SchemaRule{} = rule, {node, validation} ->
           SchemaRule.execute(rule, node, validation, id_map)
@@ -61,18 +70,8 @@ defmodule Rez.Compiler.Phases.ApplySchema do
   end
 
   def schema_for_node(node, schema) do
-    node_type_schema = Map.get(schema, Node.node_type(node), [])
-
-    if Map.has_key?(node, :attributes) do
-      case NodeHelper.get_attr(node, "$alias") do
-        nil ->
-          node_type_schema
-
-        alias ->
-          Map.get(schema, alias, node_type_schema)
-      end
-    else
-      node_type_schema
-    end
+    node
+    |> NodeHelper.get_meta("alias_chain", [])
+    |> Enum.map(&Map.get(schema, &1))
   end
 end

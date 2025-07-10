@@ -109,14 +109,16 @@ class RezList extends RezBasicObject {
   }
 
   getBag(bagId) {
-    this.getAttributeValue(`bag_${bagId}`, Array.from(this.values))
-    return this.$bags[bagId] ?? this.createBag(bagId);
+    const attrName = `bag_${bagId}`;
+    if(!this.hasAttribute(attrName)) {
+      this.createBag(bagId);
+    }
+    return this.getAttributeValue(attrName);
   }
 
   setBag(bagId, bag) {
-    const bags = this.$bags;
-    bags[bagId] = bag;
-    this.$bags = bags;
+    const attrName = `bag_${bagId}`;
+    this.setAttribute(attrName, bag);
   }
 
   createBag(bagId) {

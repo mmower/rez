@@ -34,11 +34,11 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ConsolidateNodes,
     Rez.Compiler.Phases.ValidateMixins,
     Rez.Compiler.Phases.BuildSchema,
+    Rez.Compiler.Phases.MapAliases,
     Rez.Compiler.Phases.ApplyDefaults,
     Rez.Compiler.Phases.ApplySchema,
     Rez.Compiler.Phases.CompileTemplates,
     Rez.Compiler.Phases.ProcessAST,
-    Rez.Compiler.Phases.CreateTypeHierarchy,
     Rez.Compiler.Phases.InitializationOrder,
     Rez.Compiler.Phases.DumpStructures,
     # Everything in the Game needs to be ready at this point
