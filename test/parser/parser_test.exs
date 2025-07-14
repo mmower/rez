@@ -37,10 +37,10 @@ defmodule Rez.Parser.ParserTest do
     assert {^full_path, 1} = LogicalFile.resolve_line(input, line)
 
     # Tests items have been pulled in from the included file
-    items = Enum.filter(rest, &is_struct(&1, Rez.AST.Item))
+    items = Enum.filter(rest, &is_struct(&1, Rez.AST.Object))
     assert Enum.count(items) == 3
 
-    assert [%Rez.AST.Item{attributes: attributes}] =
+    assert [%Rez.AST.Object{attributes: attributes}] =
              Enum.filter(items, &(NodeHelper.get_attr_value(&1, "name") == "Orcrist"))
 
     assert %Rez.AST.Attribute{name: "$alias", type: :string, value: "sword"} =
@@ -59,7 +59,7 @@ defmodule Rez.Parser.ParserTest do
 
     assert :ok = status
 
-    content = NodeHelper.get_attr_value(ast, "$content") |> String.trim()
+    content = Map.get(ast, :script)
 
     assert ^content = "// Javascript code goes here"
   end
@@ -76,7 +76,7 @@ defmodule Rez.Parser.ParserTest do
 
     assert :ok = status
 
-    content = NodeHelper.get_attr_value(ast, "$content") |> String.trim()
+    content = Map.get(ast, :styles)
 
     assert ^content = "# CSS styles go here"
   end
@@ -231,20 +231,21 @@ defmodule Rez.Parser.ParserTest do
 
   test "parses item element" do
     input = """
-    @item blue_cloak {
+    @object blue_cloak {
       type: :equipment
       color: "blue"
       tags: #\{:wearable :cloak}
     }
     """
 
-    context = Ergo.parse(item_element(), input, data: %{source: dummy_source(input), id_map: %{}})
+    context =
+      Ergo.parse(object_element(), input, data: %{source: dummy_source(input), id_map: %{}})
 
     assert %{status: :ok} = context
 
     tags = MapSet.new(keyword: "cloak", keyword: "wearable")
 
-    assert %Rez.AST.Item{
+    assert %Rez.AST.Object{
              id: "blue_cloak",
              attributes: %{
                "type" => %Rez.AST.Attribute{

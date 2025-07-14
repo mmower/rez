@@ -11,19 +11,45 @@ date = 2025-04-29
 
 == Introduction
 
-Rez is a language, compiler, and runtime for writing choice-based interactive fiction/RPG/simulation games based on HTML, Javascript, CSS, and — optionally — graphics, audio, and movie files.
+Rez is a language, compiler, and runtime for writing choice-based HTML games and interactive fiction.
 
-Rez started as a **quick** alternative to https://twinery.org/[Twine] for an author who had become frustrated with Twine.
+An obvious comparison is to https://twinery.org/[Twine] (using a command-line compiler like Twee rather than the Twine UI). Twine describes itself as an "open source tool for telling interactive, nonlinear stories." and it makes it easy for those with almost no development experience to get started. Rez is an "open source tool for creating interactive, nonlinear, **games**".
 
-Twine describes itself as an "open source tool for telling interactive, nonlinear stories." It makes it relatively easy for those with almost no development experience to get started and create a choice-based game.
+Creating a game often implies a level of design complexity greater than the majority of CYOA type stories. Nothing about Twine prevents you from attempting to build ambitious games, but it also doesn't offer a whole lot of support. Rez, being aimed at games, includes a lot of out of the box support for things like:
 
-Rez, by contrast, is designed for making games whose complexity is not well suited to Twine and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable. Obvious alternatives to Rez are probably https://www.inklestudios.com/ink/[Ink] or https://www.choiceofgames.com/make-your-own-games/choicescript-intro/[ChoiceScript].
+NPC behaviours including behaviour trees built in
+Flexible item & inventory management
+A simple but flexible scene-based layout & templating system
+Easy to extend with other systems as required
 
-Rez's complexity sits somewhere between advanced Twine and Inform/TADS. It has a relatively simple, declarative, syntax but requires the author to be comfortable writing small amounts of Javascript to implement more complex behaviours.
+For those with ambitious plans and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable, Rez is designed to be the ideal solution. In this Rez more directly competes with the likes of https://www.inklestudios.com/ink/[Ink] and https://www.choiceofgames.com/make-your-own-games/choicescript-intro/[ChoiceScript].
 
-Rez has a standard library including support for creating NPCs, item & inventory management, scenes, and maps and a behaviour tree system to introduce AI behaivour. Rez also features a simple, yet powerful, layout & templating system.
+Rez's complexity sits somewhere between Twine and Inform/TADS. It has a relatively simple, declarative, syntax and only requires Javascript coding knowledge for implementing custom event handlers and complex behaviours.
 
-Rez is designed to be flexible enough to create a really complex and ambitious game while offering a simple & usable framework for those just getting started.
+Here's a small taste of a simple problem of dynamically generating a greeting (while keeping count of the number of times each was used).:
+....
+@card greeting {
+  greeting: _
+  count: _
+
+  content: ```
+  <p>Rez says ${card.greeting} for the ${card.count | ordinal} time!</p>
+  <p><a card="greeting">Try again</a>
+  ```
+
+  on_start: (card) => {
+    card.greeting = ["hello", "welcome", "greetings"].randomElement();
+    const countAttrName = `${card.greeting}_count`;
+    card.count = card.getAttributeValue(countAttrName, 1);
+    card.setAttribute(countAttrName, card.count+1);
+  }
+}
+....
+
+Rez emphasises a separation of logic and presentation to help complicated layouts
+stay sane and easy to work with. Rez also provides a flexible set of tools to create
+and manage the complexity inherent in ambitious games while remaining simple
+enough for those just getting started.
 
 === Outline of a Rez Game
 
@@ -213,28 +239,20 @@ There are eight attributes defined here:
 |===
 |`is_a`
 |a keyword, a symbol often used when there are a few legal values
-
 |`magic`
 |a boolean (true/false, yes/no)
-
 |`material`
 |another keyword
-
 |`owners`
 |a number
-
 |`wearer_id`
 |a reference to the ID of the actor who holds the ring
-
 |`belongs_to_id`
 |a reference to the ID of the actor the ring belongs to
-
 |`inscription`
 |a string
-
 |`wear`
 |an event script in Javascript arrow function format
-
 |`destroy`
 |an action script in Javascript standard function format
 |===
@@ -302,42 +320,30 @@ There is also a special rule for attributes that end with an `_id` suffix. Rez w
 |an unordered collection of unique values of any Rez attribute type. Note that rez Sets do not use a `,` to separate values.
 |`+#{:red :green :blue}+`
 
-|Table
-|a collection of name: value pairs where the values can be of any Rez attribute type. Note that Rez tables do not use a `,` to separate name: value pairs.
-|`+{color: :red size: :large print: "Danger"}+`
-
+|Binding List
+|an ordered list of key: value pairs where the value can be a boolean, number, string, element reference, code block, or function. Commas are optional.
+|`[min: 1, max: 2, required: false]`
 |Script (Event)
 |a Javascript function for handling an event. Expected to be in arrow format and passed the object receiving the event and the event as parameters.
 |`(game, event) => {...}`
-
 |Script (Action)
 |a Javascript function expected to be called, e.g. in an event handler. Expected to be in traditional function style and where `this` is the object in question.
 |`function() {...}`
-
 |Behaviour Tree
 |A behaviour tree is an alternative to Javascript for creating dynamic behaviours. See <<behaviours>> for more information about using behaviour trees.
 |`^[behaviour {options} children]`
-
 |Dice
 |a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
 |`^r:2d6+1`, `^r:d4`, `^r:3d6-1`, `^r:2d10`
-
 |Probability Table
 |A list of pairs wrapped in `\|` that becomes a generator property.
 |\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
-
-|Binding Path (Deprecated)
-|Used within `bindings` to specify an object via a property path.
-|``source.exits`
-
 |Dynamic Initializer
 |A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`. Has an optional `:prio` suffix where prio is an integer between 1-10. Initializer are run in order of increasing priority so ^i:1 runs before ^i:2. The default priority is 10.
 |`^i{return Math.rand_int(1,10)}`, ^i:1{return $x_list.randomElement();}
-
 |Dynamic Property
 |A Javascript function expression that is converted into an object property
 |`^p{return \`${this.given_name} ${this.family_name}\`;}`
-
 |===
 
 === Boolean

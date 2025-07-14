@@ -17,7 +17,6 @@ defmodule Rez.Compiler.ConsolidateNodesTest do
 
     assert :ok = post_compilation.status
     assert [^game, ^scene] = post_compilation.content
-    assert ["game", "s_intro"] = Map.keys(post_compilation.node_map)
   end
 
   test "Merges nodes with the same id" do
@@ -38,7 +37,5 @@ defmodule Rez.Compiler.ConsolidateNodesTest do
              %Rez.AST.Object{id: "o_1", attributes: %{:a => 1, :b => 2, :c => 4, :e => 5}},
              ^o_2
            ] = post_compilation.content
-
-    assert ["o_1", "o_2", "o_3"] = Map.keys(post_compilation.node_map)
   end
 end

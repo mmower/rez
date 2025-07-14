@@ -9,8 +9,8 @@ defmodule Rez.Parser.SchemaParser do
   import Rez.Parser.UtilityParsers
   import Rez.Parser.ValueParsers
   import Rez.Parser.IdentifierParser
-  # import Rez.Parser.AttributeParser
   import Rez.Parser.ParserTools
+  import Rez.Parser.DelimitedParser
 
   alias Rez.Compiler.SchemaBuilder
   alias Ergo.Context
@@ -63,7 +63,10 @@ defmodule Rez.Parser.SchemaParser do
   defp schema_expression() do
     sequence(
       [
-        js_identifier("attr"),
+        choice([
+          js_identifier("attr") |> transform(fn name -> {:attr, name} end),
+          pattern_matcher() |> transform(fn pattern -> {:pattern, pattern} end)
+        ]),
         ignore(colon()),
         iws(),
         commit(),
@@ -82,19 +85,72 @@ defmodule Rez.Parser.SchemaParser do
         ignore(close_brace())
       ],
       label: "schema-expression",
-      ast: fn
-        [attr_name, other_validations] ->
-          SchemaBuilder.build(attr_name, [other_validations])
+      ctx: fn ctx ->
+        case ctx do
+          %{status: :ok, ast: [{:attr, attr_name}, other_validations]} ->
+            case SchemaBuilder.build(attr_name, [other_validations]) do
+              {:ok, rules} ->
+                Context.set_ast(ctx, rules)
+              {:error, reason} ->
+                Context.add_error(ctx, :schema_build_error, reason)
+            end
 
-        [attr_name, first_validation, other_validations] ->
-          SchemaBuilder.build(attr_name, List.flatten([first_validation | other_validations]))
+          %{status: :ok, ast: [{:attr, attr_name}, first_validation, other_validations]} ->
+            case SchemaBuilder.build(attr_name, List.flatten([first_validation | other_validations])) do
+              {:ok, rules} ->
+                Context.set_ast(ctx, rules)
+              {:error, reason} ->
+                Context.add_error(ctx, :schema_build_error, reason)
+            end
+
+          %{status: :ok, ast: [{:pattern, pattern_string}, other_validations]} ->
+            case SchemaBuilder.build_pattern(pattern_string, [other_validations]) do
+              {:ok, rules} ->
+                Context.set_ast(ctx, rules)
+              {:error, reason} ->
+                Context.add_error(ctx, :schema_build_error, reason)
+            end
+
+          %{status: :ok, ast: [{:pattern, pattern_string}, first_validation, other_validations]} ->
+            case SchemaBuilder.build_pattern(pattern_string, List.flatten([first_validation | other_validations])) do
+              {:ok, rules} ->
+                Context.set_ast(ctx, rules)
+              {:error, reason} ->
+                Context.add_error(ctx, :schema_build_error, reason)
+            end
+
+          _ ->
+            ctx
+        end
+      end
+    )
+  end
+
+  defp pattern_matcher() do
+    sequence(
+      [
+        iliteral("?"),
+        text_delimited_by_parsers(forward_slash(), forward_slash())
+      ],
+      label: "pattern-matcher",
+      ctx: fn ctx ->
+        case ctx do
+          %{status: :ok, ast: [pattern_string]} ->
+            case Regex.compile(pattern_string) do
+              {:ok, _compiled_regex} ->
+                Context.set_ast(ctx, pattern_string)
+              {:error, reason} ->
+                Context.add_error(ctx, :invalid_regex, "Invalid regex pattern '#{pattern_string}': #{inspect(reason)}")
+            end
+          _ ->
+            ctx
+        end
       end
     )
   end
 
   defp schema_rule() do
     choice([
-      # schema_default(),
       schema_validate_kind(),
       schema_validate_required(),
       schema_validate_allowed(),
@@ -116,23 +172,10 @@ defmodule Rez.Parser.SchemaParser do
       schema_validate_params(),
       schema_validate_param_count(),
       # For items
+      schema_validate_is_a(),
       schema_validate_type_exists()
     ])
   end
-
-  # defp schema_default() do
-  #   sequence(
-  #     [
-  #       iliteral("default:"),
-  #       iws(),
-  #       attr_value()
-  #     ],
-  #     label: "default",
-  #     ast: fn [value] ->
-  #       {:default, value}
-  #     end
-  #   )
-  # end
 
   defp schema_validate_kind() do
     sequence(
@@ -380,6 +423,23 @@ defmodule Rez.Parser.SchemaParser do
       label: "validate-in",
       ast: fn [values] ->
         {:in, values |> Enum.map(fn {_type, value} -> value end)}
+      end
+    )
+  end
+
+  defp schema_validate_is_a() do
+    sequence(
+      [
+        iliteral("is_a:"),
+        iws(),
+        ignore(at()),
+        js_identifier("is_a/elem"),
+        ignore(forward_slash()),
+        js_identifier("is_a/attr")
+      ],
+      label: "validate-isa",
+      ast: fn [elem_name, attr_name] ->
+        {:is_a, elem_name, attr_name}
       end
     )
   end

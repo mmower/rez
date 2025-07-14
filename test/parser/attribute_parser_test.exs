@@ -9,35 +9,17 @@ defmodule Rez.Parser.AttributeParserTest do
 
   import Rez.Parser.AttributeParser, only: [attribute: 0]
 
-  import Rez.Parser.CollectionParser,
-    only: [
-      list: 0,
-      # table: 0,
-      set: 0
-    ]
+  import Rez.Parser.Collection.List, only: [list: 0]
+  import Rez.Parser.Collection.Set, only: [set: 0]
 
   import Rez.Parser.ValueParsers,
     only: [
-      # heredoc_value: 0,
       string_value: 0,
       dice_value: 0,
       value: 0
     ]
 
   import Rez.Parser.UtilityParsers, only: [iows: 0]
-
-  # test "parses heredoc value" do
-  #   input = """
-  #   \"\"\"Now is the winter of our discontent made glorious summer by this son of York.\"\"\"
-  #   """
-
-  #   assert %Context{
-  #            status: :ok,
-  #            ast:
-  #              {:string,
-  #               "Now is the winter of our discontent made glorious summer by this son of York."}
-  #          } = Ergo.parse(heredoc_value(), input)
-  # end
 
   test "parses string value" do
     input = "\"Now is the winter of our discontent made glorious summer by this son of York.\""
@@ -55,22 +37,6 @@ defmodule Rez.Parser.AttributeParserTest do
 
     assert %Context{status: :ok, ast: {:dstring, "Now is the ${season} of our ${feeling}"}} =
              Ergo.parse(string_value(), input)
-  end
-
-  test "parses heredoc attribute" do
-    input = """
-    quote: \"\"\"Now is the winter of our discontent made glorious summer by this son of York.\"\"\"
-    """
-
-    assert %Context{
-             status: :ok,
-             ast: %Rez.AST.Attribute{
-               name: "quote",
-               type: :string,
-               value:
-                 "Now is the winter of our discontent made glorious summer by this son of York."
-             }
-           } = Ergo.parse(attribute(), input)
   end
 
   test "parses lists" do
@@ -167,11 +133,8 @@ defmodule Rez.Parser.AttributeParserTest do
     assert %Context{status: :ok, ast: {:roll, {1, 6, 0, 1}}} = Ergo.parse(dice_value(), input)
   end
 
-  test "parses attribute and elem refs" do
+  test "parses elem refs" do
     input = ~s|#foo|
     assert %Context{status: :ok, ast: {:elem_ref, "foo"}} = Ergo.parse(value(), input)
-
-    input = ~s|&foo.bar|
-    assert %Context{status: :ok, ast: {:attr_ref, {"foo", "bar"}}} = Ergo.parse(value(), input)
   end
 end

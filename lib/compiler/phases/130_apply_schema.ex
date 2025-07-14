@@ -8,19 +8,23 @@ defmodule Rez.Compiler.Phases.ApplySchema do
   alias Rez.Compiler.Compilation
   alias Rez.Compiler.Validation
   alias Rez.Compiler.SchemaBuilder.SchemaRule
+  alias Rez.Compiler.SchemaBuilder.PatternRule
 
   def run_phase(
         %Compilation{
           status: :ok,
           content: content,
-          id_map: id_map,
           schema: schema
         } = compilation
       ) do
     # File.write!("content.exs", "content = " <> inspect(content, pretty: true, limit: :infinity))
-    # File.write!("id_map.exs", "id_map = " <> inspect(id_map, pretty: true, limit: :infinity))
 
-    content = apply_schema(schema, content, id_map)
+    # File.write!(
+    #   "id_map.exs",
+    #   "id_map = " <> inspect(compilation.id_map, pretty: true, limit: :infinity)
+    # )
+
+    content = apply_schema(schema, content, compilation)
     compilation = %{compilation | content: content}
 
     content
@@ -42,21 +46,25 @@ defmodule Rez.Compiler.Phases.ApplySchema do
     compilation
   end
 
-  def apply_schema(%{} = schema, content, id_map) when is_list(content) do
-    Enum.map(content, &apply_schema_to_node(&1, schema_for_node(&1, schema), id_map))
+  def apply_schema(%{} = schema, content, lookup) when is_list(content) do
+    Enum.map(content, &apply_schema_to_node(&1, schema_for_node(&1, schema), lookup))
   end
 
   def apply_schema_to_node(node, [], _) do
     node
   end
 
-  def apply_schema_to_node(node, schema_list, id_map) when is_list(schema_list) do
+  def apply_schema_to_node(node, schema_list, lookup) when is_list(schema_list) do
     {node, validation} =
       Enum.reduce(
         List.flatten(schema_list),
         {node, %Validation{}},
-        fn %SchemaRule{} = rule, {node, validation} ->
-          SchemaRule.execute(rule, node, validation, id_map)
+        fn
+          %SchemaRule{} = rule, {node, validation} ->
+            SchemaRule.execute(rule, node, validation, lookup)
+
+          %PatternRule{} = pattern_rule, {node, validation} ->
+            apply_pattern_rule_to_node(pattern_rule, node, validation, lookup)
         end
       )
 
@@ -65,6 +73,15 @@ defmodule Rez.Compiler.Phases.ApplySchema do
       | status: if(Enum.empty?(validation.errors), do: :ok, else: :error),
         validation: validation
     }
+  end
+
+  defp apply_pattern_rule_to_node(pattern_rule, node, validation, lookup) do
+    node
+    |> NodeHelper.attr_names()
+    |> Enum.filter(&PatternRule.matches?(pattern_rule, &1))
+    |> Enum.reduce({node, validation}, fn attr_name, {node_acc, validation_acc} ->
+      PatternRule.execute(pattern_rule, attr_name, node_acc, validation_acc, lookup)
+    end)
   end
 
   def schema_for_node(node, schema) do

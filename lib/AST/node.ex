@@ -5,7 +5,7 @@ defprotocol Rez.AST.Node do
 
   @doc """
   `node_type/1` should return a String containing the type of the node, e.g.
-  `"item"`.
+  `"card"`.
   """
   def node_type(node)
 

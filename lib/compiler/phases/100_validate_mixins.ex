@@ -19,9 +19,10 @@ defmodule Rez.Compiler.Phases.ValidateMixins do
           compilation
 
         missing ->
+          # missing = Enum.map_join(missing, ", ", fn {:elem_ref, mixin} -> to_string(mixin) end)
           Compilation.add_error(
             compilation,
-            "#{NodeHelper.description(content_node)} missing mixins: #{Enum.join(missing, ", ")}"
+            "#{NodeHelper.description(content_node)} missing mixins: #{missing}"
           )
       end
     end)
@@ -37,6 +38,7 @@ defmodule Rez.Compiler.Phases.ValidateMixins do
         []
 
       node_mixins when is_list(node_mixins) ->
+        node_mixins = Enum.map(node_mixins, fn {:elem_ref, mixin} -> mixin end)
         # Find any of this mixin ids that isn't in the list of mixin_ids
         node_mixins -- mixin_ids
     end

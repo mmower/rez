@@ -60,10 +60,6 @@ defmodule Rez.Parser.ElementsParser do
     block_with_id("inventory", Rez.AST.Inventory)
   end
 
-  def item_element() do
-    block_with_id("item", Rez.AST.Item)
-  end
-
   def list_element() do
     block_with_id("list", Rez.AST.List)
   end
@@ -110,7 +106,6 @@ defmodule Rez.Parser.ElementsParser do
         generator_element(),
         group_element(),
         inventory_element(),
-        item_element(),
         list_element(),
         mixin_element(),
         object_element(),

@@ -43,16 +43,27 @@ defmodule Rez.AST.TypeHierarchy do
     end
   end
 
-  def fan_out(%TypeHierarchy{is_a: is_a} = type_hierarchy, tag) do
+  @doc """
+  Given a type hierarchy and a starting type tag return a list containing all
+  possible types. For example:
+
+  @derive :weapon :item
+  @derive :sword :weapon
+  @derive :magic_word :sword
+
+  TypeHierarchy.expand(hierarchy, :magic_sword) => [:item, :weapon, :magic_sword]
+  """
+  def expand(%TypeHierarchy{is_a: is_a} = type_hierarchy, tag) do
     case Map.get(is_a, tag) do
       nil ->
-        []
+        [tag]
 
       tags ->
         tags
-        |> Enum.map(fn tag -> fan_out(type_hierarchy, tag) end)
+        |> Enum.map(fn tag -> expand(type_hierarchy, tag) end)
         |> Enum.concat(tags)
         |> List.flatten()
+        |> Enum.concat([tag])
         |> Enum.uniq()
     end
   end

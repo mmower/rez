@@ -267,30 +267,28 @@
   on_remove: {kind: :function}
 }
 
+%% In Rez v1.8 we remove @item as a basic element and make it an alias of
+%% @card so that items can be used directly in rendering the interface. You
+%% can set the current card to an item to have it render itself.
+
+@elem item = card
+
 @defaults item {
   $global: false
   $template: false
   $auto_id_idx: 0
+  type: :item
 }
 
 @schema item {
-  $global: {kind: :boolean}
-  $template: {kind: :boolean}
-  $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :elem_ref}
-  $js_ctor: {kind: :string}
-
   %% This does not preserve the item validation that determines whether the
   %% type refers to an accept: for a slot
-  type: {kind: :keyword, required: true}
+  type: {kind: :keyword, required: true, is_a: @slot/accepts}
 
-  tags: {kind: :set, coll_kind: :keyword}
-  description: {kind: [:string :source_template]}
   container: {kind: :elem_ref, ref_elem: @inventory}
   size: {kind: :number, min: 0}
   uses: {kind: :number, min: 0}
   effects: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}
-
   asset_id: {kind: :elem_ref, ref_elem: @asset}
 }
 
@@ -1503,6 +1501,14 @@
   impl: (n, dp) => {return n.roundp(dp);}
 }
 
+@filter ORDINAL_FILTER {
+  $built_in: true
+
+  %% n -> "n(st|nd|rd|th)"
+  name: "ordinal"
+  impl: (n) => {return n.ordinal();}
+}
+
 @filter STRING_CHAR_AT_FILTER {
   $built_in: true
 
@@ -1731,89 +1737,6 @@
       const sub_block = new RezBlock("block", render_source);
       sub_block.parent_block = parent_block;
       return sub_block.renderBlock();
-    }
-  }
-}
-
-@filter CARD_LINK_FILTER {
-  $built_in: true
-
-  name: "card_link"
-  impl: (card_id, title, css_class) => {
-    css_class = css_class ?? "";
-    return `<a href="javascript:void(0);" class="${css_class}" data-event="card" data-target="${card_id}">${title}</a>`;
-  }
-}
-
-@filter SCENE_SWITCH_FILTER {
-  $built_in: true
-
-  %% ${card | scene_switch: <scene_id>, <title>}
-  %% ${card | scene_switch: "new_scene_id", "Action leading to a new scene"}
-
-  name: "scene_switch"
-  impl: (card, scene_id, title) => {
-    return "<a href='javascript:void(0);' data-event='switch' data-target='" + scene_id + "'>" + title + "</a>";
-  }
-}
-
-@filter SCENE_INTERLUDE_FILTER {
-  $built_in: true
-
-  %% ${card | scene_interlude: <scene_id>, <title>}
-  %% ${card | scene_interlude: "new_scene_id", "Action leading to a scene interrupt"}
-
-  name: "scene_interlude"
-  impl: (card, scene_id, title) => {
-    return "<a href='javascript:void(0);' data-event='interlude' data-target='" + scene_id + "'>" + title + "</a>";
-  }
-}
-
-@filter SCENE_RESUME_FILTER {
-  $built_in: true
-
-  %% ${card | scene_resume: <title>}
-  %% ${card | scene_resume "Back to game"}
-
-  name: "scene_resume"
-  impl: (title) => {
-    return "<a href='javascript:void(0);' data-event='resume'>" + title + "</a>";
-  }
-}
-
-@filter ASSET_TAG_FILTER {
-  $built_in: true
-
-  %% ${asset_id | asset_tag}
-
-  name: "asset_tag"
-  impl: (asset_id) => {
-    const asset = $(asset_id);
-    if(asset == null) {
-      throw new Error(`Attempt to retrieve unknown asset |${asset_id}|!`);
-    } else if(asset.type != "asset") {
-      throw new Error(`Attempt to retrieve asset |${asset_id}| but found ${asset.type}`);
-    } else {
-      return asset.tag();
-    }
-  }
-}
-
-@filter ASSET_PATH_FILTER {
-  $built_in: true
-
-  %% ${asset_id | asset_path}
-  %% ${"image_01" | asset_path}
-
-  name: "asset_path"
-  impl: (asset_id) => {
-    const asset = $(asset_id);
-    if(asset == null) {
-      throw new Error(`Attempt to retrieve unknown asset |${asset_id}|!`);
-    } else if(asset.type != "asset") {
-      throw new Error(`Attempt to retrieve asset |${asset_id}| but found ${asset.type}`);
-    } else {
-      return asset.path;
     }
   }
 }

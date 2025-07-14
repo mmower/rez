@@ -17,35 +17,6 @@ defmodule Rez.AST.Scene do
             metadata: %{},
             message: "",
             validation: nil
-
-  # defp compile_template(%{id: id} = scene) do
-  #   NodeHelper.set_compiled_template_attr(
-  #     scene,
-  #     "$layout_template",
-  #     TemplateHelper.compile_template(
-  #       id,
-  #       NodeHelper.get_attr_value(scene, "layout"),
-  #       fn content ->
-  #         custom_css_class = NodeHelper.get_attr_value(scene, "css_class", "")
-  #         css_classes = Utils.add_css_class("rez-scene", custom_css_class)
-
-  #         ~s|<div id="scene_#{id}" data-scene="#{id}" class="#{css_classes}">#{content}</div>|
-  #       end
-  #     )
-  #   )
-  # end
-
-  # defp remove_source_template(scene) do
-  #   scene
-  #   |> NodeHelper.delete_attr("layout")
-  #   |> NodeHelper.delete_attr("layout_format")
-  # end
-
-  # def build_template(%Scene{status: :ok} = scene) do
-  #   scene
-  #   |> compile_template()
-  #   |> remove_source_template()
-  # end
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Scene do

@@ -1,10 +1,7 @@
 defmodule Rez.AST.Item do
   alias __MODULE__
 
-  alias Rez.Utils
-
   alias Rez.AST.NodeHelper
-  alias Rez.AST.TemplateHelper
   alias Rez.AST.TypeHierarchy
 
   @moduledoc """
@@ -29,23 +26,6 @@ defmodule Rez.AST.Item do
             metadata: %{},
             validation: nil
 
-  def build_template(%Item{id: item_id} = item) do
-    NodeHelper.set_compiled_template_attr(
-      item,
-      "$content_template",
-      TemplateHelper.compile_template(
-        item_id,
-        NodeHelper.get_attr_value(item, "description", ""),
-        fn html ->
-          custom_css_class = NodeHelper.get_attr_value(item, "css_class", "")
-          css_classes = Utils.add_css_class("item", custom_css_class)
-
-          ~s|<div id="item_#{item_id}" data-item="#{item_id}" class="#{css_classes}">#{html}</div>|
-        end
-      )
-    )
-  end
-
   def add_types_as_tags(%Item{} = item, %TypeHierarchy{} = type_hierarchy) do
     case NodeHelper.get_attr_value(item, "type") do
       nil ->
@@ -62,7 +42,7 @@ defmodule Rez.AST.Item do
           end
 
         expanded_types =
-          [type | TypeHierarchy.fan_out(type_hierarchy, type)]
+          [type | TypeHierarchy.expand(type_hierarchy, type)]
           |> Enum.map(fn type -> {:keyword, type} end)
 
         tags =
@@ -89,38 +69,5 @@ defimpl Rez.AST.Node, for: Rez.AST.Item do
 
   def process(item, _node_map) do
     item
-    # |> Item.build_template()
-    # |> TemplateHelper.compile_template_attributes()
   end
-
-  # def validators(item) do
-  #   [
-
-  #     node_passes?(fn node, %Game{slots: slots} = game ->
-  #       case find_attribute(game, item, "type") do
-  #         nil ->
-  #           {:error, "No 'type' attribute available for #{Node.node_type(node)}/#{node.id}"}
-
-  #         %Attribute{value: type} ->
-  #           accepted_type_specs =
-  #             slots
-  #             |> Enum.map(fn {_slot_id, slot} -> NodeHelper.get_attr_value(slot, "accepts") end)
-  #             # We need to filter the results because if a slot is missing its
-  #             # accepts: attribute we'll get a nil in the results but this will
-  #             # cause an exception before the item can finish validating and
-  #             # validation errors can be reported
-  #             |> Enum.filter(&(!is_nil(&1)))
-  #             |> Enum.uniq()
-
-  #           case Enum.any?(accepted_type_specs, fn accepted_type
-  #                                                  when is_binary(accepted_type) ->
-  #                  Game.is_a(game, type, accepted_type)
-  #                end) do
-  #             true -> :ok
-  #             false -> {:error, "No slot found accepting type #{type} for item #{item.id}"}
-  #           end
-  #       end
-  #     end)
-  #   ]
-  # end
 end

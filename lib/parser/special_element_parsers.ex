@@ -47,7 +47,7 @@ defmodule Rez.Parser.SpecialElementParsers do
         text_delimited_by_nested_parsers(open_brace(), close_brace(), trim: true)
       ],
       label: "script-block",
-      ctx: fn %Context{ast: script} = ctx ->
+      ctx: fn %Context{ast: [script]} = ctx ->
         %{
           ctx
           | ast: %Rez.AST.Script{
@@ -67,7 +67,7 @@ defmodule Rez.Parser.SpecialElementParsers do
         text_delimited_by_nested_parsers(open_brace(), close_brace(), trim: true)
       ],
       label: "styles-block",
-      ctx: fn %Context{ast: styles} = ctx ->
+      ctx: fn %Context{ast: [styles]} = ctx ->
         %{
           ctx
           | ast: %Rez.AST.Style{

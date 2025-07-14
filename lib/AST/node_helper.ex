@@ -47,6 +47,13 @@ defmodule Rez.AST.NodeHelper do
     Map.has_key?(attributes, name)
   end
 
+  def attr_names(node) do
+    case node do
+      %{attributes: attrs} when is_map(attrs) -> Map.keys(attrs)
+      _ -> []
+    end
+  end
+
   def set_attr(%{attributes: attributes} = node, %Attribute{name: name} = attr) do
     %{node | attributes: Map.put(attributes, name, attr)}
   end

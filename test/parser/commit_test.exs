@@ -16,7 +16,7 @@ defmodule Rez.Parser.CommitTest do
       @actor random_person {
       }
 
-      @item first_item {
+      @object first_item {
       )
       """)
 

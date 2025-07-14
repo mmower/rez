@@ -19,12 +19,12 @@ defmodule Rez.Compiler.BuildSchemaTest do
         [
           "game",
           [
-            SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}]),
-            SchemaBuilder.build("initial_scene_id", [
+            elem(SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}]), 1),
+            elem(SchemaBuilder.build("initial_scene_id", [
               {:kind, [:elem_ref]},
               {:ref_elem, [:scene]},
               {:required, true}
-            ])
+            ]), 1)
           ]
         ],
         {nil, 0, 0}
@@ -33,7 +33,7 @@ defmodule Rez.Compiler.BuildSchemaTest do
       SchemaParser.make_schema(
         [
           "item",
-          [SchemaBuilder.build("inv_type", [{:kind, [:keyword]}, {:default, {:keyword, "item"}}])]
+          [elem(SchemaBuilder.build("inv_type", [{:kind, [:keyword]}]), 1)]
         ],
         {nil, 0, 0}
       ),
@@ -48,28 +48,31 @@ defmodule Rez.Compiler.BuildSchemaTest do
 
     assert [
              %SchemaBuilder.SchemaRule{
-               description: "Validate that initial_scene_id is present"
+               description: "Validate that initial_scene_id is present",
+               priority: 2
              },
              %SchemaBuilder.SchemaRule{
-               description: "Validate that name is present"
+               description: "Validate that name is present",
+               priority: 2
              },
              %SchemaBuilder.SchemaRule{
-               description: "Validate initial_scene_id is of kind elem_ref"
+               description: "Validate initial_scene_id is of kind elem_ref",
+               priority: 3
              },
              %SchemaBuilder.SchemaRule{
-               description: "Validate name is of kind string"
+               description: "Validate name is of kind string",
+               priority: 3
              },
              %SchemaBuilder.SchemaRule{
-               description: "Validate initial_scene_id is a ref to an element [:scene]"
+               description: "Validate initial_scene_id is a ref to an element of type [:scene]",
+               priority: 4
              }
            ] = game_schema
 
     assert [
              %SchemaBuilder.SchemaRule{
-               description: "Set default inv_type to :item"
-             },
-             %SchemaBuilder.SchemaRule{
-               description: "Validate inv_type is of kind keyword"
+               description: "Validate inv_type is of kind keyword",
+               priority: 3
              }
            ] = item_schema
   end

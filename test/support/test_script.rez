@@ -26,6 +26,8 @@
   size: 2
 }
 
+@elem item = object
+
 @item topic_the_ring {
   type: :topic
   memory: "You remember Gandalf mentioning the ring to you, a plain
