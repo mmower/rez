@@ -265,6 +265,8 @@
 
   on_insert: {kind: :function}
   on_remove: {kind: :function}
+
+  ?/^initial_/: {kind: :list, coll_kind: :elem_ref}
 }
 
 %% In Rez v1.8 we remove @item as a basic element and make it an alias of

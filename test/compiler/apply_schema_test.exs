@@ -226,4 +226,22 @@ defmodule Rez.Compiler.ExecSchemaTest do
       )
     ])
   end
+
+  test "min_length rule returns proper tuple format" do
+    # This test ensures the min_length rule fix works correctly
+    item = %Rez.AST.Item{
+      id: "test_item",
+      attributes: %{},
+      metadata: %{"alias_chain" => ["item"]}
+    }
+
+    {:ok, rules} = SchemaBuilder.build("slots", [{:kind, [:set]}, {:required, true}, {:min_length, 1}])
+    
+    # This should not crash with a FunctionClauseError
+    result = ApplySchema.apply_schema_to_node(item, rules, %{})
+    
+    # Should have validation errors for missing required field
+    assert result.status == :error
+    assert length(result.validation.errors) > 0
+  end
 end

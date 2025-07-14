@@ -90,7 +90,7 @@ defmodule Rez.Parser.SchemaParser do
           %{status: :ok, ast: [{:attr, attr_name}, other_validations]} ->
             case SchemaBuilder.build(attr_name, [other_validations]) do
               {:ok, rules} ->
-                Context.set_ast(ctx, rules)
+                Context.set_ast(ctx, List.flatten(rules))
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
@@ -98,7 +98,7 @@ defmodule Rez.Parser.SchemaParser do
           %{status: :ok, ast: [{:attr, attr_name}, first_validation, other_validations]} ->
             case SchemaBuilder.build(attr_name, List.flatten([first_validation | other_validations])) do
               {:ok, rules} ->
-                Context.set_ast(ctx, rules)
+                Context.set_ast(ctx, List.flatten(rules))
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
@@ -106,7 +106,7 @@ defmodule Rez.Parser.SchemaParser do
           %{status: :ok, ast: [{:pattern, pattern_string}, other_validations]} ->
             case SchemaBuilder.build_pattern(pattern_string, [other_validations]) do
               {:ok, rules} ->
-                Context.set_ast(ctx, rules)
+                Context.set_ast(ctx, List.flatten(rules))
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
@@ -114,7 +114,7 @@ defmodule Rez.Parser.SchemaParser do
           %{status: :ok, ast: [{:pattern, pattern_string}, first_validation, other_validations]} ->
             case SchemaBuilder.build_pattern(pattern_string, List.flatten([first_validation | other_validations])) do
               {:ok, rules} ->
-                Context.set_ast(ctx, rules)
+                Context.set_ast(ctx, List.flatten(rules))
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end

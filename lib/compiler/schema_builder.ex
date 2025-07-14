@@ -191,11 +191,11 @@ defmodule Rez.Compiler.SchemaBuilder do
       "Validate #{attr_name} is a collection of at least #{min_length} items",
       fn node, validation, _lookup ->
         if min_length < 1 do
-          node
+          {node, validation}
         else
           case NodeHelper.get_attr_value(node, attr_name) do
             nil ->
-              node
+              {node, validation}
 
             contents ->
               if Enumerable.impl_for(contents) do
