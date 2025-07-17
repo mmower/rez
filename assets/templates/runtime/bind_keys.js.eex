@@ -3,6 +3,8 @@
 // Bind keyboard event generators
 function rez_keybinding_listener(event) {
   const targetTag = event.target.tagName.toLowerCase();
+
+  // Exclude all form input elements from global key bindings
   if(targetTag === "input" || targetTag === "textarea") {
     return;
   }

@@ -589,6 +589,51 @@ class RezInputTransformer extends RezEventTransformer {
 window.Rez.RezInputTransformer = RezInputTransformer;
 
 //-----------------------------------------------------------------------------
+// EnterKeyTransformer
+//-----------------------------------------------------------------------------
+
+class RezEnterKeyTransformer extends RezEventTransformer {
+  constructor(receiver) {
+    super("div.rez-front-face form[rez-live] input[type='text'], div.rez-front-face form[rez-live] input[type='email'], div.rez-front-face form[rez-live] input[type='password'], div.rez-front-face form[rez-live] input[type='search'], div.rez-front-face form[rez-live] input[type='url'], div.rez-front-face form[rez-live] input[type='tel'], div.rez-front-face form[rez-live] input[type='number'], div.rez-front-face form[rez-live] input:not([type])", "keydown", receiver);
+  }
+
+  addEventListener(elem) {
+    const transformer = this;
+    elem.addEventListener(this.eventName, function (evt) {
+      if(evt.key === "Enter") {
+        evt.preventDefault();
+
+        // Find the parent form
+        const form = evt.target.closest("form[rez-live]");
+
+        if(form) {
+          const formName = form.getAttribute("name");
+
+          if(!formName) {
+            console.error("RezEnterKeyTransformer: Form has no name attribute!");
+            return;
+          }
+
+          // Create a synthetic submit event with correct target and type
+          const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+          Object.defineProperty(submitEvent, 'target', { value: form, enumerable: true });
+          Object.defineProperty(submitEvent, 'type', { value: 'submit', enumerable: true });
+
+          // Use the receiver's handleBrowserEvent method (which routes to handleBrowserSubmitEvent)
+          transformer.receiver.dispatchResponse(
+            transformer.receiver.handleBrowserEvent(submitEvent)
+          );
+        } else {
+          console.error("RezEnterKeyTransformer: No rez-live form found!");
+        }
+      }
+    });
+  }
+}
+
+window.Rez.RezEnterKeyTransformer = RezEnterKeyTransformer;
+
+//-----------------------------------------------------------------------------
 // BindingTransformer
 //-----------------------------------------------------------------------------
 
@@ -810,6 +855,7 @@ class RezView {
       new RezButtonTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
+      new RezEnterKeyTransformer(this.receiver),
       new RezBindingTransformer(this.receiver)
     ];
   }
