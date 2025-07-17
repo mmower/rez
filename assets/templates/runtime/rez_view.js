@@ -622,12 +622,20 @@ class RezBindingTransformer extends RezTransformer {
     };
   }
 
-  getBoundValue(input, binding_id, binding_attr) {
-    return this.getBoundElem(input, binding_id).getAttribute(binding_attr)
+  getBoundValue(input, boundRezElementId, boundAttrName) {
+    const elem = this.getBoundElem(input, boundRezElementId);
+    if(elem === undefined) {
+      throw new Error(`Failed to find game element for attribute binding: ${boundRezElementId}`);
+    }
+    return elem.getAttribute(boundAttrName)
   }
 
-  setBoundValue(input, binding_id, binding_attr, value) {
-    this.getBoundElem(input, binding_id).setAttribute(binding_attr, value);
+  setBoundValue(input, boundRezElementId, boundAttrName, value) {
+    const elem = this.getBoundElem(input, boundRezElementId);
+    if(typeof(elem) == undefined) {
+      throw new Error(`Failed to find game element for attribute binding: ${boundRezElementId}`);
+    }
+    elem.setAttribute(boundAttrName, value);
   }
 
   transformTextInput(view, input, binding_id, binding_attr) {

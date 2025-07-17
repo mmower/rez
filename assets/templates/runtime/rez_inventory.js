@@ -13,28 +13,19 @@ class RezInventory extends RezBasicObject {
    * @description called as part of the init process this creates the inital inventory slots
    */
   elementInitializer() {
-    this.addSlots();
+    // this.addSlots();
     this.addInitialContents();
   }
 
-  addSlots() {
-    const slots = this.getAttribute("slots");
-    for (const slotId of slots) {
-      this.addSlot(slotId);
-    }
-  }
-
   addInitialContents() {
-    const initialContents = this.getAttribute("initial_contents");
-    if(typeof(initialContents) === "object") {
-      for(const [slotId, contents] of Object.entries(initialContents)) {
-        if(Array.isArray(contents)) {
-          for(const itemId of contents) {
-            this.addItemToSlot(slotId, itemId);
-          }
-        } else {
-          this.addItemToSlot(slotId, contents);
-        }
+    const slots = this.getAttributeValue("slots");
+    for(const slotId of slots) {
+      const slot = $t(slotId, "slot", true);
+      const accessor = slot.getAttributeValue("accessor");
+      const slotInitialContentsAttrName = `initial_${accessor}`;
+      const initialContents = this.getAttributeValue(slotInitialContentsAttrName);
+      for(const contentId of initialContents) {
+        this.addItemToSlot(slotId, contentId);
       }
     }
   }
@@ -43,17 +34,25 @@ class RezInventory extends RezBasicObject {
    * @function addItemHolderForSlot
    * @memberof RezInventory
    * @param {string} slot_id
-   * @description adds an empty array to hold items for the given slot.
+   * @description add a new slot to the inventory
    */
   addSlot(slotId) {
-    const items = this.getAttribute("items");
-    items[slotId] = [];
+    const slot = $t(slotId, "slot", true);
+    const attrName = `${slot.accessor}_contents`;
+    if(!this.hasAttribute(attrName)) {
+      this.setAttribute(attrName, []);
+      this.createStaticProperty(attrName);
+    }
+  }
 
-    Object.defineProperty(this, `${slotId}_contents`, {
-      get: function () {
-        return this.getAttribute("items")[slotId];
-      },
-    });
+  /**
+   * @function getFirstItemForSlot
+   * @memberof RezInventory
+   * @param {string} slot_id
+   * @returns {string} id of first item in the slot
+   */
+  getFirstItemForSlot(slotId) {
+    return this.getItemsForSlot(slotId)[0];
   }
 
   /**
@@ -63,8 +62,8 @@ class RezInventory extends RezBasicObject {
    * @returns {array} contents of the specified slot
    */
   getItemsForSlot(slotId) {
-    this.validateSlot(slotId);
-    return this.getAttribute("items")[slotId];
+    const slot = this.getSlot(slotId);
+    return this.getAttribute(`${slot.accessor}_contents`);
   }
 
   /**
@@ -78,25 +77,18 @@ class RezInventory extends RezBasicObject {
   }
 
   /**
-   * @function getItemForSlot
+   * @function getSlot
    * @memberof RezInventory
    * @param {string} slot_id
-   * @returns {string} id of first item in the slot
+   * @returns {object} reference to the slot with the given id or throws an Error
+   * if the slot is either not defined, or not part of this inventory.
    */
-  getItemForSlot(slotId) {
-    return this.getItemsForSlot(slotId)[0];
-  }
-
-  /**
-   * @function validateSlot
-   * @memberof RezInventory
-   * @param {string} slot_id
-   * @returns {boolean} true if the given slot_id is part of this inventory
-   */
-  validateSlot(slotId) {
+  getSlot(slotId) {
     if(!this.getAttribute("slots").has(slotId)) {
       throw new Error(`Inventory |${this.id}| does not have slot |${slotId}|!`);
-    };
+    } else {
+      return $t(slotId, "slot", true);
+    }
   }
 
   /**
@@ -106,9 +98,9 @@ class RezInventory extends RezBasicObject {
    * @param {array} items array of item id's
    */
   setSlot(slotId, itemIds) {
-    this.validateSlot(slotId);
-    const items = this.getAttribute("items");
-    items[slotId] = itemIds;
+    const slot = this.getSlot(slotId);
+    const attrName = `${slot.accessor}_contents`;
+    this.setAttribute(attrName, itemIds);
   }
 
   /**
@@ -222,9 +214,7 @@ class RezInventory extends RezBasicObject {
    * @returns {boolean} true if the given item has a type that this slot accepts
    */
   slotAcceptsItem(slotId, itemId) {
-    this.validateSlot(slotId);
-
-    const slot = $(slotId);
+    const slot = this.getSlot(slotid);
     const accepts = slot.getAttributeValue("accepts");
     const item = $(itemId);
     const type = item.getAttributeValue("type");
@@ -274,7 +264,7 @@ class RezInventory extends RezBasicObject {
     const decision = new RezDecision("canRemoveItemFromSlot");
     decision.default_yes();
 
-    const item = $(item);
+    const item = $(item_id);
     decision.setData("inventory_id", this.id);
     decision.setData("slot_id", slotId);
     item.canBeRemoved(item_decision);
@@ -300,10 +290,10 @@ class RezInventory extends RezBasicObject {
   addItemToSlot(slotId, itemId) {
     const item = $(itemId);
 
-    // Anything can be added to an inventory provided it has an `inv_type`
+    // Anything can be added to an inventory provided it has an `type`
     // attribute to work with the slot accepts
-    if(!item.hasAttribute("inv_type")) {
-      throw new Error(`Attempt to add ${itemId} to inventory, which does not define an 'inv_type'!`);
+    if(!item.hasAttribute("type")) {
+      throw new Error(`Attempt to add ${itemId} to inventory, which does not define a 'type'!`);
     }
 
     this.appendItemToSlot(slotId, itemId);
@@ -329,7 +319,7 @@ class RezInventory extends RezBasicObject {
     // apply_effects is defined in Rez @slot
     if(this.owner) {
       if(this.apply_effects) {
-        const slot = $(slotId);
+        const slot = $t(slotId, "slot", true);
         return slot.apply_effects;
       } else {
         return false;

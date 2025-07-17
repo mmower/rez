@@ -176,7 +176,7 @@
   class_name: ^v{this.class == "m" ? "Mage" : this.class == "r" ? "Rogue" : "Fighter"}
 
   weapon: ^p{
-    const weapon_id = $player.container.getItemForSlot("weapon_slot");
+    const weapon_id = $player.container.getFirstItemForSlot("weapon_slot");
     return $(weapon_id);
   }
 

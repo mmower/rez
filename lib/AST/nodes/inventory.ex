@@ -30,7 +30,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     # Add attributes corresponding to the slots
     slots = NodeHelper.get_attr_value(inventory, "slots")
 
-    Enum.reduce(slots, inventory, fn slot_id, inventory ->
+    Enum.reduce(slots, inventory, fn {:elem_ref, slot_id}, inventory ->
       slot = Map.get(id_map, slot_id)
       accessor = NodeHelper.get_attr_value(slot, "accessor")
 
