@@ -5,10 +5,25 @@ draft = false
 date = 2025-06-18
 +++
 = The Rez Standard Library
+:toc:
+:toclevels: 3
 
-== Boolean
+== Introduction
 
-=== Boolean.rand()
+The Rez Standard Library automatically extends JavaScript's built-in types with additional methods and provides template filters, components, and built-in game elements. This documentation covers all the extensions and utilities available in every Rez game.
+
+The standard library includes:
+
+- **JavaScript Type Extensions**: Additional methods for Boolean, Object, Array, String, Set, Number, and Math
+- **Template Filters**: Functions for transforming values in template expressions
+- **Components**: Reusable template elements for common UI patterns
+- **Built-in Game Elements**: Pre-defined scenes and cards for common functionality
+
+== JavaScript Type Extensions
+
+=== Boolean
+
+==== Boolean.rand()
 
 Returns `true`|`false` with an equal probability.
 
@@ -20,9 +35,9 @@ Returns `true`|`false` with an equal probability.
 > false, false]
 ....
 
-== Object
+=== Object
 
-=== copy()
+==== copy()
 
 Returns a deep-copy of the given object.
 
@@ -34,7 +49,7 @@ Returns a deep-copy of the given object.
 > '0,1'
 ....
 
-=== objMap(f)
+==== objMap(f)
 where `f(v, k)``
 
 Returns a new object containing the same keys as this object where the values are the values of this object passed through `f`.
@@ -46,18 +61,10 @@ Returns a new object containing the same keys as this object where the values ar
 > {a: 2, b: 2, c: 3, d: 4, e: 10}
 ....
 
-=== dqWrap()
 
-Returns a string representation of this object wrapped in double quotes.
+=== Array
 
-....
-> false.dqWrap()
-> '"false"'
-....
-
-== Array
-
-=== Array.equals(l1, l2)
+==== Array.equals(l1, l2)
 
 Returns true if `l1` and `l2` are both arrays of the same length and have the same value at each index.
 
@@ -68,7 +75,7 @@ Returns true if `l1` and `l2` are both arrays of the same length and have the sa
 > false
 ....
 
-=== Array.nOf(number, value)
+==== Array.nOf(number, value)
 
 Returns a new array containing `number` elements of `value`. If `value` is a function the array will contain the results of calling the function.
 
@@ -81,7 +88,7 @@ Returns a new array containing `number` elements of `value`. If `value` is a fun
 > 0.875849725396377, 0.7146237562228359, 0.3918156859145241, 0.503402748321524, 0.7664109620436144]
 ....
 
-=== Array.zip(arr1, arr2)
+==== Array.zip(arr1, arr2)
 
 The zip method creates pairs of elements from two arrays based on their position. The resulting array will have the same length as the first array (array1). If the second array is shorter, undefined values will be paired with the remaining elements from the first array. If the second array is longer, the extra elements are ignored.
 
@@ -92,7 +99,7 @@ The zip method creates pairs of elements from two arrays based on their position
 > [['Alice', 25], ['Bob', 30], ['Charlie', 35]]
 ....
 
-=== max()
+==== max()
 
 Returns the maximum value of the elements of this array.
 
@@ -101,7 +108,7 @@ Returns the maximum value of the elements of this array.
 > 88
 ....
 
-=== min()
+==== min()
 
 Returns the minimum value of the elements of this array.
 
@@ -110,7 +117,7 @@ Returns the minimum value of the elements of this array.
 > 16
 ....
 
-=== englishList()
+==== englishList()
 
 Returns a string formatted list of the array that makes sense for 1, 2, or many items.
 
@@ -127,7 +134,7 @@ Returns a string formatted list of the array that makes sense for 1, 2, or many 
 > 'a, b, c, d, and e'
 ....
 
-=== remove(elem)
+==== remove(elem)
 
 Modifies this array to remove the specified element.
 
@@ -136,7 +143,7 @@ Modifies this array to remove the specified element.
 > ['a', 'b', 'd', 'e']
 ....
 
-=== fyShuffle()
+==== fyShuffle()
 
 Randomizes the elements of this array using the Fisher-Yates Shuffle.
 
@@ -145,7 +152,7 @@ Randomizes the elements of this array using the Fisher-Yates Shuffle.
 > ['b', 'e', 'a', 'g', 'f', 'c', 'd']
 ....
 
-=== randomElement()
+==== randomElement()
 
 Returns a randomly selected element of this array.
 
@@ -154,7 +161,7 @@ Returns a randomly selected element of this array.
 > 'c'
 ....
 
-=== randomIndex()
+==== randomIndex()
 
 Returns the index position of a randomly selected element of this array.
 
@@ -163,7 +170,7 @@ Returns the index position of a randomly selected element of this array.
 > 0
 ....
 
-=== frequencies()
+==== frequencies()
 
 Returns a map containing the elements of this array as keys and the number of times that element
 appears in the array as value.
@@ -178,7 +185,7 @@ appears in the array as value.
 >  "l" => 1, "a" => 1, "z" => 1, "y" => 1, "g" => 1}
 ....
 
-=== sum()
+==== sum()
 
 Returns the sum of the numeric elements of this array.
 
@@ -187,7 +194,7 @@ Returns the sum of the numeric elements of this array.
 > 15
 ....
 
-=== startsWithSequence(lst)
+==== startsWithSequence(lst)
 
 Returns true if this array starts with the elements contained in the `lst` parameter.
 
@@ -198,7 +205,7 @@ Returns true if this array starts with the elements contained in the `lst` param
 > false
 ....
 
-=== take(n)
+==== take(n)
 
 Removes the first `n` elements of this array, returning them in a new array.
 
@@ -211,7 +218,7 @@ Removes the first `n` elements of this array, returning them in a new array.
 > [1, 2]
 ....
 
-=== refs()
+==== refs()
 
 Given an array of Rez element ids, return a new array containing the objects with those ids.
 
@@ -220,7 +227,7 @@ Given an array of Rez element ids, return a new array containing the objects wit
 > [RezGame, RezActor]
 ....
 
-=== ids()
+==== ids()
 
 Given an array of Rez element objects, return a new array containing the ids of those elements.
 
@@ -229,7 +236,7 @@ Given an array of Rez element objects, return a new array containing the ids of 
 > ['game', 'player']
 ....
 
-=== sample(p)
+==== sample(p)
 
 Returns an array containing a sample of the elements of this array. The size of the sample will be
 approximately `p%` of the size of this array.
@@ -243,7 +250,7 @@ approximately `p%` of the size of this array.
 > ['v', 'i', 'b', 'g', 'c', 'f', 'n']
 ....
 
-=== splitWith(pred)
+==== splitWith(pred)
 
 Returns a new array containing two sub-arrays formed of the elements of this array. The first sub-array
 contains all the elements for which `pred(e)` returns `true` and the second sub-array those which
@@ -254,27 +261,139 @@ return `false`.
 > [[2,4,6,8,8],[1,3,5,5,7]]
 ....
 
-== String
+==== to_pairs()
 
-=== beginsWithConsonant()
+Converts this array into pairs by grouping every two consecutive elements.
 
-=== beginsWithVowel()
+....
+> [1, 2, 3, 4, 5, 6].to_pairs()
+> [[1, 2], [3, 4], [5, 6]]
+> ["name", "Alice", "age", 25, "city", "London"].to_pairs()
+> [["name", "Alice"], ["age", 25], ["city", "London"]]
+....
 
-=== capitalize()
+=== String
 
-=== possessive()
+==== beginsWithConsonant()
 
-=== camelize()
+Returns `true` if this string begins with a consonant letter.
 
-=== kebabToSnakeCase()
+....
+> "fox".beginsWithConsonant()
+> true
+> "apple".beginsWithConsonant()
+> false
+....
 
-=== toSnakeCase()
+==== beginsWithVowel()
 
-=== parseTime()
+Returns `true` if this string begins with a vowel letter.
 
-=== randomId()
+....
+> "apple".beginsWithVowel()
+> true
+> "fox".beginsWithVowel()
+> false
+....
 
-=== wrapWith(prefix, suffix)
+==== toTitleCase()
+
+Returns a new string with the first letter of each word capitalized.
+
+....
+> "the quick brown fox".toTitleCase()
+> 'The Quick Brown Fox'
+....
+
+==== possessive()
+
+Returns a possessive form of this string by adding 's or just ' as appropriate.
+
+....
+> "fox".possessive()
+> "fox's"
+> "foxes".possessive()
+> "foxes'"
+....
+
+==== toCamelCase()
+
+Converts this string from snake_case or kebab-case to camelCase.
+
+....
+> "snake_case_string".toCamelCase()
+> 'snakeCaseString'
+> "kebab-case-string".toCamelCase()
+> 'kebabCaseString'
+....
+
+==== toPascalCase()
+
+Converts this string from snake_case or kebab-case to PascalCase (like camelCase but with first letter capitalized).
+
+....
+> "snake_case_string".toPascalCase()
+> 'SnakeCaseString'
+> "kebab-case-string".toPascalCase()
+> 'KebabCaseString'
+....
+
+==== toKebabCase()
+
+Converts this string from any case (camelCase, PascalCase, snake_case) to kebab-case.
+
+....
+> "camelCaseString".toKebabCase()
+> 'camel-case-string'
+> "PascalCaseString".toKebabCase()
+> 'pascal-case-string'
+> "snake_case_string".toKebabCase()
+> 'snake-case-string'
+....
+
+==== toSnakeCase()
+
+Converts this string from camelCase or PascalCase to snake_case.
+
+....
+> "camelCaseString".toSnakeCase()
+> 'camel_case_string'
+> "PascalCaseString".toSnakeCase()
+> 'pascal_case_string'
+....
+
+==== parseTime()
+
+Parses a time string and returns an array of [hour, minutes].
+
+....
+> "10:30".parseTime()
+> [10, 30]
+> "2:15p".parseTime()
+> [2, 15]
+....
+
+==== String.randomId()
+
+Static method that generates a random hexadecimal ID string.
+
+....
+> String.randomId()
+> 'a3f7b2c1'
+....
+
+==== dqWrap()
+
+Returns this string wrapped in double quotes.
+
+....
+> "hello".dqWrap()
+> '"hello"'
+....
+
+Note: This method was listed under Object but applies to strings.
+
+==== wrapWith(prefix, suffix)
 
 Returns a string formed of the current strip wrapped with a prefix and a suffix.
 
@@ -285,7 +404,7 @@ Returns a string formed of the current strip wrapped with a prefix and a suffix.
 > '[bar]'
 ....
 
-=== indefiniteArticle()
+==== indefiniteArticle()
 
 Returns the appropriate indefinite article ("a" or "an") for the this string.
 
@@ -296,9 +415,9 @@ Returns the appropriate indefinite article ("a" or "an") for the this string.
 > 'an'
 ....
 
-== Set
+=== Set
 
-=== union(otherSet)
+==== union(otherSet)
 
 Returns a new `Set` containing the elements of this set and the `otherSet`.
 
@@ -309,7 +428,7 @@ Returns a new `Set` containing the elements of this set and the `otherSet`.
 > Set("a", "b", "c", "d", "e", "f")
 ....
 
-=== intersection(otherSet)
+==== intersection(otherSet)
 
 Returns a new `Set` containing the elements of this set that also exist in the `otherSet`.
 
@@ -320,7 +439,7 @@ Returns a new `Set` containing the elements of this set that also exist in the `
 > Set("c", "d")
 ....
 
-=== difference(otherSet)
+==== difference(otherSet)
 
 Returns a new `Set` containing the elements of this set that do not exist in the `otherSet`.
 
@@ -333,7 +452,7 @@ Returns a new `Set` containing the elements of this set that do not exist in the
 > Set("e", "f")
 ....
 
-=== equals(otherSet)
+==== equals(otherSet)
 
 Return `true` iff this `Set` has the same elements as the `otherSet`.
 
@@ -347,7 +466,7 @@ Return `true` iff this `Set` has the same elements as the `otherSet`.
 > true
 ....
 
-=== hasSubset(otherSet)
+==== hasSubset(otherSet)
 
 Returns `true` iff this `Set` has every element of the `otherSet`.
 
@@ -361,36 +480,538 @@ Returns `true` iff this `Set` has every element of the `otherSet`.
 > false
 ....
 
-== Number
+=== Number
 
-=== ordinal()
+==== ordinal()
 
-=== roundp(prec)
+Returns this number as an ordinal string (1st, 2nd, 3rd, 4th, etc.).
 
-=== cl_avg(rounds)
+....
+> (1).ordinal()
+> '1st'
+> (2).ordinal()
+> '2nd'
+> (3).ordinal()
+> '3rd'
+> (4).ordinal()
+> '4th'
+> (21).ordinal()
+> '21st'
+....
 
-=== r2nh()
-=== dist_round()
-=== round_to_nearest(n)
-=== times(f)
+==== roundp(precision)
 
-== Math
+Rounds this number to the specified number of decimal places.
 
-=== Math.perc(p)
+....
+> (3.14159).roundp(2)
+> 3.14
+> (123.456).roundp(1)
+> 123.5
+....
+
+==== cl_avg(rounds)
+
+Returns a central limit approximation by averaging `rounds` random selections (defaults to 2). Creates a more bell-curve distribution than straight random.
+
+....
+> (6).cl_avg(2)  // Roll 2 six-sided dice and average
+> 3
+> (6).cl_avg(3)  // Roll 3 six-sided dice and average  
+> 4
+....
+
+==== r2nh()
+
+Rounds this number to the nearest half (0.5).
+
+....
+> (3.3).r2nh()
+> 3.5
+> (3.7).r2nh()
+> 4.0
+> (3.25).r2nh()
+> 3.0
+....
+
+==== dist_round()
+
+Randomly rounds this number up or down to avoid bias in repeated rounding operations.
+
+....
+> (3.5).dist_round()
+> 3  // or 4, randomly chosen
+....
+
+==== round_to_nearest(n)
+
+Rounds this number to the nearest multiple of `n`.
+
+....
+> (17).round_to_nearest(5)
+> 15
+> (18).round_to_nearest(5)
+> 20
+....
+
+==== times(f)
+
+Executes function `f` this many times, passing the current iteration index (starting from 0).
+
+....
+> (3).times((i) => console.log(`Iteration ${i}`))
+> Iteration 0
+> Iteration 1
+> Iteration 2
+....
 
 
+=== Math
 
-=== Math.div(n, d)
-=== Math.div_mod(n, d)
-=== Math.range(from, to, step)
-=== Math.dist_round(v)
-=== Math.rand_int(lim)
-=== Math.rand_int_between(min, max)
-=== Math.rand_f_between(min, max)
-=== Math.cl_rand_f_between(min, max, rounds)
-=== Math.cl_rand_int(lim)
-=== Math.cl_rand_int_between(lo, hi)
+==== Math.perc(p)
 
-=== Math.clamped_sub(value, sub, min)
-=== Math.clamped_add(value, add, max)
-=== Math.alter(value, change, min, max)
+Returns `true` if a random number is less than or equal to the percentage `p` (0-100).
+
+....
+> Math.perc(75)  // 75% chance of returning true
+> true
+> Math.perc(25)  // 25% chance of returning true
+> false
+....
+
+==== Math.div(n, d)
+
+Returns the integer division of `n` divided by `d` (equivalent to `Math.floor(n/d)`).
+
+....
+> Math.div(17, 5)
+> 3
+> Math.div(20, 6)
+> 3
+....
+
+==== Math.div_mod(n, d)
+
+Returns both the integer division and remainder as an array `[div, mod]`.
+
+....
+> Math.div_mod(17, 5)
+> [3, 2]
+> Math.div_mod(20, 6)
+> [3, 2]
+....
+
+==== Math.range(from, to, step)
+
+Creates an array of numbers from `from` to `to` (inclusive) with optional `step` (defaults to 1).
+
+....
+> Math.range(1, 5)
+> [1, 2, 3, 4, 5]
+> Math.range(0, 10, 2)
+> [0, 2, 4, 6, 8, 10]
+> Math.range(5, 1)  // Arguments are swapped if from > to
+> [1, 2, 3, 4, 5]
+....
+
+==== Math.dist_round(v)
+
+Randomly rounds `v` up or down to avoid bias. Same as `Number.dist_round()` but as a static method.
+
+....
+> Math.dist_round(3.5)
+> 3  // or 4, randomly chosen
+....
+
+==== Math.rand_int(lim)
+
+Returns a random integer from 0 to `lim-1`.
+
+....
+> Math.rand_int(6)  // Simulates a die roll (0-5)
+> 3
+> Math.rand_int(10)
+> 7
+....
+
+==== Math.rand_int_between(min, max)
+
+Returns a random integer between `min` and `max` (inclusive).
+
+....
+> Math.rand_int_between(1, 6)  // Simulates a die roll (1-6)
+> 4
+> Math.rand_int_between(10, 20)
+> 15
+....
+
+==== Math.rand_f_between(min, max)
+
+Returns a random floating-point number between `min` and `max`.
+
+....
+> Math.rand_f_between(1.0, 2.0)
+> 1.7384521
+> Math.rand_f_between(0, 100)
+> 42.8391
+....
+
+==== Math.cl_rand_f_between(min, max, rounds)
+
+Returns a random floating-point number between `min` and `max` using central limit approximation (averages `rounds` random values, defaults to 2).
+
+....
+> Math.cl_rand_f_between(0, 10, 2)
+> 5.2  // More likely to be near the center
+....
+
+==== Math.cl_rand_int(lim)
+
+Returns a random integer from 0 to `lim-1` using central limit approximation (averages 2 random values).
+
+....
+> Math.cl_rand_int(6)
+> 2  // More likely to be 2 or 3 than 0 or 5
+....
+
+==== Math.cl_rand_int_between(lo, hi)
+
+Returns a random integer between `lo` and `hi` using central limit approximation.
+
+....
+> Math.cl_rand_int_between(1, 6)
+> 3  // More likely to be 3 or 4 than 1 or 6
+....
+
+==== Math.clamped_sub(value, sub, min)
+
+Subtracts `sub` from `value` but doesn't go below `min`.
+
+....
+> Math.clamped_sub(10, 3, 5)
+> 7
+> Math.clamped_sub(10, 8, 5)
+> 5  // Would be 2, but clamped to minimum of 5
+....
+
+==== Math.clamped_add(value, add, max)
+
+Adds `add` to `value` but doesn't go above `max`.
+
+....
+> Math.clamped_add(10, 3, 15)
+> 13
+> Math.clamped_add(10, 8, 15)
+> 15  // Would be 18, but clamped to maximum of 15
+....
+
+==== Math.alter(value, change, min, max)
+
+Applies `change` to `value` but keeps the result between `min` and `max`.
+
+....
+> Math.alter(10, 5, 0, 20)
+> 15
+> Math.alter(10, -15, 0, 20)
+> 0   // Would be -5, but clamped to minimum of 0
+> Math.alter(10, 15, 0, 20)
+> 20  // Would be 25, but clamped to maximum of 20
+....
+
+== Template Filters
+
+Template filters are used in template expressions to transform values. They use the pipe syntax: `${value | filter_name}` or `${value | filter_name: argument}`.
+
+=== Comparison Filters
+
+==== eq
+
+Tests if two values are equal.
+
+....
+${player.level | eq: 5}  // true if player.level == 5
+....
+
+==== ne
+
+Tests if two values are not equal.
+
+....
+${player.health | ne: 0}  // true if player.health != 0
+....
+
+==== gt, gte, lt, lte
+
+Numeric comparison filters (greater than, greater than or equal, less than, less than or equal).
+
+....
+${player.score | gt: 1000}    // true if score > 1000
+${player.level | gte: 10}     // true if level >= 10
+${enemy.health | lt: 50}      // true if health < 50
+${player.mana | lte: 25}      // true if mana <= 25
+....
+
+=== Selection Filters
+
+==== bsel
+
+Boolean selection - returns the first array element if true, second if false.
+
+....
+${player.alive | bsel: ["alive", "dead"]}
+// Returns "alive" if player.alive is true, "dead" if false
+....
+
+==== sel
+
+Index selection - returns the array element at the given index.
+
+....
+${difficulty_level | sel: ["Easy", "Medium", "Hard", "Expert"]}
+// Returns the difficulty name based on difficulty_level index
+....
+
+=== Arithmetic Filters
+
+==== add, sub, mul, div, mod
+
+Basic arithmetic operations.
+
+....
+${player.score | add: 100}     // Add 100 to score
+${enemy.health | sub: damage}  // Subtract damage from health
+${base_cost | mul: 2}          // Multiply cost by 2
+${total_points | div: 4}       // Divide points by 4
+${turn_number | mod: 10}       // Get remainder when divided by 10
+....
+
+==== abs, neg, inc, dec
+
+Other numeric operations.
+
+....
+${velocity | abs}              // Absolute value
+${profit | neg}                // Negate value
+${counter | inc}               // Add 1
+${lives | dec}                 // Subtract 1
+....
+
+==== round
+
+Round to specified decimal places.
+
+....
+${pi | round: 2}               // 3.14
+${percentage | round: 0}       // Round to whole number
+....
+
+==== ordinal
+
+Convert number to ordinal string.
+
+....
+${place | ordinal}             // "1st", "2nd", "3rd", etc.
+....
+
+=== String Filters
+
+==== string
+
+Convert any value to a string.
+
+....
+${player.level | string}       // Convert number to string
+....
+
+==== append, prepend
+
+Add text to beginning or end of string.
+
+....
+${player.name | append: " the Great"}     // "Arthur the Great"
+${item.name | prepend: "Golden "}         // "Golden Sword"
+....
+
+==== trim, capitalize, upcase, downcase
+
+Text formatting.
+
+....
+${input | trim}                // Remove whitespace
+${title | capitalize}          // Capitalize Each Word
+${shout | upcase}              // CONVERT TO UPPERCASE
+${whisper | downcase}          // convert to lowercase
+....
+
+==== to_camel_case
+
+Convert to camelCase.
+
+....
+${attribute_name | to_camel_case}   // "attributeName"
+....
+
+==== to_title_case
+
+Convert to Title Case (capitalize each word).
+
+....
+${title | to_title_case}       // "The Quick Brown Fox"
+....
+
+==== pluralize
+
+Convert to plural form.
+
+....
+${item_type | pluralize}       // "sword" -> "swords"
+....
+
+==== possessive
+
+Add possessive form.
+
+....
+${player.name | possessive}    // "Arthur's"
+....
+
+==== split
+
+Split string into array.
+
+....
+${tags | split: ","}           // Split comma-separated values
+....
+
+==== starts_with, ends_with, contains
+
+String testing.
+
+....
+${filename | starts_with: "temp"}    // true/false
+${filename | ends_with: ".txt"}      // true/false
+${text | contains: "magic"}          // true/false
+....
+
+==== quoted, dquoted
+
+Wrap in quotes.
+
+....
+${message | quoted}            // 'Hello World'
+${message | dquoted}           // "Hello World"
+....
+
+==== i_article
+
+Add indefinite article.
+
+....
+${item.name | i_article}       // "an apple", "a sword"
+....
+
+==== char_at
+
+Get character at index.
+
+....
+${word | char_at: 0}           // First character
+....
+
+=== Array Filters
+
+==== length
+
+Get array length.
+
+....
+${items | length}              // Number of items
+....
+
+==== take
+
+Take first n elements.
+
+....
+${high_scores | take: 10}      // Top 10 scores
+....
+
+=== Rendering Filters
+
+==== render
+
+Render a template attribute.
+
+....
+${card | render: "description": $block}
+// Renders the description attribute of card as a template
+....
+
+==== event
+
+Create an event link (deprecated - use link syntax instead).
+
+....
+${"Click Here" | event: "button_clicked"}
+// Creates: <a href='javascript:void(0);' class='event' data-event='button_clicked'>Click Here</a>
+....
+
+==== dyn_link
+
+Create a dynamic link (deprecated - use components instead).
+
+....
+${card | dyn_link: "can_use"}
+// Creates a link based on the card's can_use handler
+....
+
+== Components
+
+Components are reusable template elements that can be used in card content and scene layouts.
+
+=== embed_card
+
+Embeds one card within another.
+
+....
+<.embed_card card="sidebar_info">
+</.embed_card>
+// or
+<.embed_card card="#sidebar_info">
+</.embed_card>
+....
+
+The component accepts:
+- `card`: Either a string ID or a card object reference
+
+=== img
+
+Displays an image asset with proper sizing and attributes.
+
+....
+<.img name="player_portrait" width="100" height="150" class="character-image">
+</.img>
+....
+
+The component accepts:
+- `name`: Asset ID (required)
+- `width`, `height`: Dimensions (optional, uses asset dimensions if not provided)
+- Any other HTML attributes (class, alt, etc.)
+
+== Built-in Scenes and Cards
+
+=== $load_game Scene
+
+A built-in scene that provides game loading functionality.
+
+- **Scene ID**: `$load_game`
+- **Initial Card**: `$load_game_form`
+- **Purpose**: Handles file-based game loading
+
+=== $load_game_form Card
+
+A built-in card that provides a file upload form for loading saved games.
+
+- **Card ID**: `$load_game_form`
+- **Content**: File input form with submit button
+- **Event Handler**: `on_load_form` - processes the uploaded save file

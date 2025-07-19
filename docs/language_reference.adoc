@@ -165,7 +165,9 @@ Here is an example of a Rez element that includes a dynamic attribute:
   material: gold
   owners: 5
   belongs_to: #sauron
-  inscription: "Please return to Mordor",
+  content: ```
+  <p>The inscription reads <strong>If found, please return to Mordor.</strong></p>
+  ```
   on_wear: (actor) => {
     if(actor.id == "sauron") {
       actor.game.sauron_victory = true;
@@ -381,12 +383,6 @@ A list of whitespace separated values that can include any of the other attribut
 === Set
 
 A set of whitespace separated values that can include any of the other attribute types.
-
-=== Table
-
-A series of `key:` `value` pairs where the key should be a Javascript id and the value can be any of the other attribute types including another table.
-
-It is worth noting that the use of deeply nested tables is not advised, rather prefer creating separate elements and use composition.
 
 === Event Script
 
@@ -1031,6 +1027,33 @@ The first time the `next_move` card is added to a scene it displays the options 
 
 When the card is re-rendered the `flipped_content:` template is rendered which uses the block properties `action` and `hit` to decide what should get rendered.
 
+=== Creating Your Own Elements
+
+Rez has a number of built-in elements but you can easily create your own using the `@elem` directive.
+....
+@elem npc = actor
+....
+
+This declaration allows you to create new actors using `@npc`, e.g.
+....
+@npc philip_marlowe {
+}
+....
+
+Which, on its own, wouldn't be very interesting. However we can also use the `@defaults` directive to customise new `@npc` elements.
+....
+@defaults npc {
+  %% define custom NPC attributes here
+}
+....
+
+Also an alias can specify any number of `@mixin`s to include.
+....
+@elem npc = actor<speaks>
+....
+
+Automatically includes the `speaks` mixin into any `@npc` element.
+
 === HTML Structure
 
 When the game layout gets rendered its content is embedded inside a built-in template:
@@ -1318,10 +1341,10 @@ For more complex interactions use the `rez-live` attribute to generate events.
 When the user changes the value of the field this will generate an `on_input` event on the corresponding `RezCard` object, passing the generated event as a parameter.
 
 ....
-<form rez-live>...</form>
+<form name="my_form" rez-live>...</form>
 ....
 
-Will generate an `on_submit` event to the form. The handlers in either case should return as any other event handler. In the case of submit it is probably to load a new card or scene.
+Will generate an `on_my_form` event to the form. The handlers in either case should return as any other event handler. In the case of submit it is probably to load a new card or scene.
 
 == Assets
 

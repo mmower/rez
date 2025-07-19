@@ -932,8 +932,8 @@
 @patch {
   $built_in: true
   patch: "String"
-  method: "capitalize"
-  impl: function(s) {
+  method: "toTitleCase"
+  impl: function() {
     return this.replace(/(^|\s)\S/g, l => l.toUpperCase());
   }
 }
@@ -963,7 +963,7 @@
 @patch {
   $built_in: true
   patch: "String"
-  method: "camelize"
+  method: "toCamelCase"
   impl: function() {
     return this.replace(/[_.-](\w|$)/g, function (_, x) {
 	  	return x.toUpperCase();
@@ -974,20 +974,28 @@
 @patch {
   $built_in: true
   patch: "String"
-  method: "snakeToKebabCase"
+  method: "toPascalCase"
   impl: function() {
-    return this.replace(/_/g, "-");
+    const camelCase = this.replace(/[_.-](\w|$)/g, function (_, x) {
+	  	return x.toUpperCase();
+	  });
+    return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
   }
 }
 
 @patch {
   $built_in: true
   patch: "String"
-  method: "kebabToSnakeCase"
+  method: "toKebabCase"
   impl: function() {
-    return this.replace(/-/g, "_");
+    return this
+      .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
+      .map(x => x.toLowerCase())
+      .join('-');
   }
 }
+
+
 
 @patch {
   $built_in: true
@@ -1535,12 +1543,12 @@
   impl: (s, t) => {return s + t;}
 }
 
-@filter STRING_CAMELIZE_FILTER {
+@filter STRING_TO_CAMEL_CASE_FILTER {
   $built_in: true
 
   %% String -> String
-  name: "camelize"
-  impl: (s) => {return s.camelize();}
+  name: "to_camel_case"
+  impl: (s) => {return s.toCamelCase();}
 }
 
 @filter STRING_TRIM_FILTER {
@@ -1552,12 +1560,12 @@
   impl: (s) => {return s.trim();}
 }
 
-@filter STRING_CAPITALIZE_FILTER {
+@filter STRING_TO_TITLE_CASE_FILTER {
   $built_in: true
 
   %% String -> String
-  name: "capitalize"
-  impl: (s) => {return s.capitalize();}
+  name: "to_title_case"
+  impl: (s) => {return s.toTitleCase();}
 }
 
 @filter STRING_DOWNCASE_FILTER {

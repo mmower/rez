@@ -31,7 +31,7 @@ Elements describe in-game concepts.
 * <<Game (Element), Game>>
 * <<Group (Element), Group>>
 * <<Inventory (Element), Inventory>>
-* <<Item (Element), Item>>
+* <<Item (Alias), Item>>
 * <<List (Element), List>>
 * <<Object (Element), Object>>
 * <<Plot (Element), Plot>>
@@ -56,6 +56,7 @@ Directives modify in-game concepts.
 * <<Generator (Directive), Generator>>
 * <<Mixin (Directive), Mixin>>
 * <<Keybinding (Directive), Keybinding>>
+* <<Schema (Directive), Schema>>
 * <<Script (Directive), Script>>
 * <<Style (Directive), Style>>
 
@@ -1001,7 +1002,9 @@ on_remove: (inventory, event) => {...}
 
 This script will be called after an item has been removed from the specified slot of this inventory.
 
-== Item (Element)
+== Item (Alias)
+
+Prior to v1.8 `@item` was a built-in element however as of v1.8 it is an alias defined using `@elem` to the `@card` element. This means all items are cards and can be rendered as part of a scene (consequently they also require the `content:` attribute).
 
 The `@item` element defines a conceptual item the player the player (or potentially an NPC) can acquire and add to an inventory. Items don't have to represent physical objects but anything a player has for example a spell could be an item or even a memory.
 
@@ -1497,6 +1500,286 @@ The `on_start_card` script is called when a new card is played into the scene. I
     }
 
 The `on_finish_card` script is called when when a card has 'finished' as a new card is being played into the scene. It will be passed the id of the card that is finished.
+
+== Schema (Directive)
+
+The `@schema` directive is used to specify validation rules for element attributes. Schemas provide compile-time validation to ensure your game elements are properly configured and catch errors early in development.
+
+=== Syntax
+
+....
+@schema <element_type> {
+  attribute_name: {validation_rules}
+  attribute_name: {validation_rules}
+}
+....
+
+=== Basic Validation Types
+
+[cols="2,3,4"]
+|===
+|Rule |Type |Description
+
+|`kind: :boolean`
+|Boolean
+|Validates boolean values (`true` or `false`)
+
+|`kind: :number`
+|Number
+|Validates numeric values (integers or floats)
+
+|`kind: :string`
+|String
+|Validates string values
+
+|`kind: :keyword`
+|Keyword
+|Validates keyword values (e.g., `:example`)
+
+|`kind: :list`
+|List
+|Validates list/array values
+
+|`kind: :set`
+|Set
+|Validates set values
+
+|`kind: :elem_ref`
+|Element Reference
+|Validates references to other elements (e.g., `#element_id`)
+
+|`kind: :ref`
+|General Reference
+|Validates general references
+
+|`kind: :function`
+|Function
+|Validates function/script attributes
+
+|`kind: :source_template`
+|Template
+|Validates template content
+
+|`kind: :btree`
+|Behavior Tree
+|Validates behavior tree structures
+|===
+
+=== Multiple Type Support
+
+You can allow multiple types for an attribute:
+
+....
+@schema example {
+  size: {kind: [:string :number]}
+}
+....
+
+=== Collection Validation
+
+For lists and sets, use `coll_kind` to specify the type of collection elements:
+
+....
+@schema example {
+  tags: {kind: :set, coll_kind: :keyword}
+  items: {kind: :list, coll_kind: :elem_ref, ref_elem: @item}
+}
+....
+
+=== Reference Validation
+
+Use `ref_elem` to specify which element types are valid for references:
+
+....
+@schema scene {
+  initial_card_id: {kind: :elem_ref, ref_elem: @card, required: true}
+}
+....
+
+=== Required Attributes
+
+Mark attributes as required using `required: true`:
+
+....
+@schema game {
+  name: {kind: :string, required: true}
+  IFID: {kind: :string, required: true}
+}
+....
+
+=== Constraint Validation
+
+==== Numeric Constraints
+
+....
+@schema plot {
+  priority: {kind: :number, min: 1, max: 100, required: true}
+  stages: {kind: :number, min: 1, required: true}
+}
+....
+
+==== String Constraints
+
+....
+@schema game {
+  layout: {kind: :source_template, required: true, contains: "${content}"}
+}
+....
+
+==== Enumerated Values
+
+....
+@schema scene {
+  layout_mode: {kind: :keyword, in: [:single :stack]}
+}
+
+@schema group {
+  type: {kind: :keyword, in: [:image :audio :video], required: true}
+}
+....
+
+==== File Validation
+
+....
+@schema asset {
+  file_path: {kind: :string, file_exists}
+}
+....
+
+=== Mutually Exclusive Attributes (XOR)
+
+Use `xor` to ensure only one of two attributes can be present:
+
+....
+@schema asset {
+  folder_path: {kind: :string, xor: file_path}
+  file_path: {kind: :string, xor: folder_path, file_exists}
+}
+....
+
+=== Dependent Attributes (AND)
+
+Use `and` to require attributes to be used together:
+
+....
+@schema asset {
+  width: {kind: [:string :number], and: height}
+  height: {kind: [:string :number], and: width}
+}
+....
+
+=== Alternative Requirements (OR)
+
+Use `or` to specify that at least one of multiple attributes must be present:
+
+....
+@schema system {
+  before_event: {kind: :function, param_count: 3, or: after_event}
+  after_event: {kind: :function, param_count: 3, or: before_event}
+}
+....
+
+=== Function Parameter Validation
+
+For function attributes, specify expected parameters:
+
+....
+@schema actor {
+  on_accept_item: {kind: :function, params: [actor event]}
+  on_enter: {kind: :function, params: [actor event]}
+}
+....
+
+Or specify parameter count:
+
+....
+@schema system {
+  before_event: {kind: :function, param_count: 3}
+}
+....
+
+=== Template Control
+
+Prevent elements from being used as templates:
+
+....
+@schema game {
+  $template: {allowed: false}
+}
+
+@schema timer {
+  $template: {allowed: false}
+}
+....
+
+=== Pattern-Based Validation
+
+Use regex patterns to validate dynamically named attributes:
+
+....
+@schema inventory {
+  ?/^initial_/: {kind: :list, coll_kind: :elem_ref}
+}
+....
+
+This validates any attribute starting with "initial_" as a list of element references.
+
+=== Type Hierarchy Validation
+
+Use `is_a` to validate that a value matches acceptable values from another element's attribute, taking into account type hierarchies created with `@derive`:
+
+....
+@schema item {
+  type: {kind: :keyword, required: true, is_a: @slot/accepts}
+}
+....
+
+This ensures that an item's `type:` value matches at least one `@slot`'s `accepts:` value, considering the type hierarchy. For example, if you have:
+
+....
+@derive :sword :weapon
+@derive :weapon :item
+
+@slot weapon_slot {
+  accepts: :weapon
+}
+
+@item magic_sword {
+  type: :sword
+}
+....
+
+The `magic_sword` item is valid because `:sword` derives from `:weapon`, which matches the slot's `accepts:` value. The `is_a` validation works with the same keyword hierarchy system as `@derive`, similar to Clojure's derive mechanism.
+
+=== Example: Complete Schema
+
+....
+@schema card {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  content: {kind: :source_template, required: true}
+  flipped_content: {kind: :source_template}
+
+  $flipped: {kind: :boolean}
+  $suppress_wrapper: {kind: :boolean}
+
+  bindings: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  css_class: {kind: :string}
+
+  on_start: {kind: :function}
+  on_finish: {kind: :function}
+  on_render: {kind: :function}
+}
+....
+
+For more examples of schema validation in practice, see the standard library definitions in `stdlib.rez`.
 
 == Script (Directive)
 
