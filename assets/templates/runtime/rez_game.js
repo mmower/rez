@@ -644,8 +644,9 @@ class RezGame extends RezBasicObject {
       obj.runEvent("game_started", {})
     });
 
-    this.buildView();
+    this.runEvent("ready");
 
+    this.buildView();
     this.startSceneWithId(this.initial_scene_id);
   }
 
