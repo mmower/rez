@@ -7,16 +7,10 @@ date = 2024-03-16
 :relfileprefix: ../
 :relfilesuffix: /
 = Elements & Directives Catalog
-:toc:
-:toclevels: 1
 
-Rez includes many elements that you will combine to create your game, starting
-with the `@game` element that wraps the whole thing.
+Rez includes many elements and directives that you combine to create a game, starting with the `@game` element.
 
-All elements in a Rez source file are prefixed by `@`.
-
-A few Rez elements like `@game` and `@zone` contain other elements but most do
-not.
+All elements in a Rez source file have a name prefixed by `@` and most have an id which must be unique across the game. The `@game` element automatically has the id `#game`.
 
 == Elements
 

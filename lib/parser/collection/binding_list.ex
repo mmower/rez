@@ -2,7 +2,16 @@ defmodule Rez.Parser.Collection.BindingList do
   alias Rez.Parser.ParserCache
 
   import Ergo.Combinators,
-    only: [sequence: 1, sequence: 2, choice: 1, choice: 2, optional: 1, many: 1, ignore: 1]
+    only: [
+      sequence: 1,
+      sequence: 2,
+      choice: 1,
+      choice: 2,
+      optional: 1,
+      many: 1,
+      ignore: 1,
+      lazy: 1
+    ]
 
   import Rez.Parser.UtilityParsers,
     only: [iows: 0, iws: 0, open_bracket: 0, close_bracket: 0, comma: 0, colon: 0, star: 0]
@@ -20,6 +29,8 @@ defmodule Rez.Parser.Collection.BindingList do
       function_value: 0,
       code_block_value: 0
     ]
+
+  import Rez.Parser.Collection.List, only: [list: 0]
 
   def binding_list() do
     ParserCache.get_parser("binding_list", fn ->
@@ -79,7 +90,8 @@ defmodule Rez.Parser.Collection.BindingList do
         [
           string_value(),
           number_value(),
-          bool_value()
+          bool_value(),
+          lazy(list())
         ],
         label: "bound-literal",
         ast: fn value ->

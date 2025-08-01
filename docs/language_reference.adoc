@@ -8,1935 +8,1569 @@ date = 2025-04-29
 :relfilesuffix: /
 = Language Guide
 :toc:
+:toclevels: 3
 
-== Introduction
+== Part 1: Getting Started
 
-Rez is a language, compiler, and runtime for writing choice-based HTML games and interactive fiction.
+=== What is Rez?
 
-An obvious comparison is to https://twinery.org/[Twine] (using a command-line compiler like Twee rather than the Twine UI). Twine describes itself as an "open source tool for telling interactive, nonlinear stories." and it makes it easy for those with almost no development experience to get started. Rez is an "open source tool for creating interactive, nonlinear, **games**".
+Rez is a language for creating choice-based HTML games/interactive fiction.
 
-Creating a game often implies a level of design complexity greater than the majority of CYOA type stories. Nothing about Twine prevents you from attempting to build ambitious games, but it also doesn't offer a whole lot of support. Rez, being aimed at games, includes a lot of out of the box support for things like:
+If you have ever wanted to build choice-based games with inventories, smart NPCs, and complex mechanics without fighting your tools, Rez may be for you.
 
-NPC behaviours including behaviour trees built in
-Flexible item & inventory management
-A simple but flexible scene-based layout & templating system
-Easy to extend with other systems as required
+Think of it as a powerful alternative to https://twinery.org/[Twine]. While Twine democratized interactive fiction creation and remains excellent for narrative-focused projects, more complex games push the limits and need a tool designed to support that complexity. This is where Rez comes into its own.
 
-For those with ambitious plans and where a move to a parser based alternative such as https://ganelson.github.io/inform-website/[Inform] or https://www.tads.org/[TADS] is not desirable, Rez is designed to be the ideal solution. In this Rez more directly competes with the likes of https://www.inklestudios.com/ink/[Ink] and https://www.choiceofgames.com/make-your-own-games/choicescript-intro/[ChoiceScript].
+Rez uses an easy-to-learn declarative syntax and only requires Javascript for advanced features.
 
-Rez's complexity sits somewhere between Twine and Inform/TADS. It has a relatively simple, declarative, syntax and only requires Javascript coding knowledge for implementing custom event handlers and complex behaviours.
+It makes it easy to build:
 
-Here's a small taste of a simple problem of dynamically generating a greeting (while keeping count of the number of times each was used).:
+* **Rich NPCs** with memory, behavior trees, and complex interactions
+* **Dynamic inventories** where a ring works differently on your hand vs in your backpack
+* **Flexible layouts** that adapt to different game requirements (combat, dialogue, exploration)
+* **Procedural content** that creates unique experiences on each playthrough
+* **New mechanics** that we didn't think of
+
+Rez sits between the simplicity of Twine and the complexity of parser-based systems like https://ganelson.github.io/inform-website/[Inform] while offering many of the benefits of both.
+
+==== A Simple Example
+
+Here's a taste of what Rez code looks like:
+
 ....
 @card greeting {
-  greeting: _
-  count: _
-
+  visit_count: 0
   content: ```
-  <p>Rez says ${card.greeting} for the ${card.count | ordinal} time!</p>
-  <p><a card="greeting">Try again</a>
+  <p>Hello! This is visit number ${card.visit_count}.</p>
+  <p><a card="greeting">Visit again</a></p>
   ```
-
   on_start: (card) => {
-    card.greeting = ["hello", "welcome", "greetings"].randomElement();
-    const countAttrName = `${card.greeting}_count`;
-    card.count = card.getAttributeValue(countAttrName, 1);
-    card.setAttribute(countAttrName, card.count+1);
+    card.visit_count += 1;
   }
 }
 ....
 
-Rez emphasises a separation of logic and presentation to help complicated layouts
-stay sane and easy to work with. Rez also provides a flexible set of tools to create
-and manage the complexity inherent in ambitious games while remaining simple
-enough for those just getting started.
+This creates an interactive card that tracks how many times it's been visited.
 
-=== Outline of a Rez Game
+This tiny example demonstrates Rez's core philosophy: clean separation between what the players see and what happens behind the scenes. Scale this approach up and you can build any choice-based game you can imagine.
 
-A Rez game is written in the form of one or more `.rez` source files that get compiled into an HTML index page & a Javascript application, plus any associated assets like images, movies, and sounds.
+=== Installation and Setup
 
-A Rez source file contains elements and directives that describe the various components of a game and how it connects together.
+To get started with Rez, you'll need to have Rez installed on your system.
 
-At the top level is the `@game` element that contains the game metadata and all
-the other elements that make up the game.
+[NOTE]
+====
+Installation instructions depend on your platform. Please refer to the main Rez documentation for current installation methods.
+====
 
-=== Creating a new game
-
-The command:
-....
-rez new <game name> --author-name="Name" --author-email="email" --game-title="Title" --game-homepage="URL"
-....
-
-For example specifying `<game name>` as "mygame" will create a `mygame` folder containing a number of subfolders. In the `src` subfolder will be `mygame.rez` that will contain some example source. In the `lib` folder will be the `stdlib.rez` containing Rez standard library. It's good to familiarize yourself with the contents of `stdlib.rez` but do not modify it as the game will overwrite it when you compile.
-
-=== Compiling your game
-
-The command:
-....
-rez compile src/<game_name>.rez
-....
-
-Compiles the sources into a game in the `dist` sub-folder. It creates an `index.html` as well as copying all of the Javascript & other asset files that constitute the game.
-
-=== Distributing your game
-
-To distribute your game you distribute the contents of the `dist` folder. For example by compressing it into a `.zip` file or wrapping it in an https://www.electronjs.org/[Electron] app.
-
-=== Javascript & CSS Frameworks
-
-Rez includes two default frameworks:
-
-* https://bulma.io/[Bulma CSS] for stylesheet support
-* https://alpinejs.dev/[Apline.js] for dynamic UI support
-
-The files for these are included within the Rez compiler and will be automatically copied into your `assets` folder when you create or update the game. However whether you choose to use them or not is down to you. The new game template includes them as follows:
+Once installed, you can create a new game project with:
 
 ....
-@asset _ALPINE_JS {
-  $built_in: true
-  file_name: "alpinejs.min.js"
-  $js_defer: true
-  $pre_runtime: true
-}
-
-@asset _BULMA_CSS {
-  $built_in: true
-  file_name: "bulma.min.css"
-}
+rez new my_first_game --author-name="Your Name" --author-email="you@example.com" --game-title="My First Game"
 ....
 
-If you remove these lines from your game file those assets will not be included in the compiled game and you can replace them with other assets of your own. Rez does not, by itself, make use of any of their features so replacing them is intended to have no side effects.
-
-The `$pre_runtime` attribute controls whether an asset is loaded before the compiled `runtime.js` (that includes the Rez standard library and your own elements and event handlers) or after. The `$js_defer` attribute controls whether JS attributes should be included using the `<script>` tag `defer` attribute that ensures it will only be run after the page has loaded.
-
-The `$built_in` attribute is purely to help differentiate between things defined by Rez itself and things defined by the author. It has no in-game purpose.
-
-=== Source code format
-
-Rez games are written in plain UTF-8 files with a `.rez` extension.
-
-The `%` character is special in Rez and indicates a macro of which the most common is `%%` for comments.
-
-=== Comment macro
-
-Rez comments begin with `%%` and continue to the end of the line.
+This creates a folder called `my_first_game` with the following structure:
 
 ....
-%% this line will be ignored
+my-first-game/
+├── src/
+│   └── my-first-game.rez    # Your game source code
+├── lib/
+│   └── stdlib.rez           # Rez standard library (don't modify)
+├── assets/                  # Images, sounds, etc.
+└── dist/                    # Compiled game files (created on build)
 ....
 
-=== Include macro
+=== Your First Game
 
-Once source file may include another by using the include macro `%(…)`, for
-example:
-
-....
-%(act_one.rez)
-....
-
-An included file may include other files but beware of creating a cyclic dependency. For example this code will hang the compiler:
-
-....
-file1.rez
----------
-%(file2.rez)
-
-file2.rez
----------
-%(file1.rez)
-....
-
-== The Rez Language
-
-Rez is a declarative language for writing a game in terms of a set of elements representating the game contents.
-
-In Rez elements are things like items, actors, scenes, locations, assets and so forth. During compilation Rez draws these elements together and converts them into Javascript objects that represent the game when running in the browser.
-
-Elements are generally described using a set of named attributes. For example an `item` might have a `description` attribute that can be displayed to the player when they examine the item.
-
-Rez uses Javascript functions to supply dynamic behaviour. For the most part you can ignore this but, as your game becomes more complex and you want to incorporate dynamic behaviours, you may need to familiarize yourself with writing small Javascript functions.
-
-Here is an example of a Rez element that includes a dynamic attribute:
-
-....
-@item magic_ring {
-  is_a: :ring
-  magic: true
-  material: gold
-  owners: 5
-  belongs_to: #sauron
-  content: ```
-  <p>The inscription reads <strong>If found, please return to Mordor.</strong></p>
-  ```
-  on_wear: (actor) => {
-    if(actor.id == "sauron") {
-      actor.game.sauron_victory = true;
-    } else {
-      actor.makeInvisible();
-      actor.corruption += 10;
-    }
-   }
-}
-....
-
-There's a lot going on here but we'll unpack it piece by piece.
-
-=== Introduction to Elements
-
-In the first place is the element itself:
-
-....
-@item magic_ring {
-  ....attributes....
-}
-....
-
-There is a common pattern for writing elements:
-
-* element specifier with `@` prefix, e.g. `@item`
-* a unique ID of the element, e.g. `magic_ring`
-* open brace `{`
-* attributes
-* close brace `}`
-
-xref:element_catalog.adoc[Directives], by contrast, may look a little bit different, e.g. they don't have a unique id.
-
-Elements are used to describe in-game concepts. The xref:element_catalog.adoc[Element Catalog] describes each element in detail.
-
-The `id` of an element must be unique and follow the rules for Javascript identifiers. In JavaScript, identifiers are case-sensitive and can contain Unicode letters, `$`, `_`, and digits (`0`-`9`), but may not start with a digit.
-
-In some situations you may want to use similar ids for different kinds of elements, in this case a helpful protocol is to prefix the id with the type, e.g. instead of `#emergency_exit` you might use `#s_emergency_exit` for a scene or `#c_emergency_exit` for a card.
-
-=== Introduction to Attributes
-
-The most important thing when you are writing an element is its attributes. These describe the element and how it behaves in the game. In our `@item` example there are 7 attributes that demonstrate many of the built-in types:
-
-....
-is_a: :ring
-magic: true
-material: :gold
-owners: 7
-wearer_id: _
-belongs_to_id: #sauron
-inscription: "Please return to Mordor",
-wear: (actor) => {
-  if(actor.id == "sauron") {
-    $game.sauron_wins();
-  } else {
-    actor.makeInvisible();
-  }
-}
-destroy: function(mount_id) {
-  if(mount_id != "mount_doom") {
-    return false;
-  } else {
-    $game.sauron_loses();
-  }
-}
-....
-
-There are eight attributes defined here:
-
-[cols="1,2"]
-|===
-|`is_a`
-|a keyword, a symbol often used when there are a few legal values
-|`magic`
-|a boolean (true/false, yes/no)
-|`material`
-|another keyword
-|`owners`
-|a number
-|`wearer_id`
-|a reference to the ID of the actor who holds the ring
-|`belongs_to_id`
-|a reference to the ID of the actor the ring belongs to
-|`inscription`
-|a string
-|`wear`
-|an event script in Javascript arrow function format
-|`destroy`
-|an action script in Javascript standard function format
-|===
-
-The pattern for any attribute is `<name>: <value>`. The space after the colon is required and note that there is no `,` or `;` at the end as you may be familiar with from other programming languages.
-
-**Legal**
-
-    title: "The Maltese Parrot"
-
-**Not-legal**
-
-    title : "The Maltese Parrot"
-    title :"The Maltese Parrot"
-    title:"The Maltese Parrot"
-
-Attribute names follow the rule for Javascript identifiers:
-
-* cannot contain spaces
-* are case sensitive
-* must begin with a letter, underscore `_`, or dollar `$`
-* can only contain letters, numbers, underscores, or dollar signs
-
-Note that attribute names with a leading underscore `_` are considered to be 'internal' to the Rez compiler. These attributes are not converted into runtime attributes and are, therefore, not available. In general you should not use the `_` prefix in your attribute names.
-
-Attribute names with a leading dollar `$` are considered to be 'special'. Rez makes use of a number of these for its own workings. In general you are not advised to use the `$` prefix unless you know what you are doing.
-
-There is also a special rule for attributes that end with an `_id` suffix. Rez will assume any attribute with the `_id` suffix is an element reference. Such attributes get special treatment to make them more convenient to use.
-
-[cols="1,2,2"]
-|===
-|Boolean
-|a truth value that you can test to create conditional behaviour
-|`true`\|`false` (not that `yes` and `no` can also be used interchangably)
-
-|Number
-|a numeric value that can be positive, negative, integer, or decimal. Rez doesn't have separate types for these.
-|`5`\|`-1`\|`0.5`
-
-|String
-|a text value suitable for shorter strings. For longer passages a Heredoc may be easier
-|`"it's a plaster bust of a parrot"`
-
-|Keyword
-|a symbol, usually used for constant values. Note that keywords can be turned into hierarchies by the xref:element_catalog#Derive(Directive)[@derive] directive
-|`:single`\|`:multiple`, `:red`\|`:green`\|`:blue`
-
-|Element Reference
-|an identifier referring to the unique id of an element
-|`#sauron`, `#gandalf`, `#the_ring`
-
-|File
-|a string value that is imported from a file
-|`+<<<FILE_NAME>>>+`
-
-|Template
-|a text value that can span multiple lines and content template expressions that are dynamically interpolated at runtime
-|`+```The ${animal.adjective} ${animal.color} ${animal.species} jumped over the ${other_animal.adjective} ${other_animal.species}```+`
-
-|List
-|a sequence of other values, that can be of any Rez attribute type, inside `[]`. Note that Rez lists do not use a `,` to separate values.
-|`+[1 2 3]+`, `+["red", "green", "blue"]+`
-
-|Set
-|an unordered collection of unique values of any Rez attribute type. Note that rez Sets do not use a `,` to separate values.
-|`+#{:red :green :blue}+`
-
-|Binding List
-|an ordered list of key: value pairs where the value can be a boolean, number, string, element reference, code block, or function. Commas are optional.
-|`[min: 1, max: 2, required: false]`
-|Script (Event)
-|a Javascript function for handling an event. Expected to be in arrow format and passed the object receiving the event and the event as parameters.
-|`(game, event) => {...}`
-|Script (Action)
-|a Javascript function expected to be called, e.g. in an event handler. Expected to be in traditional function style and where `this` is the object in question.
-|`function() {...}`
-|Behaviour Tree
-|A behaviour tree is an alternative to Javascript for creating dynamic behaviours. See <<behaviours>> for more information about using behaviour trees.
-|`^[behaviour {options} children]`
-|Dice
-|a dice roll, in https://en.wikipedia.org/wiki/Dice_notation[Dice Notation] that is re-evaluated each time it is referenced
-|`^r:2d6+1`, `^r:d4`, `^r:3d6-1`, `^r:2d10`
-|Probability Table
-|A list of pairs wrapped in `\|` that becomes a generator property.
-|\|"key_1" freq_1 "key_2" freq_2 "key_3" freq_3\|
-|Dynamic Initializer
-|A Javascript expression that is evaluated when the game starts. It converted into an expression `(function() {return <block>}).call(this)`. Has an optional `:prio` suffix where prio is an integer between 1-10. Initializer are run in order of increasing priority so ^i:1 runs before ^i:2. The default priority is 10.
-|`^i{return Math.rand_int(1,10)}`, ^i:1{return $x_list.randomElement();}
-|Dynamic Property
-|A Javascript function expression that is converted into an object property
-|`^p{return \`${this.given_name} ${this.family_name}\`;}`
-|===
-
-=== Boolean
-
-A boolean value is either `true` or `false` (alternatively we can use `yes` and `no`) and is often used for flags.
-
-=== Number
-
-A number value can any integers or floating point value.
-
-=== String
-
-A string value is text enclosed with double-quote (`"`) characters used for descriptive properties. Typically single lines, where multiple lines need to be used the suggestion is to use the Heredoc string instead.
-
-=== Keyword
-
-A keyword value is an identifer (that follows Javascript identifier rules) that is prefixed with a colon (`:`), e.g. `:gold`. Keywords are useful for enumerated values or symbolic constants.
-
-=== Element Reference
-
-An element reference is used to refer to the id of a game element. It is prefixed with a hash (`#`) and must obey Javascript identifier rules. The compiler will attempt to verify that they refer to an existing element.
-
-=== File String
-
-A file string is a string value whose content is stored and read in from an external file.
-
-=== Template
-
-A template is a kind of string value that supports dynamic content that is interpolated at run-time. This is controlled by the use of expressions such as `${...}`, `$if() {% ... %}`, and `$foreach(x: xs) {% %}`. See the template expressions section details.
-
-=== List
-
-A list of whitespace separated values that can include any of the other attribute types. It is separate from a `@list` element.
-
-=== Set
-
-A set of whitespace separated values that can include any of the other attribute types.
-
-=== Event Script
-
-An event script is written as a Javascript arrow function `(args) => {...}` and therefore `this` will be `null` when it runs. Typically the object the event has been triggered for will be the first argument.
-
-=== Action Script
-
-An action script is written as a regular Javascript function `function (args) {...}` and `this` will refer to the object the script has been defined on.
-
-=== Dice
-
-=== Probability Table
-
-Esp. useful for procedural generation a probability table is a list of pairs where the first element is the key and the second is the frequency. Let's take eye color for example, we want characters we generate to have different coloured eyes. In reality brown eyes are most common at about 48% of the population, then blue at 29, green at 14%, and grey at about 9%. How could we generate a realistic distribution of eye colour (very important in games):
-
-....
-eye_color: |:brown 48 :blue 29 :green 14 :grey 9|
-....
-
-A different example might be a loot table, how could we generate one of those:
-
-....
-loot_quality: |:poor 20 :okay 10 :great 5 :amazing 1|
-....
-
-Our frequencies don't have to % based and add up to 100, in this example we've given relative frequencies.
-
-We can also use `#id`'s as the key:
-
-....
-meet_on_the_road: |#ranger 15 #wizard 10 #traveller 45 #evil 30|
-....
-
-At the moment, due to a lack of JSON support, it is not possible to use functions as table entries. A work around looks like this:
-
-....
-@card card1 {
-  content: ```
-  ${f}
-  ```
-
-  func_table: |#o1 50 #o2 25 #o3 25|
-
-  choose_f: function() {
-    return $(this.func_table).f();
-  }
-}
-
-@object o1 {
-  f: function() {
-    return 1;
-  }
-}
-
-@object o2 {
-  f: function() {
-    return 2;
-  }
-}
-
-@object o3 {
-  f: function() {
-    return 3;
-  }
-}
-....
-
-It's not elegant but it's feasible. This will likely get cleaned up in a future version.
-
-=== Dynamic Initializer
-
-A dynamic initializer is a value in the form `^i{js_expr}` that is used to set the attribute value when the object is created using a dynamic Javascript expression. This is useful for setting a generated value (e.g. a random value) after which the attribute behaves normally using getters/setters.
-
-Initializer are run in increasing order of priority from 1 to 10. This allows one initializer value to depend upon a previously initialized value. To specify a priority use the form `^i:<prio>{...}` for example `^i:5{...}`. Initializers that do not specify a priority get the default value of 10 and run last.
-
-An `^i` initializer expects its Javascript expression to explicitly return the value that is used to initialize the attribute.
-
-In the following example we name an actor using a randomly generated given & family name.
-....
-@actor random_npc {
-  given_name: ^i:1{return $("given_names").randomElement();}
-  family_name: ^i:1{return $("family_names").randomElement();}
-  name: ^i{return `${this.given_name} ${this.family_name}`;}
-}
-....
-
-=== Dynamic Property
-
-A dynamic property is a value in the form `^p{js_expr}` that is used to create an attribute that doesn't have a stored value but is evaluated by evaluating the Javascript expression each time it is accessed.
-
-For example:
-....
-@actor random_npc {
-  class_name: ^p{
-    if(this.character_class === "g") {
-      return "Gunslinger";
-    } else if(this.character_class =="s") {
-      return "Sleuth";
-    } else {
-      return "Crook";
-    }
-  }
-}
-....
-
-In the same way as dynamic initializers the property code is expected to explicitly return the value for the property access.
-
-=== Special Attributes
-
-* `_id` suffix attributes
-
-Any attribute with an `_id` suffix, such as `owner_id` is treated specially by Rez. It will automatically create a paired property (e.g. `owner`) that is a reference to the object implementing the element with the corresponding id. Assigning a new `id` automatically updates the associated reference and vice-verca.
-
-* `$global`:boolean
-
-Declaring an element as a global, Rez will create a global variable on the `Window` object with the same name as the object id and `$` prefix. For example:
-
-....
-@actor player {
-  $global: true
-}
-....
-
-Means that the `RezActor` object corresponding to this element can be referred to globally as `$player`.
-
-* `$template`:boolean
-
-Declaring an element a template means it is intended to be used as a template for objects created with Rez `copyAssigningId()` and `copyWithAutoId()` methods. Elements with `template: true` bypass much of the usual initialization rules and are not initialized by the `init` methods.
-
-* `$js_ctor`:string
-
-Using the `$js_ctor` attribute allows overriding of the JS prototype for a given element. This is an advanced feature and is only necessary if you want to replace the underlying Javascript class that implements an elements behaviour.
-
-== What's in a Game?
-
-The simplest possible Rez game would look something like this:
+Let's create a simple but complete game to understand the basics. Open `src/my-first-game.rez` and replace everything from `@game` onwards with:
 
 ....
 @game {
-  name: "Test Game"
-  IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
+  name: "treasure_hunt"
+  title: "Treasure Hunt"
+  author_name: "Matt Mower"
+  author_email: "self@mattmower.com"
+  game_homepage: "http://mattmower.com/"
+
+  IFID: "12345678-1234-5678-9ABC-123456789ABC"
   archive_format: 1
-  initial_scene_id: #play_game
-  layout_mode: :single
+
+  version: 1.0
+  created: "2025-07-20 14:01:27.161254Z"
+
+  initial_scene_id: #opening_scene
   layout: ```
-  ${content}
+  <section class="main-content is-fullheight">
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">${game.title}</p>
+        <p class="sub_title">a game by <a href="${game.game_homepage}">${game.author_name}</a></p>
+      </div>
+    </section>
+    <div class="container">
+      ${content}
+    </div>
+  </section>
   ```
 }
 
-%(stdlib.rez)
+@scene opening_scene {
+  initial_card_id: #forest_entrance
+}
 
-@scene play_game {
-  initial_card: #did_you_win
-  layout_mode: :single
-  played: 0
-  won: 0
-  win_p: 0
+@card forest_entrance {
+  content: ```
+  <p>You stand at the edge of a dark forest. A weathered sign reads "TREASURE WITHIN".</p>
+  <p>What do you want to do?</p>
+  <ul>
+    <li><a card="enter_forest">Enter the forest</a></li>
+    <li><a card="examine_sign">Examine the sign more closely</a></li>
+  </ul>
+  ```
+}
+
+@card enter_forest {
+  content: ```
+  <p>You push through the undergrowth and find yourself in a small clearing.
+  In the center sits an old wooden chest!</p>
+  <p><a card="open_chest">Open the chest</a></p>
+  <p><a card="forest_entrance">Go back to the entrance</a></p>
+  ```
+}
+
+@card examine_sign {
+  content: ```
+  <p>Looking closer at the sign, you notice small text at the bottom:
+  "Beware the guardian of the treasure."</p>
+  <p><a card="forest_entrance">Return to the entrance</a></p>
+  ```
+}
+
+@card open_chest {
+  bindings: [player: #player]
+  content: ```
+  $if(player.has_key) -> {%
+    <p>Using the key, you open the chest and find a pile of gold coins!
+    You win!</p>
+    <p><a card="forest_entrance">Play again</a></p>
+  %}
+  () -> {%
+    <p>The chest is locked tight. You need a key.</p>
+    <p><a card="search_area">Search the area for a key</a></p>
+    <p><a card="enter_forest">Go back</a></p>
+  %}
+  ```
+}
+
+@card search_area {
+  content: ```
+  <p>You search around the clearing and find a rusty key hidden under some leaves!</p>
+  <p><a card="open_chest">Try the key on the chest</a></p>
+  ```
+  on_start: (card) => {
+    $player.has_key = true;
+  }
+}
+
+@actor player {
+  $global: true
+  has_key: false
+}
+....
+
+[NOTE]
+====
+Notice the `$global: true` attribute on the player. This makes the player object accessible globally using `$player` in JavaScript code, which is why we can use `$player.has_key = true`.
+====
+
+=== Compiling and Running the Game
+
+From the `my_first_game` folder run:
+
+....
+➜ rc compile src/my_first_game.rez
+rez v1.8.1 — compiled to dist folder
+....
+
+Then open the dist/index.html file. There's a version https://rez-lang.com/games/my_first_game/index.html[online] and it should look like:
+
+image::index.png[]
+
+=== Distributing Your Game
+
+Package the contents of the `dist` folder in any way you like.
+
+=== Understanding the Structure
+
+Let's break down what we just created:
+
+**@game**: The top-level container that defines the game's metadata and overall layout. Every Rez game needs exactly one `@game`` element and it always has the id `#game`. It must also have an attribute `initial_scene_id` that refers to the scene that starts the game.
+
+**@scene**: A context where interactions take place, can have a layout (for example a dialogue scene might use a different layout to an inventory scene). Each scene has an `initial_card_id` that defines which `@card`` gets presented first when that scene starts. You can have one scene or many scenes.
+
+**@card**: The content that players mostly see and interact with. Cards contain the text, choices, and behaviors that make up your game. It must have a `content:` attribute containing a template that determines what the player will be shown.
+
+The structure flows like this:
+....
+@game layout
+  └── @scene layout
+      └── @card content
+....
+
+=== Compilation and Testing
+
+To build your game, run:
+
+....
+rez compile src/my-first-game.rez
+....
+
+This creates the compiled game in the `dist/` folder. Open `dist/index.html` in a web browser to play your game.
+
+The compilation process:
+
+1. Reads your `.rez` source files
+2. Converts them to JavaScript objects
+3. Creates an HTML page with embedded JavaScript
+4. Copies any assets to the distribution folder
+
+=== Next Steps
+
+Now that you have a working game, you can:
+
+* Add more cards and scenes to expand the story
+* Include images and other assets
+* Add dynamic behavior with JavaScript
+* Experiment with different layout modes
+
+In the next section, we'll dive deeper into the core concepts that make Rez games work.
+
+== Part 2: Core Concepts
+
+=== Understanding Elements
+
+Rez games are built from **elements** - the building blocks that define everything in your game. Elements represent things like the game itself, scenes, cards, characters, items, and more.
+
+Every element follows the same basic pattern:
+
+....
+@element_type unique_id {
+  attribute_name: value
+  another_attribute: another_value
+}
+....
+
+For example:
+....
+@card magic_sword {
+  name: "Enchanted Blade"
+  damage: 15
+  magic: true
+}
+....
+
+==== The Three Essential Elements
+
+Every Rez game uses three core elements:
+
+**@game** - The overall game container that holds game metadata and the "master" layout
+....
+@game {
+  name: "adventure"
+  title: "Sandbags Mythical Adventure"
+  initial_scene_id: #opening
+  author: "Matt Mower"
+  author_email: "self@mattmower.com"
   layout: ```
-  <div class="container">
-    $if{scene.played > 0} {%
-      <section class="hero is-primary">
-        <div class="hero-body">
-          <p class="title">Winning Percentage: ${scene.win_p | round: 0}%</p>
-          <p class="subtitle">
-            $if{scene.win_p >= 50.0} {%
-              You are a winner!
-            %}, {%
-              You are a loser!
-            %}
-          </p>
-        </div>
-      </section>
-    %}
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">${game.title}</p>
+        <p class="subtitle">By ${game.author}</p>
+      </div>
+    </section>
+    ${content}
+  ```
+}
+....
 
-    <p>Played: ${scene.played}</p>
-    <p>Won ${scene.won}</p>
+**@scene** - A context for a kind of player interaction that can have its own layout
+....
+@scene opening {
+  initial_card_id: #start_here
+  layout: ```
+    <div class="columns-2">
+      <div class="column">${sidebar}</div>
+      <div class="column">${content}</div>
+    </div>
+  ```
+}
+....
 
+**@card** - Content that players see and interact with
+....
+@card start_here {
+  content: ```
+  <p>Your adventure begins...</p>
+  <p><a card="next_card">Continue</a></p>
+  ```
+}
+....
+
+==== Element IDs
+
+Every element needs a unique ID that follows JavaScript naming rules:
+
+* Start with a letter, underscore, or dollar sign
+* Can contain letters, numbers, underscores, or dollar signs
+* Cannot contain spaces or special characters
+* Are case-sensitive
+
+Good IDs: `forest_entrance`, `magic_sword`, `npc_wizard`, `scene1`
+
+Bad IDs: `forest entrance`, `magic-sword`, `123start`, `npc@wizard`
+
+=== Understanding Attributes
+
+Attributes are how you describe an element's properties and behavior. They use the format `name: value` with a required space after the colon.
+
+....
+@card treasure_room {
+  title: "The Treasure Chamber"      // String
+  visited: false                     // Boolean
+  gold_count: 100                    // Number
+  room_type: :treasure               // Keyword (symbol)
+  owner_id: #dragon                  // Element reference
+  content: ```                       // Template (multi-line string)
+  <p>A room filled with gold!</p>
+  ```
+  on_enter: (card) => {              // Event script function
+    card.visited = true;
+  }
+  refill_gold: function() {          // Action script function
+    this.gold_count = 100;
+  }
+}
+....
+
+==== Attribute Types
+
+**Strings** - Text enclosed in double quotes
+....
+description: "A rusty old key"
+....
+
+**Numbers** - Integers or decimals
+....
+damage: 15
+weight: 2.5
+price: -10
+....
+
+**Booleans** - True or false values
+....
+magic: true
+cursed: false
+found: yes      // yes/no also work
+hidden: no
+....
+
+**Keywords** - Symbols starting with a colon, useful for categories
+....
+material: :gold
+rarity: :legendary
+type: :weapon
+....
+
+**Element References** - Point to another elements by referencing it's id #
+....
+owner_id: #player
+location_id: #forest
+wielded_by_id: #hero
+....
+
+[IMPORTANT]
+====
+**The `_id` Suffix Convention**: Any attribute ending with `_id` gets special treatment. Rez automatically creates a paired property without the suffix that points to the actual object:
+
+....
+@scene forest {
+  initial_card_id: #entrance    // You define this
+  // Rez automatically creates:
+  // initial_card -> the actual RezCard object
+}
+
+@actor hero {
+  location_id: #forest         // You define this
+  // Rez automatically creates:
+  // location -> reference to the object with ID #forest
+}
+....
+
+This means you can use both `hero.location_id` (the string ID) and `hero.location` (the actual object). If you assign a new object to `hero.location` it will update `hero.location_id` to the right ID value.
+====
+
+**Templates** - Multi-line content with dynamic expressions
+....
+content: ```
+<p>Welcome, ${player.name}!</p>
+<p>You have ${player.gold} gold coins.</p>
+```
+....
+
+**Lists** - Collections of values (space-separated, no commas)
+....
+colors: [:red :green :blue]
+numbers: [1 2 3 4 5]
+names: ["Alice" "Bob" "Charlie"]
+items: [#sword #shield #potion]
+....
+
+**Event Scripts** - JavaScript functions for handling events
+....
+on_use: (item) => {
+  player.health += 10;
+  return RezEvent.playCard("feeling_better");
+}
+....
+
+**Action Script** - Javascript functions for performing behaviours (`this` is automatically the element on which the function is defined).
+....
+use: function() {
+  this.uses -= 1;
+}
+....
+
+[TIP]
+====
+**Event Response Methods**: Event scripts must use RezEvent to specify what happens as a result of the event:
+
+* `RezEvent.playCard("card_id")` - Play a new card in the current scene
+* `RezEvent.switchScene("scene_id")` - Start a new scene
+* `RezEvent.flash("message")` - Show a flash message to the player
+* `RezEvent.render()` - Re-render the current view
+* `RezEvent.noop()` - do nothing
+
+Methods can be chained: `RezEvent.playCard("victory").flash("You won!")`
+====
+
+=== Dynamic Properties
+
+Dynamic properties are attributes that calculate their value each time they're accessed, rather than storing a fixed value. They're perfect for derived stats, percentages, and values that depend on other attributes.
+
+==== Basic Dynamic Properties
+
+Use `^p{...}` to define a property that recalculates automatically:
+
+....
+@actor hero {
+  first_name: "Sir"
+  last_name: "Galahad"
+
+  // This calculates every time it's accessed
+  full_name: ^p{
+    return `${this.first_name} ${this.last_name}`;
+  }
+
+  health: 85
+  max_health: 100
+
+  // Perfect for UI elements like health bars
+  health_percentage: ^p{
+    return this.health * 100 / this.max_health;
+  }
+
+  // Boolean states based on other attributes
+  is_healthy: ^p{
+    return this.health > this.max_health * 0.5;
+  }
+
+  is_at_full_health: ^p{
+    return this.health >= this.max_health;
+  }
+}
+....
+
+==== Practical Examples
+
+Dynamic properties shine for calculated stats:
+
+....
+@actor character {
+  strength: 15
+  dexterity: 12
+  intelligence: 14
+
+  // Calculated modifier (D&D style)
+  strength_modifier: ^p{
+    return Math.floor((this.strength - 10) / 2);
+  }
+
+  // Total of all stats
+  total_stats: ^p{
+    return this.strength + this.dexterity + this.intelligence;
+  }
+
+  // Armor class calculation
+  base_armor: 10
+  armor_bonus: 2
+  armor_class: ^p{
+    return this.base_armor + this.dex_modifier + this.armor_bonus;
+  }
+}
+....
+
+For inventory and resource management:
+
+....
+@actor player {
+  gold: 150
+  silver: 75
+  copper: 200
+
+  // Total wealth in copper pieces
+  total_wealth: ^p{
+    return this.copper + (this.silver * 10) + (this.gold * 100);
+  }
+
+  current_weight: 45
+  max_carrying_capacity: 100
+
+  // How much more can be carried
+  carrying_capacity_remaining: ^p{
+    return Math.max(0, this.max_carrying_capacity - this.current_weight);
+  }
+
+  // Whether player is overloaded
+  is_encumbered: ^p{
+    return this.current_weight > this.max_carrying_capacity;
+  }
+}
+....
+
+==== When Properties Recalculate
+
+Dynamic properties recalculate every time they're accessed. This means:
+
+* When displayed in templates: `${player.health_percentage}`
+* When used in conditions: `$if(player.is_healthy)`
+* When accessed in JavaScript: `player.total_stats`
+
+The calculation runs fresh each time, so changes to underlying attributes automatically update derived values.
+
+[TIP]
+====
+Dynamic properties are ideal for:
+
+* **UI displays** - health bars, progress indicators, status text
+* **Calculated stats** - armor class, damage bonuses, skill totals
+* **Boolean states** - is_alive, can_afford, has_space
+* **Formatted text** - full names, descriptions with variables
+
+Avoid using them for expensive calculations that don't change often - use regular attributes for those.
+====
+
+=== Basic Content and Templates
+
+The `content` attribute is where you define what players actually see. It uses templates that can include both static text and dynamic expressions.
+
+==== Static Content
+
+Simple text and HTML:
+....
+@card welcome {
+  content: ```
+  <h2>Welcome to the Adventure!</h2>
+  <p>You are standing in a medieval village square.</p>
+  ```
+}
+....
+
+==== Dynamic Content with Expressions
+
+Use `${...}` to include dynamic values:
+....
+@card status {
+  content: ```
+  <h3>Character Status</h3>
+  <p>Name: ${player.name}</p>
+  <p>Level: ${player.level}</p>
+  <p>Health: ${player.health}/${player.max_health}</p>
+  ```
+}
+....
+
+Note that expressions cannot be arbitrary pieces of Javascript so `${player.level + 1}` while it will compile, is not a valid expression.
+
+The `player` reference comes from **bindings** - you tell Rez which game objects to make available in templates:
+
+....
+@card status {
+  bindings: [player: #main_character]
+  content: ```
+  <p>Name: ${player.name}</p>
+  ```
+}
+....
+
+Bindings flow down so that any binding made in the `@game` is available in the current `@scene` or `@card`, likewise bindings in the `@scene` are available in the current card.
+
+==== Default Bindings
+
+Some bindings are always available:
+
+* `card` - The current card being displayed
+* `scene` - The current scene
+* `game` - The game object
+
+....
+@card example {
+  visit_count: 0
+  content: ```
+  <p>This card has been visited ${card.visit_count} times.</p>
+  ```
+}
+....
+
+=== Navigation Between Cards
+
+Rez provides several ways to move between cards and scenes:
+
+==== Playing a Card
+
+Use `<a card="card_id">` to switch to another card in the same scene:
+....
+<a card="forest_clearing">Enter the forest</a>
+....
+
+==== Switching Scenes
+
+Use `<a scene="scene_id">` to start a new scene:
+....
+<a scene="dungeon_entrance">Enter the dungeon</a>
+....
+
+==== Scene Interludes
+
+Use `<a interlude="scene_id>` and `<a resume>` to run a scene interlude.
+
+Sometimes mid-scene we find a need to go to another scene temporarily. This is very common for things like NPC conversation or combat, shops/trading or inventory management, presenting history or other details, or for mini-games.
+
+Using an interlude we 'put a bookmark' in the current scene, switch another scene, and then use the bookmark to find our place in the original scene and continue where we left off.
+
+....
+<a interlude="conversation">Talk to the Hermit</a>
+....
+
+When the user clicks an `<a resume>` link the interlude scene goes away and the original scene is resumed from the point where the player left it.
+
+==== Event Links
+
+Trigger custom behavior with `<a event="event_name">`:
+....
+@card magic_door {
+  locked: true
+  content: ```
+  <p>A mysterious door blocks your path.</p>
+  $if(card.locked) {%
+    <a event="try_key">Try to unlock with the key</a>
+  %}, {%
+    <a card="beyond_door">Go through the door</a>
+  %}
+  ```
+  on_try_key: (card) => {
+    if(player.has_item("magic_key")) {
+      card.locked = false;
+      return RezEvent.flash("The key works! The door swings open.");
+    } else {
+      return RezEvent.flash("You don't have the right key.");
+    }
+  }
+}
+....
+
+[TIP]
+====
+A big part of keeping your game managable is making good decisions about where to store
+the different properties that describe the 'world model'.
+
+Sometimes it is okay to put it in the nearest card but in different situations it might
+be more appropriate to put it elsewhere. Obvious places are the player (if you have one)
+or the game. However both of these can end up "stuffed" with properties relating to the
+world or puzzles you are setting up for the player. Sometimes you can ameliorate this
+with comments but often the answer is to find a better place.
+
+For example you might think about using a `@plot` element, or use Rez's ability to create
+custom `@object`s.
+
+....
+@object magic_door {
+  locked: true
+  description: "mysterious door"
+}
+....
+
+If there were multiple ways that this door could be unlocked then having it contained in
+its own object could make a lot of sense and be much easier to understand later on.
+====
+
+==== Buttons
+
+You can also use buttons instead of links:
+....
+<button card="next_scene">Continue Adventure</button>
+<button event="cast_spell">Cast Fireball</button>
+....
+
+==== Custom Components
+
+Rez allows you to create reusable HTML components using `@component`. Components are JavaScript functions that return formatted HTML and can accept parameters, making them perfect for complex UI elements that you use repeatedly.
+
+**Basic Component Syntax**
+
+....
+@component component_name (bindings, assigns, content) => {
+  // JavaScript code that returns HTML string
+  return `<div>Custom HTML here</div>`;
+}
+....
+
+**Simple Self-Closing Component**
+
+....
+@component health_bar (bindings, assigns, content) => {
+  const current = assigns.current || 0;
+  const max = assigns.max || 100;
+  const percentage = Math.round((current / max) * 100);
+
+  return `
+    <div class="health-bar">
+      <div class="health-fill" style="width: ${percentage}%"></div>
+      <span class="health-text">${current}/${max}</span>
+    </div>
+  `;
+}
+....
+
+Use it in templates with dot notation as a self-closing tag:
+
+....
+content: ```
+<.health_bar current="${player.health}" max="${player.max_health}" />
+```
+....
+
+**Container Component with Content**
+
+Components can also wrap content like regular HTML tags:
+
+....
+@component info_panel (bindings, assigns, content) => {
+  const title = assigns.title || "Information";
+  const type = assigns.type || "default";
+
+  return `
+    <div class="info-panel info-panel--${type}">
+      <h3 class="info-panel__title">${title}</h3>
+      <div class="info-panel__content">
+        ${content}
+      </div>
+    </div>
+  `;
+}
+....
+
+Use it as a container with dot notation:
+
+....
+content: ```
+<.info_panel title="Combat Status" type="warning">
+  <p>You are in combat with ${enemy.name}!</p>
+  <p>Your health: ${player.health}</p>
+</.info_panel>
+```
+....
+
+**Advanced Component with Logic**
+
+Components can include complex logic and conditionals:
+
+....
+@component inventory_slot (bindings, assigns, content) => {
+  const item = assigns.item;
+  const index = assigns.index;
+  const isEmpty = !item;
+
+  if (isEmpty) {
+    return `
+      <div class="inventory-slot inventory-slot--empty" data-slot="${index}">
+        <div class="slot-placeholder">Empty</div>
+      </div>
+    `;
+  }
+
+  const rarity = item.rarity || "common";
+  const quantity = item.quantity > 1 ? `<span class="quantity">${item.quantity}</span>` : "";
+
+  return `
+    <div class="inventory-slot inventory-slot--${rarity}" data-slot="${index}">
+      <img src="${item.icon}" alt="${item.name}" class="item-icon">
+      <div class="item-name">${item.name}</div>
+      ${quantity}
+      <div class="item-tooltip" data-tooltip="${item.description}"></div>
+    </div>
+  `;
+}
+....
+
+**Component Parameters**
+
+Components receive three parameters:
+
+* **`bindings`** - All bindings available in the current context (player, scene, etc.)
+* **`assigns`** - Attributes passed to the component via HTML attributes
+* **`content`** - HTML content between opening and closing tags (for container components)
+
+**When to Use Components**
+
+Components are ideal for:
+
+* **Repeated UI patterns** - health bars, inventory slots, dialog boxes
+* **Complex widgets** - skill trees, character sheets, mini-maps
+* **Conditional rendering** - different layouts based on game state
+* **Dynamic content** - procedurally generated elements
+* **Reusable game mechanics** - card displays, battle interfaces
+
+[TIP]
+====
+Keep components focused on presentation logic. For game logic, use element methods and events instead. Components should transform data into HTML, not modify game state.
+====
+
+=== A Complete Example
+
+Let's build a simple character creation scene:
+
+....
+@scene character_creation {
+  initial_card_id: #choose_name
+  layout: ```
+  <div class="creation-scene">
+    <h2>Create Your Character</h2>
     ${content}
   </div>
   ```
-  win: function() {
-    this.played += 1;
-    this.won += 1;
-    this.win_p = this.won * 100 / this.played;
-  }
-  lose: function() {
-    this.played += 1;
-    this.win_p = this.won * 100 / this.played;
-  }
 }
 
-@card did_you_win {
+@card choose_name {
   content: ```
-  Did you win? [[yes|yes_i_won]] | [[no|no_i_lost]]
+  <p>What is your character's name?</p>
+  <input type="text" rez-bind="player.name" placeholder="Enter name">
+  <p><button card="choose_class">Next: Choose Class</button></p>
   ```
 }
 
-@card yes_i_won {
-  content: ```
-  Congratulations!
-
-  [[Play again|did_you_win]]
-  ```
-  on_start: (card) => {
-    card.scene.win();
-  }
-}
-
-@card no_i_lost {
-  content: ```
-  Better luck next time!
-
-  [[Play again|did_you_win]]
-  ```
-  on_start: (card) => {
-    card.scene.lose();
-  }
-}
-....
-
-image::test_game_1.png[]
-image::test_game_2.png[]
-
-This is a terrible game but it illuminates some of the basic principles of how you create a game using Rez.
-
-It uses 3 types of element: xref:element_catalog#Game[@game], xref:element_catalog#Scene[@scene], and xref:element_catalog#Card[@card]. The scene has some attributes to keep track of the game state and two actions, the cards use an event handler and some template links.
-
-The `@game` is a required top-level element that contains the definintion of the game and holds the master layout into which scene content is inserted, and the reference to the scene that starts the game.
-
-A game must have at least one `@scene`. A scene represents a context where specific events or interactions take place. It must also have an `initial_card` attribute that defines which card is played into the scene when it starts. You can run your game from a single scene or use multiple scenes where it makes sense to do so.
-
-Lastly the cards, which are "played" into the scene, and which provide the bulk of the content presented to the player.
-
-So we have a structure:
-
-....
-@game/layout
-  @scene/layout
-    @card/content
-....
-
-The card content is rendered into the scene layout, and the scene layout is rendered into the game layout. You might notice the scene has a `layout_mode` attribute. In this case we are using the `single` layout mode that presents only the current card. There is also a `stack` layout mode that presents all of the cards played into the scene.
-
-The scene in this case defines two script attributes `win` and `lose` that update the score and winning percentage. These are called from the `on_start` event handler of the cards `yes_i_won` and `no_i_lost`. The event handlers are Javascript arrow functions that take their source object (and, optionally, an event object) as a parameter. The scene scripts are regular functions where `this` is the object in question (in this case the scene `play_game`).
-
-You can use Markup for simple formatting although here we are showing off some of the Bulma CSS classes. We also using template expressions to display variables `${}` and conditionally present content `$if{} {% ... %}`.
-
-You can go quite a long way using only this subset of Rez's features.
-
-== What's Going on in the Browser
-
-We should distinguish between two environments: The _author_time_ environment where we're dealing with `.rez` source files containg elements & attributes, and the _runtime_ environment where these have been compiled into JavaScript code that runs in the browser.
-
-=== runtime.js
-
-All of the functionality of the game is converted into Javascript objects and functions which end up in a file called `runtime.js`. You can see this in the `dist/assets` folder of your game. It's worth looking through runtime.js because you can see all of the library classes and functionality. Note that you should never modify `runtime.js` as it will be overwritten the next time you compile your game. However, in practice, there should be no reason to modify this file as its contents are produced from your game.
-
-In the runtime environment, your `@game` element is translated into a JS object with `RezGame` as its prototype, the scenes into JS objects with `RezScene` as its prototype, and cards into JS objects having `RezCard` as their prototype. For most elements there is a 1:1 correspondence between it and an equivalent JS object defined in `runtime.js`.
-
-[Advanced Note]: If you want to use different objects you can use the `$js_ctor` attribute to define which constructor function gets called. When replacing built in objects its advisable to have the built-in object as a prototype of your custom object.
-
-The Game starts with a called to the game object `start` method which handles initialization and presenting the first scene & card.
-
-=== The Rendering Process
-
-The HTML that is presented in the browser is generated as follows:
-
-At the top level the `@game` element requires a `layout:` template attribute. It further requires that this template contains a `${content}` template expression. Internally the game uses a `RezSingleLayout` object to render the current scene, which it adds to the layout bindings as `content`. So the scene content is inserted into the game layout as `${content}`.
-
-At the next level down the `@scene` also requires a `layout:` template attribute and, it too, requires a `${content}` template expression to be present. The scene either uses a `RezSingleLayout` (`layout_mode: :single`) or a `RezStackLayout` (`layout_mode: :stack`) depending on whether the scene is based on one `@card` or many `@cards`. The layout renders the card content and places it in the layout binding `content`. So the card content is inserted into the scene layout as `${content}`.
-
-At the next level down the `@card` provides a `content_template:` and, optionally, `flipped_template:` attribute. The flipped template is used in the stack layout which we'll discuss shortly.
-
-So in the simplest case the structure is:
-
-....
-Game Layout
-  Scene Layout
-    Card Template
-....
-
-The actual picture can be a little more complicated because the scene layout and card can also include content from other cards by specifying the id of the cards in their `blocks:` attribute. But what is a block?
-
-=== What is a Block?
-
-Using the `blocks:` attribute we can specify the attribute of cards that we want to include beyond the main content card. For example, to include a sidebar that is common across cards in a scene:
-
-....
-@card sidebar {
-  content: ```
-    sidebar content goes here
-  ```
-}
-
-@scene explore {
-  blocks: [#sidebar]
-
-  layout: ```
-  <div class="sidebar">${sidebar}</div>
-  <div class="main">${content}</div>
-  ```
-}
-....
-
-When the `explore` scene gets rendered it will render its current card and bind the rendered content to `content` and also render the card `#sidebar` and bind that content to `sidebar`. So using the `${sidebar}` template expression from the layout includes the sidebar content.
-
-Note that when a card is used from a `block:` attribute it is automatically given a `$parent_block` binding (that points to the card using it as a block) so that it can refer to the attributes of its parent card.
-
-This is useful when you want to create a "parameterized" block. For example, we could dynamically render a list of available exits in a card representing a location, this way:
-
-....
-@card list_exits {
-  bindings: [
-    location: $block.$parent_block.source
-  ]
-  content: ```
-    $if(location.exits) {%
-      $foreach(exit: location.exits) {%
-        %% render an exit here
-      %}
-    %}
-  ```
-}
-
-@card room_with_exits {
-  exits: [#exit_1 #exit_2 #exit_3]
-  blocks: [#list_exits]
-  content: ```
-    Room
-    ${exits}
-  ```
-}
-
-@card another_room_with_exits {
-  exits: [#exit_4 #exit_5 #exit_6]
-  blocks: [#list_exits]
-  content: ```
-    Another Room
-    ${exits}
-  ```
-}
-....
-
-In this example `#room_with_exits` and `#another_room_with_exits` both define an `exits:` attribute and render the card `#list_exits` as a block.
-
-However, `#list_exits` doesn't have to know which card is rendering it, only that it defines an `exits:` attribute.
-
-We use a code-block binding `location:` from the `#list_exits` card to reach up to its 'parent' card (the one that included it as a block) to find its `exits:` attribute and use that for rendering the list of exits.
-
-This means we can use `#list_exits` from any card that defines an `exits:` attribute.
-
-=== What are Bindings?
-
-Bindings are how we make data from our game elements available to the code and templates that are rendering our view. You've already seen an example of a binding in the section above:
-
-....
-bindings: [
-  location: $block.$parent_block.source
-]
-....
-
-But what does this mean? And why do we need it?
-
-Let's go back to basics with a very simple content template, e.g.:
-
-....
-@card c_test_1 {
-  content: ```
-    Hello from the first chapter
-  ```
-}
-....
-
-This will present the text "Hello from the first chapter" in the browser.
-
-But how does this happen?
-
-The next section is quite technical and will likely require a good understanding of Javascript, far more than is required to use bindings & expressions. Feel free to skip ahead if you don't feel comfortable digging this deep.
-
-Rez converts this simple markup into a Javascript function that renders it. For the content above you'd end up with something like
-
-....
-function(bindings) {
-  return [
-    function(bindings) {
-      return `<div id="card_c_test_1" data-card="c_test_1" class="card">Hello from the first chapter.</div>`;
-    }
-  ].reduce(
-    function(text, f) {
-      return text + f(bindings)
-    },
-    ""
-  );
-}
-....
-
-Now you might be thinking "OMG! Why do we need such a complex function to render a simple line of text?"
-
-If every template was as simple as this, we wouldn't. But a simpler approach wouldn't allow us to build more complex, dynamic, templates. Before we get to that, let's break down this function.
-
-The outer level is a function that accepts an argument `bindings` and then returns the result of a `reduce()` call on an array. In this case an array containing a single function also taking `bindings` as its argument.
-
-This 'inner' function doesn't use its argument, it just returns the static string that is our output.
-
-The reducer function takes some text (initially an empty string) and a function (taking a bindings argument), and returns of appending the function result to the text.
-
-The result is that we "thread" the outer `bindings` variable through the inner function and concatenate the results.
-
-So essentially this boils down to:
-
-....
-"" + `<div id="card_c_test_1" data-card="c_test_1" class="card">Hello from the first chapter.</div>`
-....
-
-And, hence, to our output.
-
-To see why it works this way, let's look at a dynamic template using a template expression:
-
-....
-@card c_test_2 {
-  chapter: "second"
-  content: ```
-    Hello from the ${card.chapter} chapter.
-  ```
-}
-....
-
-This template breaks down into three chunks:
-
-* "Hello from the "
-* `${card.chapter}`
-* " chapter."
-
-The first and last chunk are simple strings, like our previous example. But the middle chunk is a template expression that must be generated, using some Javascript, when the card is being rendered. At that time the value of `card.chapter` is `"second"` so the template is  equivalent to an expression like:
-
-....
-"Hello from the " + "second" + " chapter."
-....
-
-Let's look at the rendering function generated for this template:
-
-....
-function(bindings) {
-  return [
-    function(bindings) {
-      return `<div id="card_c_test_2" data-card="c_test_2" class="card">Hello from the `;
-    },
-    function(bindings) {
-      return (function(bindings) {
-        return bindings.card.chapter;
-      })(bindings);
-    },
-    function(bindings) {
-      return ` chapter.</div>`;
-    }
-  ].reduce(
-    function(text, f) {
-      return text + f(bindings)
-    }, ""
-  );
-},
-....
-
-It's more complicated but follows the same exact pattern, running `reduce()` over an array, that now contains three inner functions. These functions return the following content respectively:
-
-....
-`<div id="card_c_test_2" data-card="c_test_2" class="card">Hello from the `
-`second`
-` chapter.</div>`
-....
-
-That is concatenated to present the user with "Hello from the second chapter."
-
-But how is "second" getting from the `chapter:` attribute of the card into the second inner function. It happens through the `bindings` argument that we are threading through the outer rendering function to those inner functions. Let's look at the second inner function:
-
-....
-function(bindings) {
-  return (function(bindings) {
-    return bindings.card.chapter;
-  })(bindings);
-}
-....
-
-If we strip away the mechanism here the core part is:
-
-....
-return bindings.card.chapter;
-....
-
-This is what the template expression `${card.chapter}` boils down to.
-
-This inner function is using it's `bindings` argument to look up `card.chapter`. `card` is an example of a default binding that Rez makes. Whenever a `@card` is rendering it binds `card` to the `RezCard` object representing that card. In this case the object that defines the `chapter` property, containing the string `"second"`. Rez also automatically binds `scene` to the current `RezScene` and `game` to the `RezGame` instance. So you can always use expressions involving `card`, `scene`, or `game` bindings without needing to bind anything yourself.
-
-But, by itself, the rendering system knows nothing about your game world and the elements you have populated it with. For example, you may have an `@actor` element with id `#player` that has a `name:` attribute, but the renderer doesn't know about that. In order to use an expression like:
-
-....
-${player.name}
-....
-
-We have to teach Rez how to point `player` at the right object. That's where bindings and the `bindings:` attribute come in. They bind a variable name that you can use in a template to the Javascript object containing the values you want to refer to. To make the expression above work we'd use:
-
-....
-@card c_player_name {
+@card choose_class {
   bindings: [player: #player]
   content: ```
-  Your name is ${player.name} and a very fine name it is too!
+  <p>Hello, ${player.name}! Choose your class:</p>
+  <ul>
+    <li><a event="choose_warrior">Warrior (Strong and tough)</a></li>
+    <li><a event="choose_mage">Mage (Wise and magical)</a></li>
+    <li><a event="choose_thief">Thief (Quick and sneaky)</a></li>
+  </ul>
   ```
+  on_choose_warrior: (card) => {
+    player.class = "warrior";
+    player.strength = 15;
+    player.sneak = 5;
+    player.magic = 5;
+    return RezEvent.playCard("creation_complete");
+  }
+  on_choose_mage: (card) => {
+    player.class = "mage";
+    player.strength = 5;
+    player.sneak = 5;
+    player.magic = 15;
+    return RezEvent.playCard("creation_complete");
+  }
+  on_choose_thief: (card) => {
+    player.class = "thief";
+    player.strength = 5;
+    player.sneak = 15;
+    player.magic = 5;
+    return RezEvent.playCard("creation_complete");
+  }
+}
+
+@card creation_complete {
+  bindings: [player: #player]
+  content: ```
+  <h3>Character Created!</h3>
+  <p><strong>Name:</strong> ${player.name}</p>
+  <p><strong>Class:</strong> ${player.class}</p>
+  <p><strong>Strength:</strong> ${player.strength}</p>
+  <p><strong>Magic:</strong> ${player.magic}</p>
+  <p><button scene="game_start">Begin Adventure!</button></p>
+  ```
+}
+
+@actor player {
+  $global: true
+  name: ""
+  class: ""
+  strength: 5
+  magic: 5
+  sneak: 5
 }
 ....
 
-This is an example of an 'element binding'.
+This example demonstrates:
 
-==== Element Bindings
+* Multiple cards working together
+* Form input with `rez-bind`
+* Event handlers that modify game state
+* Dynamic content based on character attributes
+* Navigation between cards and scenes
 
-The simplest form of binding is to bind a variable name to the game object representing an element. In the example above we're looking for the `name:` attribute of some element with the id `#player`. We can make this work by binding the `player` variable as follows:
+== Part 3: Building Interactive Content
 
-....
-bindings: [player: #player]
-....
+=== Advanced Templating
 
-Here we're teaching Rez to make a binding to the Javascript reference (`player`) representing the given element id (`#player`). With this binding in place we can refer to `player` in our templates.
+Rez templates support more than just simple variable substitution. You can create dynamic content that responds to game state, user choices, and changing conditions.
 
-==== Function Bindings
+==== Conditional Content
 
-Sometimes we want to be able to refer to something that isn't an element with a a _fixed_ id. Two common reasons are:
-
-* we want to refer to a dynamic value
-* we want to refer to a dynamically choosen element (i.e. we don't know the id at authoring time)
-* we want to refer to something that doesn't have an id, such as a collection of objects
-
-For these situations we have function bindings. Here we bind a variable name to the return value of a function written inline in the bindings. Here are some examples:
+Use `$if()` expressions to show content based on conditions:
 
 ....
-bindings: [
-  random_number: () => {return Math.rand_int(10)}
-  weapon: () => {return game.get_weapon($player.favourite_weapon_id);}
-  exits: () => {return $player.location.exits(true);}
-]
-....
-
-In each case the variable will be bound to the return value of the function.
-
-Note that these bindings are re-created each time the template is rendered so while `weapon` and `exits` might have the same values, `random` is going to have a different value each time.
-
-==== Attribute Bindings
-
-Attribute bindings are a convenience when you want to refer to a specific element attribute.
-
-....
-bindings: [
-  name: &player.name
-]
-....
-
-==== Path Bindings
-
-A path binding is used to refer an object by a key-path from the $block object. This is mainly useful when implement cards intended to be used as bound blocks, that want to refer to their parent card context.
-
-....
-bindings: [
-  exits: `$parent_block.source.exits
-]
-....
-
-All path-references implictly begin with the `$block` variable (that refers to the card currently being rendered). So `$parent_block` refers to the `$parent_block` attribute of the current `$block`.
-
-Using a path binding we can get to the parent card which may be one of many cards (why we can't use an element reference) and its attributes.
-
-==== Sharp Edges
-
-Path bindings are often used to get at the internal mechanics (parent blocks, sources and so on) which are already a little complicated.
-
-Note that unlike previous versions it is now possible to make bindings that refer to previous bindings, so:
-
-....
-bindings: [
-  player: #player
-  name: player.name
-]
-....
-
-Is legal, however you can only refer to *previous* bindings made in the same bindings block.
-
-=== Stack Layout, Flipped Cards, and Blocks
-
-By default a `@scene` specifies a `layout_mode:` of `:single` which means that the scene renders a single 'main' `@card` as its content. When a new card is played into the scene it replaces the previous card and the view gets re-rendered.
-
-However, there are times when when you might want to render more than one card into a scene. For example a dialogue scene might represent a number of interactions back and forth between characters with the player able to specify a response. In these, and similar examples, you don't want the "history" of the scene to disappear.
-
-To achieve this a `@scene` can specify `layout_mode: :stack` to use the `RezStackLayout`. When using the stack layout, playing new cards into the scene do not replace the exist card but are appended or pre-pended to the list of previous cards (based on the `layout_reverse:` attribute).
-
-When the `RezStackLayout` renders, it renders the list of cards played into the scene (separated by any content in the `layout_separator:` attribute).
-
-However, in fact, an author probably doesn't actually want to re-render previous cards. A card that presented a set of dialogue choices doesn't make sense when the player has already made their choice. It would make more sense to render a version of the card representing the choice the player has made.
-
-This is why cards support a `flipped_content:` attribute. When a new card is played into a scene with a stack layout the previous card gets 'flipped' and renders the `flipped_content:` template rather than the `content:` template.
-
-But what happens if we play the same card multiple times? How does it know which is flipped and which is 'face up'. What happens if an event wants to store data in the card? To answer these questions we need to go a little deeper.
-
-The rendering process doesn't directly render `@card`s, `@scene`s, or `@game`'s. Rendering is done via an object whose prototype is `RezBlock`. `RezSingleLayout` and `RezStackLayout` both have `RezBlock` as their prototype. For each `@card` that is being rendered there is an instance of `RezBlock`.
-
-A `RezBlock` handles generating HTML to output to the view by calling executing it's template with appropriate bindings. Where appropriate a block also has a `parent_block` reference that allows walking back up the content tree. (See the example above related to bindings).
-
-So when a `RezCard` is added to a `RezStackLayout` it's actually the card wrapped in an instance of `RezBlock`. The same card can get added to the layout many times, it's always the same card, but different block instances.
-
-What this means is that when a card is being flipped it's actually the block that tracks flipped status and decided whether to render its cards `content:` or `flipped_content:` template.
-
-Further it means that when an event wants to track how this changes the cards content it can store those changes in the block.
-
-....
-@card next_move {
+@card tavern {
+  bindings: [player: #hero]
   content: ```
-  <a href="javascript:void(0)" data-event="shoot">Take a shot</a> or <a href="javascript:void(0) data-event="flee">Flee</a>.
-  ```
+  <h3>The Rusty Dragon Tavern</h3>
 
-  flipped_content: ```
-  $if($block.action == "shoot") {%
-    You shoot and ${block.hit | alt: "hit", "miss"}.
-  %}, {%
-    You run for it.
+  $if(player.gold >= 10) -> {%
+    <p>You have enough gold for a meal and room.</p>
+    <button event="buy_room">Rent a room (10 gold)</button>
+  %}
+  () -> {%
+    <p>You're too poor to afford a room here.</p>
+    <button event="work_for_gold">Offer to work for gold</button>
+  %}
+
+  $if(player.level >= 5) -> {%
+    <p>The bartender nods respectfully at such an experienced adventurer.</p>
   %}
   ```
-
-  on_shoot: (card, evt) => {
-    card.current_block.action = "shoot";
-    card.current_block.hit = $player.hits_with_primary_weapon();
-    return {
-      card: "next_move"
-    };
-  }
-
-  on_flee: (card, evt) => {
-    card.current_block.action = "flee";
-    return {
-      card: "run_away"
-    };
-  }
 }
 ....
 
-The first time the `next_move` card is added to a scene it displays the options to shoot or flee. There are two event cards which set the choosen route into the block and in the case of shooting what the result was.
-
-When the card is re-rendered the `flipped_content:` template is rendered which uses the block properties `action` and `hit` to decide what should get rendered.
-
-=== Creating Your Own Elements
-
-Rez has a number of built-in elements but you can easily create your own using the `@elem` directive.
+You can chain conditions:
 ....
-@elem npc = actor
-....
-
-This declaration allows you to create new actors using `@npc`, e.g.
-....
-@npc philip_marlowe {
-}
+$if(player.health <= 0) -> {%
+  <p>You have died!</p>
+%}
+(player.health < 20) -> {%
+  <p>You are badly wounded.</p>
+%}
+() -> {%
+  <p>You feel healthy and strong.</p>
+%}
 ....
 
-Which, on its own, wouldn't be very interesting. However we can also use the `@defaults` directive to customise new `@npc` elements.
-....
-@defaults npc {
-  %% define custom NPC attributes here
-}
-....
+==== Iterating Over Collections
 
-Also an alias can specify any number of `@mixin`s to include.
-....
-@elem npc = actor<speaks>
-....
-
-Automatically includes the `speaks` mixin into any `@npc` element.
-
-=== HTML Structure
-
-When the game layout gets rendered its content is embedded inside a built-in template:
+Use `$foreach()` to loop through lists or arrays:
 
 ....
-<div class="game">
-    ...game layout...
-</div>
-....
-
-You can target the whole game content using the `game` CSS class.
-
-The game `layout` is a good place to put fixed parts of the interface, for example titles, score, current time or location, and so on. The game layout is expected to contain the template expression `${content}` which will include the contents of the current scene.
-
-When the current scene gets rendered its content is embedded into a different template:
-
-....
-<div id="scene_<scene-id>" data-scene="<scene-id>" class="scene">
-  ...scene content...
-</div>
-....
-
-In the same was as the game, the scene `layout` is expected to contain the template expression `${content}` which will include the contents of the current card or (in stack mode) cards. You can style scenes by targetting the `scene` CSS class or customise styles for particular scenes by targetting the DOM id. In our example game that would be `scene_play_the_game`.
-
-When a card gets rendered its `content` template is embedded within the following template:
-
-....
-<div id="card_<card-id>" data-card="<card-id>" class="card <card-type>">
-   ...card content...
-</div>
-....
-
-One thing to note is that the `scene_id` may not be what you expect. If the current scene was set to `#explore_office` you might expect that the rendered HTML would contain this id. However Rez treats your @scene and @card elements as a template and uses a copy when rendering a scene.
-
-=== Block Content
-
-Block content comes from cards that are being rendered inside another card. For example you might have a card `#sidebar` that we want to use to render sidebar content that should always be visible.
-
-In this case we would add it to (for example) the scenes `blocks:` attribute. To include it within the scene layout you would use the template expression `${sidebar}`.
-
-=== Scene Layout Mode
-
-A `@scene` has a required attribute `layout_mode:` which can, as of v0.11, have two values:
-
-* `:single`
-* `:stack`
-
-In `:single` mode the `${content}` substitution embeds the content of the current card in the scene. When the card changes the content will change to match it. The effect is that the scene will jump from card to card.
-
-In `:stack` mode the `${content}` substitution embeds the content of every card that has been played into the scene so far. Rather than jumping from card to card the cards will accumulate.
-
-However, as a new card is played the previous card gets "flipped". What that means is that instead of rendering the `content` attribute it renders the `flipped_content` attribute.
-
-For example a card might present the player with two options. If the card didn't get flipped it would continue to present two options even though an option had been selected. But the flipped version can, instead, display the chosen option.
-
-== Linking to cards, scenes & events
-
-=== Playing a card
-
-When we play a card into the current scene we are either replacing (scene `layout_mode: :single`) or adding (scene `layout_mode: :stack`) to the content in the scene.
-
-....
-<a href="javascript:void(0)" data-event="card" data-target="play_game">Play Again</a>
-....
-
-This will create a link titled "Play Again" that plays the card with id `#play_game`.
-
-=== Switching to another scene
-
-A scene switch is when we end one scene and begin another, automatically playing its initial card.
-
-....
-<a href="javascript:void(0)" data-event="switch" data-target="fight">Draw your gun</a>
-....
-
-This will create a link titled "Draw your gun" that will end the current scene and begin the scene `#fight`.
-
-=== Creating an interlude
-
-An interlude is when we interrupt one scene to play out another, and when that scene ends returning to the original scene.
-
-....
-<a href="javascript:void(0)" data-event="interlude" data-target="store">Shop at the store</a>
-....
-
-This will create a link "Shop at the store" that interrupts the current scene and starts the scene `#store`. This should be followed by a resume to return to the original scene.
-
-An example of where this kind of link is useful is for presenting a player inventory. Looking at the inventory steps out of normal gameplay. When the player is done with the inventory they expect to be back where they were before they triggered it.
-
-It is possible to have an interlude within an interlude but may get confusing if taken too far.
-
-=== Resuming the previous scene
-
-From an interlude we can resume the previous scene using a resume link.
-
-....
-<a data-event="resume">Leave the store</a>
-....
-
-This will end the interluded scene and resume the previous scene where it left off.
-
-There may be situations where you only want links to appear under specific circumstances. You could do this a template expression but Rez has a built-in facility for dynamic links. Using the syntax:
-
-=== Triggering events
-
-A link can trigger a custom event.
-
-....
-<a data-event="reload">Reload gat</a>
-....
-
-This will create a link titled "Reload gat" that when clicked will run an event `on_reload` on the game, scene, or card (in that order).
-
-Once the event handler has done its work it should return a response object.
-
-=== Passing data
-
-Any of the previous types of link can be amended to pass arbitrary data values. For example we might have a dialogue scene and want to control which actor the player is going to have a dialog with:
-
-....
-<ul>
-  <li><a data-event="switch" data-target="conversation" data-actor_id="gutman">Speak with Gutman</a></li>
-  <li><a data-event="switch" data-target="conversation" data-actor_id="wilmer">Speak with Wilmer</a></li>
-</ul>
-....
-
-When either link is clicked it will start the new scene `#conversation` and that scene will have it's `actor_id` attribute set to either `#gutman` or `#wilmer` based on which of the links is clicked. This offers a great deal of ability to customise the behaviour of cards and scenes.
-
-=== Event Reponse Objects
-
-Return an object from an event handler to determine what happens next. Some object types can be combined (e.g. the `flash` message combines with most of the other choices)
-
-....
-{scene: "scene_id"}
-....
-
-To start a new scene.
-
-....
-{card: "card_id"}
-....
-
-To play a new card into the current scene.
-
-....
-{flash: "message"}
-....
-
-To set a flash message.
-
-....
-{render: true}
-....
-
-To have the current view re-rendered.
-
-....
-{error: "message"}
-....
-
-To log an error message to the console.
-
-=== Buttons
-
-An alternative to using a link is to use a `<button>` with a `data-event` attribute. For example a button to play a new card would look like:
-
-....
-<button data-event="card" data-target="new_card_id" class="button">Load Card</button>
-....
-
-By specifying `data-event="card"` we tell the button it's loading a new card and the `data-target` attribute specifies which card to load. We can use a similar approach to load new scene:
-
-....
-<button data-event="switch" data-target="new_scene_id" class="button">Switch Scene</button>
-....
-
-Here `data-target` specifies the id of the scene to switch to. Use `data-event="interlude"` for an interluded scene, rather than a scene switch.
-
-Where you want to run a custom event handler, `on_something_interesting`, use specify the event name directly in the `data-event` attribute:
-
-....
-<button data-event="something_interesting" data-custom-value="..." class="button">Something Interesting!</button>
-....
-
-You would pair this with an event handler as follows
-
-....
-on_something_interesting: (card, evt) => {
-  const custom_data = evt.target.dataset.custom_value;
-  // Interesting processing happens here
-  // then...
-  // what should happen next?
-  return {
-    render: true
-  }
-}
-....
-
-In this example the handler is in a card but you can also put in the scene or game as appropriate.
-
-=== Dynamic Links
-
-Sometimes you want a link to be disabled based on dynamic criteria (the bar doesn't open until 8am) or maybe not even to appear at all (the portal entrance isn't visible if you're not wearing your x-ray specs).
-
-To make a dynamic link use the `dyn_link` template expression filter. Here's an example:
-
-....
-@card {
+@card inventory {
+  bindings: [
+    player: #hero,
+    items: () => $("hero").inventory.items
+  ]
   content: ```
-  ${card | dyn_link: "rest"}
-  ```
+  <h3>Your Inventory</h3>
 
-  on_rest: function(dyn_link) {
-    if($player.is_fully_rested) {
-      dyn_link.deny("You are already rested");
-    } else {
-      dyn_link.allow("Rest", "player_rests");
-    }
-  }
+  $if(items.length > 0) {%
+    <ul>
+    $foreach(item: items) {%
+      <li>${item.name} - ${item.description}</li>
+    %}
+    </ul>
+  %}, {%
+    <p>Your inventory is empty.</p>
+  %}
+  ```
 }
 ....
 
-In this case, if the player is already rested they are shown a disabled option. In some cases it might be preferable to use `dyn_link.hide()` so that no choice is offered at all.
-
-The event handler is passed a RezDynamicLink object that it can use to customise link presentation.
-
-== Forms
-
-An HTML interface will often use form controls to allow the player to input or interact with data. A simple example would be using an <input> to accept a characters name. Rez offers a number of ways to support using forms.
-
-=== Binding form elements
-
-For data capture the simplest approach is to bind an HTML form input element to an attribute value using the `rez-bind` attribute.
-
-==== textfields and textareas
-
-To bind an `input` with `type='text'` or a `textarea`:
-
+With separators between items:
 ....
-<input type="text" rez-bind="player.name">
-<textarea rez-bind="player.description">
+$foreach(skill: player.skills) {%
+  ${skill.name}: Level ${skill.level}
+%}, {%
+  <br>
+%}
 ....
 
-This sets up a two-way binding between the content of the `<input>` and the `player.name` and `player.description` attributes respectively. For example, whatever is entered into the name form input will be set directly on the `player.name` attribute. Equally assigning to the attribute `$("player").name = "..."` will update the input field.
+==== Advanced Bindings
 
-==== checkboxes
+Bindings make data available to your templates. You can create different types of bindings:
 
-You can bind a checkbox input to a boolean attributes.
-
+**Element Bindings** - Reference game objects:
 ....
-<input type="checkbox" rez-bind="player.isOver18">
-....
-
-==== radios
-
-You can bind a set of radio buttons to an attribute.
-
-....
-<input type="radio" name="class" value="detective" rez-bind="player.class">
-<input type="radio" name="class" value="hood">
-<input type="radio" name="class" value="dame">
+bindings: [
+  player: #main_character,
+  location: #current_room,
+  villain: #dark_lord
+]
 ....
 
-Note that radios with the same `name` attribute will form a group and you only need to bind the first radio in the group.
-
-==== select drop-downs
-
-You can bind a `<select>` to an attribute:
-
+**Function Bindings** - Calculate values dynamically:
 ....
-<select rez-bind="player.gender">
-  <option value="m">Male</option>
-  <option value="f">Female</option>
+bindings: [
+  total_score: () => {return player.experience + player.gold},
+  random_event: () => {return Math.random() < 0.3},
+  available_exits: () => {return current_location.getExits()}
+]
+....
+
+**Attribute Bindings** - Direct access to specific attributes:
+....
+bindings: [
+  player_name: &player.name,
+  current_health: &player.health
+]
+....
+
+=== Forms and User Input
+
+Rez makes it easy to capture user input through HTML forms with two-way data binding.
+
+==== Text Input
+
+Bind text inputs directly to object attributes:
+....
+@card character_setup {
+  bindings: [player: #player]
+  content: ```
+  <h3>Character Setup</h3>
+
+  <label>Character Name:</label>
+  <input type="text" rez-bind="player.name" placeholder="Enter your name">
+
+  <label>Background Story:</label>
+  <textarea rez-bind="player.background" rows="4"></textarea>
+
+  <button card="choose_stats">Continue</button>
+  ```
+}
+....
+
+==== Checkboxes and Choices
+
+Use checkboxes for boolean values:
+....
+@card preferences {
+  bindings: [settings: #game_settings]
+  content: ```
+  <h3>Game Preferences</h3>
+
+  <label>
+    <input type="checkbox" rez-bind="settings.sound_enabled">
+    Enable Sound Effects
+  </label>
+
+  <label>
+    <input type="checkbox" rez-bind="settings.difficulty_hard">
+    Hard Difficulty Mode
+  </label>
+  ```
+}
+....
+
+Radio buttons for exclusive choices:
+....
+<h4>Choose your weapon:</h4>
+<label>
+  <input type="radio" name="weapon" value="sword" rez-bind="player.starting_weapon">
+  Sword (+3 Attack)
+</label>
+<label>
+  <input type="radio" name="weapon" value="bow" rez-bind="player.starting_weapon">
+  Bow (+2 Attack, +1 Range)
+</label>
+<label>
+  <input type="radio" name="weapon" value="staff" rez-bind="player.starting_weapon">
+  Staff (+1 Attack, +2 Magic)
+</label>
+....
+
+==== Select Dropdowns
+
+For choosing from many options:
+....
+<label>Starting Location:</label>
+<select rez-bind="player.hometown">
+  <option value="village">Peaceful Village</option>
+  <option value="city">Bustling City</option>
+  <option value="forest">Forest Dwelling</option>
+  <option value="mountain">Mountain Keep</option>
 </select>
 ....
 
-=== Adding events to inputs and forms
+==== Event-Driven Forms
 
-For more complex interactions use the `rez-live` attribute to generate events.
-
+Use `rez-live` to trigger events when form values change:
 ....
-<input name="name" rez-live >
-....
+@card dynamic_stats {
+  content: ```
+  <h3>Allocate Stat Points</h3>
+  <p>Points remaining: ${card.points_remaining}</p>
 
-When the user changes the value of the field this will generate an `on_input` event on the corresponding `RezCard` object, passing the generated event as a parameter.
+  <label>Strength:
+    <input type="range" min="1" max="20" rez-bind="player.strength" rez-live>
+  </label>
 
-....
-<form name="my_form" rez-live>...</form>
-....
+  <label>Intelligence:
+    <input type="range" min="1" max="20" rez-bind="player.intelligence" rez-live>
+  </label>
+  ```
 
-Will generate an `on_my_form` event to the form. The handlers in either case should return as any other event handler. In the case of submit it is probably to load a new card or scene.
+  points_remaining: 20
 
-== Assets
-
-Assets are files that you want to include in your game for example images, audio files or movies. Rez handles copying these into your game distribution folder and generating appropriate references.
-
-You declare an asset with an `@asset` element:
-
-....
-@asset pistol_image {
-  file: "pistol_image_01.png"
-  width: 60
-  height: 60
+  on_input: (card, event) => {
+    const total = player.strength + player.intelligence;
+    card.points_remaining = 20 - total;
+    return RezEvent.render();
+  }
 }
 ....
 
-Rez handles finding the asset file and making it available in the dist folder. Now if you want to include it you have two options, both using template expressions.
+=== Assets and Media
 
+Add images, audio, and other media to your games using the asset system.
+
+==== Defining Assets
+
+Create asset elements to register your media files:
 ....
-${"pistol_image" | asset_tag}
-....
+@asset hero_portrait {
+  file: "characters/hero.png"
+  width: 150
+  height: 200
+}
 
-Because the asset is an image this will generate an `<img />` tag that points to the image file relative to the game file.
+@asset background_music {
+  file: "audio/tavern_theme.mp3"
+}
 
-As of v0.11 only image files are supported but sound & movie support will be included soon.
-
-The second approach is to generate a path and build your own tag:
-
-....
-<img src='${"pistol_image" | asset_path}' />
-....
-
-This will work for audio & movie assets.
-
-== Template Expressions
-
-Template expressions are how you include dynamic content in your game user interface. They work in `@game` & `@scene` `layout` attributes and in a `@card`s `content` and `flipped_content` template attributes.
-
-Template Expressions are loosely based on the https://shopify.github.io/liquid/[Liquid] markup system. But it's worth noting that they are _not_ actually Liquid and you should always refer to this documentation not the Liquid docs.
-
-There are three kinds of template expression.
-
-=== Subsitution Expressions
-
-A substitution is where we replace a token like `${player.name}` in a template with the value of the expression. For example:
-
-....
-content: ```Your name is ${player.name}. It is a good name.```
+@asset treasure_sound {
+  file: "audio/treasure_found.wav"
+}
 ....
 
-If the `player` objects `name` attribute is "matt" this will return:
+==== Using Images
 
+Display images in your content:
 ....
-Your name is matt. It is a good name.
-....
-
-Note that the an expression is only a lookup. You cannot use arbitrary JS expressions, so:
-
-....
-content: ```Your name is ${player.name + "!"}```
-....
-
-Will not work. If you want to modify the value you must use a filter expression (see below) to do so. In this case it would be:
-
-....
-content: ```Your name is ${player.name | append: "!"}```
-....
-
-Where does this `player` reference come from? Good question, this is an example of a binding. You've already seen bindings at work with `${content}` and `${sidebar}`. `content` is an example of a binding that Rez automatically makes available but you can add your own to refer to any objects you like.
-
-....
-bindings: [
-  player: #player
-]
-content: ```Your name is ${player.name}```
-....
-
-Here we are binding the Javascript variable `player` to an element with id `player` (which we might assume is an `@actor` element defining the player character). For example:
-
-....
-bindings: [
-  player: ^{$("player")}
-]
-....
-
-is an equivalent way of creating the same binding. If we didn't know the object we wanted to bind to in advance we can use a dynamic binding with a function.
-
-....
-bindings: [
-  actor: ^{$("npc_list").randomElement()}
-]
-....
-
-But you don't have to make bindings only to elements, you can bind to any Javascript value:
-
-....
-bindings: [
-  coins: ^{Math.clrand_int(25)}
-]
-content: ```
-You found ${coins} coins on the floor and put them in your pocket.
-```
-....
-
-=== Default Bindings
-
-In the context of a template there are usually default bindings:
-
-* `$block` - the current rendering block, the element it represents is usually in its `source` property
-* `card` - the `RezCard` of the card being rendered
-* `scene` - the `RezScene` of the scene being rendered
-* `game` - the `RezGame` instance
-
-==== Substitution Filters
-
-If all we could do was return the attribute values of functions then expressions wouldn't be very useful. Filters, inspired by Liquid, let us manipulate values into the content we want to display.
-
-For example, let's say we wanted to capitalize the players name:
-
-....
-content: ```Your name is ${player.name | capitalize}. It is a good name.```
-....
-
-Would render as:
-
-....
-Your name is Matt. It is a good name.
-....
-
-When using a filter you put a pipe symbol `|` followed by the filter expression which is sometimes just the name of the filter (See the xref:filter_catalog.adoc[Filter Catalog] for a complete list of built-in filters) but can also include parameters.
-
-....
-content: ```The item has the inscription "${item.inscription | trunc: 40}"```
-....
-
-This is an example of a filter that takes parameters. They are separated from the filter name by a colon `:` and if there is more than one parameter separate them with a comma.
-
-You can also have multiple filters, separating each with a `|`. For example:
-
-....
-content: ```The book belongs to ${actor.name | prepend: actor.title}.```
-....
-
-might render as:
-
-....
-The book belongs to Mr Sam Spade.
-....
-
-=== Conditional Templates
-
-The third type of template expression is the conditional template. This allows content to be dynamically included based on an expression. The format of a conditional template is:
-
-....
-$if(expression) {%
-  ...true path template content...
-%}
-....
-
-or
-
-....
-$if(expression) {%
-  ...true path template content...
-%}, {%
-  ...false path template content...
-%}
-....
-
-In the game example above we used:
-
-....
-$if(scene.played > 0) {%...%}
-....
-
-To determine whether to show the won/lost percentage template content. You can nest conditional templates inside other conditional templates.
-
-=== Iteration Templates
-
-The fourth type of template expression is an iterator template. This allows content to be created from a list of values (In Javascript terms, anything that could be an treated as an array). The format of an iterator template is:
-
-....
-$foreach(x: list) {%
-  <div id="${x.id}">${x.title}</div>
-%}
-....
-
-This will iterate over the binding `list` and run the template expression once for each element of `list` binding `x` to that element.
-
-....
-$foreach(x: list) {%
-  <div id="${x.id}">${x.title}</div>
-%}, {%
-  <hr />
-%}
-....
-
-This alternate form accepts an optional second template expression. This expression will be rendered between each rendering of the content expression.
-
-Note that the list binding should either be an object in the `bindings` or a property of an object in `bindings`. You cannot use arbitrary expressions. If you need to use an arbitrary expression use a function binding, so instead of:
-
-....
-content: ```
-$foreach(x: a.b.map((el) => somefun(el))) {%
-  <div id="${x.id}">${x.title}</div>
-%}
-```
-....
-
-you would write:
-
-....
-bindings: [
-  list: ^{a.b.map((el) => somefun(el))}
-]
-content: ```
-$foreach(x: list) {%
-  <div id="${x.id}">${x.title}</div>
-%}
-```
-....
-
-=== Partial Templates
-
-A fairly common requirement when building dynamic interfaces is to want to render one card within another. For simple cases you can use the `blocks:` attribtue on `@game`, `@scene`, or `@card` to render a named card as a block.
-
-However there are two areas where this approach does not work:
-
-* you don't know the name of the card to render at author time
-* you want to render the same card multiple times and get a different output
-
-The latter is the `$foreach` case.
-
-Solving these two problems are what the `$partial` expression is for.
-
-=== Do Blocks
-
-To setup attributes for rendering you can run code in an event handler. For example a `@card` can have an `on_start` hander:
-
-....
-@card test_card {
+@card character_sheet {
   content: ```
-  $if(card.show_section) {%
-    stuff goes here
-  %}
+  <h3>Character Information</h3>
+  <div class="character-display">
+    <.img name="hero_portrait" class="character-image" />
+    <div class="character-stats">
+      <p><strong>Name:</strong> ${player.name}</p>
+      <p><strong>Level:</strong> ${player.level}</p>
+    </div>
+  </div>
   ```
+}
+....
+
+Or build your own image tags:
+....
+<img src='${"hero_portrait" | asset_path}' alt="Hero Portrait" class="portrait">
+....
+
+==== Dynamic Assets
+
+Choose different assets based on game state:
+....
+@card location_view {
+  bindings: [
+    location_image: () => {
+      if (player.location === "forest") return "forest_scene";
+      if (player.location === "dungeon") return "dungeon_scene";
+      return "default_scene";
+    }
+  ]
+  content: ```
+  <div class="location-display">
+    <img src='${location_image | asset_path}' alt="Current Location">
+    <p>${location.description}</p>
+  </div>
+  ```
+}
+....
+
+==== Audio Integration
+
+While audio isn't fully integrated yet, you can add it manually:
+....
+@card victory {
+  content: ```
+  <h2>Victory!</h2>
+  <p>You have defeated the dragon and claimed the treasure!</p>
+  <audio autoplay>
+    <source src='${"victory_music" | asset_path}' type="audio/mpeg">
+  </audio>
+  ```
+}
+....
+
+=== Building a Complete Interactive Scene
+
+Let's create a combat system that demonstrates advanced templating and dynamic content:
+
+....
+@scene combat {
+  initial_card_id: #combat_start
+  enemy_id: #goblin
+  bindings: [
+    player: #player
+    enemy: scene.enemy
+  ]
+  layout: ```
+  <div class="combat-scene">
+    <h2>Combat!</h2>
+    ${content}
+  </div>
+  ```
+}
+
+@card combat_start {
+  content: ```
+  <div class="combat-status">
+    <div class="combatant">
+      <h4>${player.name}</h4>
+      <div class="health-bar">
+        <div class="health-fill" style="width: ${player.health_perc}%"></div>
+      </div>
+      <p>Health: ${player.health}/${player.max_health}</p>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="combatant">
+      <h4>${enemy.name}</h4>
+      <div class="health-bar">
+        <div class="health-fill" style="width: ${enemy.health_perc}%"></div>
+      </div>
+      <p>Health: ${enemy.health}/${enemy.max_health}</p>
+    </div>
+  </div>
+
+  <div class="combat-actions">
+    <h4>Choose your action:</h4>
+    <button event="attack">Attack (${player.attack_power} damage)</button>
+    <button event="defend">Defend (+${player.defense_bonus} defense)</button>
+    $if(player.mana >= 10) {%
+      <button event="cast_spell">Cast Fireball (10 mana)</button>
+    %}
+    <button event="try_flee">Attempt to Flee</button>
+  </div>
+  ```
+
+  on_attack: (card) => {
+    const enemy = card.scene.enemy;
+
+    const damage = Math.max(1, $player.attack_power - enemy.defense);
+    enemy.health -= damage;
+
+    if (enemy.health <= 0) {
+      return RezEvent.playCard("victory");
+    } else {
+      return RezEvent.playCard("enemy_turn").flash(`You deal ${damage} damage!`);
+    }
+  }
+
+  on_defend: (card) => {
+    $player.temp_defense = $player.defense_bonus;
+    return RezEvent.playCard("enemy_turn").flash("You prepare to defend!");
+  }
+
+  on_cast_spell: (card) => {
+    const enemy = card.scene.enemy;
+
+    $player.mana -= 10;
+    const damage = 15;
+    enemy.health -= damage;
+
+    if(enemy.health <= 0) {
+      return RezEvent.playCard("victory");
+    } else {
+      return RezEvent.playCard("enemy_turn").flash(`Your fireball deals ${damage} damage!`);
+    }
+  }
+
+  on_try_flee: (card) => {
+    const flee_ability = 0.5 * (($player.sneak - 7.5) / 7.5);
+    const flee_chance = 0.5 + flee_ability;
+    if (Math.random() < flee_chance) {
+      return RezEvent.switchScene("overworld").flash("You successfully escape!");
+    } else {
+      $player.temp_defence = -5;
+      return RezEvent.playCard("enemy_turn").flash("You couldn't escape!");
+    }
+  }
+}
+
+@card enemy_turn {
+  content: ```
+  <p>${enemy.name} attacks!</p>
+  <button event="continue">Continue</button>
+  ```
+
+  on_continue: (card) => {
+    const enemy = card.scene.enemy;
+
+    const damage = Math.max(1, enemy.attack_power - ($player.defense + ($player.temp_defense || 0)));
+    player.health -= damage;
+    player.temp_defense = 0; // Reset temporary defense
+
+    if (player.health <= 0) {
+      return RezEvent.playCard("defeat");
+    } else {
+      return RezEvent.playCard("combat_start").flash(`${enemy.name} deals ${damage} damage to you!`);
+    }
+  }
+}
+
+@card victory {
+  content: ```
+  <h3>Victory!</h3>
+  <p>You have defeated the ${enemy.name}!</p>
+  <p>You gain ${enemy.experience_reward} experience and ${enemy.gold_reward} gold.</p>
+  <button scene="overworld">Continue your adventure</button>
+  ```
+
   on_start: (card) => {
-    card.show_section = Math.random() < 0.5;
+    const enemy = card.scene.enemy;
+    player.experience += enemy.experience_reward;
+    player.gold += enemy.gold_reward;
   }
 }
-....
 
-However in many cases it might be easier to use a "do block" inline in the template:
-
-....
-@card test_card {
-  content: ```
-  $do{
-    $card.show_section = Math.random() < 0.5;
+@actor player {
+  $global: true
+  name: "Hero"
+  health: 100
+  max_health: 100
+  health_perc: ^p{
+    return this.health * 100 / this.max_health;
   }
-  $if(card.show_section) {%
-    stuff goes here
-  %}
-  ```
+  mana: 50
+  attack_power: 15
+  defense: 5
+  defense_bonus: 3
+  experience: 0
+  gold: 0
+}
+
+@actor goblin {
+  $global: true
+  name: "Goblin"
+  health: 30
+  max_health: 30
+  health_perc: ^p{
+    return this.health * 100 / this.max_health;
+  }
+  attack_power: 8
+  defense: 2
+  experience_reward: 25
+  gold_reward: 10
 }
 ....
 
-=== User Components
+This combat system demonstrates:
 
-Sometimes it is advantageous to be able to be able to create new tags that hide some of the complexity of your HTML/CSS. That is what user components are for.
+* Dynamic health bars using CSS and template expressions
+* Conditional action availability based on resources (mana)
+* Bindings flowing down from scene to card
+* Dynamic properties
+* Event-driven gameplay with multiple outcomes
+* State management across multiple cards
+* Visual feedback through flash messages
 
-Here is a very simple example. Bulma CSS provides the `block` class that you may wish to apply to your paragraphs:
+== Part 4: Advanced Features
+
+=== Custom Elements and Mixins
+
+As your games grow more complex, you'll want to create your own element types and reusable components.
+
+==== Creating Custom Elements
+
+Use `@elem` to define new element types based on existing ones:
 
 ....
-@card c_demo {
-  content: ```
-  <p class="block">Your text goes here.</p>
-  ```
+@elem npc = actor
+
+@npc village_guard {
+  name: "Guard"
+  occupation: "Village Protector"
+  dialogue: "Halt! State your business."
 }
 ....
 
-There's nothing particularly complex about this but if you are using this everywhere it can get tedious to write every time and noisy to read. Here is a component that simplifies this situation:
+This creates a new `@npc` element type that inherits all the properties of `@actor` but can have its own defaults and behaviors.
+
+==== Adding Default Attributes
+
+Use `@defaults` to give custom elements standard attributes:
 
 ....
-@component p (bindings, assigns, content) => {
-  return `<p class="block">${content}</p>`;
+@elem monster = actor
+
+@defaults monster {
+  hostile: true
+  experience_reward: 10
+  gold_reward: 5
+  behavior_pattern: :aggressive
 }
 
-@card c_demo {
-  content: ```
-  <.p>Your text goes here</.p>
-  ```
-}
-....
-
-User components are always written in markup with a `.` in front of their name. So the component `p` becomes the tag `<.p>`.
-
-A user component is implemented by a Javascript function that receives three parameters:
-
-* bindings — all of the in-scope bindings from the `@card` being rendered
-* assigns - all of the attribute values passed to the component (in this example above there aren't any)
-* content - for container tags, the content between the open and closing tag
-
-The return value of the component is expected to be the markup the component emits.
-
-Let's look at another example. Let's say we are writing a lot of event buttons like this:
-
-....
-<button class="button is-small" data-event="reload">Reload</button>
-....
-
-The boilerplate to make a button can be a bit tiresome and it obscures the most important thing about this button, that pressing it triggers the `reload` event. Let's make a component:
-
-....
-@component evt_btn (bindings, assigns, content) => {
-  const event = assigns["event"];
-  return `<button class="button is-small" data-event="${event}">${content}</button>`;
+@monster goblin {
+  name: "Goblin Warrior"
+  health: 25
+  attack_power: 8
+  // Inherits: hostile: true, experience_reward: 10, etc.
 }
 ....
 
-Now we can write:
+==== Mixins for Shared Behavior
+
+Mixins let you share common attributes across different element types:
 
 ....
-<.evt_btn event="reload">Reload</.evt_btn>
+@mixin combat_capable {
+  health: 100
+  max_health: 100
+  attack_power: 10
+  defense: 5
+
+  take_damage: function(amount) {
+    this.health = Math.max(0, this.health - amount);
+    return this.health <= 0;
+  }
+
+  heal: function(amount) {
+    this.health = Math.min(this.max_health, this.health + amount);
+  }
+}
+
+@elem warrior = actor<combat_capable>
+@elem guardian = actor<combat_capable>
+
+@warrior player_character {
+  name: "Hero"
+  // Automatically gets all combat_capable attributes and methods
+}
 ....
 
-Because `evt_btn` is a container tag the value of the `content` argument is the string `"Reload"`. For self-closing tags the value of `content` will be `null`.
-
-The `event` attribute above is an example of a static assign but we can also pass dynamic expressions:
-
+Multiple mixins can be combined:
 ....
-<.evt_btn event={event_name}>${event_action}</.evt_btn>
-....
+@mixin magic_user {
+  mana: 50
+  max_mana: 50
+  spell_power: 12
+}
 
-In this case the expression `event_name` is going to be evaluated and that value will be passed to the assigns map under the `event` key. Any Javascript expression is permitted here and all in-scope bindings are available so:
-
-....
-<.buy_button amount={item.cost * vendor.discount}>${item.name}<.buy_button>
+@elem battle_mage = actor<combat_capable, magic_user>
 ....
 
-Is legal.
+=== Behavior Trees
 
-== Behaviour Trees
+For complex NPC AI and game logic, Rez includes a powerful behavior tree system. Behavior trees let you create sophisticated, reactive AI without writing complex JavaScript.
 
-In the realm of game development and interactive simulations it is very desirable to be able to create entities that can respond to their environment in realistic and complex ways. Rez enables authors to infuse characters and objects with dynamic behaviors using Javascript. However, as the complexity of these behaviors grows, managing them can become problematic. This is where behaviour trees come into play, offering a structured yet flexible way to design and implement AI behaviors.
+==== Basic Behavior Tree Concepts
 
-Behaviour trees are an artificial intelligence technique that revolutionized NPC behavior in video games, with their roots tracing back to landmark titles like Halo 2. Behaviour trees provide a modular, scalable, and easy-to-understand approach. They excel in managing complex decision-making processes, making them an ideal choice for developers looking to create nuanced AI behaviors without getting lost in a web of code.
+Behavior trees are composed of nodes that either succeed or fail:
 
-At the heart of behaviour trees lies the concept of breaking down behaviors into a tree of decisions, where each node in the tree represents some kind of choice or action. These choices and actions guide the entity's behavior based on conditions and events in the game world. This hierarchical structure allows for clear and logical organization of behaviors, from simple actions like moving to a location, to complex sequences of decisions such as engaging in combat or solving puzzles.
-
-The beauty of using behaviour trees in Rez lies in their versatility and ease of integration. With Rez's support for behaviour trees, authors can create rich, adaptive, AI that can handle a wide range of scenarios, reacting to the game world and player actions in realistic ways.
-
-In this section, we'll dive deep into the fundamentals of behaviour trees, explore their syntax and structure within Rez, and provide practical examples to illustrate how they can be implemented to bring your game's characters and world to life
-
-=== Behaviour Tree Syntax
-
-Let's start with an example of the syntax and main concepts:
+* **Composite nodes** coordinate multiple child behaviors
+* **Condition nodes** test the game state
+* **Action nodes** modify the game state
 
 ....
-@actor sam_spade {
-  behaviours: ^[$select
+@actor smart_guard {
+  name: "Intelligent Guard"
+
+  behaviors: ^[
+    $select
       [$sequence
-        [actor_in actor=#sam_spade location=#sams_office]
-        [item_in item=#whisky_bottle location=#sams_office]
-        [actor_drinks actor=#sam_space item=#whisky_bottle]]
+        [player_nearby range=3]
+        [guard_not_alerted]
+        [set_alert_level level=1]]
       [$sequence
-        [actor_in actor=#sam_spade location=#gutmans_suite]
-        [actor_in actor=#kasper_gutman location=#gutmans_suite]
-        [actor_wisecracks]]]
+        [alert_level_equals level=2]
+        [call_for_backup]]
+      [patrol_route]
+  ]
 }
 ....
 
-At a high-level this behaviour tree defines some behaviour for our NPC Sam Spade. When Sam's in his office he will attempt to have a drink. If he finds himself with Kasper Gutman he will attempt a wisecrack. While this is a contrived example it will serve to highlight the main concepts at work.
+==== Core Behavior Types
 
-Behaviour trees are attribute values. In the example above the `behaviours:` attribute contains a behaviour tree. They are written in the form of a list but have a special `^` prefix to distinguish them from regular lists.
-
-A behaviour tree is composed of behaviours, which may contain other behaviours as children, and where each behaviour is written as a list in the form:
-
+**$select** - Try children until one succeeds (OR logic):
 ....
-[behaviour options* children*]
-....
-
-So we have the name of the behaviour, followed by zero or more options, followed by zero or more children. In the example the first behaviour is a `$select` with no options (`$select` doesn't take any) and two children:
-
-....
-[$select child1 child2]
+behaviors: ^[
+  $select
+    [has_weapon]      // Try this first
+    [find_weapon]     // If no weapon, try to find one
+    [flee_combat]     // Last resort: run away
+]
 ....
 
-The first child is a `$sequence` behaviour that again has no options (`$sequence` doesn't take any either) and three children:
-
+**$sequence** - All children must succeed (AND logic):
 ....
-[$sequence child1 child2 child3]
-....
-
-and its first child is an `actor_in`:
-
-....
-[actor_in actor=#sam_spade location=#sams_office]
+behaviors: ^[
+  $sequence
+    [see_enemy]       // First, spot an enemy
+    [weapon_ready]    // Then, make sure weapon is ready
+    [attack_enemy]    // Finally, attack
+]
 ....
 
-This behaviour has two options `actor` and `location` and no children. The other two children of the `$sequence` have a similar structure.
-
-The name of the behaviour corresponds to the id of a `@behaviour` element in the game. The `$` prefix tells us that `$select` and `$sequence` are a _core behaviours_ that is `@behaviour` elements defined in the Rez stdlib and always available to any game.
-
-Options are written as `<option name>=<value>` where the option name follows the Javascript variable naming pattern the same as attribute names, and the value can be any legal Rez value type.
-
-The behaviours `actor_in`, `item_in`, and `actor_drinks` are not core behaviours but examples of author defined behaviours. As an author your job is to create behaviours that are meaningful in your games context.
-
-Now let's talk about what all of this means.
-
-Although behaviour trees are syntactically written as a list, they form a branching tree structure as each behaviour can nest other behaviours in its child list, to an arbitrary depth. The first behaviour is the _root behaviour_ of the tree.
-
-When we "execute the tree" it means excuting the root behaviour which in turn may execute some or all of its children until execution reaches the leaves of the tree. But, before we can understand all that, there are some other concepts we need to be aware of.
-
-=== Success and Failure
-
-When we talk about _executing_ a behaviour tree what we are really saying is: when we execute the _root behaviour_ of the tree does it *succeed* or *fail*?
-
-At the level of the tree itself, if the root behaviour succeeds it means that some action was successfully taken in response to whatever event caused us to execute the tree in the first place.
-
-In the context of a behaviour itself success or failure has different meaning. For example, a `$select` will succeed if any of its children succeed, while a `$sequence` will only succeed if all of its children succeed (the observant may notice a relation to boolean logic here).
-
-To put this in context, `$select` can be used to choose among a range of behaviours (given as its children). If one child fails, the next is tried, and so on. If the `$select` succeeds we know that one of its children succeeded. Conversely the `$select` failing tells us that none of its children succeeded. By contrast the `$sequence` is a step-by-step procedure where if any step fails, the `$sequence` fails.
-
-You will see this pattern of `$select`/`$sequence` for selecting among options that are described as a procedure (that may themselves contain other such patterns) often.
-
-`$sequence` and `$select` are examples of _composite_ behaviours. We'll talk about behavior types in a moment.
-
-The 'leaf' behaviours in a tree don't have children and their success or failure it more directly tied to the state of the game world. In our example above the behaviour:
-
+**$parallel** - Run multiple behaviors simultaneously:
 ....
-[actor_in actor=#sam_spade location=#sams_office]
+behaviors: ^[
+  $parallel
+    [patrol_area]     // Keep patrolling
+    [watch_for_threats] // While watching for danger
+]
 ....
 
-Will, we supppose, succeed if Sam is in his office and fail otherwise. The `actor_drinks` example is a little more subtle.
+==== Writing Custom Behaviors
+
+Create your own condition and action behaviors:
 
 ....
-[actor_drinks actor=#sam_spade item=#whisky_bottle]
-....
-
-In our example we have already tested that the whisky item is in Sam's location we can assume that `actor_drinks` is going to succeed. But this doesn't always have to be the case. Whether or not a behaviour succeed automatically if its prior conditions succeed is down to you.
-
-=== Behaviour Types
-
-There are four different types of behaviour:
-
-* composite
-* decorator
-* condition
-* action
-
-==== Composite Behaviours
-
-A composite behaviour always has at least one child and can be thought of as a kind of coordinator where its success or failure is based on what happens when it executes some, or all, of its children.
-
-Two of the most important composite behaviours are xref:behaviour_catalog.adoc#_sequence[$sequence] and xref:behaviour_catalog.adoc#_select[$select].
-
-As you've seen, `$sequence` executes its children in turn until either they have all succeeded (in which case `$sequence` succeeds) or until one of them fails (at which point `$sequence` fails). So a sequence general consists of a set of conditions and then the actions that should arise if they are met.
-
-The `$select` behaviour executes its children in turn until one of them succeeds (at which point `$select` succeeds) or they have all failed (at which point `$select` fails). This means that `$select` is a good way of choosing between a set of alternatives, for example different ways to achieve a goal where the AI can have fall back tactics should any particular behaviour fail or not be available.
-
-You may have observed that `$select` implements OR-logic while `$sequence` implements AND-logic. Just these two behaviours allow us to create any complexity of decision-making structure we want.
-
-==== Decorator Behaviours
-
-A decorator behaviour usually has a single child and its purpose is to modify the result of running its child behaviour.
-
-For example the xref:behaviour_catalog.adoc#_invert[$invert] decorator executes its child and flips the result making success into failure (and vice verca).
-
-==== Condition Behaviours
-
-A condition behaviour tests the state of the game world and succeeds or fails based upon that test. For example we defined two conditions in the example above `actor_in` and `item_in` which test whether an actor, or item, are in a given location.
-
-We can imagine that `actor_in` succeeds when the specified actor is in the specified location and fails otherwise.
-
-As an author you will create condition behaviours that test things that are meaningful to your game and these behaviours become available to your behaviour trees.
-
-==== Action Behaviours
-
-An action behaviour modifies the state of the game world. Actions are usually expected to succeed (because, typically, they are placed after conditions that gate whether they should happen or not).
-
-Typically an action will succeed (because the conditions for success should already have been met) although this is not a hard and fast rule.
-
-However be careful about making changes to world state and then failing. This could have unintended consequences.
-
-=== Putting It All Together
-
-Our first example of a simple behaviour tree uses one composite behaviour (`$sequence`), two conditions (`actor_in`, `item_in`), and one action (`actor_drinks`).
-
-Let's make a more complex example:
-
-....
-@actor sam_spade {
-  behaviours: ^[
-    [$select
-      [$sequence
-        [actor_sense_danger]
-        [$select
-          [$sequence
-            [actor_is_armed]
-            [actor_draws_gun]]
-          [$sequence
-            [actor_sees_item type=:weapon]
-            [actor_equips_item]]
-          [$sequence
-            [actor_sees_exit]
-            [actor_escapes]]]]
-      [$sequence
-        [actor_thirsty]
-        [$select
-          [$sequence
-            [actor_sees_item type=:drink]
-            [actor_equips_item]
-            [actor_drinks]]
-          [$sequence
-            [actor_says msg="Boy I could use a drink!"]]]]]]
-}
-....
-
-In this example we're using `$select` to choose between 2 high level behaviours (respond to threat, respond to thirst) with each of those behaviours being composed of further `$sequence` and `$select` based behaviours.
-
-For example if the player senses danger, do they have a gun? Is there a weapon in their environment? Can they escape?
-
-We've made up a bunch of condition and action behaviours like `actor_is_armed` and `actor_says` and hand waved over the detail of their implementation.
-
-As an author most of your work will be creating meaningful conditions and actions that represent the state and actions available in your game world.
-
-You'll note in this example we have a number of `actor_xxx` behaviours but haven't specified an `actor=xxx` option. In this context we'd probably put the actor into working memory.
-
-=== Working Memory
-
-When a behaviour tree gets executed (using `RezBehaviour.executeBehaviour(wmem)`) it is passed an object to represent the "working memory" of the tree. This object is passed from behaviour to behaviour and can be used to communicate information between behaviours.
-
-In our example above we might initialize working memory with something like:
-
-....
-{self: $("sam_spade")}
-....
-
-Now any behaviour that needs it can refer to `self` in the working memory to find out who is performing these behaviours. Working memory can be a useful way to pass information around that is either dynamic (and therefore difficult to refer to as an option) or repetitive.
-
-=== Core Behaviours
-
-The Rez stdlib defines a range of xref:behaviour_catalog.adoc[core behaviours] whose id have a `$` prefix to distinguish them from author written behaviours. The implementation of the core behaviours is in `stdlib.rez`.
-
-The core behaviours are intended to provide an overall structure for creating different kinds of behaviour. In particular look at behaviours like xref:behaviour_catalog.adoc#_either[$either], xref:behaviour_catalog.adoc#_random_choice[$random_choice] and xref:behaviour_catalog:[$random_each] which can introduce variability into behaviour patterns.
-
-=== Writing Your Own Behaviours
-
-The `@behaviour` element allows you to write your own behaviours, typically these will be conditions and actions that query & modify, respectively, your game world. Let's take a look at a query first:
-
-....
-@behaviour actor_is_armed {
+@behaviour player_nearby {
+  options: ["range"]
   execute: function(owner, behaviour, wmem) {
+    const range = behaviour.option("range");
+    const distance = owner.distanceTo($("player"));
+
     return {
-      success: ($player.main_inventory.weapon_contents.length > 0),
+      success: distance <= range,
       wmem: wmem
-    }
+    };
   }
 }
-....
 
-First note that the only thing we are required to define is the `execute:` attribute, which must be a regular function (an arrow function will not do). All `execute:` handler functions are required to return an object with two keys: `success` and `wmem`. The value for `success` should a boolean. In this case we return `true` if the players weapon slot has something in it, false if not. The value for `wmem` should be the working memory we were passed in.
-
-In this example we've assumed the actor is the #player. But we could make it more flexible using an option.
-
-....
-@behaviour actor_is_armed {
-  options: ["actor"]
+@behaviour set_alert_level {
+  options: ["level"]
   execute: function(owner, behaviour, wmem) {
-    const actor = $(actor);
-    return {
-      success: (actor.main_inventory.weapon_contents.length > 0),
-      wmem: wmem
-    }
-  }
-}
-....
+    const level = behaviour.option("level");
+    owner.alert_level = level;
 
-Now we'd specify the behaviour as
-
-....
-^[actor_is_armed actor=#sam_spade]
-....
-
-An as long as Sam's `@actor` definition contained a `main_inventory` all would be well.
-
-Now let's examine how we would define an action:
-
-....
-@behaviour actor_drinks {
-  execute: function(owner, behaviour, wmem) {
-    $player.drunk += 1;
     return {
       success: true,
       wmem: wmem
@@ -1945,221 +1579,725 @@ Now let's examine how we would define an action:
 }
 ....
 
-We can see that this is even simpler. Most actions will return a successful result since you have, likely, already queried whether they be executed or not. But if an action can be executed and fail you can return a different results as per the query above.
+==== Complex AI Example
 
-Working memory is assumed to be an object that is passed between the different behaviours in the tree. For example one behaviour could store a value that a later behaviour will use. We can see how `actor_sees_item` could return success and store the id of the item in the working memory for `actor_equips_item` to put into their inventory.
-
-Lastly the owner is the object that owns the behaviour tree. This allows you to make use of the owner's attributes within the behaviour. Here's an example of doing this. Let's create a generic `query` behaviour that lets us test a property of any object and compare it with an attribute of the owning element:
+Here's a sophisticated NPC that reacts to the player and environment:
 
 ....
-@behaviour query {
-  options: ["if", "obj"]
+@actor tavern_keeper {
+  name: "Bartender Bob"
+  mood: :neutral
+  reputation_with_player: 0
+  last_interaction: 0
+
+  behaviors: ^[
+    $select
+      // Emergency responses
+      [$sequence
+        [tavern_on_fire]
+        [evacuate_tavern]]
+
+      // Player interactions
+      [$sequence
+        [player_at_bar]
+        [$select
+          [$sequence
+            [player_reputation_high]
+            [greet_warmly]]
+          [$sequence
+            [player_reputation_low]
+            [greet_coldly]]
+          [greet_neutrally]]]
+
+      // Idle behaviors
+      [$sequence
+        [no_customers_present]
+        [$select
+          [clean_glasses]
+          [restock_bottles]
+          [count_money]]]
+
+      // Default: serve customers
+      [serve_random_customer]
+  ]
+}
+
+@behaviour player_at_bar {
   execute: function(owner, behaviour, wmem) {
-    const f = behaviour.option("if").bind(owner);
-    const o = $(behaviour.option("obj"));
+    const player_location = $("player").current_location;
     return {
-      success: f(o),
+      success: player_location === "tavern_bar",
       wmem: wmem
     };
   }
 }
 
-@object foo {
-  cost: 2
-}
+@behaviour greet_warmly {
+  execute: function(owner, behaviour, wmem) {
+    const greetings = [
+      "Welcome back, friend! The usual?",
+      "Good to see you again! What can I get you?",
+      "My favorite customer! What brings you here today?"
+    ];
 
-@object bar {
-  cash: 10
+    owner.current_dialogue = greetings.randomElement();
+    $("game").trigger_event("npc_speaks", {npc: owner, text: owner.current_dialogue});
 
-  test: ^[query obj="foo" if=^{obj.cost < this.cash}]
-}
-....
-
-Might take you a while to see what is going on here but we are making use of `bind` to make `this` into the owner object within the context of the code block being passed to the `query` via its `if` option.
-
-=== Using Behaviour Trees
-
-Having defined a behaviour tree, how do you use it?
-
-Remember that a behaviour tree is defined as an attribute on an element:
-
-....
-@actor sam_spade {
-  behaviours: ^[...]
-}
-....
-
-At a basic level we can run this behaviour tree using:
-
-....
-const result = $("sam_spade").behaviours.executeBehaviour({});
-....
-
-The `executeBehaviour()` method returns an object:
-
-....
-{
-  success: true|false,
-  wmem: <modified working memory>
-
-}
-if(result.success) {
-
-} else {
-
-}
-....
-
-The authors are still experimenting but a broad approach suggests itself:
-
-Behaviours are likely to fall into broad categories that form a response to an event. An example might be "new day" or "player enters location".
-
-You could then define, e.g., a `new_day_behaviours:` attribute any element that should respond to the `:new_day` event. Then use a `@system` to reponds to the event, running the behaviours for all relevant elements.
-
-....
-@system new_day_system {
-  after_event: (system, event, result) => {
-    if(event === "new_day") {
-      const wmem = {};
-      $game.getObjectsWith("new_day_behaviours").forEach((el) => {
-        el.new_day_behaviours.executeBehaviour(wmem);
-      });
-    }
-    return result;
+    return {success: true, wmem: wmem};
   }
 }
 ....
 
-Another approach is to define a behaviour tree to cover all events and use `$select` to decide which branch to follow. For example:
+=== Custom Scripts and Styles
 
-....
-@actor sam_spade {
-  behaviours: ^[select
-    [$sequence
-      [event is=:new_day]
-      [...]]
-    [$sequence
-      [event is=<some other event>]
-      ...]]
-}
-....
+Extend Rez with your own JavaScript functions and CSS styling.
 
-Now you could define a system for running all behaviours in response to any event:
+==== Adding Custom JavaScript
 
-....
-@system event_behaviours {
-  after_event: (system, event, result) => {
-    const wmem = {event: event};
-    $game.getObjectsWith("behaviours").forEach((el) => {
-      el.behaviours.executeBehaviour(wmem);
-    })
-  }
-}
-....
-
-The behaviour system is quite flexible and can be made to work in a number of different ways to suit the needs of your game and ease of authorship.
-
-=== Differences To Other Systems
-
-Much of the writing on behaviour trees comes from a real-time video game perspective where the trees are used to power enemy-AI. This introduces a number of constraints for example that the behaviour AI must run within one frame (i.e. <0.04s). The "running" status can be used to "break up" a behaviour.
-
-In the Rez context this is less relevant so we do not support the "running" status. However it may be implemented later if it proves useful.
-
-From a terminology perspective we use "executing" instead of the more common "ticking" language. We think it's more natural to say you are executing a behaviour than ticking one.
-
-We use the term "behaviour" to refer to our behaviour types while you may see them referred to as "nodes" elsewhere. Node is a more mathematical term, we think behaviour is more natural.
-
-Also where you see `fallback` as a type of behaviour we call it `$select`. The behaviour is ultimately the same.
-
-=== Further reading
-
-https://opsive.com/support/documentation/behavior-designer/what-is-a-behavior-tree/[What is a Behaviour Tree]
-
-https://towardsdatascience.com/designing-ai-agents-behaviors-with-behavior-trees-b28aa1c3cf8a[Designing AI Agent's Behaviours with Behavior Trees]
-
-http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter06_The_Behavior_Tree_Starter_Kit.pdf[The Behaviour Tree Start Kit] by Alex J. Champandard and Philip Dunstan
-
-https://docs.unrealengine.com/4.27/en-US/InteractiveExperiences/ArtificialIntelligence/BehaviorTrees/BehaviorTreesOverview/[Unreal 4 Behaviour Tree Overview]
-
-https://outforafight.wordpress.com/2014/07/15/behaviour-behavior-trees-for-ai-dudes-part-1/[Chris Simpson's Behaviour trees for AI: How they work]
-
-https://www.kth.se/profile/petter/page/video-lectures-on-behavior-trees[Video lectures on behaviour trees]
-
-especially:
-
-https://www.youtube.com/watch?v=KeShMInMjro[5 minute Behaviour Tree tutorial]
-
-== Custom Scripts & Styles
-
-Rez supports the addition of custom Javascript & CSS in a number of different ways.
-
-=== Script & Stylesheet Directives
-
-The `@script` and `@style` directives allow embedding arbitrary Javascript or CSS classes into your game.
+Use `@script` to add utility functions:
 
 ....
 @script {
-  function identifyParrot(p) {
-    if(p === "parrot") {
-      return "Sqwauk";
-    } else {
-      return "Pfffft";
+  // Dice rolling utilities
+  function rollDie(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+  }
+
+  function rollDice(count, sides, modifier = 0) {
+    let total = modifier;
+    for (let i = 0; i < count; i++) {
+      total += rollDie(sides);
     }
+    return total;
+  }
+
+  // Combat calculation helpers
+  function calculateDamage(attacker, defender) {
+    const baseDamage = rollDice(2, 6) + attacker.strength_modifier;
+    const mitigatedDamage = Math.max(1, baseDamage - defender.armor_class);
+    return mitigatedDamage;
   }
 }
 ....
+
+==== Adding Custom CSS
+
+Use `@stylesheet` to style your game:
 
 ....
 @stylesheet {
-  /* https://gist.github.com/JoeyBurzynski/617fb6201335779f8424ad9528b72c41 */
-  .main {
-    max-width: 38rem;
-    padding: 2rem;
-    margin: auto;
+  .character-sheet {
+    border: 2px solid #8B4513;
+    border-radius: 10px;
+    padding: 20px;
+    background: linear-gradient(135deg, #F5E6D3, #E8D5B7);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+
+  .health-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #444;
+    border: 2px solid #000;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ffaa44, #44ff44);
+    transition: width 0.3s ease;
+  }
+
+  .combat-actions button {
+    background: #8B4513;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .combat-actions button:hover {
+    background: #A0522D;
+    transform: translateY(-2px);
+  }
+
+  .flash-message {
+    background: #FFD700;
+    border: 2px solid #FFA500;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
   }
 }
 ....
 
-The contents of these directives is automatically inserted into an appropriate spot in the game files.
+==== JavaScript Patches
 
-=== Patching Javascript
-
-Another way to include your own Javascript is through the use of the `@patch` directive which allows you to add new methods to existing JS classes. Here is an example from the stdlib.
+Extend built-in JavaScript objects with the `@patch` directive:
 
 ....
-@patch ARRAY_FY_SHUFFLE {
-  %% Fisher-Yates Shuffle impl from: https://sebhastian.com/fisher-yates-shuffle-javascript/
+@patch {
   patch: "Array"
-  method: "fy_shuffle"
-  impl: function() {
-    let idx = this.length;
-    while(--idx > 0) {
-      const rand_idx = Math.floor(Math.random() * (idx+1));
-      [this[rand_idx], this[idx]] = [this[idx], this[rand_idx]];
+  method: "sample"
+  impl: function(count = 1) {
+    const shuffled = [...this].sort(() => 0.5 - Math.random());
+    return count === 1 ? shuffled[0] : shuffled.slice(0, count);
+  }
+}
+
+// Now you can use:
+// ["red", "green", "blue"].sample()  -> "green"
+// [1,2,3,4,5].sample(3)  -> [3, 1, 5]
+....
+
+==== Custom Template Filters
+
+Create your own template expression filters:
+
+....
+@filter DICE_ROLL_FILTER {
+  name: "roll"
+  impl: (dice_notation) => {
+    // Parse "2d6+3" format
+    const match = dice_notation.match(/(\d+)d(\d+)(?:\+(\d+))?/);
+    if (!match) return 0;
+
+    const count = parseInt(match[1]);
+    const sides = parseInt(match[2]);
+    const modifier = parseInt(match[3]) || 0;
+
+    return rollDice(count, sides, modifier);
+  }
+}
+
+// Use in templates:
+// <p>You rolled ${"2d6+3" | roll} damage!</p>
+....
+
+=== Building Modular Game Systems
+
+For large games, organize your code into modular systems:
+
+....
+// combat_system.rez
+@script {
+  const CombatSystem = {
+    initiateCombat(player, enemy) {
+      $("game").combat_state = {
+        player: player,
+        enemy: enemy,
+        turn: "player",
+        round: 1
+      };
+      return RezEvent.switchScene("combat");
+    },
+
+    processTurn(action, target) {
+      const state = $("game").combat_state;
+      // Process combat logic...
+      return this.checkCombatEnd(state);
+    },
+
+    checkCombatEnd(state) {
+      if (state.player.health <= 0) {
+        return RezEvent.playCard("player_defeated");
+      } else if (state.enemy.health <= 0) {
+        return RezEvent.playCard("enemy_defeated");
+      }
+      return RezEvent.render();
     }
-    return this;
+  };
+}
+
+// inventory_system.rez
+@script {
+  const InventorySystem = {
+    addItem(character, item) {
+      if (!character.inventory) character.inventory = [];
+      character.inventory.push(item);
+      this.sortInventory(character);
+    },
+
+    removeItem(character, itemId) {
+      if (!character.inventory) return false;
+      const index = character.inventory.findIndex(item => item.id === itemId);
+      if (index >= 0) {
+        character.inventory.splice(index, 1);
+        return true;
+      }
+      return false;
+    },
+
+    sortInventory(character) {
+      character.inventory.sort((a, b) => {
+        // Sort by type, then by name
+        if (a.type !== b.type) return a.type.localeCompare(b.type);
+        return a.name.localeCompare(b.name);
+      });
+    }
+  };
+}
+....
+
+== Part 5: Technical Reference
+
+=== How Rez Works Under the Hood
+
+Understanding Rez's compilation and runtime process helps you debug issues and optimize your games.
+
+==== The Compilation Process
+
+When you run `rez compile`, several steps occur:
+
+1. **Parse Source Files** - Rez reads your `.rez` files and parses the element definitions
+2. **Validate References** - Checks that element references (like `#player`) point to existing elements
+3. **Generate JavaScript** - Converts elements into JavaScript objects and classes
+4. **Template Compilation** - Transforms template expressions into rendering functions
+5. **Asset Processing** - Copies assets and generates asset manifests
+6. **Runtime Assembly** - Combines everything into `runtime.js` and `index.html`
+
+==== Runtime Object Model
+
+Your Rez elements become JavaScript objects at runtime:
+
+* `@game` → `RezGame` instance
+* `@scene` → `RezScene` instance
+* `@card` → `RezCard` instance
+* `@actor` → `RezActor` instance
+* And so on...
+
+Each object gets methods and properties based on the attributes you defined:
+
+....
+@actor hero {
+  name: "Brave Knight"
+  health: 100
+
+  heal: function(amount) {
+    this.health += amount;
+  }
+}
+
+// Becomes at runtime:
+const hero = new RezActor({
+  id: "hero",
+  name: "Brave Knight",
+  health: 100,
+  heal: function(amount) {
+    this.health += amount;
+  }
+});
+....
+
+==== The Rendering Pipeline
+
+Content rendering follows this flow:
+
+1. **Game Layout** renders with scene content in `${content}`
+2. **Scene Layout** renders with card content in `${content}`
+3. **Card Content** renders with template expressions resolved
+4. **Blocks** (if any) render and provide additional template variables
+
+Each level wraps the next in HTML structure:
+
+....
+<div class="game">                    <!-- Game wrapper -->
+  <!-- Game layout content -->
+  <div class="scene" id="scene_forest"> <!-- Scene wrapper -->
+    <!-- Scene layout content -->
+    <div class="card" id="card_clearing"> <!-- Card wrapper -->
+      <!-- Card content -->
+    </div>
+  </div>
+</div>
+....
+
+==== Memory and Performance
+
+**Global Objects**: Elements with `$global: true` become window variables:
+
+....
+@actor player {
+  $global: true
+  name: "Hero"
+}
+
+// Accessible as: window.$player or just $player
+....
+
+**Template Caching**: Template rendering functions are compiled once and cached for performance.
+
+**Event Delegation**: Rez uses event delegation for clicks, so dynamically added content automatically works.
+
+=== Complete Attribute Type Reference
+
+==== Primitive Types
+
+**Boolean**
+....
+visible: true
+completed: false
+enabled: yes     // yes/no also work
+hidden: no
+....
+
+**Number**
+....
+count: 42
+price: 19.99
+temperature: -10
+percentage: 0.85
+....
+
+**String**
+....
+name: "Magic Sword"
+description: "A blade that glows with inner light"
+note: ""  // Empty string
+....
+
+**Keyword**
+....
+type: :weapon
+rarity: :legendary
+status: :active
+category: :consumable
+....
+
+==== Complex Types
+
+**Element Reference**
+....
+owner_id: #player
+location_id: #forest_clearing
+target_id: #dragon
+....
+
+**List** (space-separated, no commas)
+....
+colors: [:red :green :blue]
+scores: [100 250 75 420]
+items: [#sword #shield #potion]
+mixed: ["text" 42 :keyword #reference]
+....
+
+**Set** (unique values, unordered)
+....
+tags: #{:magical :rare :weapon}
+visited_locations: #{#town #forest #cave}
+....
+
+**Template** (multi-line with expressions)
+....
+content: ```
+<h2>${title}</h2>
+<p>Welcome, ${player.name}!</p>
+$if(player.level > 5) {%
+  <p>You are an experienced adventurer.</p>
+%}
+```
+....
+
+**Binding List** (key-value pairs)
+....
+bindings: [
+  player: #main_character,
+  location: () => player.current_location,
+  gold: &player.gold
+]
+....
+
+==== Dynamic Types
+
+**Dynamic Initializer** (runs once at game start)
+....
+random_stat: ^i{return Math.random() * 20 + 1;}
+starting_gold: ^i:1{return rollDice(3, 6) * 10;}  // Priority 1 (runs early)
+total_stats: ^i:5{return this.str + this.dex + this.int;}  // Priority 5
+....
+
+**Dynamic Property** (calculated each access, see Part 2 for basics)
+....
+// Advanced: Complex calculations with error handling
+spell_save_dc: ^p{
+  const base = 8 + this.proficiency_bonus;
+  const modifier = this.spell_casting_modifier || 0;
+  return Math.max(8, base + modifier);
+}
+
+// Advanced: Conditional logic and multiple dependencies
+movement_speed: ^p{
+  let speed = this.base_speed || 30;
+  if (this.is_encumbered) speed = Math.floor(speed / 2);
+  if (this.hasCondition?.("haste")) speed *= 2;
+  if (this.hasCondition?.("slow")) speed = Math.floor(speed / 2);
+  return Math.max(0, speed);
+}
+
+// Advanced: Expensive calculations that should be cached
+threat_assessment: ^p{
+  // This is expensive - consider using ^i{} with manual updates instead
+  const nearby = this.getAllNearbyEnemies();
+  return nearby.reduce((threat, enemy) => {
+    return threat + (enemy.level * enemy.aggression_factor);
+  }, 0);
+}
+....
+
+**Dice Notation**
+....
+damage: ^r:2d6+3      // Roll 2 six-sided dice, add 3
+treasure: ^r:d100     // Roll 1 hundred-sided die
+healing: ^r:1d4+1     // Roll 1 four-sided die, add 1
+....
+
+**Probability Table**
+....
+loot_type: |:common 60 :uncommon 25 :rare 10 :legendary 5|
+encounter: |#goblin 40 #orc 30 #troll 20 #dragon 10|
+weather: |"sunny" 50 "cloudy" 30 "rainy" 15 "stormy" 5|
+....
+
+==== Script Types
+
+**Event Script** (arrow function, receives object and event)
+....
+on_use: (item, event) => {
+  player.health += item.healing_power;
+  return RezEvent.flash("You feel better!");
+}
+
+on_enter: (scene, event) => {
+  scene.visit_count = (scene.visit_count || 0) + 1;
+  return RezEvent.render();
+}
+....
+
+**Action Script** (regular function, `this` is the owner object)
+....
+attack: function(target) {
+  const damage = this.attack_power + rollDie(6);
+  target.health -= damage;
+  return damage;
+}
+
+canAfford: function(price) {
+  return this.gold >= price;
+}
+....
+
+**Behavior Tree**
+....
+behaviors: ^[
+  $select
+    [$sequence
+      [health_low]
+      [has_potion]
+      [use_potion]]
+    [$sequence
+      [enemy_nearby]
+      [attack_enemy]]
+    [wander_around]
+]
+....
+
+==== Special Attributes
+
+**System Attributes** (control Rez behavior)
+....
+$global: true          // Create global variable
+$template: true        // Mark as template for copying
+$js_ctor: "CustomClass" // Use different JavaScript constructor
+$built_in: true        // Mark as built-in (documentation only)
+....
+
+**ID Suffix Attributes** (create automatic references)
+....
+owner_id: #player          // Also creates 'owner' property pointing to player object
+location_id: #forest      // Also creates 'location' property pointing to forest object
+target_id: #dragon        // Also creates 'target' property pointing to dragon object
+initial_card_id: #start   // Also creates 'initial_card' property pointing to start card
+initial_scene_id: #main   // Also creates 'initial_scene' property pointing to main scene
+parent_id: #container     // Also creates 'parent' property pointing to container object
+....
+
+=== Best Practices and Patterns
+
+==== Project Organization
+
+Structure larger projects with clear separation:
+
+....
+src/
+├── game.rez              # Main game definition
+├── characters/
+│   ├── player.rez        # Player character
+│   ├── npcs.rez          # Non-player characters
+│   └── monsters.rez      # Enemy creatures
+├── locations/
+│   ├── town.rez          # Town scenes and cards
+│   ├── dungeon.rez       # Dungeon areas
+│   └── overworld.rez     # World map
+├── items/
+│   ├── weapons.rez       # Weapon definitions
+│   ├── armor.rez         # Armor and protection
+│   └── consumables.rez   # Potions, scrolls, etc.
+└── systems/
+    ├── combat.rez        # Combat mechanics
+    ├── inventory.rez     # Inventory management
+    └── dialogue.rez      # Conversation system
+....
+
+Use the include macro to combine files:
+....
+// In game.rez
+@game {
+  name: "My Adventure"
+  // ... game definition
+}
+
+%(characters/player.rez)
+%(characters/npcs.rez)
+%(locations/town.rez)
+%(items/weapons.rez)
+%(systems/combat.rez)
+....
+
+==== Naming Conventions
+
+Use consistent naming patterns:
+
+....
+// Scenes: describe location or context
+@scene forest_entrance
+@scene combat_arena
+@scene character_creation
+
+// Cards: describe content or action
+@card explore_clearing
+@card merchant_dialogue
+@card level_up_screen
+
+// Actors: role or name
+@actor village_guard
+@actor evil_wizard
+@actor shop_keeper
+
+// Items: descriptive names
+@item rusty_sword
+@item healing_potion
+@item magic_amulet
+....
+
+==== State Management
+
+Keep game state organized and predictable:
+
+....
+@game {
+  name: "Adventure Game"
+
+  // Global game state
+  current_chapter: 1
+  player_score: 0
+  game_flags: {}
+
+  // Helper methods for state
+  setFlag: function(name, value = true) {
+    this.game_flags[name] = value;
+  }
+
+  getFlag: function(name) {
+    return this.game_flags[name] || false;
+  }
+
+  addScore: function(points) {
+    this.player_score += points;
+    if (this.player_score >= 1000) {
+      this.setFlag("high_score_achieved");
+    }
   }
 }
 ....
 
-This adds a new method `fy_shuffle` to Javascript `Array` instances. So you can now write:
+==== Error Handling
+
+Handle edge cases gracefully:
 
 ....
-[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].fy_shuffle()
-=> [3, 7, 6, 8, 4, 9, 1, 2, 5, 10]
-....
-
-To add a method to instances use the `method:` attribute and specify the method name. To add a function to a constructor use the `function:` attribute instead.
-
-=== Write Your Own Filters
-
-A third way to include custom Javascript is by implementing a template expression filter. Here is an example from the stdlib:
-
-....
-@filter STRING_STARTS_WITH_FILTER {
-  %% String -> Bool
-
-  name: "starts_with"
-  impl: (s, search) => {return s.startsWith(search);}
+@card examine_item {
+  bindings: [
+    target_item: () => {
+      const itemId = $("game").selected_item_id;
+      return itemId ? $(itemId) : null;
+    }
+  ]
+  content: ```
+  $if(target_item) {%
+    <h3>${target_item.name}</h3>
+    <p>${target_item.description}</p>
+    <button event="use_item">Use Item</button>
+  %}, {%
+    <p>No item selected to examine.</p>
+    <button card="inventory">Back to Inventory</button>
+  %}
+  ```
 }
+....
+
+==== Performance Tips
+
+1. **Use Global Sparingly**: Only mark frequently-accessed objects as global
+2. **Optimize Templates**: Avoid complex calculations in template expressions
+3. **Choose the Right Dynamic Type**: Match the attribute type to your use case
+4. **Cache Expensive Operations**: Store calculated values rather than recalculating
+5. **Batch DOM Updates**: Use `{render: true}` to refresh all content at once
+
+**Choosing Between Dynamic Types**:
+
+....
+// Use ^p{} for values that change frequently and need to be current
+health_percentage: ^p{return this.health * 100 / this.max_health;}
+
+// Use ^i{} for complex setup that rarely changes
+starting_equipment: ^i{
+  return this.character_class === "warrior"
+    ? ["sword", "shield", "armor"]
+    : ["dagger", "lockpicks", "cloak"];
+}
+
+// Use regular attributes for values that change manually
+experience: 0  // Updated by events, not calculated
+
+// Use ^i{} with manual updates for expensive calculations
+threat_level: ^i{return this.calculateThreatLevel();}
+recalculate_threat: function() {
+  this.threat_level = this.calculateThreatLevel();
+}
+....
+
+**Template Optimization**:
+
+....
+// Good: use dynamic properties to move calculations out of templates
+@actor player {
+  base_attack: 10
+  strength: 15
+  attack_power: ^p{return this.base_attack + Math.floor(this.strength / 2);}
+}
+
+content: ```
+Attack Power: ${player.attack_power}
+```
+
+// Less good: calculate every time template renders
+content: ```
+Attack Power: ${player.base_attack + Math.floor(player.strength / 2)}
+```
 ....

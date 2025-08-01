@@ -35,6 +35,10 @@ class RezBasicObject {
     return this.#id;
   }
 
+  get ref() {
+    return {$ref: this.id};
+  }
+
   get attributes() {
     return this.#attributes;
   }
@@ -232,20 +236,27 @@ class RezBasicObject {
     }
 
     // Priority is fixed by the Rez compiler to be between 1 & 10
-    const initializers = [[], [], [], [], [], [], [], [], [], []];
+    const dyn_initializers = [[], [], [], [], [], [], [], [], [], []];
+    const copy_initializers = [[], [], [], [], [], [], [], [], [], []];
 
     for(let attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
       if(typeof value == "object") {
         if(value.hasOwnProperty("initializer")) {
           const prio = parseInt(value["priority"]);
-          initializers[prio-1].push([attrName, value]);
+          dyn_initializers[prio-1].push([attrName, value]);
+        } else if(value.hasOwnProperty("$copy")) {
+          const prio = parseInt(value["priority"]);
+          copy_initializers[prio-1].push([attrName, value]);
         }
       }
     }
 
-    const initializer_in_prio_order = initializers.flat();
-    initializer_in_prio_order.forEach(
+    copy_initializers.flat().forEach(
+      ([attrName, elem_ref]) => this.createAttributeByCopying(attrName, elem_ref)
+    );
+
+    dyn_initializers.flat().forEach(
       ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
     );
   }
@@ -295,6 +306,12 @@ class RezBasicObject {
       const initializerSrc = `(function() {${initializerDef}}).call(this)`;
       this.setAttribute(attrName, eval(initializerSrc), false);
     }
+  }
+
+  createAttributeByCopying(attrName, value) {
+    const elem_ref = value["$copy"];
+    const source = $(elem_ref);
+    this.setAttribute(attrName, source.addCopy().id);
   }
 
   createBehaviourTreeAttribute(attrName, value) {

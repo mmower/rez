@@ -135,6 +135,8 @@ class RezBlock {
     let value;
     if (typeof source === "string") {
       value = this.instantiateIdBinding(source);
+    } else if(Rez.isElementRef(source)) {
+      value = this.instantiateIdBinding(source.$ref);
     } else if (typeof source === "function") {
       value = this.instantiateFunctionBinding(bindings, source);
     } else if (source && typeof source.binding === "function") {
@@ -155,10 +157,10 @@ class RezBlock {
 
   dereferenceBoundValue(value) {
     if (Array.isArray(value)) {
-      return value.map(id => $(id));
+      return value.map(ref => $(ref));  // $(ref) now handles both string and {$ref: "id"} formats
     }
 
-    return $(value);
+    return $(value);  // $(value) now handles both string and {$ref: "id"} formats
   }
 
   getBindings(initialBindings) {
@@ -525,7 +527,7 @@ class RezEventTransformer extends RezTransformer {
 //-----------------------------------------------------------------------------
 class RezBlockTransformer extends RezTransformer {
   constructor() {
-    super("div.rez-card");
+    super("div.rez-card div[data-card]");
   }
 
   transformElement(elem, view) {
@@ -546,7 +548,7 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 class RezEventLinkTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.rez-front-face a[data-event]", "click", receiver);
+    super("div.rez-front-face a[data-event], div.rez-active a[data-event]", "click", receiver);
   }
 }
 

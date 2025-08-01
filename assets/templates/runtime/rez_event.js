@@ -156,6 +156,10 @@ class RezEvent {
     return new RezEvent().render();
   }
 
+  static setParam(param, value) {
+    return new RezEvent().setParam(param, value);
+  }
+
   static sceneChange(sceneId) {
     return new RezEvent().sceneChange(sceneId);
   }

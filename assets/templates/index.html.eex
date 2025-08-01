@@ -3,7 +3,7 @@
 <!-- Modifications will be overwritten -->
 <% alias Rez.AST.Asset %>
 <% alias Rez.AST.NodeHelper %>
-<html>
+<html class="<%= NodeHelper.get_attr_value(@game, "html_classes", "") %>">
   <head>
     <meta charset="UTF-8">
     <meta name="author" content="<%= NodeHelper.get_attr_value(@game, "author_name") %>">
@@ -29,7 +29,7 @@
       <% end %>
     </style>
   </head>
-  <body>
+  <body class="<%= NodeHelper.get_attr_value(@game, "body_classes", "") %>">
     <div id="game-container">
       <!-- Game output will be inserted here -->
     </div>

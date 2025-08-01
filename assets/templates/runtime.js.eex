@@ -17,6 +17,29 @@
   window.$ = (id, show_throw = false) => game.getGameObject(id, show_throw);
   window.$t = (id, element, should_throw = false) => game.getTypedGameObject(id, element, should_throw);
 
+  /* @function isElementRef
+   * @memberof RezGame
+   * @param {*} value value to check
+   * @returns {boolean} true if value is an element reference object
+   * @description checks if a value is an element reference in {$ref: "id"} format
+   */
+  Rez.isElementRef = function(value) {
+    return value && typeof value === 'object' && '$ref' in value;
+  };
+
+  /**
+   * @function extractId
+   * @memberof RezGame
+   * @param {string|object} idOrRef either a string ID or a {$ref: "id"} object
+   * @returns {string} the extracted ID string
+   * @description extracts ID from either plain string or {$ref: "id"} format
+   */
+  Rez.extractId = function(idOrRef) {
+    if (typeof idOrRef === 'string') return idOrRef;
+    if (idOrRef?.$ref) return idOrRef.$ref;
+    throw new Error(`Invalid reference format: ${String(idOrRef)}`);
+  };
+
   window.$game = game;
 
   window.range = function*(sv, ev) {

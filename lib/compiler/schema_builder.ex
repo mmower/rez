@@ -58,8 +58,9 @@ defmodule Rez.Compiler.SchemaBuilder do
 
     def new(priority, description, pattern_string, f)
         when is_number(priority) and priority > 0 and is_binary(description) and
-             is_binary(pattern_string) and is_function(f, 4) do
+               is_binary(pattern_string) and is_function(f, 4) do
       {:ok, compiled_pattern} = Regex.compile(pattern_string)
+
       %PatternRule{
         priority: priority,
         description: description,
@@ -68,7 +69,13 @@ defmodule Rez.Compiler.SchemaBuilder do
       }
     end
 
-    def execute(%PatternRule{f: f}, attr_name, %{} = node, %Validation{} = validation, %{} = lookup) do
+    def execute(
+          %PatternRule{f: f},
+          attr_name,
+          %{} = node,
+          %Validation{} = validation,
+          %{} = lookup
+        ) do
       f.(attr_name, node, validation, lookup)
     end
 
@@ -80,10 +87,12 @@ defmodule Rez.Compiler.SchemaBuilder do
   def build(attr_name, schema_expressions)
       when is_binary(attr_name) and is_list(schema_expressions) do
     try do
-      rules = schema_expressions
-      |> Enum.map(fn expression ->
-        rule_fn(attr_name, expression)
-      end)
+      rules =
+        schema_expressions
+        |> Enum.map(fn expression ->
+          rule_fn(attr_name, expression)
+        end)
+
       {:ok, rules}
     rescue
       e in FunctionClauseError ->
@@ -94,12 +103,15 @@ defmodule Rez.Compiler.SchemaBuilder do
   def build_pattern(pattern_string, schema_expressions)
       when is_binary(pattern_string) and is_list(schema_expressions) do
     try do
-      rules = schema_expressions
-      |> Enum.map(&pattern_rule_fn(pattern_string, &1))
+      rules =
+        schema_expressions
+        |> Enum.map(&pattern_rule_fn(pattern_string, &1))
+
       {:ok, rules}
     rescue
       e in FunctionClauseError ->
-        {:error, "Unsupported pattern rule expression for pattern '/#{pattern_string}/': #{inspect(e.args)}"}
+        {:error,
+         "Unsupported pattern rule expression for pattern '/#{pattern_string}/': #{inspect(e.args)}"}
     end
   end
 
@@ -229,7 +241,7 @@ defmodule Rez.Compiler.SchemaBuilder do
     SchemaRule.new(
       4,
       "Validate #{attr_name} is a ref to an element of type #{inspect(elems)}",
-      fn node, validation, %{id_map: id_map} = _lookup ->
+      fn node, validation, lookup ->
         case NodeHelper.get_attr(node, attr_name) do
           nil ->
             {node, validation}
@@ -237,21 +249,21 @@ defmodule Rez.Compiler.SchemaBuilder do
           %{type: :placeholder} ->
             {node, validation}
 
-          %{type: :elem_ref, value: elem_id} ->
-            if elem_type_one_of(id_map, elem_id, elems) do
+          %{type: type, value: elem_id} when type in [:elem_ref, :copy_initializer] ->
+            if elem_type_one_of(lookup, elem_id, elems) do
               {node, validation}
             else
               {node,
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} is a ref to a non-existent element (##{elem_id})"
+                 "#{attr_name} refers to an element id (##{elem_id}) that cannot be found"
                )}
             end
 
           %{type: t, value: values} when t in [:list, :set] ->
             if Enum.all?(values, fn {:elem_ref, ref} ->
-                 elem_type_one_of(id_map, ref, elems)
+                 elem_type_one_of(lookup, ref, elems)
                end) do
               {node, validation}
             else
@@ -614,13 +626,16 @@ defmodule Rez.Compiler.SchemaBuilder do
     )
   end
 
-  def elem_type_one_of(id_map, elem_id, elems) do
+  def elem_type_one_of(lookup, elem_id, elems) do
+    %{id_map: id_map} = lookup
+
     case Map.get(id_map, elem_id) do
       nil ->
         false
 
       %{} = node ->
-        Node.node_type(node) in elems
+        alias_chain = NodeHelper.get_meta(node, "alias_chain", [Node.node_type(node)])
+        Enum.any?(alias_chain, &(&1 in elems))
     end
   end
 
@@ -631,7 +646,8 @@ defmodule Rez.Compiler.SchemaBuilder do
       3,
       if(length(kinds) == 1,
         do: "Validate attributes matching /#{pattern_string}/ are of kind #{List.first(kinds)}",
-        else: "Validate attributes matching /#{pattern_string}/ are one of #{Utils.english_list(kinds)}"
+        else:
+          "Validate attributes matching /#{pattern_string}/ are one of #{Utils.english_list(kinds)}"
       ),
       pattern_string,
       fn attr_name, node, validation, _lookup ->
@@ -681,7 +697,7 @@ defmodule Rez.Compiler.SchemaBuilder do
       4,
       "Validate attributes matching /#{pattern_string}/ are refs to elements of type #{inspect(elems)}",
       pattern_string,
-      fn attr_name, node, validation, %{id_map: id_map} = _lookup ->
+      fn attr_name, node, validation, lookup ->
         case NodeHelper.get_attr(node, attr_name) do
           nil ->
             {node, validation}
@@ -690,7 +706,19 @@ defmodule Rez.Compiler.SchemaBuilder do
             {node, validation}
 
           %{type: :elem_ref, value: elem_id} ->
-            if elem_type_one_of(id_map, elem_id, elems) do
+            if elem_type_one_of(lookup, elem_id, elems) do
+              {node, validation}
+            else
+              {node,
+               Validation.add_error(
+                 validation,
+                 node,
+                 "#{attr_name} is a ref to a non-existent element (##{elem_id})"
+               )}
+            end
+
+          %{type: :copy_initializer, value: {elem_id, _prio}} ->
+            if elem_type_one_of(lookup, elem_id, elems) do
               {node, validation}
             else
               {node,
@@ -798,5 +826,4 @@ defmodule Rez.Compiler.SchemaBuilder do
       end
     )
   end
-
 end

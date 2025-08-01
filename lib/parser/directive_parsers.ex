@@ -195,14 +195,13 @@ defmodule Rez.Parser.DirectiveParsers do
   defp keyboard_modifiers() do
     many(keyboard_modifier())
     |> transform(fn modifier_list ->
-      {:modifiers,
-       Enum.reduce(
-         modifier_list,
-         %{shiftKey: false, altKey: false, metaKey: false, ctrlKey: false},
-         fn key_mod, modifiers ->
-           Map.put(modifiers, key_mod, true)
-         end
-       )}
+      Enum.reduce(
+        modifier_list,
+        %{shiftKey: false, altKey: false, metaKey: false, ctrlKey: false},
+        fn key_mod, modifiers ->
+          Map.put(modifiers, key_mod, true)
+        end
+      )
     end)
   end
 
@@ -212,6 +211,10 @@ defmodule Rez.Parser.DirectiveParsers do
       many(choice([alpha(), digit()]))
     ])
     |> transform(fn ast -> ast |> List.flatten() |> List.to_string() end)
+    |> transform(fn
+      "space" -> " "
+      key_name -> key_name
+    end)
   end
 
   defp key_desc() do
@@ -220,7 +223,7 @@ defmodule Rez.Parser.DirectiveParsers do
         keyboard_modifiers(),
         key_name()
       ],
-      ast: fn [modifiers, key] -> {:keybinding, modifiers, key} end
+      ast: fn [modifiers, key] -> {modifiers, key} end
     )
   end
 
@@ -235,7 +238,7 @@ defmodule Rez.Parser.DirectiveParsers do
         keyword_value()
       ],
       label: "@keybinding",
-      ctx: fn %Context{ast: [{:keybinding, modifiers, key}, event]} = ctx ->
+      ctx: fn %Context{ast: [{modifiers, key}, {:keyword, event}]} = ctx ->
         %{
           ctx
           | ast: %Rez.AST.KeyBinding{

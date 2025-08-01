@@ -183,6 +183,8 @@
 
   name: {kind: :string, required: true}
   title: {kind: :string, required: true}
+  author: {kind: :string, required: true}
+  author_email: {kind: :string}
   archive_format: {kind: :number, required: true}
   layout: {kind: :source_template, required: true, contains: "${content}"}
   initial_scene_id: {kind: :elem_ref, ref_elem: @scene, required: true}
@@ -776,6 +778,21 @@
 @patch {
   $built_in: true
   patch: "Array"
+  method: "normalizePTable"
+  impl: function() {
+    const sum = this.reduce((sum, [value, freq]) => sum + freq, 0);
+
+    let cumProbability = 0.0;
+    return this.map(([value, freq]) => {
+      cumProbability += freq/sum;
+      return [value, cumProbability];
+    });
+  }
+}
+
+@patch {
+  $built_in: true
+  patch: "Array"
   method: "sum"
   impl: function() {
     return this.reduce((a, b) => a+b, 0);
@@ -937,15 +954,6 @@
     return this.replace(/(^|\s)\S/g, l => l.toUpperCase());
   }
 }
-
-%%@patch {
-%%  $built_in: true
-%%  patch: "String"
-%%  method: "interpolate"
-%%  impl: function(game) {
-%%    return this;
-%%  }
-%%}
 
 @patch {
   $built_in: true
@@ -1363,6 +1371,24 @@
   }
 }
 
+@patch {
+  $built_in: true
+  patch: "Math"
+  function: "samplePTable"
+  impl: function(table) {
+    if(!Array.isArray(table)) {
+      throw new Error(`Tried to sample an ${typeof(table)} which is expected be an array [[value, prob], [value, prob], ...]`);
+    }
+
+    const p = Math.random();
+    const idx = table.findIndex((pair) => p <= pair[1]);
+    if (idx == -1) {
+      throw new Error("Invalid p_table. Must contain range 0<n<1");
+    }
+    return table[idx][0];
+  }
+}
+
 %% ----------------------------------------------------------------------------
 %% Template Filters
 %% ----------------------------------------------------------------------------
@@ -1509,6 +1535,25 @@
   %% n -> n
   name: "round"
   impl: (n, dp) => {return n.roundp(dp);}
+}
+
+@filter LPAD_FILTER {
+  $built_in: true
+
+  %% n, p, c -> "(m*s)n"
+  name: "lpad"
+  impl: (n, padChar, length) => {
+    return String(n).padStart(length, padChar);
+  }
+}
+
+@filter RPAD_FILTER {
+  $built_in: true
+
+  name: "rpad"
+  impl: (n, padChar, length) => {
+    return String(n).padEnd(length, padChar);
+  }
 }
 
 @filter ORDINAL_FILTER {
@@ -1681,6 +1726,14 @@
   %% Array, n -> Array
   name: "take"
   impl: (arr, n) => {return arr.take(n);}
+}
+
+@filter ARRAY_AT_FILTER {
+  $built_in: true
+
+  %% Array, n -> value
+  name: "at"
+  impl: (arr, n) => {return arr[n];}
 }
 
 %% Most of the following filters have been superceded either by the revised

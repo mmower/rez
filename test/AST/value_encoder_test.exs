@@ -13,7 +13,7 @@ defmodule Rez.AST.ValueEncoderTest do
 
   test "encodes list to JS" do
     encoding = encode_attribute(Attribute.list("tags", [{:elem_ref, "foo"}, {:elem_ref, "bar"}]))
-    assert {"tags", "[\"foo\", \"bar\"]"} = encoding
+    assert {"tags", "[{$ref: \"foo\"}, {$ref: \"bar\"}]"} = encoding
   end
 
   test "encodes function to JS" do

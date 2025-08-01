@@ -5,7 +5,11 @@ class RezTimer extends RezBasicObject {
     super("timer", id, attributes);
   }
 
-  run() {
+  get running() {
+    return this.#timer != null;
+  }
+
+  start() {
     const timerHandler = this.notify.bind(this);
     if(this.repeats) {
       this.#timer = setInterval(timerHandler, this.interval);
@@ -26,13 +30,13 @@ class RezTimer extends RezBasicObject {
 
   notify() {
     this.dec_counter();
-    const event_processor = this.game.event_processor;
-    event_processor.dispatchResponse(event_processor.raiseTimerEvent(this));
+    const eventProcessor = this.game.eventProcessor;
+    eventProcessor.dispatchResponse(eventProcessor.raiseTimerEvent(this));
   }
 
   stop() {
-    clearTimeout(this.timer);
-    this.timer = null;
+    clearTimeout(this.#timer);
+    this.#timer = null;
   }
 }
 

@@ -130,7 +130,8 @@ defmodule Rez.Compiler.ExecSchemaTest do
     item3 = %Rez.AST.Item{id: "item_3"}
     
     [validated_item] = ApplySchema.apply_schema(schema, [item], %{
-      id_map: %{"item_1" => item1, "item_2" => item2, "item_3" => item3}
+      id_map: %{"item_1" => item1, "item_2" => item2, "item_3" => item3},
+      aliases: %{}
     })
     assert [] = validated_item.validation.errors
 

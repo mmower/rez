@@ -336,15 +336,17 @@ class RezGame extends RezBasicObject {
   /**
    * @function getGameObject
    * @memberof RezGame
-   * @param {string} id id of game-object
+   * @param {string|object} idOrRef either a string ID or a {$ref: "id"} object
    * @param {boolean} should_throw (default: true)
    * @returns {basic_object|undefined} game-object or undefined
    * @description given an element id returns the appropriate game-object reference
    *
+   * Accepts both plain string IDs and {$ref: "id"} objects for backward compatibility.
    * If should_throw is true an exception will be thrown if the element id
    * is not valid. Otherwise null is returned.
    */
-  getGameObject(id, shouldThrow = true) {
+  getGameObject(idOrRef, shouldThrow = true) {
+    const id = Rez.extractId(idOrRef, shouldThrow);
     const obj = this.#gameObjects.get(id);
     if(typeof(obj) === "undefined") {
       if(shouldThrow) {

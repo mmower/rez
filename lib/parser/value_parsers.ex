@@ -189,8 +189,42 @@ defmodule Rez.Parser.ValueParsers do
         label: "elem-ref-value",
         debug: true,
         ast: fn
-          [elem_id] -> {:elem_ref, elem_id}
-          [_bang, elem_id] -> {:clone_ref, elem_id}
+          [elem_id] ->
+            {:elem_ref, elem_id}
+            # [_bang, elem_id] -> {:clone_ref, elem_id}
+        end
+      )
+    end)
+  end
+
+  def priority() do
+    ParserCache.get_parser("priority", fn ->
+      optional(
+        sequence(
+          [
+            ignore(colon()),
+            number()
+          ],
+          ast: fn [prio] -> prio end
+        )
+      )
+      |> default(10)
+    end)
+  end
+
+  # Copy initializer
+  def copy_initializer_value() do
+    ParserCache.get_parser("copy_initializer", fn ->
+      sequence(
+        [
+          ignore(caret()),
+          ignore(char(?c)),
+          priority(),
+          ignore(colon()),
+          elem_ref_value()
+        ],
+        ast: fn [prio, {:elem_ref, elem_id}] ->
+          {:copy_initializer, {elem_id, bounded(prio, 1, 10)}}
         end
       )
     end)
@@ -204,16 +238,7 @@ defmodule Rez.Parser.ValueParsers do
         [
           ignore(caret()),
           ignore(char(?i)),
-          optional(
-            sequence(
-              [
-                ignore(colon()),
-                number()
-              ],
-              ast: fn [prio] -> prio end
-            )
-          )
-          |> default(10),
+          priority(),
           text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
         ast: fn
@@ -503,6 +528,7 @@ defmodule Rez.Parser.ValueParsers do
           dice_value(),
           elem_ref_value(),
           dynamic_initializer_value(),
+          copy_initializer_value(),
           file_value(),
           placeholder_value()
         ],

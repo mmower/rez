@@ -76,6 +76,10 @@ defmodule Rez.AST.ValueEncoder do
     "{initializer: #{Poison.encode!(initializer)}, priority: #{prio}}"
   end
 
+  def encode_value({:copy_initializer, {elem_id, prio}}) do
+    "{$copy: #{encode_value({:elem_ref, elem_id})}, priority: #{prio}}"
+  end
+
   def encode_value({:property, f}) do
     "{property: #{Poison.encode!(f)}}"
   end
@@ -98,7 +102,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:elem_ref, r}) do
-    ~s|"#{r}"|
+    ~s|{$ref: "#{r}"}|
   end
 
   def encode_value({:function, f}) do
