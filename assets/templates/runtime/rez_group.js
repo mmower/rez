@@ -5,15 +5,40 @@
 // include_tag and exclude_tag attributes.
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezGroup
+ * @extends RezBasicObject
+ * @description Represents a dynamically generated group of assets in the Rez game engine.
+ * Groups filter assets based on type, include_tags, and exclude_tags attributes.
+ * Provides methods for getting random assets from the filtered collection.
+ */
 class RezGroup extends RezBasicObject {
+  /**
+   * @function constructor
+   * @memberof RezGroup
+   * @param {string} id - unique identifier for this group
+   * @param {object} attributes - group attributes including type, include_tags, exclude_tags
+   * @description Creates a new asset group instance
+   */
   constructor(id, attributes) {
     super("group", id, attributes);
   }
 
+  /**
+   * @function elementInitializer
+   * @memberof RezGroup
+   * @description Initializes the group by filtering assets during game startup
+   */
   elementInitializer() {
     this.filterAssets();
   }
 
+  /**
+   * @function filterAssets
+   * @memberof RezGroup
+   * @description Filters all game assets based on type, include_tags, and exclude_tags
+   * to build the group's asset collection. The filtered assets are shuffled and stored.
+   */
   filterAssets() {
     // Start with all assets
     let assets = this.game.getAll("asset");
@@ -52,6 +77,14 @@ class RezGroup extends RezBasicObject {
     this.setAttribute("assets", assets);
   }
 
+  /**
+   * @function randomAssetId
+   * @memberof RezGroup
+   * @returns {string} ID of a random asset from this group
+   * @description Gets a random asset ID from this group, consuming it from the collection.
+   * If the group is empty, it will re-filter assets first.
+   * @throws {Error} if no matching assets are found
+   */
   randomAssetId() {
     if(this.assets.size == 0) {
       this.filterAssets();

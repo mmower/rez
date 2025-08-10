@@ -311,6 +311,7 @@ class RezLayout extends RezBlock {
     const boundBlocks = this.bindBlocks();
     return templateFn({
       content: renderedContent,
+      // ...this.parentBindings(),
       ...boundValues,
       ...boundBlocks,
     });

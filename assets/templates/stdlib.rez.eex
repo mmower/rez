@@ -930,6 +930,19 @@
 
 @patch {
   $built_in: true
+  patch: "Array"
+  method: "pushWithLimit"
+  impl: function(el, lim) {
+    this.push(el);
+    if(this.length > lim) {
+      this.shift();
+    }
+    return this;
+  }
+}
+
+@patch {
+  $built_in: true
   patch: "String"
   method: "beginsWithConsonant"
   impl: function() {

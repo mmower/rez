@@ -2,6 +2,16 @@
 // Event Handling SubSystem
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezEvent
+ * @description Represents a game event response in the Rez game engine. Events are used to communicate
+ * the results of user interactions and specify what actions should be taken (scene changes, card plays,
+ * flash messages, etc.). Supports method chaining for building complex event responses.
+ * 
+ * @example
+ * // Create an event that plays a card and shows a message
+ * return RezEvent.playCard("next_card").flash("Moving forward!").render();
+ */
 class RezEvent {
   #params;
   #flashMessages;
@@ -13,6 +23,11 @@ class RezEvent {
   #renderEvent;
   #errorMessage;
 
+  /**
+   * @function constructor
+   * @memberof RezEvent
+   * @description Creates a new event response with default values
+   */
   constructor() {
     this.#params = {};
     this.#flashMessages = [];
@@ -25,157 +40,382 @@ class RezEvent {
     this.#errorMessage = null;
   }
 
+  /**
+   * @function params
+   * @memberof RezEvent
+   * @returns {object} the parameters object associated with this event
+   */
   get params() {
     return this.#params;
   }
 
+  /**
+   * @function flashMessages
+   * @memberof RezEvent
+   * @returns {string[]} array of flash messages to display
+   */
   get flashMessages() {
     return this.#flashMessages;
   }
 
+  /**
+   * @function cardId
+   * @memberof RezEvent
+   * @returns {string|null} ID of the card to play, or null if no card action
+   */
   get cardId() {
     return this.#cardId;
   }
 
+  /**
+   * @function sceneId
+   * @memberof RezEvent
+   * @returns {string|null} ID of the scene for scene transition, or null if no scene action
+   */
   get sceneId() {
     return this.#sceneId;
   }
 
+  /**
+   * @function sceneChangeEvent
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should trigger a scene change
+   */
   get sceneChangeEvent() {
     return this.#sceneChangeEvent;
   }
 
+  /**
+   * @function sceneInterludeEvent
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should trigger a scene interlude
+   */
   get sceneInterludeEvent() {
     return this.#sceneInterludeEvent;
   }
 
+  /**
+   * @function sceneResumeEvent
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should resume the previous scene
+   */
   get sceneResumeEvent() {
     return this.#sceneResumeEvent;
   }
 
+  /**
+   * @function renderEvent
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should trigger a view render
+   */
   get renderEvent() {
     return this.#renderEvent;
   }
 
+  /**
+   * @function errorMessage
+   * @memberof RezEvent
+   * @returns {string|null} error message if this is an error event, or null
+   */
   get errorMessage() {
     return this.#errorMessage;
   }
 
+  /**
+   * @function setParam
+   * @memberof RezEvent
+   * @param {string} name - parameter name
+   * @param {*} value - parameter value
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets a single parameter on this event
+   */
   setParam(name, value ) {
     this.#params[name] = value;
     return this;
   }
 
+  /**
+   * @function setParams
+   * @memberof RezEvent
+   * @param {object} params - parameters object to set
+   * @returns {RezEvent} this event for method chaining
+   * @description Replaces the entire parameters object for this event
+   */
   setParams(params) {
     this.#params = params;
     return this;
   }
 
+  /**
+   * @function hasFlash
+   * @memberof RezEvent
+   * @returns {boolean} true if this event has flash messages to display
+   */
   get hasFlash() {
     return this.#flashMessages.length > 0;
   }
 
+  /**
+   * @function flash
+   * @memberof RezEvent
+   * @param {string} message - message to display as a flash
+   * @returns {RezEvent} this event for method chaining
+   * @description Adds a flash message to be displayed to the user
+   */
   flash(message) {
     this.#flashMessages.push(message);
     return this;
   }
 
+  /**
+   * @function shouldPlayCard
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should play a card
+   */
   get shouldPlayCard() {
     return this.#cardId != null;
   }
 
+  /**
+   * @function playCard
+   * @memberof RezEvent
+   * @param {string} cardId - ID of the card to play
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event to play the specified card
+   */
   playCard(cardId) {
     this.#cardId = cardId;
     return this;
   }
 
+  /**
+   * @function shouldRender
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should trigger a view render
+   */
   get shouldRender() {
     return this.#renderEvent;
   }
 
+  /**
+   * @function render
+   * @memberof RezEvent
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event to trigger a view render
+   */
   render() {
     this.#renderEvent = true;
     return this;
   }
 
+  /**
+   * @function shouldChangeScene
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should change to a new scene
+   */
   get shouldChangeScene() {
     return this.#sceneChangeEvent;
   }
 
+  /**
+   * @function sceneChange
+   * @memberof RezEvent
+   * @param {string} sceneId - ID of the scene to change to
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event to change to the specified scene
+   */
   sceneChange(sceneId) {
     this.#sceneChangeEvent = true;
     this.#sceneId = sceneId;
     return this;
   }
 
+  /**
+   * @function shouldInterludeScene
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should start a scene interlude
+   */
   get shouldInterludeScene() {
     return this.#sceneInterludeEvent;
   }
 
+  /**
+   * @function sceneInterlude
+   * @memberof RezEvent
+   * @param {string} sceneId - ID of the scene to interlude with
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event to start an interlude with the specified scene
+   */
   sceneInterlude(sceneId) {
     this.#sceneInterludeEvent = true;
     this.#sceneId = sceneId;
     return this;
   }
 
+  /**
+   * @function shouldResumeScene
+   * @memberof RezEvent
+   * @returns {boolean} true if this event should resume the previous scene
+   */
   get shouldResumeScene() {
     return this.#sceneResumeEvent;
   }
 
+  /**
+   * @function sceneResume
+   * @memberof RezEvent
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event to resume the previous scene from the scene stack
+   */
   sceneResume() {
     this.#sceneResumeEvent = true;
     return this;
   }
 
+  /**
+   * @function isError
+   * @memberof RezEvent
+   * @returns {boolean} true if this is an error event
+   */
   get isError() {
     return this.#errorMessage != null;
   }
 
+  /**
+   * @function error
+   * @memberof RezEvent
+   * @param {string} message - error message
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets this event as an error with the specified message
+   */
   error(message) {
     this.#errorMessage = message;
     return this;
   }
 
+  /**
+   * @function noop
+   * @memberof RezEvent
+   * @returns {RezEvent} this event for method chaining
+   * @description No-operation method for method chaining when no action is needed
+   */
   noop() {
     return this;
   }
 
+  /**
+   * @function built_in
+   * @memberof RezEvent
+   * @static
+   * @returns {RezEvent} a new empty event
+   * @description Creates a new built-in event with default values
+   */
   static built_in() {
     return new RezEvent();
   }
 
+  /**
+   * @function flash
+   * @memberof RezEvent
+   * @static
+   * @param {string} message - flash message to display
+   * @returns {RezEvent} a new event with the flash message
+   * @description Creates a new event that displays a flash message
+   */
   static flash(message) {
     return new RezEvent().flash(message);
   }
 
+  /**
+   * @function playCard
+   * @memberof RezEvent
+   * @static
+   * @param {string} cardId - ID of the card to play
+   * @returns {RezEvent} a new event that plays the specified card
+   * @description Creates a new event that plays the specified card
+   */
   static playCard(cardId) {
     return new RezEvent().playCard(cardId);
   }
 
+  /**
+   * @function render
+   * @memberof RezEvent
+   * @static
+   * @returns {RezEvent} a new event that triggers a render
+   * @description Creates a new event that triggers a view render
+   */
   static render() {
     return new RezEvent().render();
   }
 
+  /**
+   * @function setParam
+   * @memberof RezEvent
+   * @static
+   * @param {string} param - parameter name
+   * @param {*} value - parameter value
+   * @returns {RezEvent} a new event with the specified parameter
+   * @description Creates a new event with a single parameter set
+   */
   static setParam(param, value) {
     return new RezEvent().setParam(param, value);
   }
 
+  /**
+   * @function sceneChange
+   * @memberof RezEvent
+   * @static
+   * @param {string} sceneId - ID of the scene to change to
+   * @returns {RezEvent} a new event that changes to the specified scene
+   * @description Creates a new event that changes to the specified scene
+   */
   static sceneChange(sceneId) {
     return new RezEvent().sceneChange(sceneId);
   }
 
+  /**
+   * @function sceneInterlude
+   * @memberof RezEvent
+   * @static
+   * @param {string} sceneId - ID of the scene to interlude with
+   * @returns {RezEvent} a new event that starts an interlude
+   * @description Creates a new event that starts an interlude with the specified scene
+   */
   static sceneInterlude(sceneId) {
     return new RezEvent().sceneInterlude(sceneId);
   }
 
+  /**
+   * @function sceneResume
+   * @memberof RezEvent
+   * @static
+   * @returns {RezEvent} a new event that resumes the previous scene
+   * @description Creates a new event that resumes the previous scene from the stack
+   */
   static sceneResume() {
     return new RezEvent().sceneResume();
   }
 
+  /**
+   * @function noop
+   * @memberof RezEvent
+   * @static
+   * @returns {RezEvent} a new empty event
+   * @description Creates a new event that performs no action
+   */
   static noop() {
     return new RezEvent();
   }
 
+  /**
+   * @function error
+   * @memberof RezEvent
+   * @static
+   * @param {string} message - error message
+   * @returns {RezEvent} a new error event
+   * @description Creates a new event that represents an error
+   */
   static error(message) {
     return new RezEvent().error(message);
   }
@@ -183,25 +423,60 @@ class RezEvent {
 
 window.Rez.RezEvent = RezEvent;
 
+/**
+ * @class RezEventProcessor
+ * @description Processes events in the Rez game engine. Handles browser events (clicks, inputs, submits),
+ * custom game events, timer events, and system events. Routes events to appropriate handlers and manages
+ * the event lifecycle including system pre/post processing and undo manager integration.
+ */
 class RezEventProcessor {
   #game;
 
+  /**
+   * @function constructor
+   * @memberof RezEventProcessor
+   * @param {RezGame} game - the game instance this processor belongs to
+   * @description Creates a new event processor for the specified game
+   */
   constructor(game) {
     this.#game = game;
   }
 
+  /**
+   * @function game
+   * @memberof RezEventProcessor
+   * @returns {RezGame} the game instance
+   */
   get game() {
     return this.#game;
   }
 
+  /**
+   * @function scene
+   * @memberof RezEventProcessor
+   * @returns {RezScene} the current scene
+   */
   get scene() {
     return this.#game.current_scene;
   }
 
+  /**
+   * @function card
+   * @memberof RezEventProcessor
+   * @returns {RezCard} the current card
+   */
   get card() {
     return this.#game.current_scene.current_card;
   }
 
+  /**
+   * @function dispatchResponse
+   * @memberof RezEventProcessor
+   * @param {RezEvent} response - the event response to process
+   * @description Processes a RezEvent response by executing the actions it specifies:
+   * flash messages, scene changes/interludes/resumes, card plays, view renders, and error handling.
+   * @throws {Error} if the response is not a RezEvent instance
+   */
   dispatchResponse(response) {
     if(response instanceof RezEvent) {
       if(response.hasFlash) {
@@ -234,6 +509,15 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function beforeEventProcessing
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the browser event to pre-process
+   * @returns {Event} the processed event
+   * @description Runs the event through all enabled systems' before_event handlers.
+   * Each system can modify the event before it gets processed.
+   * @throws {Error} if any system handler doesn't return a valid event object
+   */
   beforeEventProcessing(evt) {
     const systems = this.game.getEnabledSystems();
 
@@ -247,6 +531,16 @@ class RezEventProcessor {
     }, evt);
   }
 
+  /**
+   * @function afterEventProcessing
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the original browser event
+   * @param {*} result - the result from event processing
+   * @returns {*} the processed result
+   * @description Runs the event result through all enabled systems' after_event handlers.
+   * Each system can modify the result after the event has been processed.
+   * @throws {Error} if any system handler doesn't return a valid result object
+   */
   afterEventProcessing(evt, result) {
     const systems = this.game.getEnabledSystems();
 
@@ -260,21 +554,50 @@ class RezEventProcessor {
     }, result);
   }
 
+  /**
+   * @function raiseTimerEvent
+   * @memberof RezEventProcessor
+   * @param {RezTimer} timer - the timer that fired
+   * @returns {*} the result of processing the timer event
+   * @description Creates and processes a custom timer event
+   */
   raiseTimerEvent(timer) {
     const evt = new CustomEvent('timer', {detail: {timer: timer}});
     return this.handleBrowserEvent(evt);
   }
 
+  /**
+   * @function raiseKeyBindingEvent
+   * @memberof RezEventProcessor
+   * @param {string} event_name - the name of the key binding event
+   * @returns {*} the result of processing the key binding event
+   * @description Creates and processes a custom key binding event
+   */
   raiseKeyBindingEvent(event_name) {
     const evt = new CustomEvent("key_binding", {detail: {event_name: event_name}});
     return this.handleBrowserEvent(evt);
   }
 
+  /**
+   * @function isAutoUndoEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the event to check
+   * @returns {boolean} true if this event type should trigger automatic undo recording
+   * @description Determines if an event should automatically record undo state
+   */
   isAutoUndoEvent(evt) {
     const evtTypes = ["click", "input", "submit", "key_binding"];
     return evtTypes.includes(evt.type);
   }
 
+  /**
+   * @function handleBrowserEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the browser event to handle
+   * @returns {*} the result of processing the event
+   * @description Main event handler that processes browser events. Handles undo recording,
+   * system pre/post processing, and routes events to specific handlers based on type.
+   */
   handleBrowserEvent(evt) {
     console.log("HandleBrowserEvent");
 
@@ -304,11 +627,25 @@ class RezEventProcessor {
     return this.afterEventProcessing(evt, result);
   }
 
+  /**
+   * @function decodeEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the browser event to decode
+   * @returns {Array} [eventName, target, params] decoded from the event's dataset
+   * @description Extracts event name, target, and parameters from an element's dataset attributes
+   */
   decodeEvent(evt) {
     const { event, target, ...params } = evt.currentTarget.dataset;
     return [event.toLowerCase(), target, params];
   }
 
+  /**
+   * @function handleTimerEvent
+   * @memberof RezEventProcessor
+   * @param {CustomEvent} evt - the timer event with timer details
+   * @returns {*} the result of handling the timer event
+   * @description Handles timer events by routing them to custom event handlers
+   */
   handleTimerEvent(evt) {
     const timer = evt.detail.timer;
     const result = this.handleCustomEvent(timer.event, {timer: timer.id});
@@ -319,6 +656,13 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function handleKeyBindingEvent
+   * @memberof RezEventProcessor
+   * @param {CustomEvent} evt - the key binding event with event name details
+   * @returns {*} the result of handling the key binding event
+   * @description Handles key binding events by routing them to custom event handlers
+   */
   handleKeyBindingEvent(evt) {
     const result = this.handleCustomEvent(evt.detail.event_name, {});
     if(!typeof(result) === "object") {
@@ -328,6 +672,14 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function handleBrowserClickEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the click event
+   * @returns {*} the result of handling the click event
+   * @description Handles browser click events by decoding the event data and routing to appropriate handlers.
+   * Supports built-in event types (card, switch, interlude, resume) and custom events.
+   */
   handleBrowserClickEvent(evt) {
     const [eventName, target, params] = this.decodeEvent(evt);
 
@@ -349,6 +701,14 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function getReceiverEventHandler
+   * @memberof RezEventProcessor
+   * @param {*} receiver - the object to check for event handlers
+   * @param {string} eventname - the name of the event to find a handler for
+   * @returns {Function|null} the event handler function or null if not found
+   * @description Gets an event handler function from a receiver object
+   */
   getReceiverEventHandler(receiver, eventname) {
     let handler = receiver.eventHandler(eventname);
     if(handler && typeof(handler) === "function") {
@@ -358,12 +718,28 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function getEventHandler
+   * @memberof RezEventProcessor
+   * @param {string} eventName - the name of the event to find a handler for
+   * @returns {Array} [receiver, handler] pair where receiver is the object that handles the event
+   * @description Finds an event handler by checking card, scene, and game in that order.
+   * Returns the first receiver that has a handler for the event.
+   */
   getEventHandler(eventName) {
     const receivers = [this.card, this.scene, this.game];
     const handlers = receivers.map((receiver) => [receiver, this.getReceiverEventHandler(receiver, eventName)]);
     return handlers.find(([receiver, handler]) => handler) ?? [null, null];
   }
 
+  /**
+   * @function handleCustomEvent
+   * @memberof RezEventProcessor
+   * @param {string} eventName - the name of the custom event
+   * @param {object} params - parameters to pass to the event handler
+   * @returns {RezEvent} the result of the event handler or an error event
+   * @description Handles custom events by finding and calling the appropriate event handler
+   */
   handleCustomEvent(eventName, params) {
     const [receiver, handler] = this.getEventHandler(eventName);
     if(!handler) {
@@ -374,26 +750,66 @@ class RezEventProcessor {
     }
   }
 
+  /**
+   * @function handleCardEvent
+   * @memberof RezEventProcessor
+   * @param {string} target - ID of the card to play
+   * @param {object} params - parameters to pass to the card
+   * @returns {RezEvent} event that plays the specified card
+   * @description Handles built-in card events that play a specific card
+   */
   handleCardEvent(target, params) {
     console.log(`Handle card event: |${target}|`);
     return RezEvent.playCard(target).setParams(params);
   }
 
+  /**
+   * @function handleSwitchEvent
+   * @memberof RezEventProcessor
+   * @param {string} target - ID of the scene to switch to
+   * @param {object} params - parameters to pass to the scene
+   * @returns {RezEvent} event that changes to the specified scene
+   * @description Handles built-in switch events that change to a new scene
+   */
   handleSwitchEvent(target, params) {
     console.log(`Handle switch event: |${target}|`);
     return RezEvent.sceneChange(target).setParams(params);
   }
 
+  /**
+   * @function handleInterludeEvent
+   * @memberof RezEventProcessor
+   * @param {string} target - ID of the scene to interlude with
+   * @param {object} params - parameters to pass to the scene
+   * @returns {RezEvent} event that starts an interlude with the specified scene
+   * @description Handles built-in interlude events that interrupt the current scene
+   */
   handleInterludeEvent(target, params) {
     console.log(`Handle interlude event: |${target}|`);
     return RezEvent.sceneInterlude(target).setParams(params);
   }
 
+  /**
+   * @function handleResumeEvent
+   * @memberof RezEventProcessor
+   * @param {object} params - parameters to pass to the resumed scene
+   * @returns {RezEvent} event that resumes the previous scene
+   * @description Handles built-in resume events that return to the previous scene
+   */
   handleResumeEvent(params) {
     console.log("Handle resume event");
     return RezEvent.sceneResume().setParams(params);
   }
 
+  /**
+   * @function handleBrowserInputEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the input event
+   * @returns {RezEvent} the result of the card's input event handler
+   * @description Handles browser input events by finding the card that contains the input element
+   * and calling its input event handler.
+   * @throws {Error} if the card container or card ID cannot be found
+   */
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
     const card_div = evt.target.closest("div.rez-active-card div[data-card]");
@@ -410,6 +826,15 @@ class RezEventProcessor {
     return card.runEvent("input", { evt: evt }) || RezEvent.noop();
   }
 
+  /**
+   * @function handleBrowserSubmitEvent
+   * @memberof RezEventProcessor
+   * @param {Event} evt - the submit event
+   * @returns {RezEvent} the result of the card's form event handler
+   * @description Handles browser form submit events by finding the card that contains the form
+   * and calling its event handler named after the form.
+   * @throws {Error} if the form name or card container cannot be found
+   */
   handleBrowserSubmitEvent(evt) {
     console.log("Handle submit event");
 

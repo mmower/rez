@@ -200,37 +200,103 @@ defmodule Rez.Compiler.SchemaBuilder do
   defp rule_fn(attr_name, {:min_length, min_length}) do
     SchemaRule.new(
       3,
-      "Validate #{attr_name} is a collection of at least #{min_length} items",
+      "Validate #{attr_name} is a collection of at least #{min_length} items or a string of at least #{min_length} characters.",
       fn node, validation, _lookup ->
         if min_length < 1 do
           {node, validation}
         else
-          case NodeHelper.get_attr_value(node, attr_name) do
+          case NodeHelper.get_attr(node, attr_name) do
             nil ->
               {node, validation}
 
-            contents ->
-              if Enumerable.impl_for(contents) do
-                if Enum.count(contents) < min_length do
-                  {node,
-                   Validation.add_error(
-                     validation,
-                     node,
-                     "#{attr_name} is expected to be a collection of at least #{min_length} elements but was #{Enum.count(contents)}"
-                   )}
-                else
-                  {node, validation}
-                end
-              else
+            %Rez.AST.Attribute{type: :string, value: s} ->
+              if String.length(s) < min_length do
                 {
                   node,
                   Validation.add_error(
                     validation,
                     node,
-                    "#{attr_name} contains something that is not a collection"
+                    "#{attr_name} is expected to be a string of at least #{min_length} characters, was #{String.length(s)}"
                   )
                 }
+              else
+                {node, validation}
               end
+
+            %Rez.AST.Attribute{type: type, value: contents} when type in [:list, :set] ->
+              if Enum.count(contents) < min_length do
+                {node,
+                 Validation.add_error(
+                   validation,
+                   node,
+                   "#{attr_name} is expected to be a collection of at least #{min_length} elements but was #{Enum.count(contents)}"
+                 )}
+              else
+                {node, validation}
+              end
+
+            {type, _} ->
+              {
+                node,
+                Validation.add_error(
+                  validation,
+                  node,
+                  "#{attr_name} was expected to be a list, set, or string but was #{inspect(type)}"
+                )
+              }
+          end
+        end
+      end
+    )
+  end
+
+  defp rule_fn(attr_name, {:max_length, max_length}) do
+    SchemaRule.new(
+      3,
+      "Validate #{attr_name} is a collection of at most #{max_length} items or a string of at most #{max_length} characters.",
+      fn node, validation, _lookup ->
+        if max_length < 1 do
+          {node, validation}
+        else
+          case NodeHelper.get_attr(node, attr_name) do
+            nil ->
+              {node, validation}
+
+            %Rez.AST.Attribute{type: :string, value: s} ->
+              if String.length(s) > max_length do
+                {
+                  node,
+                  Validation.add_error(
+                    validation,
+                    node,
+                    "#{attr_name} is expected to be a string of at most #{max_length} characters, was #{String.length(s)}"
+                  )
+                }
+              else
+                {node, validation}
+              end
+
+            %Rez.AST.Attribute{type: type, value: contents} when type in [:list, :set] ->
+              if Enum.count(contents) > max_length do
+                {node,
+                 Validation.add_error(
+                   validation,
+                   node,
+                   "#{attr_name} is expected to be a collection of at most #{max_length} elements but was #{Enum.count(contents)}"
+                 )}
+              else
+                {node, validation}
+              end
+
+            {type, _} ->
+              {
+                node,
+                Validation.add_error(
+                  validation,
+                  node,
+                  "#{attr_name} was expected to be a list, set, or string but was #{inspect(type)}"
+                )
+              }
           end
         end
       end

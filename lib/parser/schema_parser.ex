@@ -91,14 +91,19 @@ defmodule Rez.Parser.SchemaParser do
             case SchemaBuilder.build(attr_name, [other_validations]) do
               {:ok, rules} ->
                 Context.set_ast(ctx, List.flatten(rules))
+
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
 
           %{status: :ok, ast: [{:attr, attr_name}, first_validation, other_validations]} ->
-            case SchemaBuilder.build(attr_name, List.flatten([first_validation | other_validations])) do
+            case SchemaBuilder.build(
+                   attr_name,
+                   List.flatten([first_validation | other_validations])
+                 ) do
               {:ok, rules} ->
                 Context.set_ast(ctx, List.flatten(rules))
+
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
@@ -107,14 +112,19 @@ defmodule Rez.Parser.SchemaParser do
             case SchemaBuilder.build_pattern(pattern_string, [other_validations]) do
               {:ok, rules} ->
                 Context.set_ast(ctx, List.flatten(rules))
+
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
 
           %{status: :ok, ast: [{:pattern, pattern_string}, first_validation, other_validations]} ->
-            case SchemaBuilder.build_pattern(pattern_string, List.flatten([first_validation | other_validations])) do
+            case SchemaBuilder.build_pattern(
+                   pattern_string,
+                   List.flatten([first_validation | other_validations])
+                 ) do
               {:ok, rules} ->
                 Context.set_ast(ctx, List.flatten(rules))
+
               {:error, reason} ->
                 Context.add_error(ctx, :schema_build_error, reason)
             end
@@ -139,9 +149,15 @@ defmodule Rez.Parser.SchemaParser do
             case Regex.compile(pattern_string) do
               {:ok, _compiled_regex} ->
                 Context.set_ast(ctx, pattern_string)
+
               {:error, reason} ->
-                Context.add_error(ctx, :invalid_regex, "Invalid regex pattern '#{pattern_string}': #{inspect(reason)}")
+                Context.add_error(
+                  ctx,
+                  :invalid_regex,
+                  "Invalid regex pattern '#{pattern_string}': #{inspect(reason)}"
+                )
             end
+
           _ ->
             ctx
         end
@@ -164,6 +180,7 @@ defmodule Rez.Parser.SchemaParser do
       schema_validate_ref_elem(),
       schema_validate_coll_kind(),
       schema_validate_min_length(),
+      schema_validate_max_length(),
       schema_validate_contains(),
       schema_validate_in(),
       # For assets
@@ -354,7 +371,23 @@ defmodule Rez.Parser.SchemaParser do
       ],
       label: "validate-min-length",
       ast: fn [{:number, min_length}] ->
+        # TODO: Should be a positive integer & less than any max length
         {:min_length, min_length}
+      end
+    )
+  end
+
+  defp schema_validate_max_length() do
+    sequence(
+      [
+        iliteral("max_length:"),
+        iws(),
+        number_value()
+      ],
+      label: "validate-max-length",
+      ast: fn [{:number, max_length}] ->
+        # TODO: Should be a positive integer & greater than any min-length really
+        {:max_length, max_length}
       end
     )
   end

@@ -198,15 +198,19 @@ class RezGame extends RezBasicObject {
    * @param {basic_object} elem element whose attributes are to be indexed
    */
   addToAttrIndex(elem) {
-    Object.entries(elem.attributes).forEach(([k, v]) => {
-      this.indexAttribute(elem.id, k);
-    });
+    if(!elem.isTemplateObject()) {
+      Object.entries(elem.attributes).forEach(([k, v]) => {
+        this.indexAttribute(elem.id, k);
+      });
+    }
   }
 
   removeFromAttrIndex(elem) {
-    Object.entries(elem.attributes).forEach(([k, v]) => {
-      this.unindexAttribute(elem.id, k);
-    })
+    if(!elem.isTemplateObject()) {
+      Object.entries(elem.attributes).forEach(([k, v]) => {
+        this.unindexAttribute(elem.id, k);
+      });
+    }
   }
 
   /**
