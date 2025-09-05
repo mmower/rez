@@ -36,3 +36,6 @@ docs/*.html
 settings.json
 out
 docs/api
+.serena
+.claude
+.vscode

@@ -23,6 +23,7 @@ defmodule Rez.Compiler.Compilation do
             type_hierarchy: TypeHierarchy.new(),
             defaults: %{},
             aliases: %{},
+            constants: %{},
             schema: nil,
             progress: [],
             errors: []

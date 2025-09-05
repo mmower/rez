@@ -26,6 +26,39 @@ defmodule Rez.Parser.ParserTest do
     LogicalFile.assemble(base_path, [section])
   end
 
+  test "parses const directive with number" do
+    input = "@const MAX_HEALTH = 100"
+    source = dummy_source(input)
+
+    assert {:ok, [%Rez.AST.Const{name: "MAX_HEALTH", value: {:number, 100}, value_type: :number}], %{}} =
+             parse(source)
+  end
+
+  test "parses const directive with string" do
+    input = "@const PLAYER_NAME = \"Hero\""
+    source = dummy_source(input)
+
+    assert {:ok, [%Rez.AST.Const{name: "PLAYER_NAME", value: {:string, "Hero"}, value_type: :string}], %{}} =
+             parse(source)
+  end
+
+  test "parses const directive with boolean" do
+    input = "@const DEBUG_MODE = true"
+    source = dummy_source(input)
+
+    assert {:ok, [%Rez.AST.Const{name: "DEBUG_MODE", value: {:boolean, true}, value_type: :boolean}], %{}} =
+             parse(source)
+  end
+
+  test "parses element with constant reference in attribute" do
+    input = "@const MAX_HEALTH = 100\n@game {\n  max_hp: $MAX_HEALTH\n}"
+    source = dummy_source(input)
+
+    assert {:ok, [const, game], %{}} = parse(source)
+    assert %Rez.AST.Const{name: "MAX_HEALTH"} = const
+    assert %Rez.AST.Game{attributes: %{"max_hp" => %{type: :const_ref, value: "MAX_HEALTH"}}} = game
+  end
+
   test "parse script" do
     input = read_source(@test_script_path)
     full_path = Path.expand(@test_script_path)

@@ -27,6 +27,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:function, {:std, params, body}}), do: std_function(name, {params, body})
   def create(name, {:function, {:arrow, params, body}}), do: arrow_function(name, {params, body})
   def create(name, {:elem_ref, value}), do: elem_ref(name, value)
+  def create(name, {:const_ref, value}), do: const_ref(name, value)
   def create(name, {:keyword, value}), do: keyword(name, value)
   def create(name, {:list, values}), do: list(name, values)
   def create(name, {:table, values}), do: table(name, values)
@@ -56,6 +57,10 @@ defmodule Rez.AST.Attribute do
 
   def elem_ref(name, value) do
     %Attribute{name: name, type: :elem_ref, value: value}
+  end
+
+  def const_ref(name, value) do
+    %Attribute{name: name, type: :const_ref, value: value}
   end
 
   def keyword(name, value) do

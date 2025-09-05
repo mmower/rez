@@ -20,11 +20,14 @@ defmodule Rez.Compiler.BuildSchemaTest do
           "game",
           [
             elem(SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}]), 1),
-            elem(SchemaBuilder.build("initial_scene_id", [
-              {:kind, [:elem_ref]},
-              {:ref_elem, [:scene]},
-              {:required, true}
-            ]), 1)
+            elem(
+              SchemaBuilder.build("initial_scene_id", [
+                {:kind, [:elem_ref]},
+                {:ref_elem, [:scene]},
+                {:required, true}
+              ]),
+              1
+            )
           ]
         ],
         {nil, 0, 0}

@@ -5,9 +5,11 @@
   "use strict";
   window.Rez = window.Rez ?? {};
 
+  <%= @constants %>
   <%= @patch_js_objects %>
   <%= @js_stdlib %>
   <%= @js_userlib %>
+
   <%= @mixins %>
   <%= @register_expression_filters %>
   <%= @init_game_objects %>

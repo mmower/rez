@@ -1,5 +1,13 @@
 #!/bin/bash
-jsdoc --verbose -d docs/api assets/templates/runtime/*.js
+
+# Generate JavaScript API documentation using JSDoc configuration
+npm run docs:js
+
+# Copy README (uncomment if needed)
 #cp README.html docs/about.html
+
+# Build AsciiDoc documentation (uncomment if needed)
 #asciidoctor docs/*.adoc
+
+# Sync documentation to www directory
 rsync -av --delete docs ../www/content/

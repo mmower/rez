@@ -136,67 +136,24 @@ class RezBehaviour extends RezBasicObject {
     return this.#children[idx];
   }
 
-  /**
-   * @function result
-   * @memberof RezBehaviour
-   * @param {object} wmem - the working memory object
-   * @param {boolean} success - whether the behaviour succeeded
-   * @returns {object} a standardized behaviour result object
-   * @description Creates a standardized result object for behaviour execution
-   */
-  result(wmem, success) {
-    return {
-      id: this.id,
-      wmem: wmem,
-      success: success
-    };
-  }
 
   /**
    * @function executeBehaviour
    * @memberof RezBehaviour
-   * @param {object} wmem - the working memory object containing context for execution
-   * @returns {object} result object with id, wmem, success, and optional error properties
-   * @description Executes this behaviour with the provided working memory.
-   * Validates expected keys in wmem before execution and ensures proper result format.
+   * @returns {boolean} true if the behaviour succeeded, false otherwise
+   * @description Executes this behaviour using the owner's blackboard for context.
    * @throws {Error} if the execute function returns an invalid result format
    */
-  executeBehaviour(wmem) {
-    // By definition this is a function of two attributes
-    // (behaviour, wmem)
+  executeBehaviour() {
     const execute = this.getAttribute("execute");
     if(typeof(execute) !== "function") {
-      return {
-        id: this.id,
-        wmem: wmem,
-        success: false,
-        error: "No execute handler found."
-      };
+      console.error(`Behaviour ${this.id}: No execute handler found.`);
+      return false;
     }
 
-    const expectedKeys = this.getAttribute("expected_keys");
-    if(Array.isArray(expectedKeys)) {
-      for(let propKey of expectedKeys) {
-        if(!wmem.hasOwnProperty(propKey)) {
-          return {
-            id: this.id,
-            wmem: wmem,
-            success: false,
-            error: `Expected key '${propKey}' is not present in wmem.`
-          };
-        }
-      }
-    }
-
-    // owner is a property that is set in the default attributes of the
-    // @behaviour element
-    const result = execute(this.owner, this, wmem);
-    if(typeof(result) !== "object") {
-      throw new Error("Behaviour execute returned non-object");
-    } else if(!result.hasOwnProperty("success")) {
-      throw new Error("Behaviour execute return object without success");
-    } else if(typeof(result.success) == "undefined") {
-      throw new Error("Behaviour execute returned success undefined");
+    const result = execute(this);
+    if(typeof(result) !== "boolean") {
+      throw new Error(`Behaviour ${this.id} execute returned non-boolean: ${typeof(result)}`);
     }
 
     return result;

@@ -24,7 +24,10 @@ defmodule Rez.Compiler.ExecSchemaTest do
     assert "item" = NH.get_attr_value(validated_item, "inv_type")
     assert [] = validated_item.validation.errors
 
-    item = %Rez.AST.Item{id: "item_2", metadata: %{"alias_chain" => ["item"]}} |> NH.set_string_attr("inv_type", "item")
+    item =
+      %Rez.AST.Item{id: "item_2", metadata: %{"alias_chain" => ["item"]}}
+      |> NH.set_string_attr("inv_type", "item")
+
     [validated_item] = ApplySchema.apply_schema(schema, [item], %{"item_id" => item})
     %{validation: validation} = validated_item
 
@@ -64,7 +67,7 @@ defmodule Rez.Compiler.ExecSchemaTest do
     }
 
     scene = %Rez.AST.Scene{id: "s_intro"}
-    
+
     [validated_item] = ApplySchema.apply_schema(schema, [item], %{id_map: %{"s_intro" => scene}})
     assert [] = validated_item.validation.errors
 
@@ -80,12 +83,18 @@ defmodule Rez.Compiler.ExecSchemaTest do
 
     [validated_invalid] = ApplySchema.apply_schema(schema, [invalid_item], %{id_map: %{}})
     errors = validated_invalid.validation.errors
-    
+
     # Should have errors for wrong type and negative value
     # Note: scene_id gets 2 errors (wrong type + not a ref) because 2 pattern rules match it
     assert length(errors) == 3
-    assert Enum.any?(errors, fn {_, _, msg} -> String.contains?(msg, "scene_id") and String.contains?(msg, "ref") end)
-    assert Enum.any?(errors, fn {_, _, msg} -> String.contains?(msg, "item_count") and String.contains?(msg, ">= 0") end)
+
+    assert Enum.any?(errors, fn {_, _, msg} ->
+             String.contains?(msg, "scene_id") and String.contains?(msg, "ref")
+           end)
+
+    assert Enum.any?(errors, fn {_, _, msg} ->
+             String.contains?(msg, "item_count") and String.contains?(msg, ">= 0")
+           end)
   end
 
   test "Pattern rules work alongside exact attribute rules" do
@@ -102,7 +111,7 @@ defmodule Rez.Compiler.ExecSchemaTest do
     }
 
     scene = %Rez.AST.Scene{id: "s_intro"}
-    
+
     [validated_item] = ApplySchema.apply_schema(schema, [item], %{id_map: %{"s_intro" => scene}})
     assert [] = validated_item.validation.errors
   end
@@ -114,52 +123,61 @@ defmodule Rez.Compiler.ExecSchemaTest do
     item = %Rez.AST.Item{
       id: "test_item",
       attributes: %{
-        "test_contents" => Attribute.list("test_contents", [
-          {:elem_ref, "item_1"},
-          {:elem_ref, "item_2"}
-        ]),
-        "other_contents" => Attribute.list("other_contents", [
-          {:elem_ref, "item_3"}
-        ])
+        "test_contents" =>
+          Attribute.list("test_contents", [
+            {:elem_ref, "item_1"},
+            {:elem_ref, "item_2"}
+          ]),
+        "other_contents" =>
+          Attribute.list("other_contents", [
+            {:elem_ref, "item_3"}
+          ])
       },
       metadata: %{"alias_chain" => ["item"]}
     }
 
     item1 = %Rez.AST.Item{id: "item_1"}
-    item2 = %Rez.AST.Item{id: "item_2"} 
+    item2 = %Rez.AST.Item{id: "item_2"}
     item3 = %Rez.AST.Item{id: "item_3"}
-    
-    [validated_item] = ApplySchema.apply_schema(schema, [item], %{
-      id_map: %{"item_1" => item1, "item_2" => item2, "item_3" => item3},
-      aliases: %{}
-    })
+
+    [validated_item] =
+      ApplySchema.apply_schema(schema, [item], %{
+        id_map: %{"item_1" => item1, "item_2" => item2, "item_3" => item3},
+        aliases: %{}
+      })
+
     assert [] = validated_item.validation.errors
 
     # Test item with invalid collection contents (wrong type)
     invalid_item = %Rez.AST.Item{
-      id: "invalid_item", 
+      id: "invalid_item",
       attributes: %{
-        "bad_contents" => Attribute.list("bad_contents", [
-          {:string, "not_an_elem_ref"}
-        ])
+        "bad_contents" =>
+          Attribute.list("bad_contents", [
+            {:string, "not_an_elem_ref"}
+          ])
       },
       metadata: %{"alias_chain" => ["item"]}
     }
 
     [validated_invalid] = ApplySchema.apply_schema(schema, [invalid_item], %{id_map: %{}})
     errors = validated_invalid.validation.errors
-    
+
     # Should have error for wrong collection content type
     assert length(errors) >= 1
-    assert Enum.any?(errors, fn {_, _, msg} -> 
-      String.contains?(msg, "bad_contents") and String.contains?(msg, "collection")
-    end)
+
+    assert Enum.any?(errors, fn {_, _, msg} ->
+             String.contains?(msg, "bad_contents") and String.contains?(msg, "collection")
+           end)
   end
 
   def create_pattern_schema() do
-    {:ok, id_pattern_rules} = SchemaBuilder.build_pattern(".*_id", [{:kind, [:elem_ref]}, {:ref_elem, ["scene"]}])
-    {:ok, count_pattern_rules} = SchemaBuilder.build_pattern(".*_count", [{:kind, [:number]}, {:min_value, 0}])
-    
+    {:ok, id_pattern_rules} =
+      SchemaBuilder.build_pattern(".*_id", [{:kind, [:elem_ref]}, {:ref_elem, ["scene"]}])
+
+    {:ok, count_pattern_rules} =
+      SchemaBuilder.build_pattern(".*_count", [{:kind, [:number]}, {:min_value, 0}])
+
     BuildSchema.build_schema([
       SchemaParser.make_schema(
         [
@@ -172,16 +190,18 @@ defmodule Rez.Compiler.ExecSchemaTest do
   end
 
   def create_mixed_schema() do
-    {:ok, id_pattern_rules} = SchemaBuilder.build_pattern(".*_id", [{:kind, [:elem_ref]}, {:ref_elem, ["scene"]}])
+    {:ok, id_pattern_rules} =
+      SchemaBuilder.build_pattern(".*_id", [{:kind, [:elem_ref]}, {:ref_elem, ["scene"]}])
+
     {:ok, unlock_pattern_rules} = SchemaBuilder.build_pattern("unlock_.*", [{:kind, [:keyword]}])
-    
+
     BuildSchema.build_schema([
       SchemaParser.make_schema(
         [
           "item",
           elem(SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}]), 1) ++
-          id_pattern_rules ++
-          unlock_pattern_rules
+            id_pattern_rules ++
+            unlock_pattern_rules
         ],
         {nil, 0, 0}
       )
@@ -189,8 +209,9 @@ defmodule Rez.Compiler.ExecSchemaTest do
   end
 
   def create_coll_kind_pattern_schema() do
-    {:ok, contents_pattern_rules} = SchemaBuilder.build_pattern(".*_contents", [{:kind, [:list]}, {:coll_kind, [:elem_ref]}])
-    
+    {:ok, contents_pattern_rules} =
+      SchemaBuilder.build_pattern(".*_contents", [{:kind, [:list]}, {:coll_kind, [:elem_ref]}])
+
     BuildSchema.build_schema([
       SchemaParser.make_schema(
         [
@@ -209,11 +230,14 @@ defmodule Rez.Compiler.ExecSchemaTest do
           "game",
           [
             elem(SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}]), 1),
-            elem(SchemaBuilder.build("initial_scene_id", [
-              {:kind, [:elem_ref]},
-              {:ref_elem, [:scene]},
-              {:required, true}
-            ]), 1)
+            elem(
+              SchemaBuilder.build("initial_scene_id", [
+                {:kind, [:elem_ref]},
+                {:ref_elem, [:scene]},
+                {:required, true}
+              ]),
+              1
+            )
           ]
         ],
         {nil, 0, 0}
@@ -236,11 +260,12 @@ defmodule Rez.Compiler.ExecSchemaTest do
       metadata: %{"alias_chain" => ["item"]}
     }
 
-    {:ok, rules} = SchemaBuilder.build("slots", [{:kind, [:set]}, {:required, true}, {:min_length, 1}])
-    
+    {:ok, rules} =
+      SchemaBuilder.build("slots", [{:kind, [:set]}, {:required, true}, {:min_length, 1}])
+
     # This should not crash with a FunctionClauseError
     result = ApplySchema.apply_schema_to_node(item, rules, %{})
-    
+
     # Should have validation errors for missing required field
     assert result.status == :error
     assert length(result.validation.errors) > 0

@@ -8,6 +8,7 @@ defmodule Rez.Parser.DirectiveParsers do
   import Ergo.Meta
   alias Ergo.Context
 
+  import Rez.Parser.CollectionParser, only: [collection: 0]
   import Rez.Parser.StructureParsers
   import Rez.Parser.UtilityParsers
   import Rez.Parser.ValueParsers
@@ -64,37 +65,37 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
-  # defp declare_directive() do
-  #   sequence(
-  #     [
-  #       iliteral("@declare"),
-  #       iws(),
-  #       commit(),
-  #       js_identifier("declare")
-  #     ],
-  #     label: "@declare",
-  #     ctx: fn %Context{
-  #               entry_points: [{line, col} | _],
-  #               ast: [id],
-  #               data: %{source: source}
-  #             } = ctx ->
-  #       {source_file, source_line} = LogicalFile.resolve_line(source, line)
+  defp const_directive() do
+    sequence(
+      [
+        iliteral("@const"),
+        iws(),
+        commit(),
+        js_identifier("const_name"),
+        iws(),
+        ignore(equals()),
+        iws(),
+        choice([
+          collection(),
+          value()
+        ])
+      ],
+      label: "@const",
+      ctx: fn %Context{ast: [name, value]} = ctx ->
+        {value_type, _} = value
 
-  #       block =
-  #         create_block(
-  #           Rez.AST.Object,
-  #           id,
-  #           [],
-  #           %{},
-  #           source_file,
-  #           source_line,
-  #           col
-  #         )
-
-  #       ctx_with_block_and_id_mapped(ctx, block, id, "declare", source_file, source_line)
-  #     end
-  #   )
-  # end
+        %{
+          ctx
+          | ast: %Rez.AST.Const{
+              position: resolve_position(ctx),
+              name: name,
+              value: value,
+              value_type: value_type
+            }
+        }
+      end
+    )
+  end
 
   defp defaults_directive() do
     sequence(
@@ -146,32 +147,6 @@ defmodule Rez.Parser.DirectiveParsers do
       end
     )
   end
-
-  # defp enum_directive() do
-  #   sequence(
-  #     [
-  #       iliteral("@enum"),
-  #       iws(),
-  #       commit(),
-  #       js_identifier("enum"),
-  #       iws(),
-  #       ignore(open_bracket()),
-  #       keyword_value() |> transform(fn {:keyword, keyword} -> keyword end),
-  #       many(
-  #         sequence([
-  #           iws(),
-  #           keyword_value() |> transform(fn {:keyword, keyword} -> keyword end)
-  #         ])
-  #       ),
-  #       iows(),
-  #       ignore(close_bracket())
-  #     ],
-  #     label: "@enum",
-  #     ast: fn [id, first_kw, other_kws] ->
-  #       {:enum, id, [first_kw | List.flatten(other_kws)]}
-  #     end
-  #   )
-  # end
 
   defp modifier_key(modifier_name, event_name) do
     sequence([
@@ -257,6 +232,7 @@ defmodule Rez.Parser.DirectiveParsers do
       [
         behaviour_template_directive(),
         component_directive(),
+        const_directive(),
         # declare_directive(),
         defaults_directive(),
         derive_directive(),

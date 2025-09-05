@@ -512,6 +512,26 @@ defmodule Rez.Parser.ValueParsers do
     end)
   end
 
+  # Constant Reference
+  # $const_name
+
+  def const_ref_value() do
+    ParserCache.get_parser("const_ref", fn ->
+      sequence(
+        [
+          ignore(char(?$)),
+          commit(),
+          js_identifier()
+        ],
+        label: "const-ref-value",
+        debug: true,
+        ast: fn [const_name] ->
+          {:const_ref, const_name}
+        end
+      )
+    end)
+  end
+
   # Value
 
   def value() do
@@ -527,6 +547,7 @@ defmodule Rez.Parser.ValueParsers do
           property_value(),
           dice_value(),
           elem_ref_value(),
+          const_ref_value(),
           dynamic_initializer_value(),
           copy_initializer_value(),
           file_value(),

@@ -13,6 +13,8 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
 
   alias Rez.AST.Asset
 
+  alias Rez.AST.ValueEncoder
+
   @js_stdlib_dir "assets/templates/runtime"
   @js_stdlib_files Path.join([@js_stdlib_dir, "rez_*.js"])
                    |> Path.wildcard()
@@ -41,6 +43,15 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
     Path.expand("assets/templates/runtime/register_expression_filters.js.eex"),
     [:assigns]
   )
+
+  def generate_constants(constants) when is_map(constants) do
+    constants
+    |> Enum.map(fn {name, {type, value}} ->
+      js_value = ValueEncoder.encode_value({type, value})
+      ~s|window.$#{name} = #{js_value};|
+    end)
+    |> Enum.join("\n")
+  end
 
   EEx.function_from_file(
     :def,
@@ -81,6 +92,7 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
           content: content,
           id_map: id_map,
           type_map: type_map,
+          constants: constants,
           dist_path: dist_path,
           progress: progress,
           options: %{output: true}
@@ -101,6 +113,7 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
       render_runtime(
         js_stdlib: @js_stdlib,
         js_userlib: js_userlib_content(assets),
+        constants: generate_constants(constants),
         patch_js_objects: patch_js_objects(patches: patches),
         bind_keys: bind_keys(keybindings: keybindings),
         user_components: user_components(user_components: user_components),

@@ -4,5 +4,12 @@
     "bulma": "^1.0",
     "node": "^22.0",
     "pluralize": "^8.0.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.4"
+  },
+  "scripts": {
+    "docs:js": "jsdoc -c jsdoc.conf.json",
+    "docs:watch": "jsdoc -c jsdoc.conf.json --watch"
   }
 }

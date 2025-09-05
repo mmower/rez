@@ -21,6 +21,23 @@ defmodule Rez.Parser.ValueParserTest do
              Ergo.parse(ValueParsers.dice_value(), input)
   end
 
+  test "parses constant references" do
+    input = "$MAX_HEALTH"
+
+    assert %Context{status: :ok, ast: {:const_ref, "MAX_HEALTH"}} =
+             Ergo.parse(ValueParsers.const_ref_value(), input)
+
+    assert %Context{status: :ok, ast: {:const_ref, "MAX_HEALTH"}} =
+             Ergo.parse(ValueParsers.value(), input)
+  end
+
+  test "parses constant references with underscores" do
+    input = "$my_const"
+
+    assert %Context{status: :ok, ast: {:const_ref, "my_const"}} =
+             Ergo.parse(ValueParsers.const_ref_value(), input)
+  end
+
   # test "parses hereoc strings" do
   #   input = ~s|"""Heredoc string"""|
 
