@@ -4,7 +4,11 @@ defmodule Rez.AST.Generator do
   run-time procedural generators.
   """
   defstruct status: :ok,
-            # technically not, but it resovles to a RezList of the same id
+            # technically the generator itself is not a game element but
+            # at runtime a RezList will be created with the same id using
+            # specialised initialization code. We have a custom js_initializer
+            # implementation in the AST Node module that creates the
+            # appropriate initializer
             game_element: true,
             position: {nil, 0, 0},
             id: nil,
@@ -14,13 +18,47 @@ defmodule Rez.AST.Generator do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Generator do
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.ValueEncoder
+
+  @on_init_src ~s"""
+  {
+    // Lookup the object the generator is copying
+    const source = $(list.getAttribute("source"));
+    const copies = list.getAttribute("copies");
+    const customize = list.getAttribute("customize");
+    const objects = [];
+    for(let idx = 0; idx < copies; idx += 1) {
+      let copy = source.copyWithAutoId();
+      if(typeof(customize) == "function") {
+        customize(copy);
+      }
+      objects.push(copy);
+      game.addGameObject(copy);
+    }
+    list.setAttribute("values", objects);
+  }
+  """
+
   def html_processor(_generator, _attr), do: raise("@generator does not support HTML processing!")
 
   def node_type(_generator), do: "generator"
 
   def js_ctor(_generator), do: raise("@generator does not support a JS constructor!")
 
-  def js_initializer(_obj), do: raise("@generator does not support a JS initializer!")
+  def js_initializer(generator) do
+    generator =
+      generator
+      |> NodeHelper.set_attr_value("values", {:list, []})
+      |> NodeHelper.set_std_func_attr("on_init", {["list", "event"], @on_init_src})
+
+    ~s"""
+    new RezList(
+      "#{generator.id}",
+      #{ValueEncoder.encode_attributes(generator.attributes)}
+    )
+    """
+  end
 
   def process(generator, _node_map) do
     generator

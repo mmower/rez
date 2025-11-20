@@ -35,22 +35,31 @@ class RezList extends RezBasicObject {
   //---------------------------------------------------------------------------
 
   warmStarvationPool(poolId = "$default") {
-    const warming_count = 2*this.list_length;
+    const warming_count = 2*this.length;
     for(let i = 0; i<warming_count; i++ ) {
       this.randomWithoutStarvation(poolId);
     }
   }
 
   randomWithoutStarvation(poolId = "$default") {
-    let stats = this.getAttributeValue(`$pool_${poolId}`, Array.nOf(this.list_length, 0));
+    let stats = this.getAttributeValue(`$pool_${poolId}`, Array.nOf(this.length, 0));
     const len = stats.length;
     const max = Math.floor(len + (len+2)/3);
-    let choice = stats.findIndex((element) => element+1 >= max);
-    if(choice == -1) {
-      choice = stats.randomIndex();
-    }
 
+    // Increment all counters first
     stats = stats.map((element) => element+1);
+
+    // Find elements that are now starving
+    let starvingIndices = stats
+      .map((el, idx) => el >= max ? idx : -1)
+      .filter(idx => idx !== -1);
+
+    // Choose: starving element if any exist, otherwise random
+    let choice = starvingIndices.length > 0
+      ? starvingIndices.randomElement()
+      : stats.randomIndex();
+
+    // Reset chosen element
     stats[choice] = 0;
 
     this.setAttribute(`$pool_${poolId}`, stats);
