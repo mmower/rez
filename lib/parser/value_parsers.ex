@@ -534,6 +534,16 @@ defmodule Rez.Parser.ValueParsers do
 
   # Value
 
+  def simple_value() do
+    ParserCache.get_parser("simple_value", fn ->
+      choice([
+        bool_value(),
+        number_value(),
+        string_value()
+      ])
+    end)
+  end
+
   def value() do
     ParserCache.get_parser("value", fn ->
       choice(

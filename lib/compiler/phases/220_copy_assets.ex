@@ -44,9 +44,16 @@ defmodule Rez.Compiler.Phases.CopyAssets do
       destination_path = Path.join([dist_path, Config.asset_path_name(), file_name])
       asset_path = NodeHelper.get_attr_value(asset, "$source_path")
 
-      compilation
-      |> check_asset_exists(asset_path)
-      |> copy_asset_file(asset_path, destination_path)
+      if is_nil(asset_path) do
+        Compilation.add_error(
+          compilation,
+          "Unable to identify source path for asset: #{asset.id}"
+        )
+      else
+        compilation
+        |> check_asset_exists(asset_path)
+        |> copy_asset_file(asset_path, destination_path)
+      end
     end
   end
 
@@ -54,17 +61,11 @@ defmodule Rez.Compiler.Phases.CopyAssets do
     compilation
   end
 
-  def check_asset_exists(%Compilation{errors: errors} = compilation, asset_path) do
-    case File.exists?(asset_path) || Compilation.ignore_missing_assets?(compilation) do
-      true ->
-        compilation
-
-      false ->
-        %{
-          compilation
-          | status: :error,
-            errors: ["Asset source file #{asset_path} not found." | errors]
-        }
+  def check_asset_exists(%Compilation{} = compilation, asset_path) do
+    if File.exists?(asset_path) || Compilation.ignore_missing_assets?(compilation) do
+      compilation
+    else
+      Compilation.add_error(compilation, "Asset source file not found: #{asset_path}")
     end
   end
 

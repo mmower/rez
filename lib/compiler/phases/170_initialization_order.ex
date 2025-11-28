@@ -109,26 +109,7 @@ defmodule InitOrder do
     case find_next_available_node(remaining, sorted_set) do
       nil ->
         if remaining != [] do
-          # Find all unique dependencies
-          all_deps =
-            remaining
-            |> Enum.flat_map(fn {_id, deps} -> deps end)
-            |> MapSet.new()
-
-          # Find missing dependencies (those not in sorted and not in remaining)
-          remaining_ids = MapSet.new(Enum.map(remaining, fn {id, _deps} -> id end))
-
-          missing_deps =
-            all_deps
-            |> Enum.filter(fn dep ->
-              !MapSet.member?(sorted_set, dep) && !MapSet.member?(remaining_ids, dep)
-            end)
-
-          if missing_deps != [] do
-            {:error, {:missing_dependencies, missing_deps}}
-          else
-            {:error, :circular_dependency}
-          end
+          analyze_depedency_errors(remaining, sorted_set)
         else
           {:ok, Enum.reverse(sorted)}
         end
@@ -136,6 +117,29 @@ defmodule InitOrder do
       {object, parents} ->
         remaining = List.delete(remaining, {object, parents})
         sort(remaining, [object | sorted], MapSet.put(visited, object))
+    end
+  end
+
+  defp analyze_depedency_errors(remaining, sorted_set) do
+    # Find all unique dependencies
+    all_deps =
+      remaining
+      |> Enum.flat_map(fn {_id, deps} -> deps end)
+      |> MapSet.new()
+
+    # Find missing dependencies (those not in sorted and not in remaining)
+    remaining_ids = MapSet.new(Enum.map(remaining, fn {id, _deps} -> id end))
+
+    missing_deps =
+      all_deps
+      |> Enum.filter(fn dep ->
+        !MapSet.member?(sorted_set, dep) && !MapSet.member?(remaining_ids, dep)
+      end)
+
+    if missing_deps != [] do
+      {:error, {:missing_dependencies, missing_deps}}
+    else
+      {:error, :circular_dependency}
     end
   end
 

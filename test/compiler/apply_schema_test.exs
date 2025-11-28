@@ -270,4 +270,72 @@ defmodule Rez.Compiler.ExecSchemaTest do
     assert result.status == :error
     assert length(result.validation.errors) > 0
   end
+
+  test "type_exists rule validates derived types" do
+    alias Rez.AST.TypeHierarchy
+
+    # Create a type hierarchy with a derived type
+    type_hierarchy =
+      TypeHierarchy.new()
+      |> TypeHierarchy.add("weapon", "item")
+
+    # Create a schema with type_exists validation
+    {:ok, rules} =
+      SchemaBuilder.build("accepts", [{:kind, [:keyword]}, {:required, true}, :type_exists])
+
+    # Test with a valid derived type
+    slot_valid = %Rez.AST.Slot{
+      id: "weapon_slot",
+      attributes: %{"accepts" => Attribute.keyword("accepts", "weapon")},
+      metadata: %{"alias_chain" => ["slot"]}
+    }
+
+    result =
+      ApplySchema.apply_schema_to_node(slot_valid, rules, %{type_hierarchy: type_hierarchy})
+
+    assert [] = result.validation.errors
+
+    # Test with a non-existent derived type
+    slot_invalid = %Rez.AST.Slot{
+      id: "invalid_slot",
+      attributes: %{"accepts" => Attribute.keyword("accepts", "weaponx")},
+      metadata: %{"alias_chain" => ["slot"]}
+    }
+
+    result =
+      ApplySchema.apply_schema_to_node(slot_invalid, rules, %{type_hierarchy: type_hierarchy})
+
+    assert length(result.validation.errors) == 1
+
+    assert [{"slot", "invalid_slot", error_msg}] = result.validation.errors
+
+    assert String.contains?(error_msg, "weaponx") and
+             String.contains?(error_msg, "not been derived")
+  end
+
+  test "type_exists rule validates parent types that don't themselves derive" do
+    alias Rez.AST.TypeHierarchy
+
+    # Create a type hierarchy where "weapon" derives from "item"
+    # Here "item" is a parent type that doesn't derive from anything
+    type_hierarchy =
+      TypeHierarchy.new()
+      |> TypeHierarchy.add("weapon", "item")
+
+    # Create a schema with type_exists validation
+    {:ok, rules} =
+      SchemaBuilder.build("accepts", [{:kind, [:keyword]}, {:required, true}, :type_exists])
+
+    # Test with the parent type "item" - should be valid since it exists in the hierarchy
+    slot_with_parent = %Rez.AST.Slot{
+      id: "item_slot",
+      attributes: %{"accepts" => Attribute.keyword("accepts", "item")},
+      metadata: %{"alias_chain" => ["slot"]}
+    }
+
+    result =
+      ApplySchema.apply_schema_to_node(slot_with_parent, rules, %{type_hierarchy: type_hierarchy})
+
+    assert [] = result.validation.errors
+  end
 end

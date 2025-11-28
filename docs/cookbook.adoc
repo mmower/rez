@@ -107,7 +107,7 @@ An alias has a name, element type, and one or more objects to base instances of 
   magical: true
 }
 
-@alias magic_item = item<magic_item_template>
+@elem magic_item = item<#magic_item_template>
 
 @magic_item magic_ring {
   description: "A plain golden band. Probably nobody is interested in this ring at all."
@@ -122,7 +122,7 @@ Another example might be wanting to specify a common layout for a group of scene
   layout: ```${content}```
 }
 
-@alias standard_scene = scene<standard_scene>
+@elem standard_scene = scene<#standard_scene>
 
 @standard_scene scene_01 {
   %% scene specific content here

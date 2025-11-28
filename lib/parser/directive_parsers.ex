@@ -6,6 +6,9 @@ defmodule Rez.Parser.DirectiveParsers do
   import Ergo.Combinators
   import Ergo.Terminals
   import Ergo.Meta
+  alias Rez.Parser.DefaultParser
+  alias Ergo.Combinators
+  alias Rez.Parser.ValueParsers
   alias Ergo.Context
 
   import Rez.Parser.CollectionParser, only: [collection: 0]
@@ -227,6 +230,76 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
+  def pragma_timing() do
+    choice([
+      literal("after_build_schema"),
+      literal("after_schema_apply"),
+      literal("after_process_ast"),
+      literal("before_create_runtime"),
+      literal("after_copy_assets")
+    ])
+    |> Combinators.transform(fn ast -> String.to_atom(ast) end)
+  end
+
+  def pragma_directive() do
+    sequence(
+      [
+        iliteral("@pragma"),
+        commit(),
+        ignore(open_paren()),
+        iws(),
+        pragma_timing(),
+        iws(),
+        ignore(close_paren()),
+        iws(),
+        js_identifier("pragma_name"),
+        optional(
+          sequence([
+            ignore(open_paren()),
+            iws(),
+            many(
+              sequence([
+                ignore(optional(comma())),
+                iws(),
+                ValueParsers.simple_value()
+                |> Combinators.transform(fn {_type, value} -> value end)
+              ])
+            ),
+            iws(),
+            ignore(close_paren())
+          ])
+        )
+        |> DefaultParser.default([])
+      ],
+      label: "@pragma",
+      ctx: fn
+        %Context{ast: [timing, pragma_name, values]} = ctx ->
+          case Rez.AST.Pragma.build(pragma_name, timing, values, resolve_position(ctx)) do
+            {:ok, pragma} ->
+              %{ctx | ast: pragma}
+
+            {:error, {:invalid_timing, timing}} ->
+              valid_timings = Enum.map_join(Rez.AST.Pragma.valid_timings(), ", ", &inspect/1)
+
+              ctx
+              |> Context.add_error(
+                :invalid_timing,
+                "Invalid pragma timing '#{timing}'. Valid timings are: #{valid_timings}"
+              )
+              |> Context.make_error_fatal()
+
+            {:error, reason} ->
+              ctx
+              |> Context.add_error(
+                :bad_pragma,
+                "Unable to find pragma script (#{inspect(reason)})"
+              )
+              |> Context.make_error_fatal()
+          end
+      end
+    )
+  end
+
   def directive() do
     choice(
       [
@@ -238,7 +311,8 @@ defmodule Rez.Parser.DirectiveParsers do
         derive_directive(),
         # enum_directive(),
         keybinding_directive(),
-        schema_directive()
+        schema_directive(),
+        pragma_directive()
       ],
       label: "directive"
     )

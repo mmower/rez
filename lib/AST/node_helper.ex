@@ -8,6 +8,47 @@ defmodule Rez.AST.NodeHelper do
   alias Rez.AST.Node
   import Rez.AST.ValueEncoder, only: [encode_attributes: 1]
 
+  defmodule PluginAPI do
+    alias Rez.AST.NodeHelper
+    use Lua.API, scope: "rez.node"
+
+    deflua inspect(node, label), state do
+      {:userdata, node} = Lua.decode!(state, node)
+      IO.inspect(node, label: label)
+      nil
+    end
+
+    deflua get_attr_value(node, attr_name), state do
+      {:userdata, node} = Lua.decode!(state, node)
+
+      case NodeHelper.get_attr_value(node, attr_name) do
+        value when is_map(value) or is_atom(value) ->
+          Lua.encode!(state, value)
+
+        value when is_list(value) ->
+          Lua.encode_list!(state, value)
+
+        value ->
+          value
+      end
+    end
+
+    deflua set_attr_value(node, attr_name, attr_type, attr_value), state do
+      {:userdata, node} = Lua.decode!(state, node)
+      attr_type = String.to_existing_atom(attr_type)
+      node = NodeHelper.set_attr_value(node, attr_name, {attr_type, attr_value})
+      Lua.encode!(state, {:userdata, node})
+    end
+
+    deflua add_tag(node, tag), state do
+      {:userdata, node} = Lua.decode!(state, node)
+      tags = NodeHelper.get_attr_value(node, "tags", MapSet.new())
+      tags = MapSet.put(tags, {:keyword, tag})
+      node = NodeHelper.set_set_attr(node, "tags", tags)
+      Lua.encode!(state, {:userdata, node})
+    end
+  end
+
   def has_id?(node) do
     Map.has_key?(node, :id)
   end

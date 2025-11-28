@@ -1,4 +1,4 @@
-defmodule Rez.Compiler.Phases.ProcessAST do
+defmodule Rez.Compiler.Phases.ReprocessAST do
   @moduledoc """
   `Rez.Compiler.ProcessAST` implements the compiler phase that post processes
   the game AST nodes. For example some nodes will converting markup into a
@@ -23,9 +23,11 @@ defmodule Rez.Compiler.Phases.ProcessAST do
       compilation
       | content:
           Enum.map(content, fn node ->
-            node
-            |> Node.process(content_data)
-            |> NodeHelper.set_meta(:processed, true)
+            if NodeHelper.get_meta(node, :processed, false) do
+              node
+            else
+              Node.process(node, content_data)
+            end
           end)
     }
   end

@@ -1,4 +1,4 @@
-elixir 1.17.3-otp-27
-erlang 27.2.2
-nodejs 23.7.0
-zig 0.13.0
+elixir 1.19.3-otp-27
+erlang 27.3.4.6
+nodejs 25.2.1
+zig 0.15.2

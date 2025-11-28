@@ -16,6 +16,7 @@ defmodule Rez.Compiler.Phases.BuildSchema do
     {defaults_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Defaults)
     {alias_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Alias)
     {derive_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Derive)
+    {pragma_nodes, content} = NodeHelper.extract_nodes(content, Rez.AST.Pragma)
 
     %{
       compilation
@@ -24,6 +25,7 @@ defmodule Rez.Compiler.Phases.BuildSchema do
         aliases: build_aliases(alias_nodes),
         schema: build_schema(schema_nodes),
         type_hierarchy: build_type_hierarchy(derive_nodes),
+        pragmas: pragma_nodes,
         progress: ["Built schema" | progress]
     }
   end

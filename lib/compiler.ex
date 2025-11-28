@@ -19,8 +19,19 @@ defmodule Rez.Compiler do
   """
 
   alias Rez.AST.NodeHelper
+  alias Rez.AST.Pragma
   alias Rez.Compiler.Compilation
   import Rez.Debug
+
+  # Mapping from phase modules to the pragma timing they trigger.
+  # After running a phase in this map, all pragmas with the corresponding timing will be executed.
+  @pragma_triggers %{
+    Rez.Compiler.Phases.BuildSchema => :after_build_schema,
+    Rez.Compiler.Phases.ApplySchema => :after_schema_apply,
+    Rez.Compiler.Phases.ProcessAST => :after_process_ast,
+    Rez.Compiler.Phases.InitializationOrder => :before_create_runtime,
+    Rez.Compiler.Phases.CopyAssets => :after_copy_assets
+  }
 
   @compiler_phases [
     Rez.Compiler.Phases.GetWorkingDirectory,
@@ -35,19 +46,25 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.CollectConstants,
     Rez.Compiler.Phases.ValidateMixins,
     Rez.Compiler.Phases.BuildSchema,
+    # Pragmas with :after_build_schema timing run here
     Rez.Compiler.Phases.MapAliases,
     Rez.Compiler.Phases.ApplyDefaults,
     Rez.Compiler.Phases.ResolveConstants,
     Rez.Compiler.Phases.ApplySchema,
+    # Pragmas with :after_schema_apply timing run here
     Rez.Compiler.Phases.CompileTemplates,
     Rez.Compiler.Phases.ProcessAST,
+    # Pragmas with :after_process_ast timing run here (before ReprocessAST)
+    Rez.Compiler.Phases.ReprocessAST,
     Rez.Compiler.Phases.InitializationOrder,
+    # Pragmas with :before_create_runtime timing run here
     Rez.Compiler.Phases.DumpStructures,
     # Everything in the Game needs to be ready at this point
     Rez.Compiler.Phases.CreateRuntime,
     Rez.Compiler.Phases.WriteObjMap,
     Rez.Compiler.Phases.WriteGameFile,
     Rez.Compiler.Phases.CopyAssets,
+    # Pragmas with :after_copy_assets timing run here
     Rez.Compiler.Phases.GenerateReports
   ]
 
@@ -55,18 +72,41 @@ defmodule Rez.Compiler do
     v_log("Running phase: #{to_string(phase)}")
     compilation = apply(phase, :run_phase, [compilation])
 
-    if compilation.content && length(compilation.content) > 0 do
-      # Assuming there is content, automatically (re-)build the
-      # id & type mappings after each phase has modified the content
-      %{
+    compilation =
+      if compilation.content && length(compilation.content) > 0 do
+        # Assuming there is content, automatically (re-)build the
+        # id & type mappings after each phase has modified the content
+        %{
+          compilation
+          | type_map: NodeHelper.build_type_map(compilation.content),
+            id_map: NodeHelper.build_id_map(compilation.content)
+        }
+      else
         compilation
-        | type_map: NodeHelper.build_type_map(compilation.content),
-          id_map: NodeHelper.build_id_map(compilation.content)
-      }
-    else
-      compilation
+      end
+
+    # Check if this phase triggers any pragmas
+    run_triggered_pragmas(phase, compilation)
+  end
+
+  defp run_triggered_pragmas(phase, %Compilation{status: :ok, pragmas: pragmas} = compilation)
+       when is_list(pragmas) do
+    case Map.get(@pragma_triggers, phase) do
+      nil ->
+        compilation
+
+      timing ->
+        v_log("Running pragmas with timing: #{timing}")
+
+        pragmas
+        |> Enum.filter(fn %Pragma{timing: t} -> t == timing end)
+        |> Enum.reduce(compilation, fn pragma, comp ->
+          Pragma.run(pragma, comp)
+        end)
     end
   end
+
+  defp run_triggered_pragmas(_phase, compilation), do: compilation
 
   def dbg_run_phase(phase, compilation) do
     {time, result} = :timer.tc(__MODULE__, :run_phase, [phase, compilation])

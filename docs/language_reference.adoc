@@ -433,12 +433,19 @@ on_use: (item) => {
 }
 ....
 
-**Action Script** - Javascript functions for performing behaviours (`this` is automatically the element on which the function is defined).
+Event script functions are written as arrow functions and passed the event
+receiving object as their first parameter.
+
+**Action Script** - Javascript functions for performing behaviours
 ....
 use: function() {
   this.uses -= 1;
 }
 ....
+
+Action script functions are written in the standard Javascript function format
+and utilise `this` as a reference to the object whose action script is being
+executed.
 
 [TIP]
 ====
@@ -1466,8 +1473,8 @@ Mixins let you share common attributes across different element types:
   }
 }
 
-@elem warrior = actor<combat_capable>
-@elem guardian = actor<combat_capable>
+@elem warrior = actor<#combat_capable>
+@elem guardian = actor<#combat_capable>
 
 @warrior player_character {
   name: "Hero"
@@ -1483,7 +1490,7 @@ Multiple mixins can be combined:
   spell_power: 12
 }
 
-@elem battle_mage = actor<combat_capable, magic_user>
+@elem battle_mage = actor<#combat_capable, #magic_user>
 ....
 
 === Behavior Trees
@@ -2021,6 +2028,14 @@ random_stat: ^i{return Math.random() * 20 + 1;}
 starting_gold: ^i:1{return rollDice(3, 6) * 10;}  // Priority 1 (runs early)
 total_stats: ^i:5{return this.str + this.dex + this.int;}  // Priority 5
 ....
+
+Dynamic intializers are Javascript code blocks that are run when the game is
+being initialized. The result of the code block will be assigned to the value
+of the attribute.
+
+Initializers are run in priority order 1-10. By default an initializer has
+priority 10. To specify a priority use `:prio` after the `^i` prefix, e.g. to
+initialize an attribute at priority 5 you would write `^i:5{...}`.
 
 **Dynamic Property** (calculated each access, see Part 2 for basics)
 ....

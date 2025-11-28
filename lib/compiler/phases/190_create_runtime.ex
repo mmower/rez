@@ -45,12 +45,10 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
   )
 
   def generate_constants(constants) when is_map(constants) do
-    constants
-    |> Enum.map(fn {name, {type, value}} ->
+    Enum.map_join(constants, "\n", fn {name, {type, value}} ->
       js_value = ValueEncoder.encode_value({type, value})
       ~s|window.$#{name} = #{js_value};|
     end)
-    |> Enum.join("\n")
   end
 
   EEx.function_from_file(

@@ -350,7 +350,7 @@ class RezGame extends RezBasicObject {
    * is not valid. Otherwise null is returned.
    */
   getGameObject(idOrRef, shouldThrow = true) {
-    const id = Rez.extractId(idOrRef, shouldThrow);
+    const id = Rez.extractId(idOrRef);
     const obj = this.#gameObjects.get(id);
     if(typeof(obj) === "undefined") {
       if(shouldThrow) {

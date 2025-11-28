@@ -1,13 +1,13 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.8.5"
+  @version "1.8.6"
 
   def project do
     [
       app: :rez,
       version: @version,
-      elixir: "~> 1.15",
+      elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       escript: [main_module: Rez]
@@ -31,15 +31,16 @@ defmodule Rez.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:elixir_uuid, "~> 1.2"},
       {:temp, "~> 0.4"},
-      {:ex_image_info, "~> 0.2.4"},
+      {:ex_image_info, "~> 1.0"},
       {:inflectorex, "~> 0.1.2"},
       {:burrito, "~> 1.0"},
       {:mime, "~> 2.0"},
       {:rename, "~> 0.1.0"},
-      {:poison, "~> 5.0"},
+      {:poison, "~> 6.0"},
       {:dialyxir, "~> 1.3", runtime: false},
       {:apex, "~>1.2.1"},
-      {:scribe, "~> 0.11"}
+      {:scribe, "~> 0.11"},
+      {:lua, "~> 0.3.0"}
     ]
   end
 

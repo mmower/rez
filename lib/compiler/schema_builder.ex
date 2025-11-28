@@ -181,7 +181,7 @@ defmodule Rez.Compiler.SchemaBuilder do
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} must be a collection of #{inspect(values)}"
+                 "#{attr_name} must be a collection of #{inspect(kinds)}"
                )}
             end
 
@@ -692,6 +692,31 @@ defmodule Rez.Compiler.SchemaBuilder do
     )
   end
 
+  defp rule_fn(attr_name, :type_exists) do
+    SchemaRule.new(
+      9,
+      "Validate #{attr_name} references a type that exists in the type hierarchy",
+      fn node, validation, %{type_hierarchy: type_hierarchy} = _lookup ->
+        case NodeHelper.get_attr(node, attr_name) do
+          nil ->
+            {node, validation}
+
+          %{value: type_value} ->
+            if TypeHierarchy.has_type?(type_hierarchy, type_value) do
+              {node, validation}
+            else
+              {node,
+               Validation.add_error(
+                 validation,
+                 node,
+                 "#{attr_name} references type ':#{type_value}' which has not been derived with @derive"
+               )}
+            end
+        end
+      end
+    )
+  end
+
   def elem_type_one_of(lookup, elem_id, elems) do
     %{id_map: id_map} = lookup
 
@@ -877,7 +902,7 @@ defmodule Rez.Compiler.SchemaBuilder do
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} must be a collection of #{inspect(values)}"
+                 "#{attr_name} must be a collection of #{inspect(kinds)}"
                )}
             end
 

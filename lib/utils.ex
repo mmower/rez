@@ -259,4 +259,10 @@ defmodule Rez.Utils do
         {:error, "#{path}: #{reason}"}
     end
   end
+
+  def path_is_sub_path?(path, parent_path) do
+    parent_segments = Path.split(parent_path)
+    path_segments = Path.split(path)
+    List.starts_with?(path_segments, parent_segments)
+  end
 end

@@ -1,3 +1,37 @@
+function normalizeRefs(value) {
+  // Primitives pass through
+  if (value === null || value === undefined || typeof value !== 'object') {
+    return value;
+  }
+
+  // Check for pure ref: {$ref: "id"} with only that property
+  if ('$ref' in value && Object.keys(value).length === 1) {
+    return value.$ref;
+  }
+
+  // Handle Arrays
+  if (Array.isArray(value)) {
+    return value.map(normalizeRefs);
+  }
+
+  // Handle Sets - must recreate
+  if (value instanceof Set) {
+    return new Set([...value].map(normalizeRefs));
+  }
+
+  // Handle plain objects - recurse into properties
+  if (value.constructor === Object) {
+    const result = {};
+    for (const [k, v] of Object.entries(value)) {
+      result[k] = normalizeRefs(v);
+    }
+    return result;
+  }
+
+  // Other object types (RezDie, Map, etc.) pass through unchanged
+  return value;
+}
+
 class RezBasicObject {
   static #game;
 
@@ -10,7 +44,7 @@ class RezBasicObject {
   constructor(element, id, attributes) {
     this.#element = element;
     this.#id = id;
-    this.#attributes = attributes;
+    this.#attributes = normalizeRefs(attributes);
     this.#changedAttributes = new Set();
     this.#initialized = false;
   }
@@ -125,7 +159,8 @@ class RezBasicObject {
 
   init2() {
     // Initialize Mixins
-    for(let mixin_id of this.getAttributeValue("$mixins", [])) {
+    for(let mixin_ref of this.getAttributeValue("$mixins", [])) {
+      const mixin_id = (typeof mixin_ref === "object" && mixin_ref.$ref) ? mixin_ref.$ref : mixin_ref;
       const mixin = window.Rez.mixins[mixin_id];
 
       // Apply properties

@@ -587,7 +587,7 @@ From this point in the source file all `@card` elements will pick up a `hub: fal
 
 Note that you can later change issue a new default for `@card` and any `@card` elements defined from that point will inherit the new default instead.
 
-It is possible to set defaults for an `@alias` that will only be set for elements that use the alias. So this is legal:
+It is possible to set defaults for an `@elem` that will only be set for elements that use the alias. So this is legal:
 
 ....
 @defaults card {
@@ -601,7 +601,7 @@ It is possible to set defaults for an `@alias` that will only be set for element
   }
 }
 
-@alias storylet = card
+@elem storylet = card
 ....
 
 Now a card defined using the `@storylet` alias will has `is_storylet: true` and the default implementation of the `storylets:` attribute while regular cards get `is_storylet: false` and have no `storylets:` attribute.
@@ -1190,14 +1190,14 @@ Imagine we are building a role-playing game and we want to introduce the notion 
   cur: 0
 }
 
-@alias skill = object<skill>
+@elem skill = object<#skill>
 
 @object perk {
   $template: true
   cost: 1
 }
 
-@alias perk = object<perk>
+@elem perk = object<#perk>
 
 @perk gun_license {
   description: "Without this cops might pick you up for flashing your lead pumper."

@@ -30,7 +30,8 @@ defmodule Rez.Parser.ParserTest do
     input = "@const MAX_HEALTH = 100"
     source = dummy_source(input)
 
-    assert {:ok, [%Rez.AST.Const{name: "MAX_HEALTH", value: {:number, 100}, value_type: :number}], %{}} =
+    assert {:ok, [%Rez.AST.Const{name: "MAX_HEALTH", value: {:number, 100}, value_type: :number}],
+            %{}} =
              parse(source)
   end
 
@@ -38,7 +39,9 @@ defmodule Rez.Parser.ParserTest do
     input = "@const PLAYER_NAME = \"Hero\""
     source = dummy_source(input)
 
-    assert {:ok, [%Rez.AST.Const{name: "PLAYER_NAME", value: {:string, "Hero"}, value_type: :string}], %{}} =
+    assert {:ok,
+            [%Rez.AST.Const{name: "PLAYER_NAME", value: {:string, "Hero"}, value_type: :string}],
+            %{}} =
              parse(source)
   end
 
@@ -46,7 +49,9 @@ defmodule Rez.Parser.ParserTest do
     input = "@const DEBUG_MODE = true"
     source = dummy_source(input)
 
-    assert {:ok, [%Rez.AST.Const{name: "DEBUG_MODE", value: {:boolean, true}, value_type: :boolean}], %{}} =
+    assert {:ok,
+            [%Rez.AST.Const{name: "DEBUG_MODE", value: {:boolean, true}, value_type: :boolean}],
+            %{}} =
              parse(source)
   end
 
@@ -56,7 +61,9 @@ defmodule Rez.Parser.ParserTest do
 
     assert {:ok, [const, game], %{}} = parse(source)
     assert %Rez.AST.Const{name: "MAX_HEALTH"} = const
-    assert %Rez.AST.Game{attributes: %{"max_hp" => %{type: :const_ref, value: "MAX_HEALTH"}}} = game
+
+    assert %Rez.AST.Game{attributes: %{"max_hp" => %{type: :const_ref, value: "MAX_HEALTH"}}} =
+             game
   end
 
   test "parse script" do
