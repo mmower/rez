@@ -11,12 +11,6 @@ defmodule Rez.AST.TypeHierarchy do
     %TypeHierarchy{}
   end
 
-  def is_a(_, tag, tag), do: true
-
-  def is_a(%TypeHierarchy{} = hierarchy, tag, parent) when is_binary(tag) and is_binary(parent) do
-    search_is_a(hierarchy, tag, parent)
-  end
-
   def add(%TypeHierarchy{is_a: is_a} = type_map, tag, parent) do
     parents =
       Map.get(is_a, tag, MapSet.new())
@@ -25,22 +19,15 @@ defmodule Rez.AST.TypeHierarchy do
     %{type_map | is_a: Map.put(is_a, tag, parents)}
   end
 
-  def search_is_a(%TypeHierarchy{is_a: is_a} = type_hierarchy, tag, parent) do
-    case Map.get(is_a, tag) do
-      nil ->
-        false
-
-      parents ->
-        case MapSet.member?(parents, parent) do
-          true ->
-            true
-
-          false ->
-            Enum.any?(parents, fn search_parent ->
-              search_is_a(type_hierarchy, search_parent, parent)
-            end)
-        end
-    end
+  @doc """
+  Returns true if the given type has been registered in the hierarchy via @derive.
+  """
+  def has_type?(%TypeHierarchy{is_a: is_a}, tag) do
+    # Check if the type is either:
+    # 1. A key in is_a (a child type that derives from something)
+    # 2. A value in any parent set (a parent type that something derives from)
+    Map.has_key?(is_a, tag) or
+      Enum.any?(is_a, fn {_key, parents} -> MapSet.member?(parents, tag) end)
   end
 
   @doc """

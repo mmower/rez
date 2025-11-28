@@ -17,6 +17,31 @@ defmodule Rez.AST.Asset do
             metadata: %{},
             validation: nil
 
+  defmodule PluginAPI do
+    use Lua.API, scope: "rez.asset"
+
+    def auto_id(file_name) do
+      name = Path.rootname(file_name)
+      type = Path.extname(file_name) |> String.trim_leading(".")
+      "asset_#{name}_#{type}"
+    end
+
+    deflua make(path), state do
+      file_name = Path.basename(path)
+      id = auto_id(file_name)
+
+      asset =
+        %Rez.AST.Asset{id: id}
+        |> NodeHelper.set_string_attr("$source_path", path)
+        |> NodeHelper.set_string_attr("file_name", file_name)
+        |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
+        |> NodeHelper.set_string_attr("$dist_path", "assets/#{file_name}")
+        |> NodeHelper.set_meta(:synthetic, true)
+
+      Lua.encode!(state, {:userdata, asset})
+    end
+  end
+
   def search(%Asset{} = asset) do
     file_name = Asset.file_name(asset)
 
@@ -124,35 +149,46 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
   end
 
   def process(%Asset{} = asset, _) do
-    if NodeHelper.get_attr_value(asset, "$template", false) do
-      asset
-    else
-      case Asset.search(asset) do
-        [] ->
-          %{asset | status: {:error, "Asset not found"}}
+    cond do
+      # Synethic Assets are created via the plugin API
+      # and assumed to have a path already
+      NodeHelper.get_meta(asset, :synthetic, false) ->
+        if NodeHelper.get_attr_value(asset, "$inline", false) do
+          NodeHelper.set_string_attr(asset, "content", Asset.read_source(asset))
+        else
+          asset
+        end
 
-        [path] ->
-          case Utils.path_readable?(path) do
-            :ok ->
-              asset
-              |> NodeHelper.set_string_attr("$source_path", path)
-              |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
-              |> then(fn asset ->
-                if NodeHelper.get_attr_value(asset, "$inline", false) do
-                  NodeHelper.set_string_attr(asset, "content", File.read!(path))
-                else
-                  file_name = NodeHelper.get_attr_value(asset, "file_name")
-                  NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{file_name}")
-                end
-              end)
+      NodeHelper.get_attr_value(asset, "$template", false) ->
+        asset
 
-            {:error, reason} ->
-              %{asset | status: {:error, "Asset file ${path} is unreadable: #{reason}"}}
-          end
+      true ->
+        case Asset.search(asset) do
+          [] ->
+            %{asset | status: {:error, "Asset not found"}}
 
-        _ ->
-          %{asset | status: {:error, "Multiple asset files found"}}
-      end
+          [path] ->
+            case Utils.path_readable?(path) do
+              :ok ->
+                asset
+                |> NodeHelper.set_string_attr("$source_path", path)
+                |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
+                |> then(fn asset ->
+                  if NodeHelper.get_attr_value(asset, "$inline", false) do
+                    NodeHelper.set_string_attr(asset, "content", File.read!(path))
+                  else
+                    file_name = NodeHelper.get_attr_value(asset, "file_name")
+                    NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{file_name}")
+                  end
+                end)
+
+              {:error, reason} ->
+                %{asset | status: {:error, "Asset file ${path} is unreadable: #{reason}"}}
+            end
+
+          _ ->
+            %{asset | status: {:error, "Multiple asset files found"}}
+        end
     end
   end
 end
