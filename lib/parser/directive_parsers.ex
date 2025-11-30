@@ -254,20 +254,26 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         js_identifier("pragma_name"),
         optional(
-          sequence([
-            ignore(open_paren()),
-            iws(),
-            many(
-              sequence([
-                ignore(optional(comma())),
-                iws(),
-                ValueParsers.simple_value()
-                |> Combinators.transform(fn {_type, value} -> value end)
-              ])
-            ),
-            iws(),
-            ignore(close_paren())
-          ])
+          sequence(
+            [
+              ignore(open_paren()),
+              iws(),
+              many(
+                sequence(
+                  [
+                    ignore(optional(comma())),
+                    iws(),
+                    ValueParsers.simple_value()
+                    |> Combinators.transform(fn {_type, value} -> value end)
+                  ],
+                  ast: fn [val] -> val end
+                )
+              ),
+              iws(),
+              ignore(close_paren())
+            ],
+            ast: fn [vals] -> vals end
+          )
         )
         |> DefaultParser.default([])
       ],

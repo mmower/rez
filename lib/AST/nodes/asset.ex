@@ -26,9 +26,9 @@ defmodule Rez.AST.Asset do
       "asset_#{name}_#{type}"
     end
 
-    deflua make(path), state do
+    deflua make(id \\ nil, path), state do
       file_name = Path.basename(path)
-      id = auto_id(file_name)
+      id = id || auto_id(file_name)
 
       # Compute relative path from assets directory to preserve structure
       relative_path =
