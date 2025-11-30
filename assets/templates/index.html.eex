@@ -15,7 +15,7 @@
     <%= for js_asset <- @js_pre_runtime_assets do %>
       <%= Asset.asset_tag(js_asset) %>
     <% end %>
-    <script src="assets/runtime.js"></script>
+    <script src="assets/js/runtime.js"></script>
     <%= for js_asset <- @js_post_runtime_assets do %>
       <%= Asset.asset_tag(js_asset) %>
     <% end %>

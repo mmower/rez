@@ -20,6 +20,7 @@ defmodule Rez.AST.Pragma do
             script: nil,
             metadata: %{}
 
+  alias Rez.AST.NodeHelper
   alias __MODULE__
   alias Rez.Compiler.Compilation
 
@@ -31,40 +32,60 @@ defmodule Rez.AST.Pragma do
     :after_copy_assets
   ]
 
-  @built_ins ["write_hierarchy"]
+  @built_ins ["write_content", "write_id_map", "write_hierarchy", "write_obj_map"]
 
   def valid_timings, do: @valid_timings
 
   defmodule PluginAPI do
     use Lua.API, scope: "rez.plugin"
 
-    deflua read_file(filename) do
-      case File.read(filename) do
-        {:ok, content} ->
-          [true, content]
+    deflua cwd(), state do
+      case File.cwd() do
+        {:ok, cwd} ->
+          cwd
 
-        {:error, error} ->
-          [false, error]
+        {:error, reason} ->
+          Lua.encode_list!(state, [nil, reason])
       end
     end
 
-    deflua write_file(filename, content) do
+    deflua ls(path), state do
+      case File.ls(path) do
+        {:ok, files} ->
+          Lua.encode_list!(state, [files])
+
+        {:error, reason} ->
+          Lua.encode_list!(state, [nil, reason])
+      end
+    end
+
+    deflua read_file(filename), state do
+      case File.read(filename) do
+        {:ok, content} ->
+          content
+
+        {:error, reason} ->
+          Lua.encode_list!(state, [nil, reason])
+      end
+    end
+
+    deflua write_file(filename, content), state do
       case File.write(filename, content) do
         :ok ->
           true
 
-        {:error, error} ->
-          [false, error]
+        {:error, reason} ->
+          Lua.encode_list!(state, [nil, reason])
       end
     end
 
-    deflua mkdir(path) do
+    deflua mkdir(path), state do
       case File.mkdir_p(path) do
         :ok ->
           true
 
-        {:error, error} ->
-          [false, error]
+        {:error, reason} ->
+          Lua.encode_list!(state, [nil, reason])
       end
     end
   end
@@ -114,6 +135,53 @@ defmodule Rez.AST.Pragma do
     end
   end
 
+  def run(
+        %Pragma{built_in: true, name: "write_content", values: [file | _]},
+        %Compilation{content: content} = compilation
+      ) do
+    case File.write(file, "content = " <> inspect(content, pretty: true, limit: :infinity)) do
+      :ok ->
+        compilation
+
+      {:error, errno} ->
+        Compilation.add_error(
+          compilation,
+          "PRAGMA write_content: cannot write '#{file}' error: #{inspect(errno)}"
+        )
+    end
+  end
+
+  def run(
+        %Pragma{built_in: true, name: "write_id_map", values: [file | _]},
+        %Compilation{id_map: id_map} = compilation
+      ) do
+    case File.write(file, "id_map = " <> inspect(id_map, pretty: true, limit: :infinity)) do
+      :ok ->
+        compilation
+
+      {:error, errno} ->
+        Compilation.add_error(
+          compilation,
+          "PRAGMA write_id_map: cannot write '#{file}' error: #{inspect(errno)}"
+        )
+    end
+  end
+
+  def run(
+        %Pragma{built_in: true, name: "write_obj_map"},
+        %Compilation{content: content} = compilation
+      ) do
+    content
+    |> Enum.filter(fn node ->
+      !NodeHelper.get_attr_value(node, "$built_in", false)
+    end)
+    |> Enum.group_by(&PrintableGroup.node_type/1)
+    |> Enum.filter(&PrintableGroup.printable_group/1)
+    |> Enum.each(&PrintableGroup.print_group/1)
+
+    compilation
+  end
+
   def run(%Pragma{name: _name, values: values, script: script}, compilation) do
     lua =
       Lua.new(sandboxed: [])
@@ -133,6 +201,52 @@ defmodule Rez.AST.Pragma do
     # Apex.ap(post_compilation)
 
     post_compilation
+  end
+end
+
+defmodule PrintableGroup do
+  alias Rez.AST.Node
+  alias Rez.AST.NodeHelper
+  alias Rez.AST.Patch
+
+  def printable_group({{"script", _}, _}), do: false
+  def printable_group({{"style", _}, _}), do: false
+  def printable_group(_), do: true
+
+  def print_group({{type, nil}, nodes_of_type}) do
+    IO.puts("--[#{type} (#{Enum.count(nodes_of_type)})]----")
+    Enum.each(nodes_of_type, &print_node/1)
+    IO.puts("")
+  end
+
+  def print_group({{type, alias}, nodes_of_type}) do
+    IO.puts("--[#{alias} -> #{type} (#{Enum.count(nodes_of_type)})]----")
+    Enum.each(nodes_of_type, &print_node/1)
+    IO.puts("")
+  end
+
+  def print_node(%Patch{} = patch) do
+    case Patch.type(patch) do
+      :function -> IO.puts("@patch #{Patch.object(patch)}.#{Patch.function(patch)}")
+      :method -> IO.puts("@patch #{Patch.object(patch)}.#{Patch.method(patch)}")
+    end
+  end
+
+  def print_node(%{id: id} = node) do
+    {file, line, _col} = node.position
+    file = Path.relative_to_cwd(file)
+    IO.puts("#{node_type_name(node)} ##{id} — #{file}:#{line}")
+  end
+
+  def print_node(_) do
+  end
+
+  def node_type_name(node) do
+    NodeHelper.get_attr_value(node, "$alias", Node.node_type(node))
+  end
+
+  def node_type(node) do
+    {Node.node_type(node), NodeHelper.get_attr_value(node, "$alias")}
   end
 end
 

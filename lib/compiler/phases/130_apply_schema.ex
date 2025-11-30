@@ -17,13 +17,6 @@ defmodule Rez.Compiler.Phases.ApplySchema do
           schema: schema
         } = compilation
       ) do
-    # File.write!("content.exs", "content = " <> inspect(content, pretty: true, limit: :infinity))
-
-    # File.write!(
-    #   "id_map.exs",
-    #   "id_map = " <> inspect(compilation.id_map, pretty: true, limit: :infinity)
-    # )
-
     content = apply_schema(schema, content, compilation)
     compilation = %{compilation | content: content}
 

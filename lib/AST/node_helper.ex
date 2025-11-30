@@ -12,7 +12,7 @@ defmodule Rez.AST.NodeHelper do
     alias Rez.AST.NodeHelper
     use Lua.API, scope: "rez.node"
 
-    deflua inspect(node, label), state do
+    deflua inspect(node, label \\ "Inspect"), state do
       {:userdata, node} = Lua.decode!(state, node)
       IO.inspect(node, label: label)
       nil
@@ -268,7 +268,7 @@ defmodule Rez.AST.NodeHelper do
   def build_type_map(nodes) when is_list(nodes) do
     nodes
     |> Enum.group_by(&Node.node_type/1)
-    |> Map.update!("game", fn [game] -> game end)
+    |> Map.update!("game", fn games -> List.last(games) end)
   end
 
   def build_id_map(nodes) when is_list(nodes) do

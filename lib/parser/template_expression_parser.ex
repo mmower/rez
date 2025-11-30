@@ -20,7 +20,9 @@ defmodule Rez.Parser.TemplateExpressionParser do
   import Rez.Parser.UtilityParsers,
     only: [open_bracket: 0, close_bracket: 0, comma: 0, colon: 0, iws: 0, iows: 0, bar: 0]
 
-  import Rez.Parser.ValueParsers, only: [string_value: 0, number_value: 0, bool_value: 0]
+  import Rez.Parser.ValueParsers,
+    only: [string_value: 0, number_value: 0, bool_value: 0, const_ref_value: 0]
+
   import Rez.Parser.ParserCache, only: [get_parser: 2]
 
   def js_value() do
@@ -80,6 +82,7 @@ defmodule Rez.Parser.TemplateExpressionParser do
   def expression_value() do
     choice(
       [
+        const_ref_value(),
         binding_path(),
         js_value_or_array()
       ],

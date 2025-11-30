@@ -30,12 +30,20 @@ defmodule Rez.AST.Asset do
       file_name = Path.basename(path)
       id = auto_id(file_name)
 
+      # Compute relative path from assets directory to preserve structure
+      relative_path =
+        if String.starts_with?(path, "assets/") do
+          String.replace_prefix(path, "assets/", "")
+        else
+          file_name
+        end
+
       asset =
         %Rez.AST.Asset{id: id}
         |> NodeHelper.set_string_attr("$source_path", path)
         |> NodeHelper.set_string_attr("file_name", file_name)
         |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
-        |> NodeHelper.set_string_attr("$dist_path", "assets/#{file_name}")
+        |> NodeHelper.set_string_attr("$dist_path", "assets/#{relative_path}")
         |> NodeHelper.set_meta(:synthetic, true)
 
       Lua.encode!(state, {:userdata, asset})
@@ -122,7 +130,9 @@ defmodule Rez.AST.Asset do
   The `asset_path` represents the distribution path of the asset file.
   """
   def asset_path(%Asset{} = asset) do
-    Path.join("assets", file_name(asset))
+    # Use computed $dist_path if available, fallback for backwards compat
+    NodeHelper.get_attr_value(asset, "$dist_path") ||
+      Path.join("assets", file_name(asset))
   end
 
   def asset_content(%Asset{} = asset) do
@@ -150,7 +160,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
 
   def process(%Asset{} = asset, _) do
     cond do
-      # Synethic Assets are created via the plugin API
+      # Synthetic Assets are created via the plugin API
       # and assumed to have a path already
       NodeHelper.get_meta(asset, :synthetic, false) ->
         if NodeHelper.get_attr_value(asset, "$inline", false) do
@@ -162,33 +172,69 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
       NodeHelper.get_attr_value(asset, "$template", false) ->
         asset
 
+      # file_path specified - exact path, no search
+      NodeHelper.has_attr?(asset, "file_path") ->
+        handle_file_path(asset)
+
+      # file_name specified - search for file
       true ->
-        case Asset.search(asset) do
-          [] ->
-            %{asset | status: {:error, "Asset not found"}}
+        handle_file_name_search(asset)
+    end
+  end
 
-          [path] ->
-            case Utils.path_readable?(path) do
-              :ok ->
-                asset
-                |> NodeHelper.set_string_attr("$source_path", path)
-                |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
-                |> then(fn asset ->
-                  if NodeHelper.get_attr_value(asset, "$inline", false) do
-                    NodeHelper.set_string_attr(asset, "content", File.read!(path))
-                  else
-                    file_name = NodeHelper.get_attr_value(asset, "file_name")
-                    NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{file_name}")
-                  end
-                end)
+  defp handle_file_path(%Asset{} = asset) do
+    file_path = NodeHelper.get_attr_value(asset, "file_path")
+    full_path = Path.join("assets", file_path)
 
-              {:error, reason} ->
-                %{asset | status: {:error, "Asset file ${path} is unreadable: #{reason}"}}
-            end
+    case Utils.path_readable?(full_path) do
+      :ok ->
+        file_name = Path.basename(file_path)
 
-          _ ->
-            %{asset | status: {:error, "Multiple asset files found"}}
+        asset
+        |> NodeHelper.set_string_attr("$source_path", full_path)
+        |> NodeHelper.set_string_attr("file_name", file_name)
+        |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(full_path))
+        |> then(fn asset ->
+          if NodeHelper.get_attr_value(asset, "$inline", false) do
+            NodeHelper.set_string_attr(asset, "content", File.read!(full_path))
+          else
+            NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{file_path}")
+          end
+        end)
+
+      {:error, reason} ->
+        %{asset | status: {:error, "Asset file not found: #{full_path} (#{reason})"}}
+    end
+  end
+
+  defp handle_file_name_search(%Asset{} = asset) do
+    case Asset.search(asset) do
+      [] ->
+        %{asset | status: {:error, "Asset not found"}}
+
+      [path] ->
+        # Compute relative path for dist (preserves directory structure)
+        relative_path = String.replace_prefix(path, "assets/", "")
+
+        case Utils.path_readable?(path) do
+          :ok ->
+            asset
+            |> NodeHelper.set_string_attr("$source_path", path)
+            |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
+            |> then(fn asset ->
+              if NodeHelper.get_attr_value(asset, "$inline", false) do
+                NodeHelper.set_string_attr(asset, "content", File.read!(path))
+              else
+                NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{relative_path}")
+              end
+            end)
+
+          {:error, reason} ->
+            %{asset | status: {:error, "Asset file #{path} is unreadable: #{reason}"}}
         end
+
+      _ ->
+        %{asset | status: {:error, "Multiple asset files found"}}
     end
   end
 end

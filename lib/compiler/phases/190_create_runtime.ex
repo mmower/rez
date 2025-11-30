@@ -121,7 +121,8 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
         register_expression_filters: register_expression_filters(filters: filters)
       )
 
-    output_path = Path.join(dist_path, "assets/runtime.js")
+    output_path = Path.join(dist_path, "assets/js/runtime.js")
+    File.mkdir_p(Path.dirname(output_path))
 
     case File.write(output_path, runtime_code) do
       :ok -> %{compilation | progress: ["Written runtime to #{output_path}" | progress]}

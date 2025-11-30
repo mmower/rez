@@ -14,7 +14,7 @@ defmodule Rez.Compiler.Compilation do
       compilation.source_path
     end
 
-    deflua source_paths(compilation), state do
+    deflua source_paths(compilation, user_only \\ false), state do
       {:userdata, compilation} = Lua.decode!(state, compilation)
 
       sources =
@@ -22,11 +22,15 @@ defmodule Rez.Compiler.Compilation do
         |> Enum.reduce(MapSet.new(), fn {_range, section}, sources ->
           source_path = Path.expand(section.source_path, compilation.source_path)
 
-          # if path_is_sub_path?(source_path, compilation.source.base_path) do
-          MapSet.put(sources, source_path)
-          # else
-          # sources
-          # end
+          if user_only do
+            if path_is_sub_path?(source_path, compilation.source.base_path) do
+              MapSet.put(sources, source_path)
+            else
+              sources
+            end
+          else
+            MapSet.put(sources, source_path)
+          end
         end)
         |> MapSet.to_list()
 

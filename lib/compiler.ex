@@ -58,10 +58,8 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ReprocessAST,
     Rez.Compiler.Phases.InitializationOrder,
     # Pragmas with :before_create_runtime timing run here
-    Rez.Compiler.Phases.DumpStructures,
-    # Everything in the Game needs to be ready at this point
+    # ** Everything in the Game needs to be ready at this point **
     Rez.Compiler.Phases.CreateRuntime,
-    Rez.Compiler.Phases.WriteObjMap,
     Rez.Compiler.Phases.WriteGameFile,
     Rez.Compiler.Phases.CopyAssets,
     # Pragmas with :after_copy_assets timing run here

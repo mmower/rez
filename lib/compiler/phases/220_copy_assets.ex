@@ -40,19 +40,23 @@ defmodule Rez.Compiler.Phases.CopyAssets do
     if ignore_asset?(asset) do
       compilation
     else
-      file_name = Asset.file_name(asset)
-      destination_path = Path.join([dist_path, Config.asset_path_name(), file_name])
-      asset_path = NodeHelper.get_attr_value(asset, "$source_path")
+      # Get the $dist_path which includes relative structure (e.g., "assets/images/foo.png")
+      asset_dist_path = NodeHelper.get_attr_value(asset, "$dist_path")
+      # Strip leading "assets/" to get relative portion
+      relative_path = String.replace_prefix(asset_dist_path, "assets/", "")
+      destination_path = Path.join([dist_path, Config.asset_path_name(), relative_path])
+      source_path = NodeHelper.get_attr_value(asset, "$source_path")
 
-      if is_nil(asset_path) do
+      if is_nil(source_path) do
         Compilation.add_error(
           compilation,
           "Unable to identify source path for asset: #{asset.id}"
         )
       else
         compilation
-        |> check_asset_exists(asset_path)
-        |> copy_asset_file(asset_path, destination_path)
+        |> check_asset_exists(source_path)
+        |> ensure_destination_dir(destination_path)
+        |> copy_asset_file(source_path, destination_path)
       end
     end
   end
@@ -60,6 +64,20 @@ defmodule Rez.Compiler.Phases.CopyAssets do
   def copy_asset(compilation, _asset) do
     compilation
   end
+
+  defp ensure_destination_dir(%Compilation{status: :ok} = compilation, destination_path) do
+    dir = Path.dirname(destination_path)
+
+    case File.mkdir_p(dir) do
+      :ok ->
+        compilation
+
+      {:error, reason} ->
+        Compilation.add_error(compilation, "Failed to create directory #{dir}: #{reason}")
+    end
+  end
+
+  defp ensure_destination_dir(compilation, _), do: compilation
 
   def check_asset_exists(%Compilation{} = compilation, asset_path) do
     if File.exists?(asset_path) || Compilation.ignore_missing_assets?(compilation) do

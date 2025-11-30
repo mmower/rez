@@ -258,6 +258,9 @@ defmodule Rez.Compiler.TemplateCompiler do
 
     def js_exp(bindings_map_name, {:bound_path, bound_path}),
       do: js_apply_fn(bindings_map_name, "#{bindings_map_name}.#{Enum.join(bound_path, ".")}")
+
+    def js_exp(_bindings_map_name, {:const_ref, const_name}),
+      do: "$#{const_name}"
   end
 
   defmodule Filters do

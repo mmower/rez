@@ -49,6 +49,7 @@ Directives modify in-game concepts.
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
 * <<Mixin (Directive), Mixin>>
+* <<Pragma (Directive), Pragma>>
 * <<Keybinding (Directive), Keybinding>>
 * <<Schema (Directive), Schema>>
 * <<Script (Directive), Script>>
@@ -237,6 +238,7 @@ Assets can be collected into groups (using <<Group, `@group`>>) dynamically choo
 
 === Example
 
+Using `file_name` (search mode):
 ....
 @asset hat_01 {
   file_name: "hat_01.png"
@@ -244,18 +246,32 @@ Assets can be collected into groups (using <<Group, `@group`>>) dynamically choo
 }
 ....
 
-This defines an asset that will be copied into the game when built and which can be referred to in-game by it's id.
+Using `file_path` (exact path mode):
+....
+@asset icon_attack {
+  file_path: "images/icons/attack.png"
+}
+....
+
+This defines an asset that will be copied into the game when built and which can be referred to in-game by its id. Directory structure is preserved when copying to the distribution folder.
 
 Rez will ensure that all assets are available during compilation.
 
 Assets are the key to using asset groups that can be used for showing different but randomised media.
 
 === Required Attributes
+
+Assets must specify their source file using either `file_name` or `file_path` (but not both):
+
 [cols="2,1,4"]
 |===
 |`file_name`
 |String
-|name of the asset file in the assets folder
+|Name of the asset file. The compiler searches for this file anywhere in the `assets/` directory hierarchy. If multiple files with the same name exist, compilation fails. The directory structure is preserved when copying to the distribution folder.
+
+|`file_path`
+|String
+|Explicit path relative to `assets/`. For example, `file_path: "images/ui/icon.png"` looks for `assets/images/ui/icon.png`. Use this when you have multiple files with the same name in different directories.
 |===
 
 === Optional Attributes
@@ -1120,7 +1136,7 @@ Available modifiers are:
 * meta (the Command key on Mac computers)
 * alt (the Option key on Mac computers)
 
-Modifiers are optional. Where the shift modifier is used the keyName should be in upper case.
+Modifiers are optional. **Where the shift modifier is used the keyName should be in upper case**.
 
 KeyNames follow the https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values[Javascript KeyboardEvent rules].
 
@@ -1172,6 +1188,28 @@ A `@mixin` defines attributes that can be included into an object at runtime. Th
 ....
 
 Now that `@elem` supports arbitrary nesting it is possible that `@mixin` is not required.
+
+== Pragma (Directive)
+
+The `@pragma` directive specifies an instruction to be run during the compilation process. For example this pragma runs the `pragmas/source_explorer.lua` file after the compiler has run a first pass processing the abstract syntax tree (AST).
+
+....
+@pragma(after_process_ast) source_explorer("source_explorer.html")
+....
+
+A pragma is specified using a timing instruction:
+
+* `after_build_schema`
+* `after_schema_apply`
+* `after_process_ast`
+* `before_create_runtime`
+* `after_copy_assets`
+
+a name e.g. `source_explorer` which corresponds either to one of the built-in pragmas (at the moment that is only `write_hierarchy`) or to a Lua source file in the `pragmas` project folder, followed optionally by values that get passed to the pragma script.
+
+A pragma receives the Rez internal `%Compilation{}` struct as a value `compilation` and any parameters as `values` and can use the plugin API to query & modify the compilation (for example adding new assets). It is expected to return either the original or a modified compilation.
+
+Use with care.
 
 == Object (Element)
 
@@ -1646,8 +1684,8 @@ Use `xor` to ensure only one of two attributes can be present:
 
 ....
 @schema asset {
-  folder_path: {kind: :string, xor: file_path}
-  file_path: {kind: :string, xor: folder_path, file_exists}
+  file_name: {kind: :string, xor: file_path}
+  file_path: {kind: :string, xor: file_name, file_exists}
 }
 ....
 

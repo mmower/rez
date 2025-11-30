@@ -52,8 +52,8 @@
 
   tags: {kind: :set, coll_kind: :keyword}
 
-  folder_path: {kind: :string, xor: file_path}
-  file_path: {kind: :string, xor: folder_path, file_exists}
+  file_name: {kind: :string, xor: file_path}
+  file_path: {kind: :string, xor: file_name, file_exists}
   width: {kind: [:string :number], and: height}
   height: {kind: [:string :number], and: width}
 }
