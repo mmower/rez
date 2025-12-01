@@ -2,7 +2,6 @@
   "dependencies": {
     "alpinejs": "^3.4",
     "bulma": "^1.0",
-    "node": "^22.0",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
