@@ -1054,7 +1054,10 @@ Rez makes it easy to capture user input through HTML forms with two-way data bin
 
 ==== Text Input
 
-Bind text inputs directly to object attributes:
+Use the `rez-bind={id.attr}` syntax to create a two way binding between a text input and a compatible attribute. In this example
+we bind `player.name` to a text input and `player.background` to a textarea. The form field will initially take on the value of
+the attribute. Changes to the form field will be transparently applied to the attribute.
+
 ....
 @card character_setup {
   bindings: [player: #player]
@@ -1074,7 +1077,8 @@ Bind text inputs directly to object attributes:
 
 ==== Checkboxes and Choices
 
-Use checkboxes for boolean values:
+Similarly you can use `rez-bind` to bind checkboxes to boolean attribute values.
+
 ....
 @card preferences {
   bindings: [settings: #game_settings]

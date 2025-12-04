@@ -585,7 +585,7 @@ window.Rez.RezFormTransformer = RezFormTransformer;
 
 class RezInputTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.rez-front-face input[rez-live]", "input", receiver);
+    super("div.rez-front-face input[rez-live], div.rez-front-face select[rez-live], div.rez-front-face textarea[rez-live]", "input", receiver);
   }
 }
 
@@ -706,7 +706,7 @@ class RezBindingTransformer extends RezTransformer {
       input.checked = value;
     });
     input.checked = this.getBoundValue(input, binding_id, binding_attr);
-    input.addEventListener("change", function (evt) {
+    input.addEventListener("input", function (evt) {
       transformer.setBoundValue(input, binding_id, binding_attr, evt.target.checked);
     });
   }
@@ -723,7 +723,7 @@ class RezBindingTransformer extends RezTransformer {
   trackRadioGroupChange(group_name, callback) {
     const radios = document.getElementsByName(group_name);
     for (let radio of radios) {
-      radio.addEventListener("change", callback);
+      radio.addEventListener("input", callback);
     }
   }
 
@@ -750,7 +750,7 @@ class RezBindingTransformer extends RezTransformer {
       select.value = value;
     });
     select.value = this.getBoundValue(select, binding_id, binding_attr);
-    select.addEventListener("change", function (evt) {
+    select.addEventListener("input", function (evt) {
       transformer.setBoundValue(select, binding_id, binding_attr, evt.target.value);
     });
   }
@@ -857,9 +857,9 @@ class RezView {
       new RezBlockTransformer(),
       new RezButtonTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
+      new RezBindingTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
-      new RezEnterKeyTransformer(this.receiver),
-      new RezBindingTransformer(this.receiver)
+      new RezEnterKeyTransformer(this.receiver)
     ];
   }
 

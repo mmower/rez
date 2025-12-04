@@ -74,10 +74,10 @@ class RezList extends RezBasicObject {
    * Treat the list as a repeating cycle. Each cycle identified by an id
    * is separate.
    */
-  nextForCycle(cycleId) {
-    const cycleIdx = this.getAttributeValue(`cycle_${cycleId}`, 0);
+  nextForCycle(cycleId = "$default") {
+    let cycleIdx = this.getAttributeValue(`cycle_${cycleId}`, 0);
     const values = this.getAttribute("values");
-    const value = values.at(cycle_idx);
+    const value = values.at(cycleIdx);
     cycleIdx = (cycleIdx + 1) % values.length;
     this.setAttribute(`cycle_${cycleId}`, cycleIdx);
     return value;
