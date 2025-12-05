@@ -80,6 +80,10 @@ defmodule Rez.AST.ValueEncoder do
     "{$copy: #{encode_value({:elem_ref, elem_id})}, priority: #{prio}}"
   end
 
+  def encode_value({:delegate, attr_name}) do
+    ~s|{$delegate: "#{attr_name}"}|
+  end
+
   def encode_value({:property, f}) do
     "{property: #{Poison.encode!(f)}}"
   end

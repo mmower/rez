@@ -273,6 +273,7 @@ class RezBasicObject {
     // Priority is fixed by the Rez compiler to be between 1 & 10
     const dyn_initializers = [[], [], [], [], [], [], [], [], [], []];
     const copy_initializers = [[], [], [], [], [], [], [], [], [], []];
+    const delegates = [];
 
     for(let attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
@@ -283,6 +284,8 @@ class RezBasicObject {
         } else if(value.hasOwnProperty("$copy")) {
           const prio = parseInt(value["priority"]);
           copy_initializers[prio-1].push([attrName, value]);
+        } else if(value.hasOwnProperty("$delegate")) {
+          delegates.push([attrName, value["$delegate"]]);
         }
       }
     }
@@ -293,6 +296,10 @@ class RezBasicObject {
 
     dyn_initializers.flat().forEach(
       ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
+    );
+
+    delegates.forEach(
+      ([attrName, targetAttr]) => this.createDelegateProperty(attrName, targetAttr)
     );
   }
 
@@ -347,6 +354,29 @@ class RezBasicObject {
     const elem_ref = value["$copy"];
     const source = $(elem_ref);
     this.setAttribute(attrName, source.addCopy().id);
+  }
+
+  /**
+   * @function createDelegateProperty
+   * @memberof basic_object
+   * @param {string} attrName - name of the attribute to create a delegate property for
+   * @param {string} targetAttr - name of the attribute that holds a reference to the delegate target
+   * @description Creates a read-only property that delegates to the corresponding property of
+   * the referenced element. For example, if targetAttr is "hull", this will look up this.hull
+   * (which is the dereferenced element from hull_id) and return its attrName property.
+   */
+  createDelegateProperty(attrName, targetAttr) {
+    delete this[attrName];
+    Object.defineProperty(this, attrName, {
+      get: function() {
+        const target = this[targetAttr];
+        if (target == null) {
+          return undefined;
+        }
+        return target[attrName];
+      },
+      configurable: true
+    });
   }
 
   createBehaviourTreeAttribute(attrName, value) {

@@ -213,18 +213,43 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   # Copy initializer
+  # ^c:#elem_id or ^c:N:#elem_id where N is priority 1-10
   def copy_initializer_value() do
     ParserCache.get_parser("copy_initializer", fn ->
       sequence(
         [
           ignore(caret()),
           ignore(char(?c)),
+          commit(),
           priority(),
           ignore(colon()),
           elem_ref_value()
         ],
+        label: "copy-initializer (^c:#id)",
         ast: fn [prio, {:elem_ref, elem_id}] ->
           {:copy_initializer, {elem_id, bounded(prio, 1, 10)}}
+        end
+      )
+    end)
+  end
+
+  # Delegate
+  # ^d:<attr-name> where attr-name specifies an attribute that holds a reference to another element.
+  # Creates a property that delegates to the corresponding property of the referenced element.
+  # E.g. hull_id: #foo, purpose: ^d:hull will create a purpose property that reads from foo.purpose
+  def delegate_value() do
+    ParserCache.get_parser("delegate", fn ->
+      sequence(
+        [
+          ignore(caret()),
+          ignore(char(?d)),
+          commit(),
+          ignore(colon()),
+          js_identifier("delegate_attr")
+        ],
+        label: "delegate (^d:<attr-name>)",
+        ast: fn [attr_name] ->
+          {:delegate, attr_name}
         end
       )
     end)
@@ -560,6 +585,7 @@ defmodule Rez.Parser.ValueParsers do
           const_ref_value(),
           dynamic_initializer_value(),
           copy_initializer_value(),
+          delegate_value(),
           file_value(),
           placeholder_value()
         ],
