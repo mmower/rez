@@ -310,7 +310,8 @@
   $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
-  values: {kind: :list, required: true}
+  includes: {kind: :list, coll_kind: :elem_ref, ref_elem: @list}
+  values: {kind: :list}
 
   tags: {kind: :set, coll_kind: :keyword}
 }

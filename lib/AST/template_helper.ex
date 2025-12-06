@@ -59,12 +59,18 @@ defmodule Rez.AST.TemplateHelper do
         {_, %Attribute{name: name, type: :source_template, value: template_source}},
         node
       ) do
-    node
-    |> NodeHelper.set_compiled_template_attr(
-      "$#{name}_template",
-      compile_template(node.id, template_source, Node.html_processor(node, name))
-    )
-    |> NodeHelper.delete_attr(name)
+    case compile_template(node.id, template_source, Node.html_processor(node, name)) do
+      {:error, errors} ->
+        Enum.reduce(errors, node, fn {error_type, {line, col}, message}, acc ->
+          NodeHelper.add_error(acc, "#{name}:#{line}:#{col} #{error_type}: #{message}")
+        end)
+        |> NodeHelper.delete_attr(name)
+
+      compiled_template ->
+        node
+        |> NodeHelper.set_compiled_template_attr("$#{name}_template", compiled_template)
+        |> NodeHelper.delete_attr(name)
+    end
   end
 
   def compile_template_attribute(_attribute, node) do

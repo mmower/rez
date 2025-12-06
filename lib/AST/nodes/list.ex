@@ -27,7 +27,28 @@ defimpl Rez.AST.Node, for: Rez.AST.List do
     NodeHelper.get_attr_value(list, "$js_ctor", "RezList")
   end
 
-  def process(list, _) do
-    list
+  @doc """
+  Process the list node. If the list has an `includes` attribute, add those
+  list IDs to `$init_after` to ensure they initialize first. Also ensure
+  a `values` attribute exists (even if empty) so the property is created.
+  """
+  def process(list, _resources) do
+    case NodeHelper.get_attr_value(list, "includes", nil) do
+      nil ->
+        list
+
+      includes when is_list(includes) ->
+        # Ensure values attribute exists so the property is created at runtime
+        list =
+          if NodeHelper.has_attr?(list, "values") do
+            list
+          else
+            NodeHelper.set_list_attr(list, "values", [])
+          end
+
+        existing_init_after = NodeHelper.get_attr_value(list, "$init_after", [])
+        merged = Enum.uniq(existing_init_after ++ includes)
+        NodeHelper.set_list_attr(list, "$init_after", merged)
+    end
   end
 end

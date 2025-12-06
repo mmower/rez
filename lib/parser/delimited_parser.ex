@@ -79,6 +79,15 @@ defmodule Rez.Parser.DelimitedParser do
     ])
   end
 
+  def invalid_pattern_check(nil), do: nil
+
+  def invalid_pattern_check(invalid_parser) when is_function(invalid_parser, 0) do
+    sequence([
+      invalid_parser.(),
+      commit()
+    ])
+  end
+
   def non_zero_counter(counter_name) do
     terminal(
       :non_zero_counter,
@@ -117,20 +126,27 @@ defmodule Rez.Parser.DelimitedParser do
     counter = "#{:erlang.unique_integer([:monotonic, :positive])}"
     start_open = Keyword.get(options, :start_open, false)
     trim = Keyword.get(options, :trim, false)
+    invalid_parser = Keyword.get(options, :invalid_pattern, nil)
 
     start_parser =
       if start_open, do: set_counter(counter, 0), else: open(open_parser, counter, :zero)
 
+    # If not invalid_pattern is passed then invalid_pattern_check() will return
+    # nil and needs to be removed from the list. This preserves the pre-existing
+    # behavior of the t_d_b_n_p parser
+    inner_choices =
+      [
+        open(open_parser, counter, :inc),
+        inner_close(close_parser, counter),
+        invalid_pattern_check(invalid_parser),
+        inner_char(close_parser)
+      ]
+      |> Enum.reject(&is_nil/1)
+
     sequence(
       [
         start_parser,
-        many(
-          choice([
-            open(open_parser, counter, :inc),
-            inner_close(close_parser, counter),
-            inner_char(close_parser)
-          ])
-        ),
+        many(choice(inner_choices)),
         ignore(close_parser)
       ],
       ast: fn chunks ->

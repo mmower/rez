@@ -345,7 +345,8 @@ defmodule Rez.Parser.TemplateParser do
         DP.text_delimited_by_nested_parsers(
           open_nested_container_user_component(),
           close_container_user_component(),
-          start_open: true
+          start_open: true,
+          invalid_pattern: &invalid_component_close/0
         )
       ],
       ast: fn [[tag_name, attrs], content] ->
@@ -394,6 +395,26 @@ defmodule Rez.Parser.TemplateParser do
       ],
       ast: fn [attr_name, attr_value] ->
         {attr_name, attr_value}
+      end
+    )
+  end
+
+  def invalid_component_close() do
+    sequence(
+      [
+        ignore(left_angle_bracket()),
+        ignore(dot()),
+        ignore(forward_slash()),
+        js_identifier(),
+        ignore(right_angle_bracket())
+      ],
+      ctx: fn %Context{ast: [tag_name]} = ctx ->
+        ctx
+        |> Context.add_error(
+          :invalid_close_tag,
+          "Invalid component close tag <./#{tag_name}>. Did you mean </.#{tag_name}>?"
+        )
+        |> Context.make_error_fatal()
       end
     )
   end

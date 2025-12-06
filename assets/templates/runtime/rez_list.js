@@ -7,6 +7,32 @@ class RezList extends RezBasicObject {
     super("list", id, attributes);
   }
 
+  /**
+   * Called during initialization to merge values from included lists.
+   * If the list has an `includes` attribute, collect values from all
+   * referenced lists and prepend them to this list's own values.
+   */
+  elementInitializer() {
+    const includes = this.getAttributeValue("includes", []);
+    if (includes.length > 0) {
+      // Get own values (may be empty array if only using includes)
+      const ownValues = this.getAttributeValue("values", []);
+
+      // Collect values from all included lists
+      const includedValues = includes.flatMap(listId => {
+        const list = $(listId);
+        if (!list) {
+          throw new Error(`List '${this.id}' includes non-existent list: '${listId}'`);
+        }
+        return list.values;
+      });
+
+      // Merge: included values first, then own values
+      const mergedValues = [...includedValues, ...ownValues];
+      this.setAttribute("values", mergedValues, false);
+    }
+  }
+
   // No need to define values accessor as it's defined by default for @list
 
   get length() {
