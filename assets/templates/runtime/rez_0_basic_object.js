@@ -294,12 +294,12 @@ class RezBasicObject {
       ([attrName, elem_ref]) => this.createAttributeByCopying(attrName, elem_ref)
     );
 
-    dyn_initializers.flat().forEach(
-      ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
-    );
-
     delegates.forEach(
       ([attrName, targetAttr]) => this.createDelegateProperty(attrName, targetAttr)
+    );
+
+    dyn_initializers.flat().forEach(
+      ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
     );
   }
 
@@ -373,7 +373,11 @@ class RezBasicObject {
         if (target == null) {
           return undefined;
         }
-        return target[attrName];
+        const value = target[attrName];
+        if (typeof value === "function") {
+          return value.bind(target);
+        }
+        return value;
       },
       configurable: true
     });

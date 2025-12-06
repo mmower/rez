@@ -48,6 +48,18 @@ defmodule Rez.Compiler.Compilation do
       Lua.encode!(state, {:userdata, compilation})
     end
 
+    deflua add_numeric_const(compilation, name, value), state do
+      {:userdata, %{constants: constants} = compilation} = Lua.decode!(state, compilation)
+      compilation = %{compilation | constants: Map.put(constants, name, {:number, value})}
+      Lua.encode!(state, {:userdata, compilation})
+    end
+
+    deflua add_string_const(compilation, name, value), state do
+      {:userdata, %{constants: constants} = compilation} = Lua.decode!(state, compilation)
+      compilation = %{compilation | constants: Map.put(constants, name, {:string, value})}
+      Lua.encode!(state, {:userdata, compilation})
+    end
+
     deflua dist_path(compilation), state do
       {:userdata, compilation} = Lua.decode!(state, compilation)
       compilation.dist_path

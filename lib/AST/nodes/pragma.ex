@@ -39,6 +39,19 @@ defmodule Rez.AST.Pragma do
   defmodule PluginAPI do
     use Lua.API, scope: "rez.plugin"
 
+    deflua run(cmd, args), state do
+      args = Lua.decode!(state, args) |> Enum.map(fn {_, arg} -> arg end)
+      {result, exit_status} = System.cmd(cmd, args)
+
+      if exit_status == 0 do
+        result
+      else
+        Lua.encode_list!(state, [nil, exit_status])
+      end
+
+      result
+    end
+
     deflua cwd(), state do
       case File.cwd() do
         {:ok, cwd} ->
