@@ -111,7 +111,7 @@
   $suppress_wrapper: {kind: :boolean}
 
   bindings: {kind: :list, coll_kind: :list_binding}
-  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  blocks: {kind: :list, coll_kind: :list_binding}
   css_class: {kind: :string}
 
   on_start: {kind: :function}
@@ -193,7 +193,7 @@
   current_scene_id: {kind: :elem_ref}
 
   bindings: {kind: :list, coll_kind: :list_binding}
-  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  blocks: {kind: :list, coll_kind: :list_binding}
   links: {kind: :list, coll_kind: :string}
   scripts: {kind: :list, coll_kind: :string}
 
@@ -421,7 +421,7 @@
   layout_separator: {kind: :string}
   layout_reverse: {kind: :boolean}
   bindings: {kind: :list, coll_kind: :list_binding}
-  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  blocks: {kind: :list, coll_kind: :list_binding}
 
   on_init: {kind: :function}
   on_start: {kind: :function}

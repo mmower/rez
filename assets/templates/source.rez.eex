@@ -52,7 +52,7 @@
   created: "<%= @created %>"
   initial_scene_id: #explore_dungeon
 
-  blocks: [#sidebar]
+  blocks: [sidebar: #sidebar]
   bindings: {messages: `game.$flash_messages}
 
   layout: ```
@@ -742,7 +742,7 @@
 
 @card c_dungeon_entrance {
   exits: [{alias: "outside" by: "walk" dir: "north" to: #c_outside_world check: :can_leave} {alias: "tunnel" by: "walk" dir: "west" to: #c_dungeon_tunnel_1}]
-  blocks: [#c_exits #c_actors #c_conversations]
+  blocks: [c_exits: #c_exits c_actors: #c_actors c_conversations: #c_conversations]
   location: [:dungeon :entrance]
   content: ```
   <div class="box">
@@ -771,7 +771,7 @@
 @card c_dungeon_tunnel_1 {
   exits: [{alias: "entrance" dir: "east" to: #c_dungeon_entrance} {alias: "tunnel" dir: "south" to: #c_dungeon_tunnel_2}]
   location: [:dungeon :tunnel_1]
-  blocks: [#c_exits]
+  blocks: [c_exits: #c_exits]
   content: ```
   <div class="box">
     A dark echo-ey tunnel. You can hear your heart beating fast.
@@ -783,7 +783,7 @@
 @card c_dungeon_tunnel_2 {
   exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_1} {alias: "chamber" dir: "south" to: #c_dungeon_chamber}]
   location: [:dungeon :tunnel_2]
-  blocks: [#c_exits]
+  blocks: [c_exits: #c_exits]
   content: ```
   <div class="box">
     <div class="block">A narrow tunnel that smells foul, something horrible lurks nearby.</div>
@@ -799,7 +799,7 @@
 @card c_dungeon_chamber {
   exits: [{alias: "tunnel" dir: "north" to: #c_dungeon_tunnel_2} {alias: "dungeon" dir: "descend" to: #c_level_2 check: :can_descend}]
   bindings: {location: #location}
-  blocks: [#c_exits]
+  blocks: [c_exits: #c_exits]
   location: [:dungeon :chamber]
   monster_id: 0
   monster_defeated: false

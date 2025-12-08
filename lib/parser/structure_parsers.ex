@@ -108,6 +108,7 @@ defmodule Rez.Parser.StructureParsers do
     sequence(
       [
         iliteral("@#{label}"),
+        not_lookahead(elem_body_char()),
         iws(),
         commit(),
         block_begin(),
@@ -144,6 +145,7 @@ defmodule Rez.Parser.StructureParsers do
     sequence(
       [
         iliteral("@#{label}"),
+        not_lookahead(elem_body_char()),
         iws(),
         commit(),
         block_begin(),
@@ -178,6 +180,7 @@ defmodule Rez.Parser.StructureParsers do
     sequence(
       [
         iliteral("@#{label}"),
+        not_lookahead(elem_body_char()),
         iws(),
         commit(),
         js_identifier("#{label}_id"),

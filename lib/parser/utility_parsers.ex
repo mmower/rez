@@ -90,7 +90,7 @@ defmodule Rez.Parser.UtilityParsers do
     do: ParserCache.get_parser("elem_start_char", fn -> char([?a..?z, ?A..?Z]) end)
 
   def elem_body_char(),
-    do: ParserCache.get_parser("elem_body_char", fn -> char([?_, ?a..?z, ?A..?Z]) end)
+    do: ParserCache.get_parser("elem_body_char", fn -> char([?_, ?a..?z, ?A..?Z, ?0..?9]) end)
 
   def elem_tag() do
     Combinators.sequence(

@@ -6,6 +6,7 @@ defmodule Rez.Parser.AliasParsers do
 
   alias Ergo.Context
   import Ergo.Combinators, only: [ignore: 1, sequence: 2]
+  import Ergo.Meta, only: [commit: 0]
 
   alias Rez.AST.Attribute
   alias Rez.AST.NodeHelper
@@ -90,6 +91,7 @@ defmodule Rez.Parser.AliasParsers do
       [
         iliteral("@elem"),
         iws(),
+        commit(),
         elem_tag(),
         iows(),
         ignore(equals()),

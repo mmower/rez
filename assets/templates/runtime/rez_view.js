@@ -195,17 +195,19 @@ class RezBlock {
     return this.getBindings(initialBindings);
   }
 
-  // blocks are a list of id's of other card elements that we
+  // blocks are a binding list of other card elements that we
   // want to sub-render and make available to the template of this
-  // card. The result is a map of key pairs {block_id, block_render}
+  // card. The result is a map of key pairs {binding_name, block_render}
   getBlocks() {
     const blocks = this.source.getAttributeValue("blocks", []);
-    return blocks.reduce((blockMappings, blockId) => {
-      const blockSource = $(blockId);
+    return blocks.reduce((blockMappings, item) => {
+      // Binding: {prefix: "name", source: {$ref: "card_id"}}
+      const bindingName = item.prefix;
+      const blockSource = $(item.source);
       blockSource.$parent = this.source;
       const block = new RezBlock("block", blockSource);
       block.parentBlock = this;
-      blockMappings[blockId] = block;
+      blockMappings[bindingName] = block;
       return blockMappings;
     }, {});
   }

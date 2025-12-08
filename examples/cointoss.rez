@@ -73,7 +73,7 @@
 
   @scene play_game begin
     initial_card: #play_round
-    blocks: [#sidebar]
+    blocks: [sidebar: #sidebar]
     layout_mode: :single
 
     layout: """
