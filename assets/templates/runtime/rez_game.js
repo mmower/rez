@@ -632,19 +632,20 @@ class RezGame extends RezBasicObject {
 
     this.#containerId = containerId;
 
-    // Init every object, will also trigger on_init for any object that defines it
+    // Initialize the game object first (all levels)
     for(let init_level of this.initLevels()) {
-      console.log("init/" + init_level);
-
       this.init(init_level);
-
-      const game_objects = this.getAttribute("$init_order");
-
-      game_objects.forEach(function (obj_id) {
-        const obj = this.getGameObject(obj_id);
-        obj.init(init_level);
-      }, this);
     }
+
+    // Initialize each object fully before moving to the next
+    // This ensures $init_after dependencies are completely ready
+    const game_objects = this.getAttribute("$init_order");
+    game_objects.forEach(function (obj_id) {
+      const obj = this.getGameObject(obj_id);
+      for(let init_level of this.initLevels()) {
+        obj.init(init_level);
+      }
+    }, this);
 
     this.getAll().forEach((obj) => {
       obj.runEvent("game_started", {})
