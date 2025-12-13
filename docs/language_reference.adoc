@@ -55,12 +55,9 @@ This tiny example demonstrates Rez's core philosophy: clean separation between w
 
 === Installation and Setup
 
-To get started with Rez, you'll need to have Rez installed on your system.
+To get started with Rez, you'll need to have the Rez compiler installed on your system. Download the https://github.com/mmower/rez/releases/latest[latest release] for your operating system and install it. The installer will automatically download and install the compiler and its runtime dependencies for your platform.
 
-[NOTE]
-====
-Installation instructions depend on your platform. Please refer to the main Rez documentation for current installation methods.
-====
+Once the installer is complete you will have an executable named either `rez_macos`, `rez_linux`, or `rez_windows.exe` depending on your platform. Move or copy that executable into your path. The name of the executable doesn't matter so you can rename it `rez` or `rc` (for rez compiler) as you like.
 
 Once installed, you can create a new game project with:
 
@@ -79,6 +76,14 @@ my-first-game/
 ├── assets/                  # Images, sounds, etc.
 └── dist/                    # Compiled game files (created on build)
 ....
+
+The `stdlib.rez` file is contains a basic library of elements that Rez games can depend upon. You should not modify this file as it will be regenerated every time the rez compiler is run. When you upgrade to a newer version of Rez it will automatically install the newest standard library. You may put other Rez source files in the `lib` folder and they will not be interfered with.
+
+Put any asset files you want to distribute with your game into the `assets` folder.
+
+The `dist` folder will be recreated each time the Rez compiler runs and will contain a complete, ready to distribute, version of your game including all runtime files and used assets. You can package or upload this folder to share your game.
+
+Once the compiler has run you may add other files or post process files in the `dist` folder but be aware any such changes may be overwritten the next time the compiler runs. The `@pragma` directive is designed to allow for extra processing steps in the compilation process. For example a `@pragma` could be used to convert graphics into different formats or minify files. This will ensure the step happens every time the compiler runs.
 
 === Your First Game
 
@@ -188,8 +193,8 @@ Notice the `$global: true` attribute on the player. This makes the player object
 From the `my_first_game` folder run:
 
 ....
-➜ rc compile src/my_first_game.rez
-rez v1.8.1 — compiled to dist folder
+➜ rez compile src/my_first_game.rez
+rez v1.8.15 — compiled to dist folder
 ....
 
 Then open the dist/index.html file. There's a version https://rez-lang.com/games/my_first_game/index.html[online] and it should look like:
@@ -208,7 +213,7 @@ Let's break down what we just created:
 
 **@scene**: A context where interactions take place, can have a layout (for example a dialogue scene might use a different layout to an inventory scene). Each scene has an `initial_card_id` that defines which `@card`` gets presented first when that scene starts. You can have one scene or many scenes.
 
-**@card**: The content that players mostly see and interact with. Cards contain the text, choices, and behaviors that make up your game. It must have a `content:` attribute containing a template that determines what the player will be shown.
+**@card**: The content that players mostly see and interact with. Cards contain the text, choices, and behaviors that make up your game. It must have a `content:` attribute containing a template (HTML markup and Rez template expressions) that determines what the player will see.
 
 The structure flows like this:
 ....
@@ -249,12 +254,12 @@ In the next section, we'll dive deeper into the core concepts that make Rez game
 
 === Understanding Elements
 
-Rez games are built from **elements** - the building blocks that define everything in your game. Elements represent things like the game itself, scenes, cards, characters, items, and more.
+Rez games are built from **elements** - the building blocks that define everything in your game. Elements represent things like the game itself, scenes, cards, characters, items, and more. Rez has a number of useful elements built in and you can also create your own when you need to.
 
-Every element follows the same basic pattern:
+Every element follows the same basic pattern. It starts with an `@` symbol that says "we're declaring an element", this is followed by the element name (e.g. `game`), then a matched pair of braces `{}` inside which are attributes that define that element. So:
 
 ....
-@element_type unique_id {
+@element_name unique_id {
   attribute_name: value
   another_attribute: another_value
 }
@@ -262,7 +267,7 @@ Every element follows the same basic pattern:
 
 For example:
 ....
-@card magic_sword {
+@item magic_sword {
   name: "Enchanted Blade"
   damage: 15
   magic: true
@@ -271,14 +276,15 @@ For example:
 
 ==== The Three Essential Elements
 
-Every Rez game uses three core elements:
+Every Rez game uses three core elements (`@game`, `@scene`, and `@card`) and if you wanted to you could build your entire game with just these three elements.
 
-**@game** - The overall game container that holds game metadata and the "master" layout
+**@game** - The overall game container that holds game metadata and the "master" layout.
+
 ....
 @game {
   name: "adventure"
   title: "Sandbags Mythical Adventure"
-  initial_scene_id: #opening
+  initial_scene_id: #sc_opening
   author: "Matt Mower"
   author_email: "self@mattmower.com"
   layout: ```
@@ -293,10 +299,14 @@ Every Rez game uses three core elements:
 }
 ....
 
-**@scene** - A context for a kind of player interaction that can have its own layout
+The `@game` element is the only element where you don't specify the element id, it always `#game` and you can't change it. Every other element you will give an id yourself.
+
+**@scene** - A context for a kind of player interaction that can have its own layout. You can write your entire game in one scene, or use as many as you like to present content appropriately in that context. For example different scenes might a different number of columns, font choices, colours and so on.
+
 ....
 @scene opening {
   initial_card_id: #start_here
+  blocks: [sidebar: #sidebar]
   layout: ```
     <div class="columns-2">
       <div class="column">${sidebar}</div>
@@ -306,7 +316,8 @@ Every Rez game uses three core elements:
 }
 ....
 
-**@card** - Content that players see and interact with
+**@card** - Content that players see and interact with, presented within a scene. If you are familiar with Twine then a `@card` is roughly equivalent to a Twine passage.
+
 ....
 @card start_here {
   content: ```
@@ -316,9 +327,13 @@ Every Rez game uses three core elements:
 }
 ....
 
-==== Element IDs
+The `layout:` attribute of the game and its scenes and the `content:` attribute of cards are where you put the HTML markup that is shown to the player.
 
-Every element needs a unique ID that follows JavaScript naming rules:
+==== Element Unique Identifiers
+
+Every game element must have a unique `id` by which it can be referenced.
+
+In Rez element ids follow the JavaScript rules for naming identifiers:
 
 * Start with a letter, underscore, or dollar sign
 * Can contain letters, numbers, underscores, or dollar signs
@@ -510,6 +525,10 @@ Dynamic properties shine for calculated stats:
   // Calculated modifier (D&D style)
   strength_modifier: ^p{
     return Math.floor((this.strength - 10) / 2);
+  }
+
+  dex_modifier: ^p{
+    return Math.floor((this.dex - 10) / 2);
   }
 
   // Total of all stats
@@ -849,7 +868,7 @@ Components are ideal for:
 
 [TIP]
 ====
-Keep components focused on presentation logic. For game logic, use element methods and events instead. Components should transform data into HTML, not modify game state.
+Keep components focused on presentation logic. For game logic, use element methods and events instead. Components work best when they transform data into HTML,rather than modify the game state.
 ====
 
 === A Complete Example
@@ -1040,13 +1059,23 @@ bindings: [
 ]
 ....
 
-**Attribute Bindings** - Direct access to specific attributes:
+**Dependent Bindings** - Bind to attributes of another binding:
 ....
 bindings: [
-  player_name: &player.name,
-  current_health: &player.health
+  player: #player
+  player_name: player.name
+  current_health: player.health
 ]
 ....
+
+**Value Bindings** - If you want you can bind directly to a value:
+....
+bindings: [
+  options: 2
+]
+....
+
+This can be useful if you want to give a name to a transient value you are using in an expression. Note that such expressions can only be simple values such as numbers and strings, or lists of such values. You use complex attributes or arbitrary expressions like `2+2`.
 
 === Forms and User Input
 
@@ -2026,48 +2055,151 @@ bindings: [
 
 ==== Dynamic Types
 
-**Dynamic Initializer** (runs once at game start)
+** Dynamic Initializer** (calculated during intialization, static thereafter)
+When you want to initialize an attribute value with a dynamic value but have it
+remain the same thereafter you can use a dynamic initializer `^i{}`.
+
+An initializer should contain Javascript to return the value that becomes the
+attributes initial value at runtime.
+
+Thereafter the attribute is equivalent to a statically declared value and can
+be changed or replaced as normal.
+
+You may optionally specify a priority 1-10 for the initializer, `:n`, that determines
+when it runs relative to other initializers. If left unspecified initializers
+get priority `10`, the lowest priority.
+
 ....
-random_stat: ^i{return Math.random() * 20 + 1;}
-starting_gold: ^i:1{return rollDice(3, 6) * 10;}  // Priority 1 (runs early)
-total_stats: ^i:5{return this.str + this.dex + this.int;}  // Priority 5
-....
-
-Dynamic intializers are Javascript code blocks that are run when the game is
-being initialized. The result of the code block will be assigned to the value
-of the attribute.
-
-Initializers are run in priority order 1-10. By default an initializer has
-priority 10. To specify a priority use `:prio` after the `^i` prefix, e.g. to
-initialize an attribute at priority 5 you would write `^i:5{...}`.
-
-**Dynamic Property** (calculated each access, see Part 2 for basics)
-....
-// Advanced: Complex calculations with error handling
-spell_save_dc: ^p{
-  const base = 8 + this.proficiency_bonus;
-  const modifier = this.spell_casting_modifier || 0;
-  return Math.max(8, base + modifier);
-}
-
-// Advanced: Conditional logic and multiple dependencies
-movement_speed: ^p{
-  let speed = this.base_speed || 30;
-  if (this.is_encumbered) speed = Math.floor(speed / 2);
-  if (this.hasCondition?.("haste")) speed *= 2;
-  if (this.hasCondition?.("slow")) speed = Math.floor(speed / 2);
-  return Math.max(0, speed);
-}
-
-// Advanced: Expensive calculations that should be cached
-threat_assessment: ^p{
-  // This is expensive - consider using ^i{} with manual updates instead
-  const nearby = this.getAllNearbyEnemies();
-  return nearby.reduce((threat, enemy) => {
-    return threat + (enemy.level * enemy.aggression_factor);
-  }, 0);
+@object treasure_horde {
+  gold: ^i:1{return Math.rand_int_between(20, 50);}
+  silver: ^i:2{return Math.rand_int_between(this.gold, 200);}
+  copper: ^i{return Math.rand_int_between(this.silver, 1000);}
 }
 ....
+
+In the example the `gold` initializer has priority `1` and runs first. This means
+that when the `silver` initializer runs at priority `2` the object has its
+`gold` property set and it can depend upon that value. The `copper` initializer
+runs at the default priority of `10` which guarantees that the `silver` value
+is avialable.
+
+Note that initializers must `return` a value. The runtime turns initializers into
+functions run during game initialization. During an initializer the value of
+`this` is the element whose attribute value is being initialized.
+
+**Dynamic Property** (calculated on each access)
+
+When you want to create an attribute who value is computed dynamically each
+time it is referenced use a `^p{}` property.
+
+A property should contain Javascript code to return the value that the caller
+will receive when they reference the named attribute.
+
+....
+@actor player {
+  movement_speed: ^p{
+    let speed = this.base_speed || 30;
+    if (this.is_encumbered) speed = Math.floor(speed / 2);
+    if (this.hasCondition?.("haste")) speed *= 2;
+    if (this.hasCondition?.("slow")) speed = Math.floor(speed / 2);
+    return Math.max(0, speed);
+  }
+}
+....
+
+In this example whenever player.speed is requested it will be recalculated and
+that value returned.
+
+....
+@card c_player_run {
+  bindings: [
+    player: #player
+  ]
+
+  content: ```
+  <p>Your character can run at ${player.speed} meters per second.</p>
+  ```
+}
+....
+
+**Delegate Lookup** (referenced in a component element)
+
+When you want to simplify how you refer to an attribute in a composed element,
+use a `^d:attr` property.
+
+....
+@actor player {
+  spells_cast: ^d:spell_book
+
+  spell_book_id: #player_spell_book
+}
+
+@object player_spell_book {
+  spells_cast: 0
+}
+....
+
+In the example we can refer directly to `player.spells_cast` and it will forward
+that to its `spell_book` attribute which should be an element reference attribute
+of the same element.
+
+This is a syntactic sugar that is equivalent to `player.spell_book.spells_cast`.
+
+**Copy Initializer** (copies an element template)
+
+When you want to compose two elements by assigning a copy of a template element
+to an attribute use the `^c:#<id_ref>` copy initializer.
+
+During initialization the specified element will be copied and added to the game
+and the id of the copy will be assigned to the named attribute.
+
+You may optionally specify a priority 1-10 for the copy initializer, `:n`, that
+determines when it runs relative to other initializers. If left unspecified copy
+initializers get priority `10`, the lowest priority.
+
+....
+@item sword_template {
+  $template: true
+  damage: ^i{return Math.rand_int_between(6, 8)}
+  name: "Iron Sword"
+}
+
+@actor player {
+  weapon_id: ^c:#sword_template
+}
+....
+
+During initialization `sword_template` will be copied and the id of the copy
+will be assigned to the player `weapon_id`. From that point `player.weapon`
+will refer to the specific copy and not the template.
+
+The copy process sets `$template: false` on the new object and adds a
+`$original_id` attribute containing the id of the source element. Any
+initializers on the copied element (such as the `damage` initializer above)
+will run during the copy, so each copy gets its own independent values.
+
+After copying, the `copy` event fires on the new object with `{original: <source>}`
+allowing custom post-copy setup.
+
+....
+@item weapon_template {
+  $template: true
+  on_copy: (obj, evt) => {
+    console.log(`Created ${obj.id} from ${evt.original.id}`);
+  }
+}
+
+@actor hero {
+  main_hand_id: ^c:1:#weapon_template
+  off_hand_id: ^c:2:#weapon_template
+}
+....
+
+In this example, `main_hand_id` has priority `1` and initializes first, then
+`off_hand_id` at priority `2`. Each gets an independent copy of the template.
+
+Note: Copy initializers run before delegate (`^d`) and dynamic (`^i`) initializers,
+so copied elements are available when those initializers execute.
 
 **Dice Notation**
 ....
@@ -2136,15 +2268,64 @@ $js_ctor: "CustomClass" // Use different JavaScript constructor
 $built_in: true        // Mark as built-in (documentation only)
 ....
 
-**ID Suffix Attributes** (create automatic references)
+**ID Suffix Attributes** (automatic element references)
+
+Rez implements a built in behaviour when it sees an attribute whose name has
+the `_id` suffix. This suffix declares the attribute to be a reference to an
+element with the corresponding id.
+
 ....
-owner_id: #player          // Also creates 'owner' property pointing to player object
-location_id: #forest      // Also creates 'location' property pointing to forest object
-target_id: #dragon        // Also creates 'target' property pointing to dragon object
-initial_card_id: #start   // Also creates 'initial_card' property pointing to start card
-initial_scene_id: #main   // Also creates 'initial_scene' property pointing to main scene
-parent_id: #container     // Also creates 'parent' property pointing to container object
+@actor player {
+  nemesis_id: #villain_1
+}
 ....
+
+This declares that the `nemesis_id` attribute has the value `#villain_1` however,
+during initialization, Rez will also add a `nemesis` attribute to the `player`
+element which will be a reference to the `villain_1` element.
+
+....
+@actor villian_1 {
+  name: "Suruman of Many Colours"
+}
+
+@card c_player_nemesis {
+  bindings: [
+    player: #player
+  ]
+  content: ```
+  <p>Your current nemesis is ${player.nemesis.name}.</p>
+  ```
+}
+....
+
+You may, later, assign a new id to the `nemesis_id` attribute to update the
+reference or assign an element reference to the `nemesis` attribute.
+
+....
+@actor villain_2 {
+  name: "Sauron"
+}
+
+@actor player {
+  on_return_of_the_king: (player) => {
+    // These two lines are equivalent
+    player.nemesis_id = "villain_2";
+    player.nemesis = $("villain_2");
+  }
+}
+....
+
+In the background, all references to the `nemesis` attribute transparently look
+up the value of the related `nemesis_id` attribute, and then the Javascript
+reference for the element with that id.
+
+If `nemesis_id` is set to an invalid id value references to the `nemesis`
+property will raise an exception. Likewise setting the `nemsis` attribute to
+a Javascript object without an `id` attribute will raise an exception. Note
+that you should only assign references to elements to such properties.
+Assigning an object that happens to have an `id` property will work but later
+cause undefined errors.
 
 === Best Practices and Patterns
 

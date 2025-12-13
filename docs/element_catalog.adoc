@@ -41,6 +41,7 @@ Directives modify in-game concepts.
 
 * <<Behaviour Template (Directive), Behaviour Template>>
 * <<Component (Directive), Component>>
+* <<Const (Directive), Const>>
 * <<Declare (Directive), Declare>>
 * <<Defaults (Directive), Defaults>>
 * <<Derive (Directive), Derive>>
@@ -557,6 +558,34 @@ Let's write this component:
 ....
 
 Container components like `<.event_button>` have their contents available in the `content` argument, attribute values in `assigns`, and all bindings available at the component site in `bindings`. Self contained components have no content specified.
+
+== Const (Directive)
+
+A `@const` directive declares a named value that is available both within the Rez sources and as a Javascript global.
+
+....
+@const PI = 3.14
+....
+
+Allow you to use PI as an attribute value:
+
+....
+@object math_professor {
+  knows_that_pi_is: PIE
+}
+....
+
+Also in action and event handlers:
+
+....
+@object math_professor {
+  bad_circumference: function(r) => {
+    return r * $PI * PI;
+  }
+}
+....
+
+
 
 == Declare (Directive)
 

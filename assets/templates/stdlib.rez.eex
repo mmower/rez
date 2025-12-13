@@ -6,12 +6,6 @@
 %% Defaults
 %% ----------------------------------------------------------------------------
 
-@defaults actor {
-  $global: false
-  $template: false
-  $auto_id_idx: 0
-}
-
 @schema actor {
   $global: {kind: :boolean}
   $template: {kind: :boolean}
@@ -29,14 +23,11 @@
   behaviours: {kind: :bht}
 }
 
-@defaults asset {
+@defaults actor {
   $global: false
   $template: false
   $auto_id_idx: 0
-  $js_runtime: false
-  $js_defer: false
-  $pre_runtime: false
-  $inline: false
+  tags: #{}
 }
 
 @schema asset {
@@ -58,15 +49,15 @@
   height: {kind: [:string :number], and: width}
 }
 
-@defaults behaviour {
+@defaults asset {
   $global: false
   $template: false
   $auto_id_idx: 0
-
-  options: []
-  min_children: 0
-  max_children: 0
-  owner_id: _
+  $js_runtime: false
+  $js_defer: false
+  $pre_runtime: false
+  $inline: false
+  tags: #{}
 }
 
 @schema behaviour {
@@ -87,12 +78,16 @@
   owner_id: {kind: :elem_ref}
 }
 
-@defaults card {
+@defaults behaviour {
   $global: false
   $template: false
   $auto_id_idx: 0
-  $flipped: false
-  $suppress_wrapper: false
+
+  options: []
+  min_children: 0
+  max_children: 0
+  owner_id: _
+  tags: #{}
 }
 
 @schema card {
@@ -119,10 +114,13 @@
   on_render: {kind: :function}
 }
 
-@defaults effect {
+@defaults card {
   $global: false
   $template: false
   $auto_id_idx: 0
+  $flipped: false
+  $suppress_wrapper: false
+  tags: #{}
 }
 
 @schema effect {
@@ -138,10 +136,11 @@
   on_remove: {kind: :function}
 }
 
-@defaults faction {
+@defaults effect {
   $global: false
   $template: false
   $auto_id_idx: 0
+  tags: #{}
 }
 
 @schema faction {
@@ -154,21 +153,16 @@
   tags: {kind: :set, coll_kind: :keyword}
 }
 
+@defaults faction {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+  tags: #{}
+}
+
 @schema filter {
   name: {kind: :string, required: true}
   impl: {kind: :function, required: true}
-}
-
-@defaults game {
-  $global: true
-  $scene_stack: []
-  $flash_messages: []
-  start_events: []
-
-  current_scene_id: _
-  layout: ```
-  ${content}
-  ```
 }
 
 @schema game {
@@ -203,19 +197,26 @@
   on_load: {kind: :function}
 }
 
-@defaults generator {
-  $global: false
-  $template: false
+@defaults game {
+  $global: true
+  $scene_stack: []
+  $flash_messages: []
+  start_events: []
 
-  customize: (obj) => {return obj;}
+  current_scene_id: _
+  current_card: ^d:current_scene
+
+  layout: ```
+  ${content}
+  ```
+
+  tags: #{}
 }
 
 @schema generator {
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $init_after: {kind: :list, coll_kind: :elem_ref}
-
-  tags: {kind: :set, coll_kind: :keyword}
 
   priority: {kind: :number, min: 1, max: 100, required: true}
   source: {kind: :elem_ref, required: true}
@@ -224,10 +225,11 @@
   customize: {kind: :function}
 }
 
-@defaults group {
+@defaults generator {
   $global: false
   $template: false
-  $auto_id_idx: 0
+
+  customize: (obj) => {return obj;}
 }
 
 @schema group {
@@ -244,12 +246,11 @@
   exclude_tags: {kind: :set, coll_kind: :keyword, xor: include_tags}
 }
 
-@defaults inventory {
+@defaults group {
   $global: false
   $template: false
   $auto_id_idx: 0
-
-  apply_effects: true
+  tags: #{}
 }
 
 @schema inventory {
@@ -271,19 +272,20 @@
   ?/^initial_/: {kind: :list, coll_kind: :elem_ref}
 }
 
+@defaults inventory {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
+  apply_effects: true
+  tags: #{}
+}
+
 %% In Rez v1.8 we remove @item as a basic element and make it an alias of
 %% @card so that items can be used directly in rendering the interface. You
 %% can set the current card to an item to have it render itself.
 
 @elem item = card
-
-@defaults item {
-  $global: false
-  $template: false
-  $auto_id_idx: 0
-  is_item: true
-  type: :item
-}
 
 @schema item {
   %% This does not preserve the item validation that determines whether the
@@ -297,10 +299,12 @@
   asset_id: {kind: :elem_ref, ref_elem: @asset}
 }
 
-@defaults list {
+@defaults item {
   $global: false
   $template: false
   $auto_id_idx: 0
+  is_item: true
+  type: :item
 }
 
 @schema list {
@@ -316,10 +320,11 @@
   tags: {kind: :set, coll_kind: :keyword}
 }
 
-@defaults object {
+@defaults list {
   $global: false
   $template: false
   $auto_id_idx: 0
+  tags: #{}
 }
 
 @schema object {
@@ -332,21 +337,19 @@
   tags: {kind: :set, coll_kind: :keyword}
 }
 
+@defaults object {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+  tags: #{}
+}
+
 @schema patch {
   patch: {kind: :string, required: true}
   impl: {kind: :function, required: true}
 
   function: {kind: :string, xor: method}
   method: {kind: :string, xor: function}
-}
-
-@defaults plot {
-  $global: false
-  $template: false
-  $auto_id_idx: 0
-
-  stage: 0
-  active: false
 }
 
 @schema plot {
@@ -369,9 +372,14 @@
   on_complete: {kind: :function}
 }
 
-@defaults rel {
+@defaults plot {
   $global: false
   $template: false
+  $auto_id_idx: 0
+
+  stage: 0
+  active: false
+  tags: #{}
 }
 
 @schema rel {
@@ -386,20 +394,10 @@
   tags: {kind: :set, coll_kind: :keyword}
 }
 
-@defaults scene {
+@defaults rel {
   $global: false
   $template: false
-  $auto_id_idx: 0
-  $running: false
-
-  current_card_id: _
-  last_card_id: _
-  layout: ```
-  ${content}
-  ```
-  layout_mode: :single
-  layout_separator: ""
-  layout_reverse: false
+  tags: #{}
 }
 
 @schema scene {
@@ -433,12 +431,21 @@
   on_finish_card: {kind: :function}
 }
 
-@defaults slot {
+@defaults scene {
   $global: false
   $template: false
   $auto_id_idx: 0
+  $running: false
 
-  apply_effects: true
+  current_card_id: _
+  last_card_id: _
+  layout: ```
+  ${content}
+  ```
+  layout_mode: :single
+  layout_separator: ""
+  layout_reverse: false
+  tags: #{}
 }
 
 @schema slot {
@@ -462,8 +469,13 @@
   on_remove: {kind: :function}
 }
 
-@defaults system {
-  $global: true
+@defaults slot {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
+  apply_effects: true
+  tags: #{}
 }
 
 @schema system {
@@ -481,15 +493,9 @@
   after_event: {kind: :function, param_count: 3, or: before_event}
 }
 
-@defaults timer {
-  $global: false
-  $timer: ""
-
-  auto_start: true
-  repeats: true
-
-  on_game_started: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
-  on_game_loaded: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
+@defaults system {
+  $global: true
+  tags: #{}
 }
 
 @schema timer {
@@ -509,6 +515,17 @@
 
   on_game_started: {kind: :function}
   on_game_loaded: {kind: :function}
+}
+
+@defaults timer {
+  $global: false
+  $timer: ""
+
+  auto_start: true
+  repeats: true
+
+  on_game_started: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
+  on_game_loaded: (timer) => {if(timer.auto_start) {timer.run();}; return {handled: true};}
 }
 
 %% ----------------------------------------------------------------------------
@@ -1017,8 +1034,6 @@
       .join('-');
   }
 }
-
-
 
 @patch {
   $built_in: true

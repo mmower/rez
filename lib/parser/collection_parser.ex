@@ -19,6 +19,7 @@ defmodule Rez.Parser.CollectionParser do
     ParserCache.get_parser("collection", fn ->
       choice([
         BindingList.binding_list(),
+        Set.merge_set(),
         Set.set(),
         ProbabilityTable.probability_table(),
         lazy(List.list())

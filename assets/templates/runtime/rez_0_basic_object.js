@@ -96,7 +96,11 @@ class RezBasicObject {
 
   archiveInto(archive) {
     if(this.needsArchiving) {
+      const noArchive = this.getAttributeValue("$no_archive", new Set());
       archive[this.id] = [... this.#changedAttributes].reduce((archive, attrName) => {
+        if(noArchive.has(attrName)) {
+          return archive;
+        }
         let value = this.getAttribute(attrName);
         if(typeof(value) === "function") {
           value = {
@@ -615,6 +619,10 @@ class RezBasicObject {
         newValue
       );
     }
+  }
+
+  hasTag(tag) {
+    return this.getAttribute("tags").has(tag);
   }
 
   addTag(tag) {

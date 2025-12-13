@@ -32,6 +32,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:list, values}), do: list(name, values)
   def create(name, {:table, values}), do: table(name, values)
   def create(name, {:set, values}), do: set(name, values)
+  def create(name, {:merge_set, values}), do: merge_set(name, values)
   def create(name, {:compiled_template, value}), do: compiled_template(name, value)
   def create(name, {:placeholder, _}), do: placeholder(name)
 
@@ -81,6 +82,10 @@ defmodule Rez.AST.Attribute do
 
   def set(name, %MapSet{} = values) do
     %Attribute{name: name, type: :set, value: values}
+  end
+
+  def merge_set(name, %MapSet{} = values) do
+    %Attribute{name: name, type: :merge_set, value: values}
   end
 
   def bht(name, {_root_behaviour_id, %{} = _options, children} = value) when is_list(children) do

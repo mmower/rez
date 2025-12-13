@@ -7,7 +7,7 @@
  * @description Represents a decision that can be made by user-written filters in the Rez game engine.
  * This is a simplified abstraction of RezDynamicLink that allows code to make yes/no decisions
  * with optional reasons and data. Decisions can be made explicitly or use default values.
- * 
+ *
  * @example
  * // Create a decision and make a choice
  * const decision = new RezDecision("Filter Item");
@@ -214,6 +214,17 @@ class RezDecision {
   setData(key, value) {
     this.#data[key] = value;
     return this;
+  }
+
+  /**
+   * @function getData
+   * @memberof RezDecision
+   * @param {string} key - the data key to retrieve
+   * @returns {object} the value for the key
+   * @description Returns the object stored in the decision under the specified key
+   */
+  getData(key) {
+    return this.#data[key];
   }
 
   /**

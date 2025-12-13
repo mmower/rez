@@ -9,7 +9,7 @@ defmodule Rez.Parser.Collection.Set do
   import Ergo.Combinators, only: [sequence: 1, sequence: 2, optional: 1, many: 1, ignore: 1]
 
   import Rez.Parser.UtilityParsers,
-    only: [iws: 0, iows: 0, hash: 0, open_brace: 0, close_brace: 0]
+    only: [iws: 0, iows: 0, hash: 0, plus: 0, open_brace: 0, close_brace: 0]
 
   import Rez.Parser.ValueParsers, only: [value: 0]
 
@@ -40,6 +40,23 @@ defmodule Rez.Parser.Collection.Set do
         label: "set-value",
         debug: true,
         ast: fn set -> {:set, MapSet.new(List.flatten(set))} end
+      )
+    end)
+  end
+
+  @doc ~S"""
+  Returns a parser for merge set values (+#{...}).
+  Unions with any existing set during defaults/mixin application.
+  """
+  def merge_set() do
+    ParserCache.get_parser("merge_set_parser", fn ->
+      sequence(
+        [
+          ignore(plus()),
+          set()
+        ],
+        label: "merge-set-value",
+        ast: fn [{:set, values}] -> {:merge_set, values} end
       )
     end)
   end
