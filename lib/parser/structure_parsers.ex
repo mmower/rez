@@ -19,16 +19,19 @@ defmodule Rez.Parser.StructureParsers do
   import Rez.Parser.ValueParsers, only: [elem_ref_value: 0]
 
   import Rez.Utils, only: [attr_list_to_map: 1]
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   def attribute_list() do
-    many(
-      sequence(
-        [
-          iws(),
-          attribute()
-        ],
-        label: "attr_list",
-        ast: &List.first/1
+    cached_parser(
+      many(
+        sequence(
+          [
+            iws(),
+            attribute()
+          ],
+          label: "attr_list",
+          ast: &List.first/1
+        )
       )
     )
   end
@@ -225,29 +228,31 @@ defmodule Rez.Parser.StructureParsers do
   end
 
   def mixins() do
-    optional(
-      sequence(
-        [
-          ignore(left_angle_bracket()),
-          iows(),
-          commit(),
-          elem_ref_value(),
-          many(
-            sequence([
-              iows(),
-              ignore(comma()),
-              iows(),
-              elem_ref_value()
-            ])
-          ),
-          iows(),
-          ignore(right_angle_bracket())
-        ],
-        ast: fn ast ->
-          {:mixins, ast |> List.flatten()}
-        end
+    cached_parser(
+      optional(
+        sequence(
+          [
+            ignore(left_angle_bracket()),
+            iows(),
+            commit(),
+            elem_ref_value(),
+            many(
+              sequence([
+                iows(),
+                ignore(comma()),
+                iows(),
+                elem_ref_value()
+              ])
+            ),
+            iows(),
+            ignore(right_angle_bracket())
+          ],
+          ast: fn ast ->
+            {:mixins, ast |> List.flatten()}
+          end
+        )
       )
+      |> default({:mixins, []})
     )
-    |> default({:mixins, []})
   end
 end

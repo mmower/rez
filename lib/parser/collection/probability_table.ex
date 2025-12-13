@@ -3,7 +3,7 @@ defmodule Rez.Parser.Collection.ProbabilityTable do
   Implements parser for probability table attribute values
   """
   alias Ergo.Numeric
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Ergo.Combinators, only: [sequence: 1, sequence: 2, ignore: 1, many: 1]
 
@@ -11,7 +11,7 @@ defmodule Rez.Parser.Collection.ProbabilityTable do
   import Rez.Parser.ValueParsers, only: [value: 0]
 
   def probability_table() do
-    ParserCache.get_parser("probability_table", fn ->
+    cached_parser(
       sequence(
         [
           ignore(pipe()),
@@ -33,6 +33,6 @@ defmodule Rez.Parser.Collection.ProbabilityTable do
            |> Enum.map(fn [a, b] -> {a, b} end)}
         end
       )
-    end)
+    )
   end
 end

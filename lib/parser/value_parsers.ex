@@ -12,7 +12,7 @@ defmodule Rez.Parser.ValueParsers do
 
   import Rez.Utils
 
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Rez.Parser.DefaultParser
   import Rez.Parser.IdentifierParser
@@ -30,7 +30,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def string_value() do
-    ParserCache.get_parser("string", fn ->
+    cached_parser(
       sequence(
         [
           not_lookahead(literal("\"\"\"")),
@@ -49,7 +49,7 @@ defmodule Rez.Parser.ValueParsers do
         debug: true,
         label: "string-value"
       )
-    end)
+    )
   end
 
   # Heredoc
@@ -111,13 +111,13 @@ defmodule Rez.Parser.ValueParsers do
   template_value() parses ```template source``` into a {:source_template, "<function source>"}
   """
   def template_value() do
-    ParserCache.get_parser("tempate", fn ->
+    cached_parser(
       Rez.Parser.DelimitedParser.text_delimited_by_parsers(literal("```"), literal("```"))
       |> transform(&convert_doc_fragments_to_string/1)
       |> transform(fn template_source ->
         {:source_template, template_source}
       end)
-    end)
+    )
   end
 
   # Bool
@@ -133,7 +133,7 @@ defmodule Rez.Parser.ValueParsers do
       iex> assert %Context{status: :ok, ast: {:boolean, false}} = Ergo.parse(bool_value(), "no")
   """
   def bool_value() do
-    ParserCache.get_parser("bool", fn ->
+    cached_parser(
       choice(
         [
           choice([literal("true"), literal("yes")]) |> transform(fn _ -> {:boolean, true} end),
@@ -142,21 +142,19 @@ defmodule Rez.Parser.ValueParsers do
         label: "boolean-value",
         debug: true
       )
-    end)
+    )
   end
 
   # Number
 
   def number_value() do
-    ParserCache.get_parser("number", fn ->
-      number() |> transform(fn number -> {:number, number} end)
-    end)
+    cached_parser(number() |> transform(fn number -> {:number, number} end))
   end
 
   # Keyword
 
   def keyword_value() do
-    ParserCache.get_parser("keyword", fn ->
+    cached_parser(
       sequence(
         [
           ignore(colon()),
@@ -166,16 +164,16 @@ defmodule Rez.Parser.ValueParsers do
         debug: true,
         ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end
       )
-    end)
+    )
   end
 
   # Element Ref
   # #elem_id
 
   def elem_ref_value() do
-    ParserCache.get_parser("value_ref", fn ->
-      set_start_parser = literal("#\{")
+    set_start_parser = literal("#\{")
 
+    cached_parser(
       sequence(
         [
           # Make sure this isn't a set
@@ -194,11 +192,11 @@ defmodule Rez.Parser.ValueParsers do
             # [_bang, elem_id] -> {:clone_ref, elem_id}
         end
       )
-    end)
+    )
   end
 
   def priority() do
-    ParserCache.get_parser("priority", fn ->
+    cached_parser(
       optional(
         sequence(
           [
@@ -209,13 +207,13 @@ defmodule Rez.Parser.ValueParsers do
         )
       )
       |> default(10)
-    end)
+    )
   end
 
   # Copy initializer
   # ^c:#elem_id or ^c:N:#elem_id where N is priority 1-10
   def copy_initializer_value() do
-    ParserCache.get_parser("copy_initializer", fn ->
+    cached_parser(
       sequence(
         [
           ignore(caret()),
@@ -230,7 +228,7 @@ defmodule Rez.Parser.ValueParsers do
           {:copy_initializer, {elem_id, bounded(prio, 1, 10)}}
         end
       )
-    end)
+    )
   end
 
   # Delegate
@@ -238,7 +236,7 @@ defmodule Rez.Parser.ValueParsers do
   # Creates a property that delegates to the corresponding property of the referenced element.
   # E.g. hull_id: #foo, purpose: ^d:hull will create a purpose property that reads from foo.purpose
   def delegate_value() do
-    ParserCache.get_parser("delegate", fn ->
+    cached_parser(
       sequence(
         [
           ignore(caret()),
@@ -252,13 +250,13 @@ defmodule Rez.Parser.ValueParsers do
           {:delegate, attr_name}
         end
       )
-    end)
+    )
   end
 
   # Dynamic Initializer
   # ^i{...}
   def dynamic_initializer_value() do
-    ParserCache.get_parser("dynamic_initializer", fn ->
+    cached_parser(
       sequence(
         [
           ignore(caret()),
@@ -270,11 +268,11 @@ defmodule Rez.Parser.ValueParsers do
           [prio, initializer] -> {:dynamic_initializer, {initializer, bounded(prio, 1, 10)}}
         end
       )
-    end)
+    )
   end
 
   def code_block_value() do
-    ParserCache.get_parser("code_block", fn ->
+    cached_parser(
       sequence(
         [
           lookahead(sequence([caret(), open_brace()])),
@@ -283,13 +281,13 @@ defmodule Rez.Parser.ValueParsers do
         ],
         ast: fn [code] -> {:code_block, code} end
       )
-    end)
+    )
   end
 
   # Property
   # ^p{}
   def property_value() do
-    ParserCache.get_parser("property_value", fn ->
+    cached_parser(
       sequence(
         [
           ignore(caret()),
@@ -298,13 +296,13 @@ defmodule Rez.Parser.ValueParsers do
         ],
         ast: fn [f] -> {:property, f} end
       )
-    end)
+    )
   end
 
   # Function
   # function(...) {...}
   def traditional_function_value() do
-    ParserCache.get_parser("t_function", fn ->
+    cached_parser(
       sequence(
         [
           ignore(literal("function")),
@@ -341,13 +339,13 @@ defmodule Rez.Parser.ValueParsers do
             {:function, {:std, [], body}}
         end
       )
-    end)
+    )
   end
 
   # Arrow function
   # (...) => {...}
   def arrow_function_value() do
-    ParserCache.get_parser("a_function", fn ->
+    cached_parser(
       sequence(
         [
           ignore(open_paren()),
@@ -384,23 +382,23 @@ defmodule Rez.Parser.ValueParsers do
             {:function, {:arrow, [], body}}
         end
       )
-    end)
+    )
   end
 
   def function_value() do
-    ParserCache.get_parser("function_value", fn ->
+    cached_parser(
       choice([
         traditional_function_value(),
         arrow_function_value()
       ])
-    end)
+    )
   end
 
   # Dice
   # ndX+-m
   # 2d+6, 3d8-2, 1d10+1
   def dice_value() do
-    ParserCache.get_parser("dice", fn ->
+    cached_parser(
       sequence(
         [
           ignore(caret()),
@@ -445,7 +443,7 @@ defmodule Rez.Parser.ValueParsers do
           {:roll, {count, sides, mod, rounds}}
         end
       )
-    end)
+    )
   end
 
   # String & Function from file
@@ -496,10 +494,10 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def file_value() do
-    ParserCache.get_parser("file", fn ->
-      open = literal("<<<")
-      close = literal(">>>")
+    open = literal("<<<")
+    close = literal(">>>")
 
+    cached_parser(
       sequence(
         [
           ignore(open),
@@ -528,20 +526,18 @@ defmodule Rez.Parser.ValueParsers do
           end
         end
       )
-    end)
+    )
   end
 
   def placeholder_value() do
-    ParserCache.get_parser("placeholder_value", fn ->
-      char(?_) |> replace({:placeholder, nil})
-    end)
+    cached_parser(char(?_) |> replace({:placeholder, nil}))
   end
 
   # Constant Reference
   # $const_name
 
   def const_ref_value() do
-    ParserCache.get_parser("const_ref", fn ->
+    cached_parser(
       sequence(
         [
           ignore(char(?$)),
@@ -554,23 +550,23 @@ defmodule Rez.Parser.ValueParsers do
           {:const_ref, const_name}
         end
       )
-    end)
+    )
   end
 
   # Value
 
   def simple_value() do
-    ParserCache.get_parser("simple_value", fn ->
+    cached_parser(
       choice([
         bool_value(),
         number_value(),
         string_value()
       ])
-    end)
+    )
   end
 
   def value() do
-    ParserCache.get_parser("value", fn ->
+    cached_parser(
       choice(
         [
           bool_value(),
@@ -592,6 +588,6 @@ defmodule Rez.Parser.ValueParsers do
         label: "value",
         debug: true
       )
-    end)
+    )
   end
 end

@@ -1,5 +1,5 @@
 defmodule Rez.Parser.Collection.BindingList do
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Ergo.Combinators,
     only: [
@@ -33,7 +33,7 @@ defmodule Rez.Parser.Collection.BindingList do
   import Rez.Parser.Collection.List, only: [list: 0]
 
   def binding_list() do
-    ParserCache.get_parser("binding_list", fn ->
+    cached_parser(
       sequence(
         [
           ignore(open_bracket()),
@@ -56,11 +56,11 @@ defmodule Rez.Parser.Collection.BindingList do
         ],
         ast: fn ast -> {:list, List.flatten(ast)} end
       )
-    end)
+    )
   end
 
   def list_binding() do
-    ParserCache.get_parser("list_binding", fn ->
+    cached_parser(
       sequence(
         [
           js_identifier(),
@@ -75,7 +75,7 @@ defmodule Rez.Parser.Collection.BindingList do
           {:list_binding, {prefix, literal_or_source}}
         end
       )
-    end)
+    )
   end
 
   # Binding
@@ -85,7 +85,7 @@ defmodule Rez.Parser.Collection.BindingList do
   # value that are used for value binding
 
   def bound_literal() do
-    ParserCache.get_parser("bound_literal", fn ->
+    cached_parser(
       choice(
         [
           string_value(),
@@ -98,11 +98,11 @@ defmodule Rez.Parser.Collection.BindingList do
           {:literal, value}
         end
       )
-    end)
+    )
   end
 
   def bound_source() do
-    ParserCache.get_parser("bound_source", fn ->
+    cached_parser(
       sequence(
         [
           optional(star()),
@@ -122,6 +122,6 @@ defmodule Rez.Parser.Collection.BindingList do
             {:source, true, source}
         end
       )
-    end)
+    )
   end
 end

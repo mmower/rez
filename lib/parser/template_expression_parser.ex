@@ -23,16 +23,18 @@ defmodule Rez.Parser.TemplateExpressionParser do
   import Rez.Parser.ValueParsers,
     only: [string_value: 0, number_value: 0, bool_value: 0, const_ref_value: 0]
 
-  import Rez.Parser.ParserCache, only: [get_parser: 2]
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   def js_value() do
-    choice(
-      [
-        string_value(),
-        number_value(),
-        bool_value()
-      ],
-      label: "tep-js-value"
+    cached_parser(
+      choice(
+        [
+          string_value(),
+          number_value(),
+          bool_value()
+        ],
+        label: "tep-js-value"
+      )
     )
   end
 
@@ -43,70 +45,78 @@ defmodule Rez.Parser.TemplateExpressionParser do
     iex> assert %{status: :ok, ast: {:list, [{:number, 1}, {:number, 2}, {:number, 3}]}} = Ergo.parse(js_array(), "[1, 2, 3]")
   """
   def js_array() do
-    sequence(
-      [
-        ignore(open_bracket()),
-        iows(),
-        optional(lazy(js_value_or_array())),
-        optional(
-          many(
-            sequence([
-              iows(),
-              ignore(comma()),
-              iows(),
-              lazy(js_value_or_array())
-            ])
-          )
-        ),
-        iows(),
-        ignore(close_bracket())
-      ],
-      ast: fn elements ->
-        {:list, List.flatten(elements)}
-      end
+    cached_parser(
+      sequence(
+        [
+          ignore(open_bracket()),
+          iows(),
+          optional(lazy(js_value_or_array())),
+          optional(
+            many(
+              sequence([
+                iows(),
+                ignore(comma()),
+                iows(),
+                lazy(js_value_or_array())
+              ])
+            )
+          ),
+          iows(),
+          ignore(close_bracket())
+        ],
+        ast: fn elements ->
+          {:list, List.flatten(elements)}
+        end
+      )
     )
   end
 
   def js_value_or_array() do
-    choice(
-      [
-        js_value(),
-        js_array()
-      ],
-      label: "tep-value-or-array"
+    cached_parser(
+      choice(
+        [
+          js_value(),
+          js_array()
+        ],
+        label: "tep-value-or-array"
+      )
     )
   end
 
   import Rez.Parser.JSBindingParser, only: [binding_path: 0]
 
   def expression_value() do
-    choice(
-      [
-        const_ref_value(),
-        binding_path(),
-        js_value_or_array()
-      ],
-      label: "tep-expression-value"
+    cached_parser(
+      choice(
+        [
+          const_ref_value(),
+          binding_path(),
+          js_value_or_array()
+        ],
+        label: "tep-expression-value"
+      )
     )
   end
 
   def filter_params() do
-    sequence(
-      [
-        iows(),
-        ignore(colon()),
-        iws(),
-        expression_value(),
-        many(
-          sequence([
-            iows(),
-            ignore(comma()),
-            iows(),
-            expression_value()
-          ])
-        )
-      ],
-      ast: &List.flatten/1
+    cached_parser(
+      sequence(
+        [
+          iows(),
+          ignore(colon()),
+          iws(),
+          expression_value(),
+          many(
+            sequence([
+              iows(),
+              ignore(comma()),
+              iows(),
+              expression_value()
+            ])
+          )
+        ],
+        ast: &List.flatten/1
+      )
     )
   end
 
@@ -115,29 +125,33 @@ defmodule Rez.Parser.TemplateExpressionParser do
     iex> assert %{status: :ok, ast: {"bsel", [{:list, [number: 1, number: 2, number: 3]}]}} = Ergo.parse(filter(), "bsel: [1, 2, 3]")
   """
   def filter() do
-    sequence(
-      [
-        # filter name
-        js_identifier(),
-        optional(filter_params())
-      ],
-      ast: fn
-        [name] -> {name, []}
-        [name, params] -> {name, params}
-      end
+    cached_parser(
+      sequence(
+        [
+          # filter name
+          js_identifier(),
+          optional(filter_params())
+        ],
+        ast: fn
+          [name] -> {name, []}
+          [name, params] -> {name, params}
+        end
+      )
     )
   end
 
   def filters() do
     # 0 or more
-    many(
-      sequence([
-        iows(),
-        ignore(bar()),
-        iows(),
-        filter()
-      ]),
-      ast: &List.flatten/1
+    cached_parser(
+      many(
+        sequence([
+          iows(),
+          ignore(bar()),
+          iows(),
+          filter()
+        ]),
+        ast: &List.flatten/1
+      )
     )
   end
 
@@ -147,20 +161,22 @@ defmodule Rez.Parser.TemplateExpressionParser do
     iex> assert %{status: :ok, ast: {:expression, {:bound_path, ["player", "age"]}, [{"gte", [{:number, 18}]}, {"bsel", [{:list, [{:string, "adult"}, {:string, "minor"}]}]}]}} = Ergo.parse(expression(), expr)
   """
   def expression() do
-    sequence(
-      [
-        iows(),
-        expression_value(),
-        filters(),
-        iows()
-      ],
-      ast: fn [expression, filters] ->
-        {:expression, expression, filters}
-      end
+    cached_parser(
+      sequence(
+        [
+          iows(),
+          expression_value(),
+          filters(),
+          iows()
+        ],
+        ast: fn [expression, filters] ->
+          {:expression, expression, filters}
+        end
+      )
     )
   end
 
-  def parser(), do: get_parser("template_expression", fn -> expression() end)
+  def parser(), do: cached_parser(expression())
 
   def parse(s) when is_binary(s) do
     case Ergo.parse(parser(), s) do

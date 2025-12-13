@@ -7,99 +7,101 @@ defmodule Rez.Parser.UtilityParsers do
   import Ergo.{Combinators, Terminals}
   alias Ergo.Combinators
 
-  require Rez.Parser.ParserCache, as: PC
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
   alias Rez.Parser.ParserCache
 
-  def upcase_alpha, do: PC.cached_parser(char([?A..?Z], label: "uppercase_alpha"))
+  def upcase_alpha, do: cached_parser(char([?A..?Z], label: "uppercase_alpha"))
 
-  def iws(), do: PC.cached_parser(ignore(many(ws())))
+  def iws(), do: cached_parser(ignore(many(ws())))
 
-  def iows(), do: PC.cached_parser(optional(iws()))
+  def iows(), do: cached_parser(optional(iws()))
 
-  def iliteral(s), do: ParserCache.get_parser("iliteral-#{s}", fn -> ignore(literal(s)) end)
+  def iliteral(s), do: ParserCache.get_parser("iliteral_#{s}", fn -> ignore(literal(s)) end)
 
-  def double_quote(), do: ParserCache.get_parser("double-quote", fn -> char(?") end)
+  def double_quote(), do: cached_parser(char(?"))
 
-  def not_double_quote(), do: ParserCache.get_parser("not-double-quote", fn -> char(-?") end)
+  def not_double_quote(), do: cached_parser(char(-?"))
 
-  def equals(), do: ParserCache.get_parser("equals", fn -> char(?=) end)
+  def equals(), do: cached_parser(char(?=))
 
-  def comma(), do: ParserCache.get_parser("comma", fn -> char(?,) end)
+  def comma(), do: cached_parser(char(?,))
 
-  def colon(), do: ParserCache.get_parser("colon", fn -> char(?:) end)
+  def colon(), do: cached_parser(char(?:))
 
-  def hash(), do: ParserCache.get_parser("hash", fn -> char(?#) end)
+  def hash(), do: cached_parser(char(?#))
 
-  def bang(), do: ParserCache.get_parser("bang", fn -> char(?!) end)
+  def bang(), do: cached_parser(char(?!))
 
-  def dollar(), do: ParserCache.get_parser("dollar", fn -> char(?$) end)
+  def dollar(), do: cached_parser(char(?$))
 
-  def pipe(), do: ParserCache.get_parser("pipe", fn -> char(?|) end)
+  def pipe(), do: cached_parser(char(?|))
 
-  def dot(), do: ParserCache.get_parser("dot", fn -> char(?.) end)
+  def dot(), do: cached_parser(char(?.))
 
-  def plus(), do: ParserCache.get_parser("plus", fn -> char(?+) end)
+  def plus(), do: cached_parser(char(?+))
 
-  def minus(), do: ParserCache.get_parser("minus", fn -> char(?-) end)
+  def minus(), do: cached_parser(char(?-))
 
-  def star(), do: ParserCache.get_parser("star", fn -> char(?*) end)
+  def star(), do: cached_parser(char(?*))
 
-  def bar(), do: ParserCache.get_parser("bar", fn -> char(?|) end)
+  def bar(), do: cached_parser(char(?|))
 
-  def at(), do: ParserCache.get_parser("at", fn -> char(?@) end)
+  def at(), do: cached_parser(char(?@))
 
-  def open_brace(), do: ParserCache.get_parser("open_brace", fn -> char(?{) end)
+  def open_brace(), do: cached_parser(char(?{))
 
-  def close_brace(), do: ParserCache.get_parser("close_brace", fn -> char(?}) end)
+  def close_brace(), do: cached_parser(char(?}))
 
-  def open_paren(), do: ParserCache.get_parser("open_paren", fn -> char(?() end)
+  def open_paren(), do: cached_parser(char(?())
 
-  def close_paren(), do: ParserCache.get_parser("close_paren", fn -> char(?)) end)
+  def close_paren(), do: cached_parser(char(?)))
 
-  def open_bracket(), do: ParserCache.get_parser("open_bracket", fn -> char(?[) end)
+  def open_bracket(), do: cached_parser(char(?[))
 
-  def close_bracket(), do: ParserCache.get_parser("close_bracket", fn -> char(?]) end)
+  def close_bracket(), do: cached_parser(char(?]))
 
-  def left_angle_bracket(), do: ParserCache.get_parser("left_angle_bracket", fn -> char(?<) end)
+  def left_angle_bracket(), do: cached_parser(char(?<))
 
-  def right_angle_bracket(), do: ParserCache.get_parser("right_angle_bracket", fn -> char(?>) end)
+  def right_angle_bracket(), do: cached_parser(char(?>))
 
-  def back_tick(), do: ParserCache.get_parser("backtick", fn -> char(?`) end)
+  def back_tick(), do: cached_parser(char(?`))
 
-  def amp(), do: ParserCache.get_parser("ampersand", fn -> char(?&) end)
+  def amp(), do: cached_parser(char(?&))
 
-  def percent(), do: ParserCache.get_parser("percent", fn -> char(?%) end)
+  def percent(), do: cached_parser(char(?%))
 
-  def caret(), do: ParserCache.get_parser("caret", fn -> char(?^) end)
+  def caret(), do: cached_parser(char(?^))
 
-  def forward_slash(), do: ParserCache.get_parser("forward_slash", fn -> char(?/) end)
+  def forward_slash(), do: cached_parser(char(?/))
 
-  def arrow(), do: ParserCache.get_parser("arrow", fn -> literal("=>") end)
+  def arrow(), do: cached_parser(literal("=>"))
 
   def string() do
-    Combinators.many(non_ws(), min: 1, ast: &List.to_string(&1))
+    cached_parser(Combinators.many(non_ws(), min: 1, ast: &List.to_string(&1)))
   end
 
   def block_begin(),
-    do: ParserCache.get_parser("block_begin", fn -> ignore(open_brace()) end)
+    do: cached_parser(ignore(open_brace()))
 
   def block_end(),
-    do: ParserCache.get_parser("block_end", fn -> ignore(close_brace()) end)
+    do: cached_parser(ignore(close_brace()))
 
   def elem_start_char(),
-    do: ParserCache.get_parser("elem_start_char", fn -> char([?a..?z, ?A..?Z]) end)
+    do: cached_parser(char([?a..?z, ?A..?Z]))
 
   def elem_body_char(),
-    do: ParserCache.get_parser("elem_body_char", fn -> char([?_, ?a..?z, ?A..?Z, ?0..?9]) end)
+    do: cached_parser(char([?_, ?a..?z, ?A..?Z, ?0..?9]))
 
   def elem_tag() do
-    Combinators.sequence(
-      [
-        elem_start_char(),
-        many(elem_body_char())
-      ],
-      ast: &(&1 |> List.flatten() |> List.to_string()),
-      label: "elem_tag"
+    cached_parser(
+      Combinators.sequence(
+        [
+          elem_start_char(),
+          many(elem_body_char())
+        ],
+        ast: &(&1 |> List.flatten() |> List.to_string()),
+        label: "elem_tag"
+      )
     )
   end
 end

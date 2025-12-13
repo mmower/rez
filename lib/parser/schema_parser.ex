@@ -11,6 +11,7 @@ defmodule Rez.Parser.SchemaParser do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.ParserTools
   import Rez.Parser.DelimitedParser
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   alias Rez.Compiler.SchemaBuilder
   alias Ergo.Context
@@ -34,29 +35,31 @@ defmodule Rez.Parser.SchemaParser do
   #    attr_name: {rules}
   #  }
   def schema_directive() do
-    sequence(
-      [
-        iliteral("@schema"),
-        iws(),
-        commit(),
-        js_identifier("schema"),
-        iws(),
-        ignore(open_brace()),
-        iws(),
-        optional(schema_expression()),
-        many(
-          sequence([
-            iws(),
-            schema_expression()
-          ])
-        ),
-        iws(),
-        ignore(close_brace())
-      ],
-      label: "@schema",
-      ctx: fn %Context{ast: ast} = ctx ->
-        %{ctx | ast: make_schema(ast, resolve_position(ctx))}
-      end
+    cached_parser(
+      sequence(
+        [
+          iliteral("@schema"),
+          iws(),
+          commit(),
+          js_identifier("schema"),
+          iws(),
+          ignore(open_brace()),
+          iws(),
+          optional(schema_expression()),
+          many(
+            sequence([
+              iws(),
+              schema_expression()
+            ])
+          ),
+          iws(),
+          ignore(close_brace())
+        ],
+        label: "@schema",
+        ctx: fn %Context{ast: ast} = ctx ->
+          %{ctx | ast: make_schema(ast, resolve_position(ctx))}
+        end
+      )
     )
   end
 
@@ -525,24 +528,26 @@ defmodule Rez.Parser.SchemaParser do
   end
 
   def identifier_list() do
-    sequence(
-      [
-        ignore(open_bracket()),
-        iws(),
-        js_identifier("attr"),
-        many(
-          sequence([
-            iws(),
-            js_identifier("attr")
-          ])
-        ),
-        iws(),
-        ignore(close_bracket())
-      ],
-      label: "attr-list",
-      ast: fn [first_attr, other_attrs] ->
-        [first_attr | List.flatten(other_attrs)]
-      end
+    cached_parser(
+      sequence(
+        [
+          ignore(open_bracket()),
+          iws(),
+          js_identifier("attr"),
+          many(
+            sequence([
+              iws(),
+              js_identifier("attr")
+            ])
+          ),
+          iws(),
+          ignore(close_bracket())
+        ],
+        label: "attr-list",
+        ast: fn [first_attr, other_attrs] ->
+          [first_attr | List.flatten(other_attrs)]
+        end
+      )
     )
   end
 

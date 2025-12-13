@@ -4,7 +4,7 @@ defmodule Rez.Parser.Collection.List do
   [... [...nested list...]]
   """
 
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Ergo.Combinators, only: [sequence: 1, sequence: 2, optional: 1, many: 1, ignore: 1]
 
@@ -14,7 +14,7 @@ defmodule Rez.Parser.Collection.List do
   import Rez.Parser.Collection.Value, only: [collection_value: 0]
 
   def list() do
-    ParserCache.get_parser("list", fn ->
+    cached_parser(
       sequence(
         [
           ignore(open_bracket()),
@@ -38,6 +38,6 @@ defmodule Rez.Parser.Collection.List do
         debug: true,
         ast: fn list -> {:list, List.flatten(list)} end
       )
-    end)
+    )
   end
 end

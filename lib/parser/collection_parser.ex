@@ -6,7 +6,7 @@ defmodule Rez.Parser.CollectionParser do
   * set
   * probability_table
   """
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   alias Rez.Parser.Collection.Set
   alias Rez.Parser.Collection.BindingList
@@ -16,7 +16,7 @@ defmodule Rez.Parser.CollectionParser do
   import Ergo.Combinators, only: [choice: 1, lazy: 1]
 
   def collection() do
-    ParserCache.get_parser("collection", fn ->
+    cached_parser(
       choice([
         BindingList.binding_list(),
         Set.merge_set(),
@@ -24,6 +24,6 @@ defmodule Rez.Parser.CollectionParser do
         ProbabilityTable.probability_table(),
         lazy(List.list())
       ])
-    end)
+    )
   end
 end

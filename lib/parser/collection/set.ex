@@ -4,7 +4,7 @@ defmodule Rez.Parser.Collection.Set do
   \#{:a :b}
   """
 
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Ergo.Combinators, only: [sequence: 1, sequence: 2, optional: 1, many: 1, ignore: 1]
 
@@ -17,7 +17,7 @@ defmodule Rez.Parser.Collection.Set do
   Returns a parsing for parsing set values.
   """
   def set() do
-    ParserCache.get_parser("set_parser", fn ->
+    cached_parser(
       sequence(
         [
           ignore(hash()),
@@ -41,7 +41,7 @@ defmodule Rez.Parser.Collection.Set do
         debug: true,
         ast: fn set -> {:set, MapSet.new(List.flatten(set))} end
       )
-    end)
+    )
   end
 
   @doc ~S"""
@@ -49,7 +49,7 @@ defmodule Rez.Parser.Collection.Set do
   Unions with any existing set during defaults/mixin application.
   """
   def merge_set() do
-    ParserCache.get_parser("merge_set_parser", fn ->
+    cached_parser(
       sequence(
         [
           ignore(plus()),
@@ -58,6 +58,6 @@ defmodule Rez.Parser.Collection.Set do
         label: "merge-set-value",
         ast: fn [{:set, values}] -> {:merge_set, values} end
       )
-    end)
+    )
   end
 end

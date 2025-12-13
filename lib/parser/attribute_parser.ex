@@ -14,10 +14,10 @@ defmodule Rez.Parser.AttributeParser do
   alias Rez.Parser.ValueParsers
   alias Rez.Parser.BTreeParser
 
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   def attr_value() do
-    ParserCache.get_parser("attr_value", fn ->
+    cached_parser(
       choice(
         [
           CollectionParser.collection(),
@@ -30,11 +30,11 @@ defmodule Rez.Parser.AttributeParser do
         end,
         label: "attr-value"
       )
-    end)
+    )
   end
 
   def attribute() do
-    ParserCache.get_parser("attribute", fn ->
+    cached_parser(
       sequence(
         [
           js_identifier(),
@@ -58,6 +58,6 @@ defmodule Rez.Parser.AttributeParser do
           %Rez.AST.Attribute{name: id, type: type, value: value}
         end
       )
-    end)
+    )
   end
 end

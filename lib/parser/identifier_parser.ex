@@ -7,7 +7,7 @@ defmodule Rez.Parser.IdentifierParser do
   import Ergo.Terminals
 
   def js_identifier(label \\ "js_identifier") do
-    Rez.Parser.ParserCache.get_parser("js_identifier##{label}", fn ->
+    Rez.Parser.ParserCache.get_parser("js_identifier_#{label}", fn ->
       sequence(
         [
           char([?_, ?$, [?a..?z], [?A..?Z]], label: "js_lead_char"),

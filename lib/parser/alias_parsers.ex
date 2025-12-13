@@ -28,6 +28,7 @@ defmodule Rez.Parser.AliasParsers do
 
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
   import Rez.Utils, only: [attr_list_to_map: 1]
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   # The "right" way of doing this is still pretty brittle so I accept that
   # I will at some point forget to update this when I add a new element.
@@ -87,61 +88,63 @@ defmodule Rez.Parser.AliasParsers do
   end
 
   def alias_directive() do
-    sequence(
-      [
-        iliteral("@elem"),
-        iws(),
-        commit(),
-        elem_tag(),
-        iows(),
-        ignore(equals()),
-        iows(),
-        elem_tag(),
-        mixins()
-      ],
-      label: "elem",
-      ctx: fn %Context{
-                ast: [alias_tag, target_tag, mixins],
-                data: %{aliases: aliases} = data
-              } = ctx ->
-        existing_aliases = Map.keys(aliases)
+    cached_parser(
+      sequence(
+        [
+          iliteral("@elem"),
+          iws(),
+          commit(),
+          elem_tag(),
+          iows(),
+          ignore(equals()),
+          iows(),
+          elem_tag(),
+          mixins()
+        ],
+        label: "elem",
+        ctx: fn %Context{
+                  ast: [alias_tag, target_tag, mixins],
+                  data: %{aliases: aliases} = data
+                } = ctx ->
+          existing_aliases = Map.keys(aliases)
 
-        case {legal_alias_name?(alias_tag, existing_aliases),
-              legal_alias_target?(target_tag, existing_aliases)} do
-          {false, _} ->
-            ctx
-            |> Context.add_error(
-              :illegal_tag_name,
-              "#{alias_tag} is not a legal tag for an @elem alias"
-            )
-            |> Context.make_error_fatal()
-
-          {_, false} ->
-            ctx
-            |> Context.add_error(
-              :illegal_tag_name,
-              "#{target_tag} is not a valid target to be aliased as an @elem"
-            )
-            |> Context.make_error_fatal()
-
-          _ ->
-            alias = %Rez.AST.Alias{
-              position: resolve_position(ctx),
-              name: alias_tag,
-              target: target_tag,
-              mixins: mixins
-            }
-
-            %{
+          case {legal_alias_name?(alias_tag, existing_aliases),
+                legal_alias_target?(target_tag, existing_aliases)} do
+            {false, _} ->
               ctx
-              | ast: alias,
-                data: %{
-                  data
-                  | aliases: Map.put(aliases, alias_tag, {target_tag, mixins})
-                }
-            }
+              |> Context.add_error(
+                :illegal_tag_name,
+                "#{alias_tag} is not a legal tag for an @elem alias"
+              )
+              |> Context.make_error_fatal()
+
+            {_, false} ->
+              ctx
+              |> Context.add_error(
+                :illegal_tag_name,
+                "#{target_tag} is not a valid target to be aliased as an @elem"
+              )
+              |> Context.make_error_fatal()
+
+            _ ->
+              alias = %Rez.AST.Alias{
+                position: resolve_position(ctx),
+                name: alias_tag,
+                target: target_tag,
+                mixins: mixins
+              }
+
+              %{
+                ctx
+                | ast: alias,
+                  data: %{
+                    data
+                    | aliases: Map.put(aliases, alias_tag, {target_tag, mixins})
+                  }
+              }
+          end
         end
-      end
+      )
     )
   end
 
@@ -159,57 +162,59 @@ defmodule Rez.Parser.AliasParsers do
   The `aliased_element/0` parser
   """
   def aliased_element() do
-    sequence(
-      [
-        ignore(at()),
-        elem_tag(),
-        iws(),
-        js_identifier("alias_id"),
-        iws(),
-        block_begin(),
-        attribute_list(),
-        iws(),
-        block_end()
-      ],
-      label: "alias-block",
-      debug: true,
-      ctx: fn %Context{
-                ast: [alias_tag, alias_id, attr_list],
-                entry_points: [{line, col} | _],
-                data: %{source: source, aliases: aliases}
-              } = ctx ->
-        case Map.get(aliases, alias_tag) do
-          nil ->
-            ctx
-            |> Context.add_error(:undefined_alias, "Undefined alias #{alias_tag} found.")
-            |> Context.make_error_fatal()
+    cached_parser(
+      sequence(
+        [
+          ignore(at()),
+          elem_tag(),
+          iws(),
+          js_identifier("alias_id"),
+          iws(),
+          block_begin(),
+          attribute_list(),
+          iws(),
+          block_end()
+        ],
+        label: "alias-block",
+        debug: true,
+        ctx: fn %Context{
+                  ast: [alias_tag, alias_id, attr_list],
+                  entry_points: [{line, col} | _],
+                  data: %{source: source, aliases: aliases}
+                } = ctx ->
+          case Map.get(aliases, alias_tag) do
+            nil ->
+              ctx
+              |> Context.add_error(:undefined_alias, "Undefined alias #{alias_tag} found.")
+              |> Context.make_error_fatal()
 
-          {target_tag, {:mixins, mixins}} ->
-            target_module = aliased_struct(target_tag, aliases)
-            attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
-            {source_file, source_line} = LogicalFile.resolve_line(source, line)
+            {target_tag, {:mixins, mixins}} ->
+              target_module = aliased_struct(target_tag, aliases)
+              attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
+              {source_file, source_line} = LogicalFile.resolve_line(source, line)
 
-            block =
-              create_block(
-                target_module,
+              block =
+                create_block(
+                  target_module,
+                  alias_id,
+                  mixins,
+                  attributes,
+                  source_file,
+                  source_line,
+                  col
+                )
+
+              ctx_with_block_and_id_mapped(
+                ctx,
+                block,
                 alias_id,
-                mixins,
-                attributes,
+                target_tag,
                 source_file,
-                source_line,
-                col
+                source_line
               )
-
-            ctx_with_block_and_id_mapped(
-              ctx,
-              block,
-              alias_id,
-              target_tag,
-              source_file,
-              source_line
-            )
+          end
         end
-      end
+      )
     )
   end
 end

@@ -3,7 +3,7 @@ defmodule Rez.Parser.Collection.Value do
   Implements the parser for a collection value
   """
 
-  alias Rez.Parser.ParserCache
+  import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
   import Ergo.Combinators, only: [choice: 1]
 
@@ -11,11 +11,11 @@ defmodule Rez.Parser.Collection.Value do
   import Rez.Parser.CollectionParser, only: [collection: 0]
 
   def collection_value() do
-    ParserCache.get_parser("collection_value", fn ->
+    cached_parser(
       choice([
         value(),
         collection()
       ])
-    end)
+    )
   end
 end
