@@ -32,12 +32,13 @@ defmodule Rez.Compiler.Phases.ParseSource do
         {file, logical_line} = LogicalFile.resolve_line(source, line)
         context = source_context(source, line, col)
 
-        reasons = Enum.map_join(reasons, "\n", &translate_code/1)
+        error_message = format_errors(reasons)
 
         error = """
-        #{file} L#{logical_line}:#{col}\n
-        Compilation failed:
-        #{reasons}\n
+        #{file} L#{logical_line}:#{col}
+
+        #{error_message}
+
         #{context}
         """
 
@@ -52,20 +53,41 @@ defmodule Rez.Compiler.Phases.ParseSource do
     compilation
   end
 
-  # defp translate_code({:bad_syntax, _pos, reason}) do
-  #   reason
-  # end
+  # Infrastructure error codes that wrap more specific errors
+  @infrastructure_errors ~w(block_not_matched bad_attr bad_value bad_syntax)a
 
-  # defp translate_code({:block_not_matched, _pos, reason}) do
-  #   "Unable to complete #{reason}"
-  # end
+  defp format_errors(reasons) do
+    # Separate semantic errors from infrastructure errors
+    {infrastructure, semantic} =
+      Enum.split_with(reasons, fn {code, _, _} -> code in @infrastructure_errors end)
 
-  defp translate_code({code, pos, reason}) when is_atom(code) do
-    translate_code({Atom.to_string(code), pos, reason})
+    cond do
+      # If we have semantic errors, show those prominently
+      semantic != [] ->
+        semantic
+        |> Enum.map(&format_semantic_error/1)
+        |> Enum.join("\n")
+
+      # Otherwise fall back to infrastructure errors
+      infrastructure != [] ->
+        infrastructure
+        |> Enum.map(&format_infrastructure_error/1)
+        |> Enum.join("\n")
+
+      true ->
+        "Unknown parse error"
+    end
   end
 
-  defp translate_code({code, pos, reason}) when is_binary(code) do
-    "#{code} @ #{inspect(pos)}: #{reason}"
+  defp format_semantic_error({code, _pos, reason}) do
+    # Format semantic errors with just the message, code as context
+    code_str = code |> Atom.to_string() |> String.replace("_", " ")
+    "#{String.capitalize(code_str)}: #{reason}"
+  end
+
+  defp format_infrastructure_error({_code, _pos, reason}) do
+    # For infrastructure errors, just show the reason
+    reason
   end
 
   defp source_context(source, line, col) do
