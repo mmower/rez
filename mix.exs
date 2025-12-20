@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.8.18"
+  @version "1.9.0"
 
   def project do
     [
@@ -25,7 +25,7 @@ defmodule Rez.MixProject do
     [
       {:ergo, "~> 1.0"},
       # {:ergo, path: "/Users/matt/Projects/Elixir/ergo"},
-      {:logical_file, "~> 1.0"},
+      {:logical_file, "~> 1.1"},
       # {:logical_file, path: "/Users/matt/Projects/Elixir/logical_file"},
       # {:mix_test_watch, "~> 1.0", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

@@ -9,7 +9,10 @@ defmodule Rez.Compiler.Phases.ReadSource do
   alias LogicalFile
 
   @macros [
-    LogicalFile.Macros.Include.invocation(expr: ~r/^\s*%\((?<file>.*)\)/),
+    LogicalFile.Macros.Include.invocation(
+      expr: ~r/^\s*%\((?<file>.*)\)/,
+      allow_duplicates: false
+    ),
     Rez.Compiler.CommentMacro.invocation([])
   ]
 
@@ -36,6 +39,9 @@ defmodule Rez.Compiler.Phases.ReadSource do
           progress: ["Read source" | progress]
       }
     rescue
+      e in LogicalFile.Macros.Include.DuplicateIncludeError ->
+        Compilation.add_error(compilation, "Attempted to include #{e.file} more than once")
+
       e in File.Error ->
         IOError.file_read_error(compilation, e.reason, "Game Source", e.path)
     end

@@ -29,7 +29,7 @@ class RezActor extends RezBasicObject {
    */
   checkItem(inventoryId, slotId, itemId) {
     const decision = new RezDecision("Filter Item");
-    decision.default_yes();
+    decision.defaultYes();
     if (this.willHandleEvent("accept_item")) {
       this.runEvent("accept_item", {
         decision: decision,

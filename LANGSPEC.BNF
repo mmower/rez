@@ -1,0 +1,437 @@
+# Rez Language Grammar (BNF)
+# For use with language servers, syntax highlighters, and parser generators
+
+# ==============================================================================
+# TOP LEVEL
+# ==============================================================================
+
+game_file         = game_content* EOF ;
+
+game_content      = element
+                  | special_element
+                  | directive
+                  | alias_directive
+                  | aliased_element
+                  ;
+
+# ==============================================================================
+# ELEMENTS
+# ==============================================================================
+
+element           = actor_element
+                  | asset_element
+                  | auto_asset_element
+                  | behaviour_element
+                  | card_element
+                  | effect_element
+                  | faction_element
+                  | filter_element
+                  | game_element
+                  | generator_element
+                  | group_element
+                  | inventory_element
+                  | list_element
+                  | mixin_element
+                  | object_element
+                  | plot_element
+                  | relationship_element
+                  | scene_element
+                  | slot_element
+                  | system_element
+                  | timer_element
+                  ;
+
+# Elements with explicit ID
+actor_element     = "@actor" WS identifier mixins? WS block_body ;
+asset_element     = "@asset" WS identifier mixins? WS block_body ;
+behaviour_element = "@behaviour" WS identifier mixins? WS block_body ;
+card_element      = "@card" WS identifier mixins? WS block_body ;
+effect_element    = "@effect" WS identifier mixins? WS block_body ;
+faction_element   = "@faction" WS identifier mixins? WS block_body ;
+filter_element    = "@filter" WS identifier mixins? WS block_body ;
+generator_element = "@generator" WS identifier mixins? WS block_body ;
+group_element     = "@group" WS identifier mixins? WS block_body ;
+inventory_element = "@inventory" WS identifier mixins? WS block_body ;
+list_element      = "@list" WS identifier mixins? WS block_body ;
+mixin_element     = "@mixin" WS identifier mixins? WS block_body ;
+object_element    = "@object" WS identifier mixins? WS block_body ;
+plot_element      = "@plot" WS identifier mixins? WS block_body ;
+scene_element     = "@scene" WS identifier mixins? WS block_body ;
+slot_element      = "@slot" WS identifier mixins? WS block_body ;
+system_element    = "@system" WS identifier mixins? WS block_body ;
+timer_element     = "@timer" WS identifier mixins? WS block_body ;
+
+# Elements with implicit/fixed ID
+game_element      = "@game" WS block_body ;
+auto_asset_element= "@asset" WS block_body ;
+
+# Relationship element
+relationship_element = "@rel" WS elem_ref OWS "->" OWS elem_ref WS block_body ;
+
+# Block structure
+block_body        = "{" attribute_list WS "}" ;
+attribute_list    = ( WS attribute )* ;
+
+# Mixins
+mixins            = "<" OWS elem_ref ( OWS "," OWS elem_ref )* OWS ">" ;
+
+# ==============================================================================
+# SPECIAL ELEMENTS
+# ==============================================================================
+
+special_element   = patch_element
+                  | script_element
+                  | styles_element
+                  ;
+
+patch_element     = "@patch" WS block_body ;
+script_element    = "@script" WS "{" javascript_code "}" ;
+styles_element    = "@styles" WS "{" css_code "}" ;
+
+# ==============================================================================
+# DIRECTIVES
+# ==============================================================================
+
+directive         = behaviour_template_directive
+                  | component_directive
+                  | const_directive
+                  | defaults_directive
+                  | derive_directive
+                  | keybinding_directive
+                  | schema_directive
+                  | pragma_directive
+                  ;
+
+behaviour_template_directive = "@behaviour_template" WS identifier WS btree ;
+
+component_directive = "@component" WS identifier WS arrow_function ;
+
+const_directive   = "@const" WS identifier WS "=" WS ( collection | value ) ;
+
+defaults_directive = "@defaults" WS elem_tag WS block_body ;
+
+derive_directive  = "@derive" WS keyword_value WS keyword_value ;
+
+keybinding_directive = "@keybinding" WS key_desc WS keyword_value ;
+
+pragma_directive  = "@pragma" "(" OWS pragma_timing OWS ")" WS identifier
+                    ( "(" OWS pragma_args? OWS ")" )? ;
+
+pragma_timing     = "after_build_schema"
+                  | "after_schema_apply"
+                  | "after_process_ast"
+                  | "before_create_runtime"
+                  | "after_copy_assets"
+                  ;
+
+pragma_args       = simple_value ( OWS ","? OWS simple_value )* ;
+
+# Keybinding
+key_desc          = keyboard_modifiers key_name ;
+keyboard_modifiers = modifier_key* ;
+modifier_key      = ( "shift" | "meta" | "ctrl" | "alt" ) OWS "+" OWS ;
+key_name          = ALPHA ( ALPHA | DIGIT )* ;
+
+# ==============================================================================
+# SCHEMA DIRECTIVE
+# ==============================================================================
+
+schema_directive  = "@schema" WS identifier WS "{"
+                    WS schema_expression? ( WS schema_expression )* WS "}" ;
+
+schema_expression = ( attr_spec | pattern_spec ) ":" WS "{"
+                    WS schema_rule? ( WS "," WS schema_rule )* WS "}" ;
+
+attr_spec         = identifier ;
+pattern_spec      = "?" "/" regex_pattern "/" ;
+
+schema_rule       = schema_kind
+                  | schema_required
+                  | schema_allowed
+                  | schema_required_if
+                  | schema_requires
+                  | schema_xor
+                  | schema_or
+                  | schema_and
+                  | schema_min
+                  | schema_max
+                  | schema_ref_elem
+                  | schema_coll_kind
+                  | schema_min_length
+                  | schema_max_length
+                  | schema_contains
+                  | schema_in
+                  | schema_file_exists
+                  | schema_params
+                  | schema_param_count
+                  | schema_is_a
+                  | schema_type_exists
+                  ;
+
+schema_kind       = "kind:" WS keyword_or_list ;
+schema_required   = "required:" WS bool_value ;
+schema_allowed    = "allowed:" WS bool_value ;
+schema_required_if = "required_if:" WS identifier_or_list ;
+schema_requires   = "requires:" WS identifier_or_list ;
+schema_xor        = "xor:" WS identifier_or_list ;
+schema_or         = "or:" WS identifier_or_list ;
+schema_and        = "and:" WS identifier_or_list ;
+schema_min        = "min:" WS number_value ;
+schema_max        = "max:" WS number_value ;
+schema_ref_elem   = "ref_elem:" WS elem_or_list ;
+schema_coll_kind  = "coll_kind:" WS keyword_or_list ;
+schema_min_length = "min_length:" WS number_value ;
+schema_max_length = "max_length:" WS number_value ;
+schema_contains   = "contains:" WS string_value ;
+schema_in         = "in:" WS "[" WS value ( WS ","? WS value )* WS "]" ;
+schema_file_exists = "file_exists" ;
+schema_params     = "params:" WS identifier_or_list ;
+schema_param_count = "param_count:" WS number_value ;
+schema_is_a       = "is_a:" WS "@" identifier "/" identifier ;
+schema_type_exists = "type_exists" ;
+
+keyword_or_list   = keyword_value
+                  | "[" WS keyword_value ( WS keyword_value )* WS "]"
+                  ;
+
+identifier_or_list = identifier
+                   | "[" WS identifier ( WS identifier )* WS "]"
+                   ;
+
+elem_or_list      = "@" identifier
+                  | "[" WS "@" identifier ( WS "@" identifier )* WS "]"
+                  ;
+
+# ==============================================================================
+# ALIAS
+# ==============================================================================
+
+alias_directive   = "@elem" WS elem_tag OWS "=" OWS elem_tag mixins? ;
+
+aliased_element   = "@" elem_tag WS identifier WS block_body ;
+
+# ==============================================================================
+# ATTRIBUTES
+# ==============================================================================
+
+attribute         = identifier ":" WS attr_value ;
+
+attr_value        = collection
+                  | value
+                  | btree
+                  ;
+
+# ==============================================================================
+# VALUES
+# ==============================================================================
+
+value             = bool_value
+                  | number_value
+                  | string_value
+                  | keyword_value
+                  | template_value
+                  | function_value
+                  | property_value
+                  | dice_value
+                  | elem_ref_value
+                  | const_ref_value
+                  | dynamic_initializer_value
+                  | copy_initializer_value
+                  | delegate_value
+                  | code_block_value
+                  | file_value
+                  | placeholder_value
+                  ;
+
+simple_value      = bool_value
+                  | number_value
+                  | string_value
+                  ;
+
+# Primitive values
+bool_value        = "true" | "yes" | "false" | "no" ;
+
+number_value      = integer | float ;
+integer           = "-"? DIGIT+ ;
+float             = "-"? DIGIT+ "." DIGIT+ ;
+
+string_value      = DQUOTE string_char* DQUOTE ;
+string_char       = /[^"]/ ;
+
+keyword_value     = ":" keyword_char+ ;
+keyword_char      = LETTER | DIGIT | "_" | "$" ;
+
+# Reference values
+elem_ref_value    = "#" identifier ;
+const_ref_value   = "$" identifier ;
+elem_ref          = "#" identifier ;
+
+# Template value
+template_value    = "```" template_source "```" ;
+template_source   = /[^`]*/ ;
+
+# Function values
+function_value    = traditional_function | arrow_function ;
+
+traditional_function = "function" OWS "(" OWS param_list? OWS ")" OWS
+                       "{" javascript_code "}" ;
+
+arrow_function    = "(" OWS param_list? OWS ")" OWS "=>" OWS
+                    "{" javascript_code "}" ;
+
+param_list        = identifier ( OWS "," OWS identifier )* ;
+
+# Special values
+property_value    = "^p{" javascript_code "}" ;
+
+code_block_value  = "^{" javascript_code "}" ;
+
+dice_value        = "^r:" dice_count? "d" dice_sides dice_modifier? ( ":" dice_rounds )? ;
+dice_count        = number_value ;
+dice_sides        = number_value ;
+dice_modifier     = ( "+" | "-" ) number_value ;
+dice_rounds       = number_value ;
+
+copy_initializer_value    = "^c" priority? ":" elem_ref ;
+dynamic_initializer_value = "^i" priority? "{" javascript_code "}" ;
+delegate_value            = "^d:" identifier ;
+
+priority          = ":" number_value ;
+
+file_value        = "<<<" filename ">>>" ;
+filename          = /[^>]+/ ;
+
+placeholder_value = "_" ;
+
+# ==============================================================================
+# COLLECTIONS
+# ==============================================================================
+
+collection        = binding_list
+                  | merge_set
+                  | set
+                  | probability_table
+                  | list
+                  ;
+
+# List
+list              = "[" OWS ( collection_value ( WS ","? WS collection_value )* )? OWS "]" ;
+collection_value  = collection | value ;
+
+# Set
+set               = "#{" OWS ( value ( WS value )* )? OWS "}" ;
+merge_set         = "+#{" OWS ( value ( WS value )* )? OWS "}" ;
+
+# Probability table
+probability_table = "|" ( OWS value WS UINT )+ "|" ;
+
+# Binding list
+binding_list      = "[" ( OWS ","? OWS list_binding )* OWS "]" ;
+list_binding      = identifier ":" WS ( bound_literal | bound_source ) ;
+bound_literal     = string_value | number_value | bool_value | list ;
+bound_source      = "*"? ( elem_ref | binding_path | code_block_value | function_value ) ;
+binding_path      = identifier ( "." identifier )* ;
+
+# ==============================================================================
+# BEHAVIOUR TREES
+# ==============================================================================
+
+btree             = "^[" bt_node "]" ;
+
+bt_node           = bt_template_ref
+                  | bt_instance
+                  | bt_empty
+                  ;
+
+bt_template_ref   = "[" OWS "&" OWS identifier OWS "]" ;
+
+bt_empty          = "[" OWS "]" ;
+
+bt_instance       = "[" OWS identifier bt_options? bt_children? OWS "]" ;
+
+bt_options        = ( WS identifier OWS "=" OWS value )+ ;
+
+bt_children       = ( WS bt_node )+ ;
+
+# ==============================================================================
+# TERMINALS
+# ==============================================================================
+
+identifier        = JS_LEAD_CHAR JS_CHAR* ;
+JS_LEAD_CHAR      = "_" | "$" | LETTER ;
+JS_CHAR           = "_" | "$" | LETTER | DIGIT ;
+
+elem_tag          = ELEM_START_CHAR ELEM_BODY_CHAR* ;
+ELEM_START_CHAR   = LETTER ;
+ELEM_BODY_CHAR    = "_" | LETTER | DIGIT ;
+
+LETTER            = /[a-zA-Z]/ ;
+ALPHA             = LETTER ;
+DIGIT             = /[0-9]/ ;
+UINT              = DIGIT+ ;
+
+DQUOTE            = '"' ;
+
+# Whitespace
+WS                = WHITESPACE+ ;
+OWS               = WHITESPACE* ;
+WHITESPACE        = " " | "\t" | "\n" | "\r" ;
+
+# Delimited content (nested braces allowed)
+javascript_code   = nested_brace_content ;
+css_code          = nested_brace_content ;
+nested_brace_content = /[^{}]*(\{[^{}]*\}[^{}]*)*/ ;
+
+regex_pattern     = /[^\/]+/ ;
+
+# ==============================================================================
+# TOKEN CATEGORIES (for syntax highlighting)
+# ==============================================================================
+
+# Keywords (element tags)
+# ELEMENT_KEYWORD = "@actor" | "@asset" | "@behaviour" | "@card" | "@effect"
+#                 | "@faction" | "@filter" | "@game" | "@generator" | "@group"
+#                 | "@inventory" | "@list" | "@mixin" | "@object" | "@plot"
+#                 | "@rel" | "@scene" | "@slot" | "@system" | "@timer"
+#                 | "@patch" | "@script" | "@styles"
+#                 ;
+
+# Directive keywords
+# DIRECTIVE_KEYWORD = "@behaviour_template" | "@component" | "@const"
+#                   | "@defaults" | "@derive" | "@elem" | "@keybinding"
+#                   | "@pragma" | "@schema"
+#                   ;
+
+# Schema rule keywords
+# SCHEMA_KEYWORD = "kind" | "required" | "allowed" | "required_if" | "requires"
+#                | "xor" | "or" | "and" | "min" | "max" | "ref_elem"
+#                | "coll_kind" | "min_length" | "max_length" | "contains"
+#                | "in" | "file_exists" | "params" | "param_count"
+#                | "is_a" | "type_exists"
+#                ;
+
+# Pragma timing keywords
+# PRAGMA_TIMING = "after_build_schema" | "after_schema_apply"
+#               | "after_process_ast" | "before_create_runtime"
+#               | "after_copy_assets"
+#               ;
+
+# Modifier keywords
+# MODIFIER_KEYWORD = "shift" | "meta" | "ctrl" | "alt" ;
+
+# Boolean keywords
+# BOOLEAN = "true" | "yes" | "false" | "no" ;
+
+# Special prefix operators
+# PREFIX_OP = "^r:" | "^c:" | "^c" | "^i:" | "^i" | "^d:" | "^p" | "^[" | "^{" ;
+
+# Reference sigils
+# SIGIL = "#" | "$" | "@" | ":" ;
+
+# Delimiters
+# DELIMITER = "{" | "}" | "[" | "]" | "(" | ")" | "<" | ">"
+#           | "#{" | "+#{" | "```" | "<<<" | ">>>" | "|"
+#           ;
+
+# Operators
+# OPERATOR = "=" | "->" | "=>" | "+" | "-" | "," | "." | "/" | "*" | "?" | "&" ;

@@ -7,7 +7,7 @@
  * @description Represents a game event response in the Rez game engine. Events are used to communicate
  * the results of user interactions and specify what actions should be taken (scene changes, card plays,
  * flash messages, etc.). Supports method chaining for building complex event responses.
- * 
+ *
  * @example
  * // Create an event that plays a card and shows a message
  * return RezEvent.playCard("next_card").flash("Moving forward!").render();
@@ -225,6 +225,9 @@ class RezEvent {
    * @description Sets this event to change to the specified scene
    */
   sceneChange(sceneId) {
+    if(this.#sceneInterludeEvent || this.#sceneResumeEvent) {
+      throw new Error(`Attempt to sceneChange after sceneInterlude or sceneResume!`);
+    }
     this.#sceneChangeEvent = true;
     this.#sceneId = sceneId;
     return this;
@@ -247,6 +250,9 @@ class RezEvent {
    * @description Sets this event to start an interlude with the specified scene
    */
   sceneInterlude(sceneId) {
+    if(this.#sceneChangeEvent || this.#sceneResumeEvent) {
+      throw new Error(`Attempt to sceneInterlude after sceneChange or sceneResume!`);
+    }
     this.#sceneInterludeEvent = true;
     this.#sceneId = sceneId;
     return this;
@@ -268,6 +274,9 @@ class RezEvent {
    * @description Sets this event to resume the previous scene from the scene stack
    */
   sceneResume() {
+    if(this.#sceneChangeEvent || this.#sceneInterludeEvent) {
+      throw new Error(`Attempt to sceneResume after sceneChange or sceneInterlude!`);
+    }
     this.#sceneResumeEvent = true;
     return this;
   }
@@ -599,8 +608,6 @@ class RezEventProcessor {
    * system pre/post processing, and routes events to specific handlers based on type.
    */
   handleBrowserEvent(evt) {
-    console.log("HandleBrowserEvent");
-
     if(this.isAutoUndoEvent(evt)) {
       this.game.undoManager.startChange();
       this.game.undoManager.recordViewChange(this.game.view.copy());
@@ -621,7 +628,7 @@ class RezEventProcessor {
     } else if(evt.type === "key_binding") {
       result = this.handleKeyBindingEvent(evt);
     } else {
-      result = {unhandled: true};
+      result = RezEvent.error(`No handler for event of type '${evt.type}'!`);
     }
 
     return this.afterEventProcessing(evt, result);
@@ -635,7 +642,10 @@ class RezEventProcessor {
    * @description Extracts event name, target, and parameters from an element's dataset attributes
    */
   decodeEvent(evt) {
-    const { event, target, ...params } = evt.currentTarget.dataset;
+    const {event, target, ...params} = evt.currentTarget.dataset;
+    if(event === undefined) {
+      throw new Error(`Improperly encoded event!`);
+    }
     return [event.toLowerCase(), target, params];
   }
 
@@ -649,8 +659,8 @@ class RezEventProcessor {
   handleTimerEvent(evt) {
     const timer = evt.detail.timer;
     const result = this.handleCustomEvent(timer.event, {timer: timer.id});
-    if(!typeof(result) === "object") {
-      return {handled: true}
+    if(typeof(result) !== "object") {
+      return RezEvent.noop();
     } else {
       return result;
     }
@@ -665,8 +675,8 @@ class RezEventProcessor {
    */
   handleKeyBindingEvent(evt) {
     const result = this.handleCustomEvent(evt.detail.event_name, {});
-    if(!typeof(result) === "object") {
-      return {handled: true}
+    if(typeof(result) !== "object") {
+      return RezEvent.noop();
     } else {
       return result;
     }
@@ -684,8 +694,10 @@ class RezEventProcessor {
     const [eventName, target, params] = this.decodeEvent(evt);
 
     if(typeof(eventName) === "undefined") {
-      console.log("Received click event without an event name!");
-      return false;
+      if(RezBasicObject.game.$debug_events) {
+        console.log("Received click event without an event name!");
+      }
+      return RezEvent.error("Received event without an event name. Cannot process it!");
     }
 
     if (eventName === "card") {
@@ -745,7 +757,9 @@ class RezEventProcessor {
     if(!handler) {
       return RezEvent.error(`Unable to find an event handler for |${eventName}|`);
     } else {
-      console.log(`Routing event |${eventName}| to |${receiver.id}|`);
+      if(RezBasicObject.game.$debug_events) {
+        console.log(`Routing event |${eventName}| to |${receiver.id}|`);
+      }
       return handler(receiver, params);
     }
   }
@@ -759,7 +773,9 @@ class RezEventProcessor {
    * @description Handles built-in card events that play a specific card
    */
   handleCardEvent(target, params) {
-    console.log(`Handle card event: |${target}|`);
+    if(RezBasicObject.game.$debug_events) {
+      console.log(`Handle card event: |${target}|`);
+    }
     return RezEvent.playCard(target).setParams(params);
   }
 
@@ -772,7 +788,9 @@ class RezEventProcessor {
    * @description Handles built-in switch events that change to a new scene
    */
   handleSwitchEvent(target, params) {
-    console.log(`Handle switch event: |${target}|`);
+    if(RezBasicObject.game.$debug_events) {
+      console.log(`Handle switch event: |${target}|`);
+    }
     return RezEvent.sceneChange(target).setParams(params);
   }
 
@@ -785,7 +803,9 @@ class RezEventProcessor {
    * @description Handles built-in interlude events that interrupt the current scene
    */
   handleInterludeEvent(target, params) {
-    console.log(`Handle interlude event: |${target}|`);
+    if(RezBasicObject.game.$debug_events) {
+      console.log(`Handle interlude event: |${target}|`);
+    }
     return RezEvent.sceneInterlude(target).setParams(params);
   }
 
@@ -797,7 +817,10 @@ class RezEventProcessor {
    * @description Handles built-in resume events that return to the previous scene
    */
   handleResumeEvent(params) {
-    console.log("Handle resume event");
+    if(RezBasicObject.game.$debug_events) {
+      console.log("Handle resume event");
+    }
+
     return RezEvent.sceneResume().setParams(params);
   }
 
@@ -836,8 +859,6 @@ class RezEventProcessor {
    * @throws {Error} if the form name or card container cannot be found
    */
   handleBrowserSubmitEvent(evt) {
-    console.log("Handle submit event");
-
     const formName = evt.target.getAttribute("name");
     if (!formName) {
       throw new Error("Cannot get form name!");

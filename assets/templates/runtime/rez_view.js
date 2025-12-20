@@ -31,7 +31,12 @@ function evaluateExpression(expression, bindings, rval = true) {
 }
 
 //-----------------------------------------------------------------------------
-// View
+// Block
+//
+// Special $ attributes recognized by RezBlock:
+//   $debug_bindings  - When true, logs binding information to console during render
+//   $suppress_wrapper - When true, omits the wrapper <div> around block content
+//   $parent          - Reference to the parent source element in the hierarchy
 //-----------------------------------------------------------------------------
 
 class RezBlock {
@@ -93,7 +98,7 @@ class RezBlock {
     return $(id);
   }
 
-  instantiatPropertyBinding(ref) {
+  instantiatePropertyBinding(ref) {
     const target = $(ref.elem_id);
     return target[ref.attr_name];
   }
@@ -168,7 +173,7 @@ class RezBlock {
 
     if(this.source.getAttributeValue("$debug_bindings", false)) {
       console.log(`Binding source: ${this.source.id}`);
-      console.log("Inital Bindings");
+      console.log("Initial Bindings");
       console.dir(initialBindings);
 
       console.log("Bindings");
@@ -254,7 +259,7 @@ class RezBlock {
         return "rez-card rez-active-card";
       }
     } else {
-      throw new Error("This shouldn't happen, right?");
+      throw new Error(`Attempt to get css_classes for unexpected block type: '${this.blockType}'`);
     }
   }
 
@@ -268,18 +273,11 @@ class RezBlock {
     }
   }
 
-  _copyInto(target) {
-    target.parentBlock = this.parentBlock;
-    target.blockType = this.blockType;
-    target.source = this.source;
-    target.flipped = this.flipped;
-    target.params = this.params;
-    return target;
-  }
-
   copy() {
-    const copiedBlock = new this.constructor();
-    return this._copyInto(copiedBlock);
+    const copy = new RezBlock(this.blockType, this.source, this.params);
+    copy.parentBlock = this.parentBlock;
+    copy.flipped = this.flipped;
+    return copy;
   }
 };
 
@@ -313,7 +311,7 @@ class RezLayout extends RezBlock {
     const boundBlocks = this.bindBlocks();
     return templateFn({
       content: renderedContent,
-      // ...this.parentBindings(),
+      ...this.parentBindings(),
       ...boundValues,
       ...boundBlocks,
     });
@@ -347,16 +345,15 @@ class RezSingleLayout extends RezLayout {
     return this.#content.html();
   }
 
-  _copyInto(target) {
-    target.#content = this.#content;
-    return target;
-  }
-
   copy() {
-    const copiedLayout = new this.constructor();
-    super._copyInto(copiedLayout)
-    copiedLayout.#content = this.#content.copy();
-    return copiedLayout;
+    const copy = new RezSingleLayout(this.blockType, this.source);
+    copy.parentBlock = this.parentBlock;
+    copy.flipped = this.flipped;
+    copy.params = this.params;
+    if (this.#content) {
+      copy.addContent(this.#content.copy());
+    }
+    return copy;
   }
 }
 
@@ -404,10 +401,14 @@ class RezStackLayout extends RezLayout {
   }
 
   copy() {
-    const copiedLayout = new this.constructor();
-    super._copyInto(copiedLayout);
-    copiedLayout.#contents = this.#contents.copy();
-    return copiedLayout;
+    const copy = new RezStackLayout(this.blockType, this.source);
+    copy.parentBlock = this.parentBlock;
+    copy.flipped = this.flipped;
+    copy.params = this.params;
+    for (const block of this.#contents) {
+      copy.addContent(block.copy());
+    }
+    return copy;
   }
 };
 
@@ -422,7 +423,7 @@ window.Rez.RezStackLayout = RezStackLayout;
 // The getSelector() method returns a CSS selector that defines which elements
 // are to be transformed.
 //
-// The transformeElement() method should overridden and will get passed each
+// The transformElement() method should overridden and will get passed each
 // matching element and should transform it.
 //-----------------------------------------------------------------------------
 
@@ -432,16 +433,6 @@ class RezTransformer {
   #receiver;
 
   constructor(selector, eventName = null, receiver = null) {
-    if (typeof selector === "undefined") {
-      throw "Undefined selector!";
-    }
-    if (typeof eventName === "undefined") {
-      throw "Undefined eventName!";
-    }
-    if (typeof receiver === "undefined") {
-      throw "Undefined receiver!";
-    }
-
     this.#selector = selector;
     this.#eventName = eventName;
     this.#receiver = receiver;
@@ -470,7 +461,7 @@ class RezTransformer {
   }
 
   transformElement(elem, view) {
-    throw "Transformers must implement transformElement(elem, view)!";
+    throw new Error("Transformers must implement transformElement(elem, view)!");
   }
 }
 
@@ -551,7 +542,7 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 class RezEventLinkTransformer extends RezEventTransformer {
   constructor(receiver) {
-    super("div.rez-front-face a[data-event], div.rez-active a[data-event]", "click", receiver);
+    super("div.rez-front-face a[data-event], div.rez-active-card a[data-event]", "click", receiver);
   }
 }
 
@@ -644,7 +635,7 @@ window.Rez.RezEnterKeyTransformer = RezEnterKeyTransformer;
 
 class RezBindingTransformer extends RezTransformer {
   constructor(receiver) {
-    super("div.rez-front-face input[rez-bind], select[rez-bind], textarea[rez-bind]");
+    super("div.rez-front-face input[rez-bind], div.rez-front-face select[rez-bind], div.rez-front-face textarea[rez-bind], div.rez-active-card input[rez-bind], div.rez-active-card select[rez-bind], div.rez-active-card textarea[rez-bind]");
   }
 
   decodeBinding(binding_expr) {
@@ -666,6 +657,9 @@ class RezBindingTransformer extends RezTransformer {
       return $game.current_scene;
     } else if(binding_id === "card") {
       const card_el = input.closest("div.card");
+      if(!card_el) {
+        throw new Error(`Unable to find nearest @card to input`);
+      }
       return card_el.rez_card;
     } else {
       return $(binding_id);
@@ -682,7 +676,7 @@ class RezBindingTransformer extends RezTransformer {
 
   setBoundValue(input, boundRezElementId, boundAttrName, value) {
     const elem = this.getBoundElem(input, boundRezElementId);
-    if(typeof(elem) == undefined) {
+    if(typeof(elem) === "undefined") {
       throw new Error(`Failed to find game element for attribute binding: ${boundRezElementId}`);
     }
     elem.setAttribute(boundAttrName, value);
@@ -762,7 +756,7 @@ class RezBindingTransformer extends RezTransformer {
       input.getAttribute("rez-bind")
     );
 
-    if (input.type === "text" || input.type == "textarea") {
+    if (input.type === "text" || input.tagName.toLowerCase() === "textarea") {
       this.transformTextInput(view, input, binding_id, binding_attr);
     } else if (input.type === "checkbox") {
       this.transformCheckboxInput(view, input, binding_id, binding_attr);
@@ -795,11 +789,11 @@ class RezView {
 
   constructor(container_id, receiver, layout, transformers) {
     const container = document.getElementById(container_id);
-    if(typeof(container) === "undefined") {
+    if(!container) {
       throw Error(`Cannot get container |${container_id}|`);
     }
 
-    this.#container = document.getElementById(container_id);
+    this.#container = container;
     this.#layout = layout;
     this.#layoutStack = [];
     this.#bindings = new Map();
@@ -848,6 +842,9 @@ class RezView {
     return this.#transformers;
   }
 
+  // Note: Event listeners added by transformers are automatically cleaned up when
+  // innerHTML is replaced - no explicit cleanup needed. The DOM elements holding
+  // the listeners are destroyed, allowing garbage collection of the closures.
   render() {
     const html = this.layout.html();
     this.container.innerHTML = html;
@@ -881,7 +878,7 @@ class RezView {
 
   updateBoundControls(binding_id, binding_attr, value) {
     const callback = this.bindings.get(`${binding_id}.${binding_attr}`);
-    if (typeof callback == "function") {
+    if (typeof callback === "function") {
       callback(value);
     }
   }
@@ -896,19 +893,18 @@ class RezView {
     this.transform();
   }
 
-  _copyInto(target) {
-    target.#container = this.#container;
-    target.#layout = this.#layout.copy();
-    target.#layoutStack = this.#layoutStack.copy();
-    target.#bindings = this.#bindings.copy();
-    target.#receiver = this.#receiver;
-    target.#transformers = this.#transformers;
-  }
-
   copy() {
-    const copiedView = new this.constructor();
-    this._copyInto(copiedView);
-    return copiedView;
+    const copy = new RezView(
+      this.container.id,
+      this.receiver,
+      this.layout.copy(),
+      this.transformers
+    );
+    for (const layout of this.#layoutStack) {
+      copy.#layoutStack.push(layout.copy());
+    }
+    // bindings are cleared on each render, no need to copy
+    return copy;
   }
 }
 

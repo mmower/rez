@@ -48,7 +48,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
         css_classes = Utils.add_css_class("rez-front-face", custom_css_class)
 
-        ~s|<div id="card_#{card.id}" data-card="#{card.id}" class="#{css_classes}">#{html}</div>|
+        ~s|<div id="card_#{card.id}" data-card="#{card.id}" data-flipped="false" class="#{css_classes}">#{html}</div>|
       end
     end
   end
@@ -61,7 +61,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
         custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
         css_classes = Utils.add_css_class("rez-flipped-face", custom_css_class)
 
-        ~s|<div data-card="#{card.id}" data-card="#{card.id}" data-flipped=true class="#{css_classes}">#{html}</div>|
+        ~s|<div data-card="#{card.id}" data-flipped="true" class="#{css_classes}">#{html}</div>|
       end
     end
   end

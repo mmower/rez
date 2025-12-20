@@ -22,8 +22,6 @@ class RezScene extends RezBasicObject {
     this.reset();
   }
 
-  targetType = "scene";
-
   /**
    * @function isStackLayout
    * @memberof RezScene
@@ -42,7 +40,7 @@ class RezScene extends RezBasicObject {
    * @description Returns the view layout that manages how content is displayed in this scene
    */
   get current_block() {
-    return this.getViewLayout()
+    return this.getViewLayout();
   }
 
   /**
@@ -225,9 +223,8 @@ class RezScene extends RezBasicObject {
    * setting the running state, and playing the initial card
    */
   start(params = {}) {
-    this.init();
     this.runEvent("start", params);
-    this.$running = true;
+    this.setAttribute("$running", true);
     this.playCard(this.initial_card, params);
   }
 
@@ -249,7 +246,7 @@ class RezScene extends RezBasicObject {
   finish() {
     this.finishCurrentCard();
     this.runEvent("finish", {});
-    this.$running = false;
+    this.setAttribute("$running", false);
     this.reset();
   }
 }

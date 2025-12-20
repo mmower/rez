@@ -32,7 +32,7 @@ defmodule Rez.Utils do
 
   def english_list(items, connector) when is_list(items) do
     {first_items, [last_item]} = Enum.split(items, -1)
-    Enum.join(first_items, ", ") <> connector <> " " <> last_item
+    Enum.join(first_items, ", ") <> connector <> " " <> to_string(last_item)
   end
 
   @doc """

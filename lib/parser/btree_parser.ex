@@ -73,7 +73,7 @@ defmodule Rez.Parser.BTreeParser do
           iows(),
           ignore(close_bracket())
         ],
-        label: "bt_remplate_ref",
+        label: "bt_template_ref",
         ast: fn [template_id] ->
           {:template, template_id}
         end

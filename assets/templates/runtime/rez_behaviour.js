@@ -28,6 +28,22 @@ class RezBehaviour extends RezBasicObject {
     this.#children = [];
   }
 
+  get children() {
+    return this.#children;
+  }
+
+  set children(children) {
+    this.#children = children;
+  }
+
+  get options() {
+    return this.#options;
+  }
+
+  set options(options) {
+    this.#options = options;
+  }
+
   /**
    * @function firstChild
    * @memberof RezBehaviour

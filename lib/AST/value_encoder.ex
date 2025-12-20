@@ -145,8 +145,8 @@ defmodule Rez.AST.ValueEncoder do
   of the template. A challenge is that the 'this' binding is undefined for
   some reason (it's not even 'Window') and so we cannot supply a context.
   """
-  def encode_value({:compiled_template, t}) do
-    t
+  def encode_value({:compiled_template, template_fn}) do
+    ~s|{template: #{template_fn}}|
   end
 
   defp encode_list(l) do

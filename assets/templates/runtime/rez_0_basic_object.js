@@ -139,29 +139,20 @@ class RezBasicObject {
     }
   }
 
-  initAll() {
-    for (let initLevel of this.game.initLevels()) {
-      this.init(initLevel);
-    }
+  init() {
+    this.init_0();
+    this.init_1();
+    this.init_2();
+    this.#initialized = true;
   }
 
-  init(level) {
-    const initMethod = `init${level}`;
-    if (typeof this[initMethod] == "function") {
-      this[initMethod]();
-    }
-  }
-
-  init0() {
+  init_0() {
     this.createStaticProperties();
     this.createDynamicProperties();
-  }
-
-  init1() {
     this.initDynamicAttributes();
   }
 
-  init2() {
+  init_1() {
     // Initialize Mixins
     for(let mixin_ref of this.getAttributeValue("$mixins", [])) {
       const mixin_id = (typeof mixin_ref === "object" && mixin_ref.$ref) ? mixin_ref.$ref : mixin_ref;
@@ -179,16 +170,12 @@ class RezBasicObject {
     }
   }
 
-  init3() {
+  init_2() {
     // Templates don't initialise like regular objects
     if (!this.isTemplateObject()) {
       this.elementInitializer();
       this.runEvent("init", {});
     }
-  }
-
-  init4() {
-    this.#initialized = true;
   }
 
   /**
@@ -264,8 +251,35 @@ class RezBasicObject {
           this.createCustomProperty(attrName, value);
         } else if (value.hasOwnProperty("bht")) {
           this.createBehaviourTreeAttribute(attrName, value);
+        } else if(value.hasOwnProperty("template")) {
+          this.createTemplateProperty(attrName, value);
         }
       }
+    }
+  }
+
+  createTemplateProperty(attrName, value) {
+    const template_fn = value["template"];
+    this[attrName] = template_fn;
+
+    // Regular templates get compiled to an attribute
+    // $<attr_name>_template
+    // and this is what RezView expects for layout:
+    // and content: attributes. However we can unwrap
+    // this for regular attributes and bind 'this' to
+    // the object in question.
+    if(attrName.startsWith("$") && attrName.endsWith("_template")) {
+      const directAttrName = attrName.slice(1, -9);
+
+      Object.defineProperty(this, directAttrName, {
+        get: function() {
+          const templateFn = this.getAttribute(attrName);
+          const bindings = {
+            this: this
+          };
+          return templateFn(bindings);
+        }
+      })
     }
   }
 
@@ -427,11 +441,12 @@ class RezBasicObject {
    */
   copyAssigningId(id) {
     const attributes = this.attributes.copy();
+    // Subclasses override the RezBasicElement constructor
     const copy = new this.constructor(id, attributes);
     copy.setAttribute("$auto_id_idx", 0, false);
     copy.setAttribute("$template", false, false);
     copy.setAttribute("$original_id", this.id, false);
-    copy.initAll();
+    copy.init();
     copy.runEvent("copy", { original: this });
     return copy;
   }

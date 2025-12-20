@@ -186,6 +186,7 @@ class RezDecision {
     this.#reason = "hidden";
     this.#hidden = true;
     this.#used_default = false;
+    return this;
   }
 
   /**

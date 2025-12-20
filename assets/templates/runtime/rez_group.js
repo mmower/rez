@@ -72,7 +72,7 @@ class RezGroup extends RezBasicObject {
       console.log("Attempt to create group that matches 0 assets!");
     }
 
-    assets = assets.map((asset) => asset.id).fy_shuffle();
+    assets = assets.map((asset) => asset.id).fyShuffle();
 
     this.setAttribute("assets", assets);
   }

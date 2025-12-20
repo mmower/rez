@@ -8,7 +8,6 @@ class RezGame extends RezBasicObject {
   #eventProcessor;
   #tagIndex;
   #attrIndex;
-  // #wmem;
   #gameObjects;
   #view;
 
@@ -19,13 +18,10 @@ class RezGame extends RezBasicObject {
     this.#eventProcessor = new RezEventProcessor(this);
     this.#tagIndex = {};
     this.#attrIndex = {};
-    // this.#wmem = {game: this};
     this.#gameObjects = new Map();
     this.$ = this.getGameObject;
     this.addGameObject(this);
   }
-
-  targetType = "game";
 
   get undoManager() {
     return this.#undoManager;
@@ -55,10 +51,6 @@ class RezGame extends RezBasicObject {
     return this.$layout_template;
   }
 
-  initLevels() {
-    return [0, 1, 2, 3, 4];
-  }
-
   saveFileName(prefix) {
     if(typeof(prefix) === "undefined") {
       prefix = this.name;
@@ -69,7 +61,7 @@ class RezGame extends RezBasicObject {
     };
     const date_parts = [
       now.getFullYear() - 2000,
-      now.getMonth(),
+      now.getMonth() + 1,
       now.getDate(),
       now.getHours(),
       now.getMinutes(),
@@ -90,7 +82,7 @@ class RezGame extends RezBasicObject {
     return {
       archive_format: this.archive_format,
       data: this.dataArchive()
-    }
+    };
   }
 
   saveData() {
@@ -98,7 +90,7 @@ class RezGame extends RezBasicObject {
   }
 
   get canSave() {
-    return this.#view.layoutStack.length == 0;
+    return this.#view && this.#view.layoutStack.length == 0;
   }
 
    /**
@@ -111,6 +103,10 @@ class RezGame extends RezBasicObject {
    * link.
    */
   save() {
+    if (!this.canSave) {
+      throw new Error("Cannot save game at this time!");
+    }
+
     this.getAll().forEach((obj) => {obj.runEvent("save_game")});
 
     const file = new File(
@@ -174,13 +170,13 @@ class RezGame extends RezBasicObject {
   }
 
   /**
-   * @function getTaggedWith
+   * @function getObjectsWithTag
    * @memberof RezGame
    * @param {string} tag
    * @returns {array} array of indexed game-objects that have the specified tag
    * @description returns all game-objects tagged with the specified tag
    */
-  getTaggedWith(tag) {
+  getObjectsWithTag(tag) {
     const objects = this.#tagIndex[tag];
     if(objects) {
       return Array.from(objects);
@@ -230,8 +226,8 @@ class RezGame extends RezBasicObject {
     if(index !== undefined) {
       index.delete(elemId);
 
-      if(index.size == 0) {
-        this.#attrIndex.delete(attrName);
+      if(index.size === 0) {
+        delete this.#attrIndex[attrName];
       } else {
         this.#attrIndex[attrName] = index;
       }
@@ -241,10 +237,11 @@ class RezGame extends RezBasicObject {
   /**
    * Return the ids of all game elements having the specified attribute.
    *
+   * @function getObjectsWithAttr
    * @param {string} attr_name
    * @returns {Array} matching element ids
    */
-  getObjectsWith(attrName) {
+  getObjectsWithAttr(attrName) {
     const index = this.#attrIndex[attrName] ?? new Set();
     return Array.from(index);
   }
@@ -277,6 +274,10 @@ class RezGame extends RezBasicObject {
     let objects = this.#tagIndex[tag];
     if(objects) {
       objects.delete(obj.id);
+
+      if(objects.size === 0) {
+        delete this.#tagIndex[tag];
+      }
     }
   }
 
@@ -324,7 +325,7 @@ class RezGame extends RezBasicObject {
 
   unmapObject(obj) {
     if(!(obj instanceof RezBasicObject)) {
-      throw new Error("Atttempt to unmap non-game object!");
+      throw new Error("Attempt to unmap non-game object!");
     }
 
     obj.runEvent("unmap", {});
@@ -449,7 +450,7 @@ class RezGame extends RezBasicObject {
    * @description filters all game-objects returning those with the specified type
    */
   getAll(element) {
-    if(typeof element === undefined) {
+    if(typeof element === "undefined") {
       return Array.from(this.#gameObjects.values());
     } else {
       return this.filterObjects((obj) => obj.element === element);
@@ -632,26 +633,24 @@ class RezGame extends RezBasicObject {
 
     this.#containerId = containerId;
 
-    // Initialize the game object first (all levels)
-    for(let init_level of this.initLevels()) {
-      this.init(init_level);
-    }
-
-    // Initialize each object fully before moving to the next
-    // This ensures $init_after dependencies are completely ready
+    // Initialize the game objects starting with #game
+    this.init();
     const game_objects = this.getAttribute("$init_order");
     game_objects.forEach(function (obj_id) {
       const obj = this.getGameObject(obj_id);
-      for(let init_level of this.initLevels()) {
-        obj.init(init_level);
-      }
+      obj.init();
     }, this);
 
+    // Now everything is guaranteed to be initialized, give
+    // each object a chance to respond to the game being about
+    // to start
     this.getAll().forEach((obj) => {
       obj.runEvent("game_started", {})
     });
 
-    this.runEvent("ready");
+    // Give the game a last chance to do something before we
+    // start painting the view
+    this.runEvent("ready", {});
 
     this.buildView();
     this.startSceneWithId(this.initial_scene_id);

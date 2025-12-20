@@ -3,29 +3,53 @@
 //-----------------------------------------------------------------------------
 
 class RezCard extends RezBasicObject {
-  #currentBlock;
+  #scene;
+  #current_block;
 
   constructor(id, attributes) {
     super("card", id, attributes);
-    this.#currentBlock = null;
+    this.#current_block = null;
+    this.#scene = null;
   }
 
-  get currentBlock() {
-    return this.#currentBlock;
+  get current_block() {
+    return this.#current_block;
   }
 
-  set currentBlock(block) {
-    this.#currentBlock = block;
+  set current_block(block) {
+    this.#current_block = block;
   }
 
-  targetType = "card";
+  // Transient reference set by the scene via startNewCard().
+  // Valid for the card's lifecycle within that scene. In single layout mode the
+  // reference becomes stale when the card is replaced. In stack layout mode the
+  // reference persists as long as the scene is running.
+  get scene() {
+    return this.#scene;
+  }
+
+  set scene(scene) {
+    this.#scene = scene;
+  }
 
   bindAs() {
     return "card";
   }
 
   getViewTemplate(flipped) {
-    return flipped ? (this.$flipped_template || this.$content_template) : this.$content_template;
+    if (arguments.length === 0) {
+      flipped = this.$flipped;
+    }
+
+    const template = flipped
+      ? (this.$flipped_template || this.$content_template)
+      : this.$content_template;
+
+    if (!template) {
+      throw new Error(`Card |${this.id}| has no content template!`);
+    }
+
+    return template;
   }
 
   handleCustomEvent(event_name, evt) {

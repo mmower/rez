@@ -192,14 +192,21 @@ class RezInventory extends RezBasicObject {
    */
   itemFitsInSlot(slotId, itemId) {
     // TODO: this code looks like shit
+
+    const itemToBeAdded = $(itemId);
+    const itemSize = itemToBeAdded.getAttributeValue("size", 0);
+    if(itemSize === 0) {
+      return true;
+    }
+
     const slot = $(slotId);
     if(slot.has_capacity) {
       const used_capacity = this.getItemsForSlot(slotId).reduce((amount, itemId) => {
         const item = $(itemId);
         return amount + item.size;
-      });
+      }, 0);
 
-      return used_capacity + item.size <= slot.capacity;
+      return used_capacity + itemSize.size <= slot.capacity;
     } else {
       return true;
     }
@@ -213,7 +220,7 @@ class RezInventory extends RezBasicObject {
    * @returns {boolean} true if the given item has a type that this slot accepts
    */
   slotAcceptsItem(slotId, itemId) {
-    const slot = this.getSlot(slotid);
+    const slot = this.getSlot(slotId);
     const accepts = slot.getAttributeValue("accepts");
     const item = $(itemId);
     const type = item.getAttributeValue("type");
@@ -239,7 +246,7 @@ class RezInventory extends RezBasicObject {
       decision.no("does not fit").setData("failed_on", "capacity");
     } else if(this.owner != null) {
       const actorDecision = this.owner.checkItem(this.id, slotId, itemId);
-      if (actorDecision.result()) {
+      if (actorDecision.result) {
         decision.yes();
       } else {
         decision.no(actorDecision.reason()).setData("failed_on", "actor");
@@ -258,17 +265,17 @@ class RezInventory extends RezBasicObject {
    * @param {string} item_id
    * @returns {object} RezDecision containing the result whether the item can be removed from the slot
    */
-  canRemoveItemFromSlot(slotId, item_id) {
+  canRemoveItemFromSlot(slotId, itemId) {
     // TODO: this code looks like shit
     const decision = new RezDecision("canRemoveItemFromSlot");
-    decision.default_yes();
+    decision.defaultYes();
 
-    const item = $(item_id);
+    const item = $(itemId);
     decision.setData("inventory_id", this.id);
     decision.setData("slot_id", slotId);
-    item.canBeRemoved(item_decision);
-    if(!item_decision.result) {
-      return item_decision;
+    item.canBeRemoved(decision);
+    if(!decision.result) {
+      return decision;
     }
 
     if(this.owner == null) {

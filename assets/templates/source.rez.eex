@@ -1240,7 +1240,7 @@
   }
 
   reset: function() {
-    this.draw_pile = [...this.cards].fy_shuffle();
+    this.draw_pile = [...this.cards].fyShuffle();
   }
 
   card_sort: function(card_1, card_2) {

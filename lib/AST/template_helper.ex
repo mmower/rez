@@ -55,6 +55,17 @@ defmodule Rez.AST.TemplateHelper do
     end
   end
 
+  @doc """
+  The compile_template_attribute/2 function compiles a :source_template into a
+  JS rendering function using TemplateCompiler.compile_template. It creates a
+  new attribute using a naming pattern:
+
+  "$" <> source_attr_name <> "_template"
+
+  so
+
+  layout -> $layout_template
+  """
   def compile_template_attribute(
         {_, %Attribute{name: name, type: :source_template, value: template_source}},
         node

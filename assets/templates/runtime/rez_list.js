@@ -174,19 +174,19 @@ class RezList extends RezBasicObject {
    */
   randomWalk(walkId) {
     let walk = this.getWalk(walkId);
-    if (walk.length == 0) {
+    if(walk.length == 0) {
       walk = this.resetWalk(walkId);
-    } else {
-      const idx = walk.shift();
-      const values = this.getAttribute("values");
-      return values.at(idx);
     }
+
+    const idx = walk.shift();
+    const values = this.getAttribute("values");
+    return values.at(idx);
   }
 
   getWalk(walkId) {
     let walk = this.getAttributeValue(`walk_${walkId}`);
     if(typeof(walk) === "undefined") {
-      return this.resetWalk();
+      return this.resetWalk(walkId);
     } else {
       return walk;
     }
@@ -194,7 +194,7 @@ class RezList extends RezBasicObject {
 
   resetWalk(walkId) {
     const values = this.getAttribute("values");
-    const walk = Array.from(values.keys()).fy_shuffle();
+    const walk = Array.from(values.keys()).fyShuffle();
     this.setAttribute(`walk_${walkId}`, walk);
     return walk;
   }

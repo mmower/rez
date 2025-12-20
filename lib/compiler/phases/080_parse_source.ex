@@ -20,32 +20,37 @@ defmodule Rez.Compiler.Phases.ParseSource do
           progress: progress
         } = compilation
       ) do
-    case Parser.parse(source) do
-      {:ok, content, _id_map} ->
-        if NodeHelper.first_elem(content, Rez.AST.Game) do
-          %{compilation | content: content, progress: ["Compiled source" | progress]}
-        else
-          Compilation.add_error(compilation, "The @game element is missing.")
-        end
+    try do
+      case Parser.parse(source) do
+        {:ok, content, _id_map} ->
+          if NodeHelper.first_elem(content, Rez.AST.Game) do
+            %{compilation | content: content, progress: ["Compiled source" | progress]}
+          else
+            Compilation.add_error(compilation, "The @game element is missing.")
+          end
 
-      {:error, reasons, line, col, _input} ->
-        {file, logical_line} = LogicalFile.resolve_line(source, line)
-        context = source_context(source, line, col)
+        {:error, reasons, line, col, _input} ->
+          {file, logical_line} = LogicalFile.resolve_line(source, line)
+          context = source_context(source, line, col)
 
-        error_message = format_errors(reasons)
+          error_message = format_errors(reasons)
 
-        error = """
-        #{file} L#{logical_line}:#{col}
+          error = """
+          #{file} L#{logical_line}:#{col}
 
-        #{error_message}
+          #{error_message}
 
-        #{context}
-        """
+          #{context}
+          """
 
-        Compilation.add_error(
-          compilation,
-          error
-        )
+          Compilation.add_error(
+            compilation,
+            error
+          )
+      end
+    rescue
+      exception ->
+        Compilation.add_error(compilation, "Parser error: #{Exception.message(exception)}")
     end
   end
 

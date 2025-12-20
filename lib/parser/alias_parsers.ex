@@ -56,7 +56,9 @@ defmodule Rez.Parser.AliasParsers do
     "actor",
     "behaviour",
     "card",
+    "const",
     "effect",
+    "elem",
     "faction",
     "filter",
     "game",
@@ -111,12 +113,25 @@ defmodule Rez.Parser.AliasParsers do
           case {legal_alias_name?(alias_tag, existing_aliases),
                 legal_alias_target?(target_tag, existing_aliases)} do
             {false, _} ->
-              ctx
-              |> Context.add_error(
-                :illegal_tag_name,
-                "#{alias_tag} is not a legal tag for an @elem alias"
-              )
-              |> Context.make_error_fatal()
+              cond do
+                alias_tag in @reserved_names ->
+                  ctx
+                  |> Context.add_error(:illegal_tag_name, "#{alias_tag} is a reserved name")
+                  |> Context.make_error_fatal()
+
+                alias_tag in existing_aliases ->
+                  ctx
+                  |> Context.add_error(
+                    :illegal_tag_name,
+                    "#{alias_tag} has already been defined as an alias"
+                  )
+                  |> Context.make_error_fatal()
+
+                true ->
+                  ctx
+                  |> Context.add_error(:illegal_tag_name, "#{alias_tag} unknown error")
+                  |> Context.make_error_fatal()
+              end
 
             {_, false} ->
               ctx
