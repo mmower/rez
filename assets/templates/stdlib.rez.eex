@@ -282,18 +282,19 @@
   tags: #{}
 }
 
-%% In Rez v1.8 we remove @item as a basic element and make it an alias of
-%% @card so that items can be used directly in rendering the interface. You
-%% can set the current card to an item to have it render itself.
+%% In Rez v1.8 we removed @item as a basic element and made it an alias of @card
+%% so that it can be set as the current card and rendered.
+%% In Rez v1.9 we made it an alias of @object since template properties can now
+%% be rendered directly
 
-@elem item = card
+@elem item = object
 
 @schema item {
   %% This does not preserve the item validation that determines whether the
   %% type refers to an accept: for a slot
   type: {kind: :keyword, required: true, is_a: @slot/accepts}
 
-  container: {kind: :elem_ref, ref_elem: @inventory}
+  container_id: {kind: :elem_ref, ref_elem: @inventory}
   size: {kind: :number, min: 0}
   uses: {kind: :number, min: 0}
   effects: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}

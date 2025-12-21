@@ -186,12 +186,28 @@ defmodule Rez.Parser.AliasParsers do
           js_identifier("alias_id"),
           iws(),
           block_begin(),
+          commit(),
           attribute_list(),
           iws(),
           block_end()
         ],
         label: "alias-block",
         debug: true,
+        err: fn %Context{entry_points: [{line, col} | _], ast: ast} = ctx ->
+          # Extract what we know about the element from the partial parse
+          alias_info =
+            case ast do
+              [alias_tag, alias_id | _] -> "#{alias_tag} '#{alias_id}'"
+              [alias_tag | _] -> alias_tag
+              _ -> "elem aliased element"
+            end
+
+          Context.add_error(
+            ctx,
+            :alias_block_not_matched,
+            "Error parsing @#{alias_info} starting at #{line}:#{col}"
+          )
+        end,
         ctx: fn %Context{
                   ast: [alias_tag, alias_id, attr_list],
                   entry_points: [{line, col} | _],

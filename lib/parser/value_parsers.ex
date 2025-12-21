@@ -29,13 +29,27 @@ defmodule Rez.Parser.ValueParsers do
     context
   end
 
+  @doc """
+  Matches a single character within a string, handling escape sequences.
+  - `\\X` matches backslash followed by any character (escape sequence)
+  - Any character except `"` or `\\` matches normally
+  """
+  def string_char() do
+    choice([
+      # Escape sequence: backslash followed by any character
+      sequence([char(?\\), any()]),
+      # Normal character: anything except quote or backslash
+      not_char([?", ?\\])
+    ])
+  end
+
   def string_value() do
     cached_parser(
       sequence(
         [
           not_lookahead(literal("\"\"\"")),
           ignore(double_quote()),
-          many(not_double_quote()) |> string,
+          many(string_char()) |> transform(&List.flatten/1) |> string,
           ignore(double_quote())
         ],
         ast: fn [string] ->
