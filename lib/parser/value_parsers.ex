@@ -31,17 +31,27 @@ defmodule Rez.Parser.ValueParsers do
 
   @doc """
   Matches a single character within a string, handling escape sequences.
-  - `\\X` matches backslash followed by any character (escape sequence)
-  - Any character except `"` or `\\` matches normally
+  Escape sequences are converted to their actual character values:
+  - `\\\"` becomes `\"`
+  - `\\\\` becomes `\\`
+  - `\\n` becomes newline
+  - `\\t` becomes tab
+  - `\\r` becomes carriage return
+  - Other `\\X` sequences become just `X`
   """
   def string_char() do
     choice([
-      # Escape sequence: backslash followed by any character
-      sequence([char(?\\), any()]),
+      # Escape sequence: backslash followed by any character, converted to actual char
+      sequence([char(?\\), any()], ast: fn [?\\, char] -> convert_escape_char(char) end),
       # Normal character: anything except quote or backslash
       not_char([?", ?\\])
     ])
   end
+
+  defp convert_escape_char(?n), do: ?\n
+  defp convert_escape_char(?t), do: ?\t
+  defp convert_escape_char(?r), do: ?\r
+  defp convert_escape_char(char), do: char
 
   def string_value() do
     cached_parser(
