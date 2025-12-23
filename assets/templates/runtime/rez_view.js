@@ -191,6 +191,7 @@ class RezBlock {
 
   bindValues() {
     const initialBindings = {
+      ...this.parentBindings(),
       block: this,
       params: this.params,
       source: this.source,
@@ -227,7 +228,7 @@ class RezBlock {
 
   parentBindings() {
     if (this.parentBlock) {
-      return this.parentBlock.bindValues();
+      return this.parentBlock.bindings();
     } else {
       return {};
     }
@@ -235,7 +236,6 @@ class RezBlock {
 
   bindings() {
     const bindings = {
-      ...this.parentBindings(),
       ...this.bindValues(),
       ...this.bindBlocks(),
     };

@@ -62,14 +62,11 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:bound_path, path}) do
-    js_path =
-      "[" <> Enum.map_join(path, ", ", fn path_component -> ~s|"#{path_component}"| end) <> "]"
-
-    ~s|{binding: (root) => {
-      return #{js_path}.reduce((obj, path_component) => {
-        return obj[path_component]}, root);
-      }
-    }|
+    if has_bound_index?(path) do
+      encode_dynamic_bound_path(path)
+    else
+      encode_static_bound_path(path)
+    end
   end
 
   def encode_value({:dynamic_initializer, {initializer, prio}}) do
@@ -153,6 +150,37 @@ defmodule Rez.AST.ValueEncoder do
     l
     |> Enum.map_join(", ", &encode_value/1)
     |> wrap_with("[", "]")
+  end
+
+  defp has_bound_index?(path) do
+    Enum.any?(path, &match?({:bound_index, _}, &1))
+  end
+
+  defp encode_static_bound_path(path) do
+    js_path =
+      "[" <>
+        Enum.map_join(path, ", ", fn
+          {:index, n} -> to_string(n)
+          {:key, k} -> ~s|"#{k}"|
+          str when is_binary(str) -> ~s|"#{str}"|
+        end) <> "]"
+
+    ~s|{binding: (root) => {
+      return #{js_path}.reduce((obj, key) => obj[key], root);
+    }}|
+  end
+
+  defp encode_dynamic_bound_path(path) do
+    # Generate code that evaluates bound indices at runtime
+    access_chain =
+      Enum.map_join(path, "", fn
+        {:index, n} -> "[#{n}]"
+        {:key, k} -> ~s|["#{k}"]|
+        {:bound_index, idx_path} -> "[root.#{Enum.join(idx_path, ".")}]"
+        str when is_binary(str) -> ".#{str}"
+      end)
+
+    ~s|{binding: (root) => root#{access_chain}}|
   end
 
   def encode_function({:std, args, body}) do

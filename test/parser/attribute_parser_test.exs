@@ -39,6 +39,36 @@ defmodule Rez.Parser.AttributeParserTest do
              Ergo.parse(string_value(), input)
   end
 
+  test "parses string with escaped double quotes" do
+    input = ~S|"sparring ring at \"The Forge\""|
+
+    # Escape sequences are converted to actual characters
+    assert %Context{
+             status: :ok,
+             ast: {:string, "sparring ring at \"The Forge\""}
+           } = Ergo.parse(string_value(), input)
+  end
+
+  test "parses string with escaped backslash" do
+    input = ~S|"path\\to\\file"|
+
+    # \\ becomes a single backslash
+    assert %Context{
+             status: :ok,
+             ast: {:string, "path\\to\\file"}
+           } = Ergo.parse(string_value(), input)
+  end
+
+  test "parses string with various escape sequences" do
+    input = ~S|"line1\nline2\ttabbed"|
+
+    # \n becomes newline, \t becomes tab
+    assert %Context{
+             status: :ok,
+             ast: {:string, "line1\nline2\ttabbed"}
+           } = Ergo.parse(string_value(), input)
+  end
+
   test "parses lists" do
     ctx = Ergo.parse(list(), "[]")
     assert :ok = ctx.status

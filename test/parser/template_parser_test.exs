@@ -179,4 +179,65 @@ defmodule Rez.Parser.TemplateParserTest do
              [{"gte", [number: 18]}, {"bsel", [list: [string: "adult", string: "child"]]}]}} =
              EP.parse("player.age | gte: 18 | bsel: [\"adult\", \"child\"]")
   end
+
+  # Index syntax tests
+
+  test "parses numeric index access" do
+    assert {:ok, {:expression, {:bound_path, ["items", {:index, 0}]}, []}} =
+             EP.parse("items[0]")
+  end
+
+  test "parses numeric index with property access after" do
+    assert {:ok, {:expression, {:bound_path, ["items", {:index, 0}, "name"]}, []}} =
+             EP.parse("items[0].name")
+  end
+
+  test "parses property access followed by numeric index" do
+    assert {:ok, {:expression, {:bound_path, ["player", "inventory", {:index, 0}]}, []}} =
+             EP.parse("player.inventory[0]")
+  end
+
+  test "parses chained numeric indices" do
+    assert {:ok, {:expression, {:bound_path, ["matrix", {:index, 0}, {:index, 1}]}, []}} =
+             EP.parse("matrix[0][1]")
+  end
+
+  test "parses string key access" do
+    assert {:ok, {:expression, {:bound_path, ["obj", {:key, "special-key"}]}, []}} =
+             EP.parse("obj[\"special-key\"]")
+  end
+
+  test "parses bound variable index" do
+    assert {:ok, {:expression, {:bound_path, ["items", {:bound_index, ["idx"]}]}, []}} =
+             EP.parse("items[idx]")
+  end
+
+  test "parses bound variable index with nested path" do
+    assert {:ok, {:expression, {:bound_path, ["items", {:bound_index, ["state", "index"]}]}, []}} =
+             EP.parse("items[state.index]")
+  end
+
+  test "parses multiple bound variable indices" do
+    assert {:ok,
+            {:expression,
+             {:bound_path, ["matrix", {:bound_index, ["row"]}, {:bound_index, ["col"]}]}, []}} =
+             EP.parse("matrix[row][col]")
+  end
+
+  test "parses mixed index syntax with filter" do
+    assert {:ok,
+            {:expression, {:bound_path, ["items", {:index, 0}, "name"]},
+             [{"capitalize", []}]}} = EP.parse("items[0].name | capitalize")
+  end
+
+  test "parses index in template interpolation" do
+    template = "First item: ${items[0].name}"
+
+    assert {:source_template,
+            [
+              "First item: ",
+              {:interpolate,
+               {:expression, {:bound_path, ["items", {:index, 0}, "name"]}, []}}
+            ]} = TP.parse(template)
+  end
 end

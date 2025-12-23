@@ -12,6 +12,7 @@ defmodule Rez.AST.LinkTransformer do
   - where there is a scene="scene-id" attribute, replaces it with data-event="scene" and data-target="scene-id"
   - where there is an interlude="scene-id" attribute, replaces it with data-event="interlude" and data-target="scene-id"
   - where there is a resume attribute, replaces it with data-event="resume"
+  - where there is an event="handler" attribute, replaces it with data-event="handler"
   """
   def transform(html) do
     # Split the HTML into parts based on <a> tags
@@ -30,6 +31,7 @@ defmodule Rez.AST.LinkTransformer do
   defp transform_opening_tag(tag) do
     tag
     |> add_default_href()
+    |> transform_event_attribute()
     |> transform_card_attribute()
     |> transform_scene_attribute()
     |> transform_interlude_attribute()
@@ -58,5 +60,9 @@ defmodule Rez.AST.LinkTransformer do
 
   defp transform_resume_attribute(tag) do
     Regex.replace(~r/resume(?:="[^"]*")?/, tag, "data-event=\"resume\"")
+  end
+
+  defp transform_event_attribute(tag) do
+    Regex.replace(~r/event="([^"]*)"/, tag, "data-event=\"\\1\"")
   end
 end

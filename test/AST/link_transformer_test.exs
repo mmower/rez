@@ -49,6 +49,12 @@ defmodule Rez.AST.LinkTransformerTest do
              "<a data-event=\"resume\" href=\"javascript:void(0)\">Link</a>"
   end
 
+  test "replaces event=\"handler\" with data-event=\"handler\"" do
+    assert "<a event=\"attack\">Link</a>"
+           |> LinkTransformer.transform() ==
+             "<a data-event=\"attack\" href=\"javascript:void(0)\">Link</a>"
+  end
+
   test "does not mess with component links" do
     assert "<.foo bar=\"baz\" />" == LinkTransformer.transform("<.foo bar=\"baz\" />")
   end

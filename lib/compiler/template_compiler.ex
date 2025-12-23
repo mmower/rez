@@ -22,6 +22,34 @@ defmodule Rez.Compiler.TemplateCompiler do
   def js_create_fn(expr, ret),
     do: ~s|function(bindings) {#{if ret, do: "return"} #{expr};}|
 
+  @doc """
+  Converts a bound path (which may contain index/key tokens) to JavaScript property access.
+
+  Examples:
+    ["arr", {:index, 0}] → "bindings.arr[0]"
+    ["arr", {:key, "special"}] → "bindings.arr[\"special\"]"
+    ["arr", {:bound_index, ["idx"]}] → "bindings.arr[bindings.idx]"
+  """
+  def bound_path_to_js(path, prefix \\ "bindings") do
+    path
+    |> Enum.reduce(prefix, fn
+      {:index, n}, acc -> "#{acc}[#{n}]"
+      {:key, k}, acc -> ~s|#{acc}["#{k}"]|
+      {:bound_index, idx_path}, acc ->
+        idx_js = bound_path_to_js(idx_path, "bindings")
+        "#{acc}[#{idx_js}]"
+      ident, acc when is_binary(ident) -> "#{acc}.#{ident}"
+    end)
+  end
+
+  @doc """
+  Extracts the root binding name from a path (the first string identifier).
+  """
+  def extract_root_binding([first | _]) when is_binary(first), do: first
+  def extract_root_binding([{:index, _} | rest]), do: extract_root_binding(rest)
+  def extract_root_binding([{:key, _} | rest]), do: extract_root_binding(rest)
+  def extract_root_binding([{:bound_index, _} | rest]), do: extract_root_binding(rest)
+
   def compile({:source_template, chunks}) do
     compiled_chunks = compile_chunks(chunks)
     reducer = ~s|function(text, f) {return text + f(bindings)}|
@@ -134,9 +162,9 @@ defmodule Rez.Compiler.TemplateCompiler do
     {:compiled_template, content_template} = compile(content)
     {:compiled_template, divider_template} = compile(divider)
 
-    [bound_obj | _] = bound_path
-    bound_path = Enum.join(bound_path, ".")
-    binding_spec = "bindings." <> bound_path
+    bound_obj = extract_root_binding(bound_path)
+    bound_path_str = bound_path_to_js(bound_path, "")
+    binding_spec = "bindings" <> bound_path_str
 
     body =
       ~s|
@@ -147,10 +175,10 @@ defmodule Rez.Compiler.TemplateCompiler do
 
     const iterable = #{binding_spec};
     if(typeof(iterable) === "undefined") {
-      throw `#{bound_path} must be bound`;
+      throw `#{bound_path_str} must be bound`;
     }
     if(!Array.isArray(iterable)) {
-      throw `#{bound_path} must bind to a list`;
+      throw `#{bound_path_str} must bind to a list`;
     }
     const content_template = #{content_template};
     const divider_template = #{divider_template};
@@ -179,13 +207,13 @@ defmodule Rez.Compiler.TemplateCompiler do
             ~s|#{key}: #{b}|
 
           {:bound_path, path} ->
-            ~s|#{key}: bindings.#{Enum.join(path, ".")}|
+            ~s|#{key}: #{bound_path_to_js(path)}|
         end
       end)
 
     partial_id =
       case t_expr do
-        {:bound_path, path} -> ~s|bindings.#{Enum.join(path, ".")}|
+        {:bound_path, path} -> bound_path_to_js(path)
         {:string, id} -> ~s|"#{id}"|
         {:elem_ref, id} -> ~s|"#{id}"|
         id when is_binary(id) -> "bindings.#{id}"
@@ -256,8 +284,10 @@ defmodule Rez.Compiler.TemplateCompiler do
       js_apply_fn(bindings_map_name, "[#{list}]")
     end
 
-    def js_exp(bindings_map_name, {:bound_path, bound_path}),
-      do: js_apply_fn(bindings_map_name, "#{bindings_map_name}.#{Enum.join(bound_path, ".")}")
+    def js_exp(bindings_map_name, {:bound_path, bound_path}) do
+      js_path = Rez.Compiler.TemplateCompiler.bound_path_to_js(bound_path, bindings_map_name)
+      js_apply_fn(bindings_map_name, js_path)
+    end
 
     def js_exp(_bindings_map_name, {:const_ref, const_name}),
       do: "$#{const_name}"

@@ -68,4 +68,73 @@ defmodule Rez.Compiler.TemplateCompilerTest do
 
     assert String.contains?(ct, expr)
   end
+
+  # Index syntax compilation tests
+
+  test "compiles numeric index access" do
+    {:ok, chunk} = TEP.parse("items[0]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.items[0]")
+  end
+
+  test "compiles property after numeric index" do
+    {:ok, chunk} = TEP.parse("items[0].name")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.items[0].name")
+  end
+
+  test "compiles numeric index after property" do
+    {:ok, chunk} = TEP.parse("player.inventory[0]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.player.inventory[0]")
+  end
+
+  test "compiles chained numeric indices" do
+    {:ok, chunk} = TEP.parse("matrix[0][1]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.matrix[0][1]")
+  end
+
+  test "compiles string key access" do
+    {:ok, chunk} = TEP.parse("obj[\"special-key\"]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, ~s|bindings.obj["special-key"]|)
+  end
+
+  test "compiles bound variable index" do
+    {:ok, chunk} = TEP.parse("items[idx]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.items[bindings.idx]")
+  end
+
+  test "compiles bound variable index with nested path" do
+    {:ok, chunk} = TEP.parse("items[state.index]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.items[bindings.state.index]")
+  end
+
+  test "compiles multiple bound variable indices" do
+    {:ok, chunk} = TEP.parse("matrix[row][col]")
+    compiled = C.compile_chunk({:interpolate, chunk})
+
+    assert String.contains?(compiled, "bindings.matrix[bindings.row][bindings.col]")
+  end
+
+  test "bound_path_to_js helper function" do
+    # Test the helper function directly
+    assert "bindings.arr[0]" = C.bound_path_to_js(["arr", {:index, 0}])
+    assert "bindings.arr[0].name" = C.bound_path_to_js(["arr", {:index, 0}, "name"])
+    assert ~s|bindings.obj["key"]| = C.bound_path_to_js(["obj", {:key, "key"}])
+    assert "bindings.arr[bindings.idx]" = C.bound_path_to_js(["arr", {:bound_index, ["idx"]}])
+
+    assert "bindings.matrix[bindings.row][bindings.col]" =
+             C.bound_path_to_js(["matrix", {:bound_index, ["row"]}, {:bound_index, ["col"]}])
+  end
 end
