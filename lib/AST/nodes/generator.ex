@@ -39,7 +39,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
       if(typeof(customize) == "function") {
         customize(copy);
       }
-      objects.push(copy);
+      objects.push(copy.id);
       game.addGameObject(copy);
     }
     list.setAttribute("values", objects);

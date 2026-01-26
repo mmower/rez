@@ -5,10 +5,42 @@
 /**
  * @class RezBehaviour
  * @extends RezBasicObject
- * @description Represents a behaviour in the Rez game engine's behaviour tree system.
- * Behaviours are reusable templates that define game logic and can be instantiated with
- * specific options and child behaviours. They execute with working memory (wmem) and
- * return success/failure results.
+ * @description Represents a node in the Rez game engine's behaviour tree system.
+ * Behaviours are reusable templates that define game logic and can be composed
+ * into trees with parent-child relationships.
+ *
+ * ## Template vs Instance
+ * Behaviours follow a template-instance pattern:
+ * - **Templates** are defined in Rez source with `@behaviour` and registered globally
+ * - **Instances** are created via `instantiate()` with specific owner, options, and children
+ * - Templates are never executed directly; always instantiate first
+ *
+ * ## Tree Structure
+ * Behaviours form trees through the `children` property:
+ * - Each behaviour can have zero or more child behaviours
+ * - Parent behaviours control execution flow (sequence, selector, etc.)
+ * - Leaf behaviours perform actual actions
+ *
+ * ## Execution
+ * Behaviours execute via the `execute` attribute function:
+ * - Must return a boolean: `true` for success, `false` for failure
+ * - The behaviour instance is passed as the first argument
+ * - Access the owner object via `this.owner`
+ *
+ * ## Options
+ * Options allow parameterizing behaviour instances:
+ * - Set during instantiation
+ * - Retrieved via `option()`, `numberOption()`, `intOption()`
+ * - Enable reusing the same behaviour template with different configurations
+ *
+ * ## Configuration
+ * The optional `configure` attribute function runs after instantiation:
+ * - Receives the behaviour instance
+ * - Used for setup that depends on options or owner
+ *
+ * ## Usage in Rez
+ * Behaviour trees are typically attached to objects via the `bht:` attribute prefix,
+ * which automatically instantiates the tree with the object as owner.
  */
 class RezBehaviour extends RezBasicObject {
   #options;
@@ -16,7 +48,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function constructor
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {string} id - unique identifier for this behaviour
    * @param {object} attributes - behaviour attributes from Rez compilation
    * @description Creates a new behaviour template with empty options and children
@@ -28,25 +60,49 @@ class RezBehaviour extends RezBasicObject {
     this.#children = [];
   }
 
+  /**
+   * @function children
+   * @memberof RezBehaviour#
+   * @returns {RezBehaviour[]} array of child behaviour instances
+   * @description Gets the child behaviours of this behaviour node.
+   */
   get children() {
     return this.#children;
   }
 
+  /**
+   * @function children
+   * @memberof RezBehaviour#
+   * @param {RezBehaviour[]} children - array of child behaviour instances
+   * @description Sets the child behaviours for this behaviour node.
+   */
   set children(children) {
     this.#children = children;
   }
 
+  /**
+   * @function options
+   * @memberof RezBehaviour#
+   * @returns {object} the options object for this behaviour instance
+   * @description Gets the options configured for this behaviour instance.
+   */
   get options() {
     return this.#options;
   }
 
+  /**
+   * @function options
+   * @memberof RezBehaviour#
+   * @param {object} options - options to configure this behaviour
+   * @description Sets the options for this behaviour instance.
+   */
   set options(options) {
     this.#options = options;
   }
 
   /**
    * @function firstChild
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @returns {RezBehaviour|undefined} the first child behaviour or undefined if no children
    * @description Convenience accessor for the first child behaviour
    */
@@ -56,7 +112,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function secondChild
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @returns {RezBehaviour|undefined} the second child behaviour or undefined if fewer than 2 children
    * @description Convenience accessor for the second child behaviour
    */
@@ -66,7 +122,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function childCount
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @returns {number} the number of child behaviours
    * @description Returns the count of child behaviours attached to this behaviour
    */
@@ -76,7 +132,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function configure
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @description Runs the behaviour's configuration function if defined.
    * This is called during instantiation to set up behaviour-specific configuration.
    */
@@ -89,7 +145,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function option
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {string} name - the option name to retrieve
    * @returns {*} the option value
    * @description Gets an option value by name
@@ -105,7 +161,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function numberOption
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {string} name - the option name to retrieve
    * @returns {number} the option value as a number
    * @description Gets an option value and ensures it's a number
@@ -121,7 +177,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function intOption
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {string} name - the option name to retrieve
    * @returns {number} the option value as an integer
    * @description Gets an option value as an integer (floors any decimal values)
@@ -132,7 +188,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function setOption
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {string} name - the option name to set
    * @param {*} value - the value to set
    * @description Sets an option value by name
@@ -143,7 +199,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function getChildAt
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {number} idx - the index of the child to retrieve
    * @returns {RezBehaviour|undefined} the child behaviour at the specified index
    * @description Gets a child behaviour by index
@@ -155,7 +211,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function executeBehaviour
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @returns {boolean} true if the behaviour succeeded, false otherwise
    * @description Executes this behaviour using the owner's blackboard for context.
    * @throws {Error} if the execute function returns an invalid result format
@@ -177,7 +233,7 @@ class RezBehaviour extends RezBasicObject {
 
   /**
    * @function instantiate
-   * @memberof RezBehaviour
+   * @memberof RezBehaviour#
    * @param {object} owner - the object that owns this behaviour instance
    * @param {object} options - options to configure this behaviour instance
    * @param {RezBehaviour[]} children - child behaviours for this instance

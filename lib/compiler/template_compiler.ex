@@ -33,12 +33,18 @@ defmodule Rez.Compiler.TemplateCompiler do
   def bound_path_to_js(path, prefix \\ "bindings") do
     path
     |> Enum.reduce(prefix, fn
-      {:index, n}, acc -> "#{acc}[#{n}]"
-      {:key, k}, acc -> ~s|#{acc}["#{k}"]|
+      {:index, n}, acc ->
+        "#{acc}[#{n}]"
+
+      {:key, k}, acc ->
+        ~s|#{acc}["#{k}"]|
+
       {:bound_index, idx_path}, acc ->
         idx_js = bound_path_to_js(idx_path, "bindings")
         "#{acc}[#{idx_js}]"
-      ident, acc when is_binary(ident) -> "#{acc}.#{ident}"
+
+      ident, acc when is_binary(ident) ->
+        "#{acc}.#{ident}"
     end)
   end
 
@@ -50,15 +56,33 @@ defmodule Rez.Compiler.TemplateCompiler do
   def extract_root_binding([{:key, _} | rest]), do: extract_root_binding(rest)
   def extract_root_binding([{:bound_index, _} | rest]), do: extract_root_binding(rest)
 
+  def compile({:error, _reason} = error) do
+    error
+  end
+
   def compile({:source_template, chunks}) do
-    compiled_chunks = compile_chunks(chunks)
-    reducer = ~s|function(text, f) {return text + f(bindings)}|
-    body = ~s|#{compiled_chunks}.reduce(#{reducer}, "")|
-    {:compiled_template, js_create_fn(body, true)}
+    case compile_chunks(chunks) do
+      {:error, _reason} = error ->
+        error
+
+      compiled_chunks ->
+        reducer = ~s|function(text, f) {return text + f(bindings)}|
+        body = ~s|#{compiled_chunks}.reduce(#{reducer}, "")|
+        {:compiled_template, js_create_fn(body, true)}
+    end
   end
 
   def compile_chunks(chunks) when is_list(chunks) do
-    "[" <> Enum.map_join(chunks, ",", &compile_chunk/1) <> "]"
+    compiled = Enum.map(chunks, &compile_chunk/1)
+
+    case Enum.find(compiled, &match?({:error, _}, &1)) do
+      {:error, _reason} = error -> error
+      nil -> "[" <> Enum.join(compiled, ",") <> "]"
+    end
+  end
+
+  def compile_chunk({:error, _reason} = error) do
+    error
   end
 
   @doc """
@@ -88,24 +112,23 @@ defmodule Rez.Compiler.TemplateCompiler do
   end
 
   def compile_chunk({:conditional, cond_exprs}) when is_list(cond_exprs) do
-    cond_exprs
-    |> Enum.map(fn {expr, template} ->
-      {:compiled_template, compiled_template} = compile(template)
-      {expr, compiled_template}
-    end)
-    |> Enum.reduce({:if, ""}, fn {expr, sub_template}, {test, out} ->
-      {:else_if, out <> conditional_expr(test, expr, sub_template)}
-    end)
-    |> then(fn {_, expr} ->
-      expr <> ~s|
+    with :ok <- check_for_errors(cond_exprs),
+         {:ok, compiled_exprs} <- compile_conditional_exprs(cond_exprs) do
+      compiled_exprs
+      |> Enum.reduce({:if, ""}, fn {expr, sub_template}, {test, out} ->
+        {:else_if, out <> conditional_expr(test, expr, sub_template)}
+      end)
+      |> then(fn {_, expr} ->
+        expr <> ~s|
       else {
         return "";
       }
       |
-    end)
-    |> then(fn body ->
-      js_create_fn(body, false)
-    end)
+      end)
+      |> then(fn body ->
+        js_create_fn(body, false)
+      end)
+    end
   end
 
   def compile_chunk({:do, expr}) do
@@ -134,24 +157,28 @@ defmodule Rez.Compiler.TemplateCompiler do
   end
 
   def compile_chunk({:user_component, name, attributes, content}) do
-    {:compiled_template, compiled_template} = compile(content)
+    case compile(content) do
+      {:error, _reason} = error ->
+        error
 
-    assigns = component_assigns(attributes)
+      {:compiled_template, compiled_template} ->
+        assigns = component_assigns(attributes)
 
-    body = ~s|
-    const user_component = window.Rez.user_components['#{name}'];
+        body = ~s|
+        const user_component = window.Rez.user_components['#{name}'];
 
-    const sub_template = #{compiled_template};
-    const sub_content = sub_template(bindings);
+        const sub_template = #{compiled_template};
+        const sub_content = sub_template(bindings);
 
-    if(typeof user_component === "undefined") {
-      throw `No user @macro #{name} defined!`;
-    } else {
-      return user_component(bindings, {#{assigns}}, sub_content);
-    }
-    |
+        if(typeof user_component === "undefined") {
+          throw `No user @macro #{name} defined!`;
+        } else {
+          return user_component(bindings, {#{assigns}}, sub_content);
+        }
+        |
 
-    js_create_fn(body, false)
+        js_create_fn(body, false)
+    end
   end
 
   def compile_chunk({:foreach, iter_name, binding_spec, content}) do
@@ -159,38 +186,38 @@ defmodule Rez.Compiler.TemplateCompiler do
   end
 
   def compile_chunk({:foreach, iter_name, {:bound_path, bound_path}, content, divider}) do
-    {:compiled_template, content_template} = compile(content)
-    {:compiled_template, divider_template} = compile(divider)
+    with {:ok, content_template} <- compile_preserving_errors(content),
+         {:ok, divider_template} <- compile_preserving_errors(divider) do
+      bound_obj = extract_root_binding(bound_path)
+      bound_path_str = bound_path_to_js(bound_path, "")
+      binding_spec = "bindings" <> bound_path_str
 
-    bound_obj = extract_root_binding(bound_path)
-    bound_path_str = bound_path_to_js(bound_path, "")
-    binding_spec = "bindings" <> bound_path_str
+      body =
+        ~s|
+      const binding = bindings.#{bound_obj};
+      if(typeof(binding) === "undefined") {
+        throw `#{bound_obj} must be defined in bindings!`;
+      }
 
-    body =
-      ~s|
-    const binding = bindings.#{bound_obj};
-    if(typeof(binding) === "undefined") {
-      throw `#{bound_obj} must be defined in bindings!`;
-    }
+      const iterable = #{binding_spec};
+      if(typeof(iterable) === "undefined") {
+        throw `#{bound_path_str} must be bound`;
+      }
+      if(!Array.isArray(iterable)) {
+        throw `#{bound_path_str} must bind to a list`;
+      }
+      const content_template = #{content_template};
+      const divider_template = #{divider_template};
 
-    const iterable = #{binding_spec};
-    if(typeof(iterable) === "undefined") {
-      throw `#{bound_path_str} must be bound`;
-    }
-    if(!Array.isArray(iterable)) {
-      throw `#{bound_path_str} must bind to a list`;
-    }
-    const content_template = #{content_template};
-    const divider_template = #{divider_template};
+      const iter_output = iterable.map((#{iter_name}) => {
+        const iter_bindings = {...bindings, #{iter_name}: #{iter_name}};
+        return content_template(iter_bindings)
+      }).join(divider_template(bindings));
 
-    const iter_output = iterable.map((#{iter_name}) => {
-      const iter_bindings = {...bindings, #{iter_name}: #{iter_name}};
-      return content_template(iter_bindings)
-    }).join(divider_template(bindings));
+      return iter_output;|
 
-    return iter_output;|
-
-    js_create_fn(body, false)
+      js_create_fn(body, false)
+    end
   end
 
   def compile_chunk({:partial, t_expr, {:params, params}}) do
@@ -230,6 +257,35 @@ defmodule Rez.Compiler.TemplateCompiler do
     |
 
     js_create_fn(body, false)
+  end
+
+  defp check_for_errors(items) do
+    case Enum.find(items, &match?({:error, _}, &1)) do
+      {:error, _reason} = error -> error
+      nil -> :ok
+    end
+  end
+
+  defp compile_conditional_exprs(cond_exprs) do
+    compiled =
+      Enum.map(cond_exprs, fn {expr, template} ->
+        case compile(template) do
+          {:error, _reason} = error -> error
+          {:compiled_template, compiled_template} -> {expr, compiled_template}
+        end
+      end)
+
+    case Enum.find(compiled, &match?({:error, _}, &1)) do
+      {:error, _reason} = error -> error
+      nil -> {:ok, compiled}
+    end
+  end
+
+  defp compile_preserving_errors(template) do
+    case compile(template) do
+      {:error, _reason} = error -> error
+      {:compiled_template, compiled} -> {:ok, compiled}
+    end
   end
 
   def conditional_expr(:if, expr, sub_template) do

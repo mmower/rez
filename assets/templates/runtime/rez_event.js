@@ -25,7 +25,7 @@ class RezEvent {
 
   /**
    * @function constructor
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @description Creates a new event response with default values
    */
   constructor() {
@@ -42,7 +42,7 @@ class RezEvent {
 
   /**
    * @function params
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {object} the parameters object associated with this event
    */
   get params() {
@@ -51,7 +51,7 @@ class RezEvent {
 
   /**
    * @function flashMessages
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {string[]} array of flash messages to display
    */
   get flashMessages() {
@@ -60,7 +60,7 @@ class RezEvent {
 
   /**
    * @function cardId
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {string|null} ID of the card to play, or null if no card action
    */
   get cardId() {
@@ -69,7 +69,7 @@ class RezEvent {
 
   /**
    * @function sceneId
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {string|null} ID of the scene for scene transition, or null if no scene action
    */
   get sceneId() {
@@ -78,7 +78,7 @@ class RezEvent {
 
   /**
    * @function sceneChangeEvent
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should trigger a scene change
    */
   get sceneChangeEvent() {
@@ -87,7 +87,7 @@ class RezEvent {
 
   /**
    * @function sceneInterludeEvent
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should trigger a scene interlude
    */
   get sceneInterludeEvent() {
@@ -96,7 +96,7 @@ class RezEvent {
 
   /**
    * @function sceneResumeEvent
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should resume the previous scene
    */
   get sceneResumeEvent() {
@@ -105,7 +105,7 @@ class RezEvent {
 
   /**
    * @function renderEvent
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should trigger a view render
    */
   get renderEvent() {
@@ -114,7 +114,7 @@ class RezEvent {
 
   /**
    * @function errorMessage
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {string|null} error message if this is an error event, or null
    */
   get errorMessage() {
@@ -123,7 +123,7 @@ class RezEvent {
 
   /**
    * @function setParam
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} name - parameter name
    * @param {*} value - parameter value
    * @returns {RezEvent} this event for method chaining
@@ -136,7 +136,7 @@ class RezEvent {
 
   /**
    * @function setParams
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {object} params - parameters object to set
    * @returns {RezEvent} this event for method chaining
    * @description Replaces the entire parameters object for this event
@@ -148,7 +148,7 @@ class RezEvent {
 
   /**
    * @function hasFlash
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event has flash messages to display
    */
   get hasFlash() {
@@ -157,7 +157,7 @@ class RezEvent {
 
   /**
    * @function flash
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} message - message to display as a flash
    * @returns {RezEvent} this event for method chaining
    * @description Adds a flash message to be displayed to the user
@@ -169,7 +169,7 @@ class RezEvent {
 
   /**
    * @function shouldPlayCard
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should play a card
    */
   get shouldPlayCard() {
@@ -178,7 +178,7 @@ class RezEvent {
 
   /**
    * @function playCard
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} cardId - ID of the card to play
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event to play the specified card
@@ -190,7 +190,7 @@ class RezEvent {
 
   /**
    * @function shouldRender
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should trigger a view render
    */
   get shouldRender() {
@@ -199,7 +199,7 @@ class RezEvent {
 
   /**
    * @function render
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event to trigger a view render
    */
@@ -210,7 +210,7 @@ class RezEvent {
 
   /**
    * @function shouldChangeScene
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should change to a new scene
    */
   get shouldChangeScene() {
@@ -219,7 +219,7 @@ class RezEvent {
 
   /**
    * @function sceneChange
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} sceneId - ID of the scene to change to
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event to change to the specified scene
@@ -235,7 +235,7 @@ class RezEvent {
 
   /**
    * @function shouldInterludeScene
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should start a scene interlude
    */
   get shouldInterludeScene() {
@@ -244,7 +244,7 @@ class RezEvent {
 
   /**
    * @function sceneInterlude
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} sceneId - ID of the scene to interlude with
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event to start an interlude with the specified scene
@@ -260,7 +260,7 @@ class RezEvent {
 
   /**
    * @function shouldResumeScene
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this event should resume the previous scene
    */
   get shouldResumeScene() {
@@ -269,7 +269,7 @@ class RezEvent {
 
   /**
    * @function sceneResume
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event to resume the previous scene from the scene stack
    */
@@ -283,7 +283,7 @@ class RezEvent {
 
   /**
    * @function isError
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {boolean} true if this is an error event
    */
   get isError() {
@@ -292,7 +292,7 @@ class RezEvent {
 
   /**
    * @function error
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @param {string} message - error message
    * @returns {RezEvent} this event for method chaining
    * @description Sets this event as an error with the specified message
@@ -304,7 +304,7 @@ class RezEvent {
 
   /**
    * @function noop
-   * @memberof RezEvent
+   * @memberof RezEvent#
    * @returns {RezEvent} this event for method chaining
    * @description No-operation method for method chaining when no action is needed
    */
@@ -443,7 +443,7 @@ class RezEventProcessor {
 
   /**
    * @function constructor
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {RezGame} game - the game instance this processor belongs to
    * @description Creates a new event processor for the specified game
    */
@@ -453,7 +453,7 @@ class RezEventProcessor {
 
   /**
    * @function game
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @returns {RezGame} the game instance
    */
   get game() {
@@ -462,7 +462,7 @@ class RezEventProcessor {
 
   /**
    * @function scene
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @returns {RezScene} the current scene
    */
   get scene() {
@@ -471,7 +471,7 @@ class RezEventProcessor {
 
   /**
    * @function card
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @returns {RezCard} the current card
    */
   get card() {
@@ -480,7 +480,7 @@ class RezEventProcessor {
 
   /**
    * @function dispatchResponse
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {RezEvent} response - the event response to process
    * @description Processes a RezEvent response by executing the actions it specifies:
    * flash messages, scene changes/interludes/resumes, card plays, view renders, and error handling.
@@ -520,7 +520,7 @@ class RezEventProcessor {
 
   /**
    * @function beforeEventProcessing
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the browser event to pre-process
    * @returns {Event} the processed event
    * @description Runs the event through all enabled systems' before_event handlers.
@@ -542,7 +542,7 @@ class RezEventProcessor {
 
   /**
    * @function afterEventProcessing
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the original browser event
    * @param {*} result - the result from event processing
    * @returns {*} the processed result
@@ -565,7 +565,7 @@ class RezEventProcessor {
 
   /**
    * @function raiseTimerEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {RezTimer} timer - the timer that fired
    * @returns {*} the result of processing the timer event
    * @description Creates and processes a custom timer event
@@ -577,7 +577,7 @@ class RezEventProcessor {
 
   /**
    * @function raiseKeyBindingEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} event_name - the name of the key binding event
    * @returns {*} the result of processing the key binding event
    * @description Creates and processes a custom key binding event
@@ -589,7 +589,7 @@ class RezEventProcessor {
 
   /**
    * @function isAutoUndoEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the event to check
    * @returns {boolean} true if this event type should trigger automatic undo recording
    * @description Determines if an event should automatically record undo state
@@ -601,7 +601,7 @@ class RezEventProcessor {
 
   /**
    * @function handleBrowserEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the browser event to handle
    * @returns {*} the result of processing the event
    * @description Main event handler that processes browser events. Handles undo recording,
@@ -636,7 +636,7 @@ class RezEventProcessor {
 
   /**
    * @function decodeEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the browser event to decode
    * @returns {Array} [eventName, target, params] decoded from the event's dataset
    * @description Extracts event name, target, and parameters from an element's dataset attributes
@@ -651,7 +651,7 @@ class RezEventProcessor {
 
   /**
    * @function handleTimerEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {CustomEvent} evt - the timer event with timer details
    * @returns {*} the result of handling the timer event
    * @description Handles timer events by routing them to custom event handlers
@@ -668,7 +668,7 @@ class RezEventProcessor {
 
   /**
    * @function handleKeyBindingEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {CustomEvent} evt - the key binding event with event name details
    * @returns {*} the result of handling the key binding event
    * @description Handles key binding events by routing them to custom event handlers
@@ -684,7 +684,7 @@ class RezEventProcessor {
 
   /**
    * @function handleBrowserClickEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the click event
    * @returns {*} the result of handling the click event
    * @description Handles browser click events by decoding the event data and routing to appropriate handlers.
@@ -715,7 +715,7 @@ class RezEventProcessor {
 
   /**
    * @function getReceiverEventHandler
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {*} receiver - the object to check for event handlers
    * @param {string} eventname - the name of the event to find a handler for
    * @returns {Function|null} the event handler function or null if not found
@@ -732,7 +732,7 @@ class RezEventProcessor {
 
   /**
    * @function getEventHandler
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} eventName - the name of the event to find a handler for
    * @returns {Array} [receiver, handler] pair where receiver is the object that handles the event
    * @description Finds an event handler by checking card, scene, and game in that order.
@@ -746,7 +746,7 @@ class RezEventProcessor {
 
   /**
    * @function handleCustomEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} eventName - the name of the custom event
    * @param {object} params - parameters to pass to the event handler
    * @returns {RezEvent} the result of the event handler or an error event
@@ -766,7 +766,7 @@ class RezEventProcessor {
 
   /**
    * @function handleCardEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} target - ID of the card to play
    * @param {object} params - parameters to pass to the card
    * @returns {RezEvent} event that plays the specified card
@@ -781,7 +781,7 @@ class RezEventProcessor {
 
   /**
    * @function handleSwitchEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} target - ID of the scene to switch to
    * @param {object} params - parameters to pass to the scene
    * @returns {RezEvent} event that changes to the specified scene
@@ -796,7 +796,7 @@ class RezEventProcessor {
 
   /**
    * @function handleInterludeEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {string} target - ID of the scene to interlude with
    * @param {object} params - parameters to pass to the scene
    * @returns {RezEvent} event that starts an interlude with the specified scene
@@ -811,7 +811,7 @@ class RezEventProcessor {
 
   /**
    * @function handleResumeEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {object} params - parameters to pass to the resumed scene
    * @returns {RezEvent} event that resumes the previous scene
    * @description Handles built-in resume events that return to the previous scene
@@ -826,7 +826,7 @@ class RezEventProcessor {
 
   /**
    * @function handleBrowserInputEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the input event
    * @returns {RezEvent} the result of the card's input event handler
    * @description Handles browser input events by finding the card that contains the input element
@@ -835,23 +835,29 @@ class RezEventProcessor {
    */
   handleBrowserInputEvent(evt) {
     console.log("Handle input event");
-    const card_div = evt.target.closest("div.rez-active-card div[data-card]");
-    if(!card_div) {
-      throw new Error(`Cannot find div for input |${evt.target.id}|`);
+
+    // Try to find the containing card from the DOM (handles blocks/nested cards)
+    const cardDiv = evt.target.closest("div[data-card]");
+    if(cardDiv) {
+      const cardId = cardDiv.dataset.card;
+      const card = $(cardId);
+      const handler = this.getReceiverEventHandler(card, "input");
+      if(handler) {
+        return handler(card, {evt: evt}) || RezEvent.noop();
+      }
     }
 
-    const cardId = card_div.dataset.card;
-    if(!cardId) {
-      throw new Error(`Cannot get card id for input |${evt.target.id}|`);
+    // Fall back to bubbling mechanism (scene → game)
+    const [receiver, handler] = this.getEventHandler("input");
+    if(!handler) {
+      return RezEvent.noop();
     }
-
-    const card = $(cardId);
-    return card.runEvent("input", { evt: evt }) || RezEvent.noop();
+    return handler(receiver, {evt: evt}) || RezEvent.noop();
   }
 
   /**
    * @function handleBrowserSubmitEvent
-   * @memberof RezEventProcessor
+   * @memberof RezEventProcessor#
    * @param {Event} evt - the submit event
    * @returns {RezEvent} the result of the card's form event handler
    * @description Handles browser form submit events by finding the card that contains the form
@@ -860,19 +866,27 @@ class RezEventProcessor {
    */
   handleBrowserSubmitEvent(evt) {
     const formName = evt.target.getAttribute("name");
-    if (!formName) {
+    if(!formName) {
       throw new Error("Cannot get form name!");
     }
 
-    const cardDiv = evt.target.closest("div.rez-active-card div[data-card]");
-    if (!cardDiv) {
-      throw new Error(`Cannot find div for form: |${formName}|`);
+    // Try to find the containing card from the DOM (handles blocks/nested cards)
+    const cardDiv = evt.target.closest("div[data-card]");
+    if(cardDiv) {
+      const cardId = cardDiv.dataset.card;
+      const card = $(cardId);
+      const handler = this.getReceiverEventHandler(card, formName);
+      if(handler) {
+        return handler(card, {form: evt.target}) || RezEvent.noop();
+      }
     }
 
-    const cardId = cardDiv.dataset.card;
-    const card = $(cardId);
-
-    return card.runEvent(formName, { form: evt.target }) || RezEvent.noop();
+    // Fall back to bubbling mechanism (scene → game)
+    const [receiver, handler] = this.getEventHandler(formName);
+    if(!handler) {
+      return RezEvent.noop();
+    }
+    return handler(receiver, {form: evt.target}) || RezEvent.noop();
   }
 }
 

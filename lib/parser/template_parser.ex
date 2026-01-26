@@ -100,8 +100,7 @@ defmodule Rez.Parser.TemplateParser do
         ast: fn [expr, body] ->
           case TemplateParser.parse(body) do
             {:error, errors} ->
-              Enum.each(errors, fn error -> IO.inspect(error) end)
-              {:error, "Cannot compile sub-template"}
+              {:error, format_sub_template_errors("$if(#{expr}) -> {% ... %}", errors)}
 
             source_template ->
               if expr == "" do
@@ -165,11 +164,19 @@ defmodule Rez.Parser.TemplateParser do
         ],
         ast: fn
           [iter_id, bound_path, content] ->
-            {:foreach, iter_id, bound_path, TemplateParser.parse(content)}
+            case TemplateParser.parse(content) do
+              {:error, errors} ->
+                {:error, format_sub_template_errors("$foreach(#{iter_id}: ...) body", errors)}
+
+              parsed_content ->
+                {:foreach, iter_id, bound_path, parsed_content}
+            end
 
           [iter_id, bound_path, content, [divider]] ->
-            {:foreach, iter_id, bound_path, TemplateParser.parse(content),
-             TemplateParser.parse(divider)}
+            with {:ok, parsed_content} <- wrap_parse_result(TemplateParser.parse(content), "$foreach(#{iter_id}: ...) body"),
+                 {:ok, parsed_divider} <- wrap_parse_result(TemplateParser.parse(divider), "$foreach(#{iter_id}: ...) divider") do
+              {:foreach, iter_id, bound_path, parsed_content, parsed_divider}
+            end
         end
       )
     )
@@ -379,7 +386,13 @@ defmodule Rez.Parser.TemplateParser do
           )
         ],
         ast: fn [[tag_name, attrs], content] ->
-          {:user_component, tag_name, attrs, TemplateParser.parse(content)}
+          case TemplateParser.parse(content) do
+            {:error, errors} ->
+              {:error, format_sub_template_errors("<.#{tag_name}> content", errors)}
+
+            parsed_content ->
+              {:user_component, tag_name, attrs, parsed_content}
+          end
         end
       )
     )
@@ -531,5 +544,32 @@ defmodule Rez.Parser.TemplateParser do
       %{status: {:error, error}} ->
         {:error, error}
     end
+  end
+
+  defp wrap_parse_result({:error, errors}, context) do
+    {:error, format_sub_template_errors(context, errors)}
+  end
+
+  defp wrap_parse_result(parsed, _context), do: {:ok, parsed}
+
+  defp format_sub_template_errors(context, errors) when is_list(errors) do
+    error_details =
+      Enum.map_join(errors, "; ", fn
+        {error_type, {line, col}, message} ->
+          "#{error_type} at line #{line}, col #{col}: #{message}"
+
+        other ->
+          inspect(other)
+      end)
+
+    "Error in #{context}: #{error_details}"
+  end
+
+  defp format_sub_template_errors(context, error) when is_binary(error) do
+    "Error in #{context}: #{error}"
+  end
+
+  defp format_sub_template_errors(context, error) do
+    "Error in #{context}: #{inspect(error)}"
   end
 end

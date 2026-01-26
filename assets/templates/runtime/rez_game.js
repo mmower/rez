@@ -2,6 +2,28 @@
 // Game
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezGame
+ * @extends RezBasicObject
+ * @description The central singleton that manages the entire game runtime. RezGame is
+ * automatically instantiated with id "game" and is accessible globally via `$game`.
+ *
+ * RezGame provides:
+ * - **Object Registry**: All game objects are registered here and accessible via `$()` or
+ *   `getGameObject()`. Objects are indexed by tags and attributes for fast lookup.
+ * - **Scene Management**: Controls scene transitions (`startSceneWithId`), interludes
+ *   (`interludeSceneWithId`), and resumption (`resumePrevScene`) with a scene stack.
+ * - **View System**: Manages the RezView that renders content to the DOM, including
+ *   layout management and bound control updates.
+ * - **Persistence**: Save/load functionality via `save()` and `load()` methods that
+ *   serialize/deserialize all changed game object attributes.
+ * - **Undo System**: Tracks attribute changes and object creation/deletion for undo support.
+ * - **Flash Messages**: Temporary messages displayed on the next render cycle.
+ * - **Systems**: Manages enabled RezSystem objects that hook into game events.
+ *
+ * The game is started by calling `start(containerId)` which initializes all objects,
+ * builds the view, and starts the initial scene.
+ */
 class RezGame extends RezBasicObject {
   #containerId;
   #undoManager;
@@ -95,7 +117,7 @@ class RezGame extends RezBasicObject {
 
    /**
    * @function save
-   * @memberof RezGame
+   * @memberof RezGame#
    * @description triggers a download of the game archive
    *
    * This uses a hidden link with a 'download' attribute. The link is "clicked"
@@ -128,7 +150,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function load
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} source JSON format source archive
    * @description given a JSON source archive restore the game state to what was archived.
    */
@@ -171,7 +193,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getObjectsWithTag
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} tag
    * @returns {array} array of indexed game-objects that have the specified tag
    * @description returns all game-objects tagged with the specified tag
@@ -248,7 +270,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function indexObjectForTag
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} obj reference to a game-object
    * @param {string} tag
    * @description applies the specified tag to the spectified game-object
@@ -265,7 +287,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function unindexObjectForTag
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} obj reference to a game-object
    * @param {string} tag a tag to remove
    * @description removes the specified tag from the specified game-object
@@ -283,7 +305,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function addToTagIndex
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} obj game-object
    * @description indexes the specified game-object for all tags in it's tags attribute
    */
@@ -294,7 +316,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function removeFromTagIndex
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} obj game-object
    * @description unindexes the specified object from all tags in its tags attribute
    */
@@ -305,7 +327,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function addGameObject
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} obj game-object
    * @description adds an object representing a game element to the game world and automatically tagging it by its attributes
   */
@@ -340,7 +362,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getGameObject
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string|object} idOrRef either a string ID or a {$ref: "id"} object
    * @param {boolean} should_throw (default: true)
    * @returns {basic_object|undefined} game-object or undefined
@@ -365,7 +387,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getTypedGameObject
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} id id of game-object
    * @param {string} type game object type (e.g. 'actor' or 'item')
    * @param {boolean} should_throw (default: true)
@@ -385,7 +407,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function elementAttributeHasChanged
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} elem reference to game-object
    * @param {string} attr_name name of the attribute whose value has changed
    * @param {*} old_value value of the attribute before the change
@@ -404,7 +426,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getRelationship
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} source_id id of game-object that holds the relationship
    * @param {string} target_id id of game-object to which the relationship refers
    * @returns {RezRelationship|null} the relationship object for this relationship
@@ -433,7 +455,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function filterObjects
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {function} pred predicate to filter with
    * @returns {array} game-objects passing the filter
    * @description filters all game-objects returning those for which the pred filter returns true
@@ -444,7 +466,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getAll
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} target_type (optional) a specific game object type (e.g. 'actor', 'item')
    * @returns {array} game-objects with the specified type
    * @description filters all game-objects returning those with the specified type
@@ -459,7 +481,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function startSceneWithId
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} scene_id id of scene game-object
    * @param {object} params data to pass to the new scene
    * @description finish the current scene and start the new scene with the given id
@@ -486,7 +508,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function interludeSceneWithId
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} scene_id
    * @param {object} params data to pass to the new scene
    * @description interrupts the current scene, pushing it to the scene stack, and then starts the new scene with the given id
@@ -511,7 +533,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function resumePrevScene
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} params data to pass back to the previous scene
    * @description finishes the current scene, then pops the previous scene from the scene stack and resumes it
    */
@@ -546,7 +568,7 @@ class RezGame extends RezBasicObject {
    * Informs the view of new content to be rendered. It is left up to the view
    * & its layout to determine how this affects any existing content of the view.
    *
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {Object} content block to be added to the view
    */
   setViewContent(content) {
@@ -561,7 +583,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function updateView
-   * @memberof RezGame
+   * @memberof RezGame#
    * @description re-renders the view calling the 'before_render' and 'after_render'
    * game event handlers
    */
@@ -579,7 +601,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function canResume
-   * @memberof RezGame
+   * @memberof RezGame#
    * @returns {boolean}
    * @description returns true if there is at least one scene in the scene stack
    */
@@ -589,7 +611,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function pushScene
-   * @memberof RezGame
+   * @memberof RezGame#
    * @description interrupts the current scene and puts it on the scene stack
    */
   pushScene() {
@@ -601,7 +623,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function popScene
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {object} params data to be passed to the scene being resumed
    * @description removes the top object of the scene stack and makes it the current scene
    */
@@ -613,7 +635,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function setViewLayout
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {*} layout ???
    * @description ???
    */
@@ -623,7 +645,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function start
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} container_id id of the HTML element into which game content is rendered
    * @description called automatically from the index.html this runs init on the registered game
    * objects then starts the view and starts the initial scene
@@ -670,7 +692,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function getEnabledSystems
-   * @memberof RezGame
+   * @memberof RezGame#
    * @returns {array} all 'system' game-objects with attribute enabled=true
    */
   getEnabledSystems() {
@@ -681,7 +703,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function addFlashMessage
-   * @memberof RezGame
+   * @memberof RezGame#
    * @param {string} message
    * @description adds the given message to the flash to be displayed on the next render
    */
@@ -691,7 +713,7 @@ class RezGame extends RezBasicObject {
 
   /**
    * @function clearFlashMessages
-   * @memberof RezGame
+   * @memberof RezGame#
    * @description empties the flash messages
    */
   clearFlashMessages() {

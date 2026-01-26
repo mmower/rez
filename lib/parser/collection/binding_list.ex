@@ -23,6 +23,7 @@ defmodule Rez.Parser.Collection.BindingList do
   import Rez.Parser.ValueParsers,
     only: [
       string_value: 0,
+      keyword_value: 0,
       number_value: 0,
       bool_value: 0,
       elem_ref_value: 0,
@@ -91,6 +92,7 @@ defmodule Rez.Parser.Collection.BindingList do
           string_value(),
           number_value(),
           bool_value(),
+          keyword_value(),
           lazy(list())
         ],
         label: "bound-literal",

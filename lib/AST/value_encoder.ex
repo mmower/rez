@@ -91,15 +91,14 @@ defmodule Rez.AST.ValueEncoder do
     {_, entries} =
       Enum.reduce(pairs, {0, []}, fn {value, freq}, {last_p, entries} ->
         p = freq / total + last_p
-        {p, [{:list, [value, {:number, p}]} | entries]}
+        {p, [encode_ptable_entry(value, p) | entries]}
       end)
 
-    entries =
-      entries
-      |> Enum.reverse()
-      |> encode_list()
+    # Build proper Elixir data structure, encode to JSON string,
+    # then wrap as a JavaScript string literal
+    json_string = entries |> Enum.reverse() |> Poison.encode!()
 
-    "{ptable: #{Poison.encode!(entries)}}"
+    ~s|{ptable: "#{String.replace(json_string, "\"", "\\\"")}"}|
   end
 
   def encode_value({:elem_ref, r}) do
@@ -144,6 +143,19 @@ defmodule Rez.AST.ValueEncoder do
   """
   def encode_value({:compiled_template, template_fn}) do
     ~s|{template: #{template_fn}}|
+  end
+
+  # Encode a ptable entry as a JSON-safe structure (list of [ref_map, probability])
+  defp encode_ptable_entry({:elem_ref, ref_id}, p) do
+    [%{"$ref" => ref_id}, p]
+  end
+
+  defp encode_ptable_entry({:number, n}, p) do
+    [n, p]
+  end
+
+  defp encode_ptable_entry({:string, s}, p) do
+    [s, p]
   end
 
   defp encode_list(l) do

@@ -2,6 +2,39 @@
 // Inventory
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezInventory
+ * @extends RezBasicObject
+ * @description Manages a collection of slots that can hold items.
+ *
+ * An inventory is a container system that organizes items into typed slots.
+ * Each slot can accept items of a specific type and may have capacity limits.
+ * Inventories can be owned by actors, enabling equipment systems with effects.
+ *
+ * Key features:
+ * - **Typed Slots**: Each slot accepts only items of a matching type
+ * - **Capacity**: Slots can have size limits based on item sizes
+ * - **Effects**: Items can apply effects to the inventory's owner when inserted
+ * - **Events**: Triggers events on insert/remove for items, slots, and inventory
+ *
+ * Slots are defined as references to `@slot` elements. Each slot has an `accessor`
+ * attribute that determines the attribute name used to store its contents
+ * (e.g., a slot with accessor "weapon" stores items in `weapon_contents`).
+ *
+ * @example
+ * // Define in Rez
+ * @inventory player_inv {
+ *   slots: [#slot_weapon, #slot_armor]
+ *   initial_weapon: [#item_sword]
+ * }
+ *
+ * @example
+ * // Add an item at runtime
+ * const inv = $("player_inv");
+ * if (inv.canAddItemForSlot("slot_weapon", "item_axe").result) {
+ *   inv.addItemToSlot("slot_weapon", "item_axe");
+ * }
+ */
 class RezInventory extends RezBasicObject {
   constructor(id, attributes) {
     super("inventory", id, attributes);

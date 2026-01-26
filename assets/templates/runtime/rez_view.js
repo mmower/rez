@@ -1,7 +1,28 @@
 //-----------------------------------------------------------------------------
-// Templates use this for conditionals
+// Expression Evaluation
 //-----------------------------------------------------------------------------
 
+/**
+ * @function evaluateExpression
+ * @description Evaluates a JavaScript expression string with access to provided bindings.
+ *
+ * Creates a sandboxed function that can access binding values by name,
+ * then executes it with those values. Used by templates for conditionals
+ * and dynamic expressions.
+ *
+ * @param {string} expression - The JavaScript expression to evaluate
+ * @param {Object} bindings - Object mapping variable names to their values
+ * @param {boolean} [rval=true] - If true, wraps expression in return statement
+ * @returns {*} The result of evaluating the expression
+ *
+ * @example
+ * // Evaluate a conditional
+ * evaluateExpression("score > 10", { score: 15 }); // returns true
+ *
+ * @example
+ * // Evaluate without return value (for side effects)
+ * evaluateExpression("console.log(name)", { name: "Player" }, false);
+ */
 function evaluateExpression(expression, bindings, rval = true) {
   const proxy = new Proxy(
     {},
@@ -32,20 +53,47 @@ function evaluateExpression(expression, bindings, rval = true) {
 
 //-----------------------------------------------------------------------------
 // Block
-//
-// Special $ attributes recognized by RezBlock:
-//   $debug_bindings  - When true, logs binding information to console during render
-//   $suppress_wrapper - When true, omits the wrapper <div> around block content
-//   $parent          - Reference to the parent source element in the hierarchy
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezBlock
+ * @description Represents a renderable block of content within the view hierarchy.
+ *
+ * A block wraps a source element (typically a card or other game element)
+ * and handles:
+ * - Resolving data bindings from the source element
+ * - Rendering the source's template with bound values
+ * - Managing nested blocks
+ * - Generating HTML output with appropriate CSS classes
+ *
+ * Blocks can be nested within layouts to create complex view hierarchies.
+ * Each block maintains a reference to its parent block, enabling bindings
+ * to flow down through the hierarchy.
+ *
+ * Special $ attributes recognized by RezBlock:
+ * - `$debug_bindings` - When true, logs binding information to console during render
+ * - `$suppress_wrapper` - When true, omits the wrapper `<div>` around block content
+ * - `$parent` - Reference to the parent source element in the hierarchy
+ */
 class RezBlock {
+  /** @type {RezBlock|null} */
   #parentBlock;
+  /** @type {string} */
   #blockType;
+  /** @type {Object} */
   #source;
+  /** @type {boolean} */
   #flipped;
+  /** @type {Object} */
   #params;
 
+  /**
+   * Creates a new RezBlock.
+   *
+   * @param {string} blockType - The type of block ("block" or "card")
+   * @param {Object} source - The source element to render (e.g., a RezCard)
+   * @param {Object} [params={}] - Additional parameters passed to the template
+   */
   constructor(blockType, source, params = {}) {
     this.#parentBlock = null;
     this.#blockType = blockType;
@@ -54,6 +102,10 @@ class RezBlock {
     this.#params = params;
   }
 
+  /**
+   * The parent block in the view hierarchy.
+   * @type {RezBlock|null}
+   */
   get parentBlock() {
     return this.#parentBlock;
   }
@@ -62,6 +114,10 @@ class RezBlock {
     this.#parentBlock = block;
   }
 
+  /**
+   * The type of this block ("block" or "card").
+   * @type {string}
+   */
   get blockType() {
     return this.#blockType;
   }
@@ -70,6 +126,10 @@ class RezBlock {
     this.#blockType = type;
   }
 
+  /**
+   * The source element being rendered.
+   * @type {Object}
+   */
   get source() {
     return this.#source;
   }
@@ -78,6 +138,10 @@ class RezBlock {
     this.#source = source;
   }
 
+  /**
+   * Whether this block is showing its flipped (back) side.
+   * @type {boolean}
+   */
   get flipped() {
     return this.#flipped;
   }
@@ -86,6 +150,10 @@ class RezBlock {
     this.#flipped = is_flipped;
   }
 
+  /**
+   * Additional parameters passed to the template.
+   * @type {Object}
+   */
   get params() {
     return this.#params;
   }
@@ -94,15 +162,36 @@ class RezBlock {
     this.#params = params;
   }
 
+  /**
+   * Resolves an element ID to its corresponding game element.
+   *
+   * @param {string} id - The element ID to resolve
+   * @returns {Object} The resolved game element
+   */
   instantiateIdBinding(id) {
     return $(id);
   }
 
+  /**
+   * Resolves a property reference to its value.
+   *
+   * @param {Object} ref - Property reference with elem_id and attr_name
+   * @param {string} ref.elem_id - The element ID
+   * @param {string} ref.attr_name - The attribute name to read
+   * @returns {*} The attribute value
+   */
   instantiatePropertyBinding(ref) {
     const target = $(ref.elem_id);
     return target[ref.attr_name];
   }
 
+  /**
+   * Invokes a function binding with the current context.
+   *
+   * @param {Object} bindings - Current bindings object
+   * @param {Function} f - The function to invoke
+   * @returns {*} The function's return value
+   */
   instantiateFunctionBinding(bindings, f) {
     if (this.parentBlock) {
       return f(this, this.parentBlock.source, bindings);
@@ -111,14 +200,41 @@ class RezBlock {
     }
   }
 
+  /**
+   * Resolves a binding path function against the source.
+   *
+   * @param {Function} p - Path function to invoke
+   * @returns {*} The resolved value
+   */
   instantiateBindingPath(p) {
     return p(this.source);
   }
 
+  /**
+   * Resolves a path binding function with current bindings.
+   *
+   * @param {Function} path_fn - Path function to invoke
+   * @param {Object} bindings - Current bindings object
+   * @returns {*} The resolved value
+   */
   instantiatePathBinding(path_fn, bindings) {
     return path_fn(bindings);
   }
 
+  /**
+   * Resolves a binding object to its actual value.
+   *
+   * Handles literal values directly, otherwise delegates to extractBindingValue
+   * for source-based resolution.
+   *
+   * @param {Object} bindings - Current bindings object
+   * @param {Object} bindingObject - The binding specification
+   * @param {*} [bindingObject.literal] - A literal value (used directly if present)
+   * @param {*} [bindingObject.source] - Source for value resolution
+   * @param {boolean} [bindingObject.deref] - Whether to dereference the result
+   * @returns {*} The resolved binding value
+   * @throws {Error} If source is undefined or null when no literal is provided
+   */
   resolveBindingValue(bindings, bindingObject) {
     const { source, literal, deref } = bindingObject;
 
@@ -136,6 +252,21 @@ class RezBlock {
     return this.extractBindingValue(bindings, source, deref);
   }
 
+  /**
+   * Extracts a value from a binding source.
+   *
+   * Supports multiple source types:
+   * - String: Treated as an element ID
+   * - Element reference ({$ref: "id"}): Resolved to the element
+   * - Function: Invoked with block context
+   * - Object with binding function: Path-based resolution
+   *
+   * @param {Object} bindings - Current bindings object
+   * @param {string|Function|Object} source - The binding source
+   * @param {boolean} [deref=false] - Whether to dereference the result
+   * @returns {*} The extracted value
+   * @throws {Error} If source type is not recognized
+   */
   extractBindingValue(bindings, source, deref = false) {
     let value;
     if (typeof source === "string") {
@@ -160,6 +291,14 @@ class RezBlock {
     return value;
   }
 
+  /**
+   * Dereferences element references to their actual elements.
+   *
+   * Handles both single values and arrays of values.
+   *
+   * @param {string|Object|Array} value - Value(s) to dereference
+   * @returns {Object|Array<Object>} The dereferenced element(s)
+   */
   dereferenceBoundValue(value) {
     if (Array.isArray(value)) {
       return value.map(ref => $(ref));  // $(ref) now handles both string and {$ref: "id"} formats
@@ -168,6 +307,15 @@ class RezBlock {
     return $(value);  // $(value) now handles both string and {$ref: "id"} formats
   }
 
+  /**
+   * Builds the bindings object from the source element's bindings attribute.
+   *
+   * Processes each binding specification, resolving sources to values and
+   * adding them to the bindings object with their specified prefixes.
+   *
+   * @param {Object} initialBindings - Initial bindings to extend
+   * @returns {Object} The complete bindings object
+   */
   getBindings(initialBindings) {
     const sourceBindings = this.source.getAttributeValue("bindings", []);
 
@@ -189,6 +337,17 @@ class RezBlock {
     }, initialBindings);
   }
 
+  /**
+   * Creates the complete value bindings for template rendering.
+   *
+   * Combines parent bindings with this block's bindings, adding:
+   * - `block`: Reference to this block
+   * - `params`: The params object
+   * - `source`: The source element
+   * - Source's bindAs name: The source element (aliased)
+   *
+   * @returns {Object} Complete bindings object for template rendering
+   */
   bindValues() {
     const initialBindings = {
       ...this.parentBindings(),
@@ -201,9 +360,14 @@ class RezBlock {
     return this.getBindings(initialBindings);
   }
 
-  // blocks are a binding list of other card elements that we
-  // want to sub-render and make available to the template of this
-  // card. The result is a map of key pairs {binding_name, block_render}
+  /**
+   * Retrieves and instantiates nested blocks from the source's blocks attribute.
+   *
+   * Each block specification defines a binding name and source element.
+   * The blocks are instantiated as RezBlock instances with this block as parent.
+   *
+   * @returns {Object} Map of binding names to RezBlock instances
+   */
   getBlocks() {
     const blocks = this.source.getAttributeValue("blocks", []);
     return blocks.reduce((blockMappings, item) => {
@@ -218,22 +382,42 @@ class RezBlock {
     }, {});
   }
 
+  /**
+   * Renders all nested blocks to HTML.
+   *
+   * @returns {Object} Map of binding names to rendered HTML strings
+   */
   bindBlocks() {
     return this.getBlocks().objMap((block) => block.html());
   }
 
+  /**
+   * Gets the view template function for this block.
+   *
+   * @returns {Function} Template function that accepts bindings and returns HTML
+   */
   getViewTemplate() {
     return this.source.getViewTemplate(this.flipped);
   }
 
+  /**
+   * Gets bindings from the parent block, if any.
+   *
+   * @returns {Object} Parent bindings or empty object
+   */
   parentBindings() {
     if (this.parentBlock) {
-      return this.parentBlock.bindings();
+      return this.parentBlock.bindValues();
     } else {
       return {};
     }
   }
 
+  /**
+   * Computes complete bindings including values and rendered blocks.
+   *
+   * @returns {Object} Complete bindings object
+   */
   bindings() {
     const bindings = {
       ...this.bindValues(),
@@ -243,12 +427,23 @@ class RezBlock {
     return bindings;
   }
 
+  /**
+   * Renders the block content using its template and bindings.
+   *
+   * @returns {string} Rendered HTML content
+   */
   renderBlock() {
     const template = this.getViewTemplate();
     const bindings = this.bindings();
     return template(bindings);
   }
 
+  /**
+   * Gets the CSS classes for this block's wrapper element.
+   *
+   * @returns {string} Space-separated CSS class names
+   * @throws {Error} If block type is not recognized
+   */
   css_classes() {
     if (this.blockType == "block") {
       return "rez-block";
@@ -263,6 +458,13 @@ class RezBlock {
     }
   }
 
+  /**
+   * Renders this block to HTML with its wrapper div.
+   *
+   * If the source has `$suppress_wrapper` set, returns content without wrapper.
+   *
+   * @returns {string} Complete HTML for this block
+   */
   html() {
     const blockContent = this.renderBlock();
 
@@ -273,6 +475,11 @@ class RezBlock {
     }
   }
 
+  /**
+   * Creates a copy of this block.
+   *
+   * @returns {RezBlock} A new block with the same properties
+   */
   copy() {
     const copy = new RezBlock(this.blockType, this.source, this.params);
     copy.parentBlock = this.parentBlock;
@@ -287,23 +494,73 @@ window.Rez.RezBlock = RezBlock;
 // Layout
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezLayout
+ * @extends RezBlock
+ * @abstract
+ * @description Abstract base class for layout blocks.
+ *
+ * A layout is a special type of block that can contain other blocks as content.
+ * Layouts have their own template that wraps the rendered content of their
+ * child blocks.
+ *
+ * Subclasses must implement:
+ * - `addContent(block)`: Add a content block
+ * - `renderContents()`: Render all content blocks to HTML
+ * - `bindAs()`: Return the binding name for this layout
+ */
 class RezLayout extends RezBlock {
+  /**
+   * Creates a new RezLayout.
+   *
+   * @param {string} blockType - The type of layout
+   * @param {Object} source - The source element for this layout
+   */
   constructor(blockType, source) {
     super(blockType, source);
   }
 
+  /**
+   * Adds a content block to this layout.
+   *
+   * @abstract
+   * @param {RezBlock} block - The block to add
+   * @throws {Error} Must be implemented by subclass
+   */
   addContent(block) {
     throw new Error("Must implement addContent(block)");
   }
 
+  /**
+   * Renders all content blocks to HTML.
+   *
+   * @abstract
+   * @returns {string} Rendered content HTML
+   * @throws {Error} Must be implemented by subclass
+   */
   renderContents() {
     throw new Error("Must implement renderContents()");
   }
 
+  /**
+   * Returns the binding name for this layout type.
+   *
+   * @abstract
+   * @returns {string} The binding name
+   * @throws {Error} Must be implemented by subclass
+   */
   bindAs() {
     throw new Error("Must implement bindAs()");
   }
 
+  /**
+   * Renders this layout to HTML.
+   *
+   * Renders content first, then applies the layout's template with
+   * the content and all bindings.
+   *
+   * @returns {string} Complete HTML for this layout
+   */
   html() {
     const renderedContent = this.renderContents();
     const templateFn = this.getViewTemplate();
@@ -320,31 +577,64 @@ class RezLayout extends RezBlock {
 
 //-----------------------------------------------------------------------------
 // Single Layout
-//
-// This Layout holds a single block as it's content
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezSingleLayout
+ * @extends RezLayout
+ * @description A layout that holds exactly one content block.
+ *
+ * Use this layout when you need to wrap a single piece of content
+ * with a layout template.
+ */
 class RezSingleLayout extends RezLayout {
+  /** @type {RezBlock|null} */
   #content;
 
+  /**
+   * Creates a new RezSingleLayout.
+   *
+   * @param {string} sourceName - The block type name
+   * @param {Object} source - The source element for this layout
+   */
   constructor(sourceName, source) {
     super(sourceName, source);
     this.#content = null;
   }
 
+  /**
+   * Returns the binding name for this layout.
+   *
+   * @returns {string} The block type as binding name
+   */
   bindAs() {
     return this.blockType;
   }
 
+  /**
+   * Sets the single content block for this layout.
+   *
+   * @param {RezBlock} block - The content block
+   */
   addContent(block) {
     block.parentBlock = this;
     this.#content = block;
   }
 
+  /**
+   * Renders the content block to HTML.
+   *
+   * @returns {string} Rendered content HTML
+   */
   renderContents() {
     return this.#content.html();
   }
 
+  /**
+   * Creates a copy of this layout including its content.
+   *
+   * @returns {RezSingleLayout} A new layout with copied content
+   */
   copy() {
     const copy = new RezSingleLayout(this.blockType, this.source);
     copy.parentBlock = this.parentBlock;
@@ -361,26 +651,60 @@ window.Rez.RezSingleLayout = RezSingleLayout;
 
 //-----------------------------------------------------------------------------
 // Stack Layout
-//
-// This layout holds a list of blocks that are composed to form its content
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezStackLayout
+ * @extends RezLayout
+ * @description A layout that holds a list of content blocks rendered in sequence.
+ *
+ * Content blocks are rendered in order (or reversed order if `layout_reverse`
+ * is set on the source) and joined with an optional separator.
+ *
+ * Source element attributes:
+ * - `layout_reverse`: If true, new content is added to the front
+ * - `layout_separator`: HTML string inserted between content blocks
+ */
 class RezStackLayout extends RezLayout {
+  /** @type {RezBlock[]} */
   #contents;
 
+  /**
+   * Creates a new RezStackLayout.
+   *
+   * @param {string} sourceName - The block type name
+   * @param {Object} source - The source element for this layout
+   */
   constructor(sourceName, source) {
     super(sourceName, source);
     this.#contents = [];
   }
 
+  /**
+   * Returns the binding name for this layout.
+   *
+   * @returns {string} The block type as binding name
+   */
   bindAs() {
     return this.blockType;
   }
 
+  /**
+   * Whether content should be added in reverse order.
+   *
+   * @type {boolean}
+   */
   get reversed() {
     return this.source.layout_reverse;
   }
 
+  /**
+   * Adds a content block to the layout.
+   *
+   * If reversed, adds to the front; otherwise adds to the back.
+   *
+   * @param {RezBlock} block - The content block to add
+   */
   addContent(block) {
     block.parentBlock = this;
 
@@ -391,6 +715,13 @@ class RezStackLayout extends RezLayout {
     }
   }
 
+  /**
+   * Renders all content blocks to HTML.
+   *
+   * Blocks are joined with the layout_separator if specified.
+   *
+   * @returns {string} Rendered content HTML
+   */
   renderContents() {
     let separator = "";
     if (this.source.layout_separator) {
@@ -400,6 +731,11 @@ class RezStackLayout extends RezLayout {
     return this.#contents.map((block) => block.html()).join(separator);
   }
 
+  /**
+   * Creates a copy of this layout including all content blocks.
+   *
+   * @returns {RezStackLayout} A new layout with copied content
+   */
   copy() {
     const copy = new RezStackLayout(this.blockType, this.source);
     copy.parentBlock = this.parentBlock;
@@ -416,50 +752,92 @@ window.Rez.RezStackLayout = RezStackLayout;
 
 //-----------------------------------------------------------------------------
 // Transformers
-//
-// A transformer uses a CSS selector to find certain elements in the rendered
-// content and do something with them.
-//
-// The getSelector() method returns a CSS selector that defines which elements
-// are to be transformed.
-//
-// The transformElement() method should overridden and will get passed each
-// matching element and should transform it.
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezTransformer
+ * @abstract
+ * @description Base class for DOM transformers.
+ *
+ * A transformer uses a CSS selector to find certain elements in the rendered
+ * content and performs operations on them (typically adding event handlers
+ * or modifying properties).
+ *
+ * Subclasses must implement `transformElement(elem, view)` to define the
+ * transformation applied to each matching element.
+ */
 class RezTransformer {
+  /** @type {string} */
   #selector;
+  /** @type {string|null} */
   #eventName;
+  /** @type {Object|null} */
   #receiver;
 
+  /**
+   * Creates a new RezTransformer.
+   *
+   * @param {string} selector - CSS selector for elements to transform
+   * @param {string|null} [eventName=null] - Event name for event-based transformers
+   * @param {Object|null} [receiver=null] - Event receiver object
+   */
   constructor(selector, eventName = null, receiver = null) {
     this.#selector = selector;
     this.#eventName = eventName;
     this.#receiver = receiver;
   }
 
+  /**
+   * The CSS selector used to find elements.
+   * @type {string}
+   */
   get selector() {
     return this.#selector;
   }
 
+  /**
+   * The event name for event-based transformers.
+   * @type {string|null}
+   */
   get eventName() {
     return this.#eventName;
   }
 
+  /**
+   * The receiver object for event handling.
+   * @type {Object|null}
+   */
   get receiver() {
     return this.#receiver;
   }
 
+  /**
+   * All DOM elements matching this transformer's selector.
+   * @type {NodeList}
+   */
   get elements() {
     return document.querySelectorAll(this.#selector);
   }
 
+  /**
+   * Transforms all matching elements in the document.
+   *
+   * @param {RezView} view - The view being transformed
+   */
   transformElements(view) {
     this.elements.forEach((elem) => {
       this.transformElement(elem, view);
     });
   }
 
+  /**
+   * Transforms a single element.
+   *
+   * @abstract
+   * @param {Element} elem - The DOM element to transform
+   * @param {RezView} view - The view being transformed
+   * @throws {Error} Must be implemented by subclass
+   */
   transformElement(elem, view) {
     throw new Error("Transformers must implement transformElement(elem, view)!");
   }
@@ -467,25 +845,44 @@ class RezTransformer {
 
 //-----------------------------------------------------------------------------
 // Event Transformers
-//
-// An Event Transformer is used to add an event handler listener to the
-// matching elements.
-//
-// It expects a receiver property that defines the object which handles
-// events raised and an event property that specifies the name of the event
-// to be registered.
-//
-// The receiver is expected to define two methods:
-//    handleBrowserEvent
-//    dispatchResponse
-// the collective define the response to the event.
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezEventTransformer
+ * @extends RezTransformer
+ * @description A transformer that adds event listeners to matching elements.
+ *
+ * The receiver is expected to implement:
+ * - `handleBrowserEvent(evt)`: Process the event and return a response object
+ * - `dispatchResponse(response)`: Handle the response (e.g., scene changes)
+ *
+ * Response object keys:
+ * - `scene`: Load a new scene by ID
+ * - `card`: Play a card into the current scene
+ * - `flash`: Update the flash message
+ * - `render`: Trigger a view re-render
+ * - `error`: Log an error message
+ */
 class RezEventTransformer extends RezTransformer {
+  /**
+   * Creates a new RezEventTransformer.
+   *
+   * @param {string} selector - CSS selector for elements to transform
+   * @param {string} event - Event name to listen for (e.g., "click", "submit")
+   * @param {Object} receiver - Object that handles events
+   */
   constructor(selector, event, receiver) {
     super(selector, event, receiver);
   }
 
+  /**
+   * Adds the event listener to an element.
+   *
+   * The listener prevents default behavior and routes the event through
+   * the receiver's handleBrowserEvent and dispatchResponse methods.
+   *
+   * @param {Element} elem - The DOM element
+   */
   addEventListener(elem) {
     const transformer = this;
     elem.addEventListener(this.eventName, function (evt) {
@@ -508,6 +905,12 @@ class RezEventTransformer extends RezTransformer {
     });
   }
 
+  /**
+   * Transforms an element by adding an event listener.
+   *
+   * @param {Element} elem - The DOM element
+   * @param {RezView} view - The view being transformed
+   */
   transformElement(elem, view) {
     this.addEventListener(elem);
   }
@@ -515,15 +918,30 @@ class RezEventTransformer extends RezTransformer {
 
 //-----------------------------------------------------------------------------
 // Block Transformer
-//
-// A Block Transformer operates on a <div class="card" data-card="...">
-// blocks.
 //-----------------------------------------------------------------------------
+
+/**
+ * @class RezBlockTransformer
+ * @extends RezTransformer
+ * @description Transformer that links DOM elements to their corresponding card objects.
+ *
+ * Operates on `<div class="card" data-card="...">` elements, adding a
+ * `rez_card` property that references the actual card object.
+ */
 class RezBlockTransformer extends RezTransformer {
+  /**
+   * Creates a new RezBlockTransformer.
+   */
   constructor() {
     super("div.rez-card div[data-card]");
   }
 
+  /**
+   * Links the element to its card object.
+   *
+   * @param {Element} elem - The DOM element with data-card attribute
+   * @param {RezView} view - The view being transformed
+   */
   transformElement(elem, view) {
     const elem_id = elem.dataset.card;
     elem.rez_card = $(elem_id);
@@ -535,14 +953,25 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 //-----------------------------------------------------------------------------
 // Link Transformers
-//
-// Link Transformers operate on <a data-event="..."> tags within a
-// <div class="card">.
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezEventLinkTransformer
+ * @extends RezEventTransformer
+ * @description Transformer for event links (`<a data-event="...">`) in cards.
+ *
+ * Adds click handlers to links within active or front-facing cards that
+ * have a `data-event` attribute. When clicked, the event is routed through
+ * the receiver's event handling system.
+ */
 class RezEventLinkTransformer extends RezEventTransformer {
+  /**
+   * Creates a new RezEventLinkTransformer.
+   *
+   * @param {Object} receiver - Object that handles click events
+   */
   constructor(receiver) {
-    super("div.rez-front-face a[data-event], div.rez-active-card a[data-event]", "click", receiver);
+    super("div.rez-evented a[data-event], div.rez-active-card a[data-event]", "click", receiver);
   }
 }
 
@@ -552,9 +981,22 @@ window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
 // Button Transformer
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezButtonTransformer
+ * @extends RezEventTransformer
+ * @description Transformer for event buttons (`<button data-event="...">`) in cards.
+ *
+ * Adds click handlers to buttons that have a `data-event` attribute and
+ * are not marked as inactive. Only targets buttons within front-facing cards.
+ */
 class RezButtonTransformer extends RezEventTransformer {
+  /**
+   * Creates a new RezButtonTransformer.
+   *
+   * @param {Object} receiver - Object that handles click events
+   */
   constructor(receiver) {
-    super("div.rez-front-face button[data-event]:not(.inactive)", "click", receiver);
+    super("div.rez-evented button[data-event]:not(.inactive)", "click", receiver);
   }
 }
 
@@ -564,9 +1006,22 @@ window.Rez.RezButtonTransformer = RezButtonTransformer;
 // FormTransformer
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezFormTransformer
+ * @extends RezEventTransformer
+ * @description Transformer for live forms (`<form rez-live>`) in cards.
+ *
+ * Adds submit handlers to forms with the `rez-live` attribute. Form
+ * submissions are prevented and routed through the receiver instead.
+ */
 class RezFormTransformer extends RezEventTransformer {
+  /**
+   * Creates a new RezFormTransformer.
+   *
+   * @param {Object} receiver - Object that handles form submissions
+   */
   constructor(receiver) {
-    super("div.rez-front-face form[rez-live]", "submit", receiver);
+    super("div.rez-evented form[rez-live]", "submit", receiver);
   }
 }
 
@@ -576,9 +1031,22 @@ window.Rez.RezFormTransformer = RezFormTransformer;
 // InputTransformer
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezInputTransformer
+ * @extends RezEventTransformer
+ * @description Transformer for live input elements in cards.
+ *
+ * Adds input event handlers to form elements (input, select, textarea)
+ * with the `rez-live` attribute for real-time value updates.
+ */
 class RezInputTransformer extends RezEventTransformer {
+  /**
+   * Creates a new RezInputTransformer.
+   *
+   * @param {Object} receiver - Object that handles input events
+   */
   constructor(receiver) {
-    super("div.rez-front-face input[rez-live], div.rez-front-face select[rez-live], div.rez-front-face textarea[rez-live]", "input", receiver);
+    super("div.rez-evented input[rez-live], div.rez-evented select[rez-live], div.rez-evented textarea[rez-live]", "input", receiver);
   }
 }
 
@@ -588,11 +1056,33 @@ window.Rez.RezInputTransformer = RezInputTransformer;
 // EnterKeyTransformer
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezEnterKeyTransformer
+ * @extends RezEventTransformer
+ * @description Transformer that handles Enter key presses in form inputs.
+ *
+ * Listens for keydown events on text-like inputs within `rez-live` forms.
+ * When Enter is pressed, synthesizes a form submit event and routes it
+ * through the receiver.
+ *
+ * Supported input types: text, email, password, search, url, tel, number,
+ * and inputs without a type attribute.
+ */
 class RezEnterKeyTransformer extends RezEventTransformer {
+  /**
+   * Creates a new RezEnterKeyTransformer.
+   *
+   * @param {Object} receiver - Object that handles submit events
+   */
   constructor(receiver) {
-    super("div.rez-front-face form[rez-live] input[type='text'], div.rez-front-face form[rez-live] input[type='email'], div.rez-front-face form[rez-live] input[type='password'], div.rez-front-face form[rez-live] input[type='search'], div.rez-front-face form[rez-live] input[type='url'], div.rez-front-face form[rez-live] input[type='tel'], div.rez-front-face form[rez-live] input[type='number'], div.rez-front-face form[rez-live] input:not([type])", "keydown", receiver);
+    super("div.rez-evented form[rez-live] input[type='text'], div.rez-evented form[rez-live] input[type='email'], div.rez-evented form[rez-live] input[type='password'], div.rez-evented form[rez-live] input[type='search'], div.rez-evented form[rez-live] input[type='url'], div.rez-evented form[rez-live] input[type='tel'], div.rez-evented form[rez-live] input[type='number'], div.rez-evented form[rez-live] input:not([type])", "keydown", receiver);
   }
 
+  /**
+   * Adds a keydown listener that synthesizes submit events on Enter.
+   *
+   * @param {Element} elem - The input element
+   */
   addEventListener(elem) {
     const transformer = this;
     elem.addEventListener(this.eventName, function (evt) {
@@ -633,11 +1123,46 @@ window.Rez.RezEnterKeyTransformer = RezEnterKeyTransformer;
 // BindingTransformer
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezBindingTransformer
+ * @extends RezTransformer
+ * @description Transformer that creates two-way data bindings between form elements and game state.
+ *
+ * Operates on form elements (input, select, textarea) with the `rez-bind`
+ * attribute. The attribute value specifies the binding target in the format
+ * `element_id.attribute_name`.
+ *
+ * Special binding IDs:
+ * - `game`: Binds to the $game object
+ * - `scene`: Binds to the current scene
+ * - `card`: Binds to the nearest card in the DOM hierarchy
+ *
+ * Supports input types: text, textarea, checkbox, radio, select.
+ *
+ * @example
+ * <!-- Bind to game.player_name -->
+ * <input type="text" rez-bind="game.player_name">
+ *
+ * <!-- Bind to current scene's difficulty -->
+ * <select rez-bind="scene.difficulty">
+ */
 class RezBindingTransformer extends RezTransformer {
+  /**
+   * Creates a new RezBindingTransformer.
+   *
+   * @param {Object} receiver - Event receiver (unused, for API compatibility)
+   */
   constructor(receiver) {
-    super("div.rez-front-face input[rez-bind], div.rez-front-face select[rez-bind], div.rez-front-face textarea[rez-bind], div.rez-active-card input[rez-bind], div.rez-active-card select[rez-bind], div.rez-active-card textarea[rez-bind]");
+    super("div.rez-evented input[rez-bind], div.rez-evented select[rez-bind], div.rez-evented textarea[rez-bind]");
   }
 
+  /**
+   * Parses a binding expression into element ID and attribute name.
+   *
+   * @param {string} binding_expr - Binding expression (e.g., "game.score")
+   * @returns {Array<string>} Array of [element_id, attribute_name]
+   * @throws {string} If binding expression is invalid
+   */
   decodeBinding(binding_expr) {
     const [binding_id, binding_attr] = binding_expr.split(".");
     if (
@@ -650,6 +1175,14 @@ class RezBindingTransformer extends RezTransformer {
     return [binding_id, binding_attr];
   }
 
+  /**
+   * Resolves a binding ID to its corresponding game element.
+   *
+   * @param {Element} input - The form input element
+   * @param {string} binding_id - The binding target ID
+   * @returns {Object} The resolved game element
+   * @throws {Error} If card binding used outside a card context
+   */
   getBoundElem(input, binding_id) {
     if(binding_id === "game") {
       return $game;
@@ -666,6 +1199,15 @@ class RezBindingTransformer extends RezTransformer {
     };
   }
 
+  /**
+   * Gets the current value of a bound attribute.
+   *
+   * @param {Element} input - The form input element
+   * @param {string} boundRezElementId - The binding target ID
+   * @param {string} boundAttrName - The attribute name
+   * @returns {*} The attribute value
+   * @throws {Error} If element not found
+   */
   getBoundValue(input, boundRezElementId, boundAttrName) {
     const elem = this.getBoundElem(input, boundRezElementId);
     if(elem === undefined) {
@@ -674,6 +1216,15 @@ class RezBindingTransformer extends RezTransformer {
     return elem.getAttribute(boundAttrName)
   }
 
+  /**
+   * Sets the value of a bound attribute.
+   *
+   * @param {Element} input - The form input element
+   * @param {string} boundRezElementId - The binding target ID
+   * @param {string} boundAttrName - The attribute name
+   * @param {*} value - The new value
+   * @throws {Error} If element not found
+   */
   setBoundValue(input, boundRezElementId, boundAttrName, value) {
     const elem = this.getBoundElem(input, boundRezElementId);
     if(typeof(elem) === "undefined") {
@@ -682,6 +1233,14 @@ class RezBindingTransformer extends RezTransformer {
     elem.setAttribute(boundAttrName, value);
   }
 
+  /**
+   * Sets up two-way binding for a text input or textarea.
+   *
+   * @param {RezView} view - The view for binding registration
+   * @param {Element} input - The input element
+   * @param {string} binding_id - The binding target ID
+   * @param {string} binding_attr - The attribute name
+   */
   transformTextInput(view, input, binding_id, binding_attr) {
     const transformer = this;
 
@@ -695,6 +1254,14 @@ class RezBindingTransformer extends RezTransformer {
     });
   }
 
+  /**
+   * Sets up two-way binding for a checkbox input.
+   *
+   * @param {RezView} view - The view for binding registration
+   * @param {Element} input - The checkbox element
+   * @param {string} binding_id - The binding target ID
+   * @param {string} binding_attr - The attribute name
+   */
   transformCheckboxInput(view, input, binding_id, binding_attr) {
     const transformer = this;
 
@@ -707,6 +1274,12 @@ class RezBindingTransformer extends RezTransformer {
     });
   }
 
+  /**
+   * Sets the selected radio button in a group.
+   *
+   * @param {string} group_name - The radio group name
+   * @param {string} value - The value to select
+   */
   setRadioGroupValue(group_name, value) {
     const radios = document.getElementsByName(group_name);
     for (let radio of radios) {
@@ -716,6 +1289,12 @@ class RezBindingTransformer extends RezTransformer {
     }
   }
 
+  /**
+   * Adds change tracking to all radios in a group.
+   *
+   * @param {string} group_name - The radio group name
+   * @param {Function} callback - Callback for input events
+   */
   trackRadioGroupChange(group_name, callback) {
     const radios = document.getElementsByName(group_name);
     for (let radio of radios) {
@@ -723,6 +1302,16 @@ class RezBindingTransformer extends RezTransformer {
     }
   }
 
+  /**
+   * Sets up two-way binding for a radio button group.
+   *
+   * Only the first radio in a group needs to register the binding.
+   *
+   * @param {RezView} view - The view for binding registration
+   * @param {Element} input - A radio button in the group
+   * @param {string} binding_id - The binding target ID
+   * @param {string} binding_attr - The attribute name
+   */
   transformRadioInput(view, input, binding_id, binding_attr) {
     const transformer = this;
     if (!view.hasBinding(binding_id, binding_attr)) {
@@ -739,6 +1328,14 @@ class RezBindingTransformer extends RezTransformer {
     });
   }
 
+  /**
+   * Sets up two-way binding for a select element.
+   *
+   * @param {RezView} view - The view for binding registration
+   * @param {Element} select - The select element
+   * @param {string} binding_id - The binding target ID
+   * @param {string} binding_attr - The attribute name
+   */
   transformSelect(view, select, binding_id, binding_attr) {
     const transformer = this;
 
@@ -751,6 +1348,15 @@ class RezBindingTransformer extends RezTransformer {
     });
   }
 
+  /**
+   * Transforms a form element by setting up two-way data binding.
+   *
+   * Delegates to type-specific methods based on input type.
+   *
+   * @param {Element} input - The form element to transform
+   * @param {RezView} view - The view for binding registration
+   * @throws {Error} If input type is not supported
+   */
   transformElement(input, view) {
     const [binding_id, binding_attr] = this.decodeBinding(
       input.getAttribute("rez-bind")
@@ -779,14 +1385,52 @@ window.Rez.RezBindingTransformer = RezBindingTransformer;
 // View
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezView
+ * @description The main view controller that manages rendering and DOM transformations.
+ *
+ * RezView is responsible for:
+ * - Managing the layout hierarchy and content blocks
+ * - Rendering HTML into the container element
+ * - Applying transformers to set up event handlers and bindings
+ * - Tracking two-way data bindings between form elements and game state
+ *
+ * The view uses a layout stack to support nested layouts during complex
+ * rendering scenarios. Bindings are cleared and re-established on each
+ * render cycle.
+ *
+ * @example
+ * // Create a view with a stack layout
+ * const layout = new RezStackLayout("scene", sceneElement);
+ * const view = new RezView("game-container", eventReceiver, layout);
+ *
+ * // Add content and render
+ * view.addLayoutContent(new RezBlock("card", cardElement));
+ * view.update();
+ */
 class RezView {
+  /** @type {Element} */
   #container;
+  /** @type {RezLayout} */
   #layout;
+  /** @type {RezLayout[]} */
   #layoutStack;
+  /** @type {Map<string, Function>} */
   #bindings;
+  /** @type {Object} */
   #receiver;
+  /** @type {RezTransformer[]} */
   #transformers;
 
+  /**
+   * Creates a new RezView.
+   *
+   * @param {string} container_id - ID of the DOM container element
+   * @param {Object} receiver - Event receiver for handling user interactions
+   * @param {RezLayout} layout - The root layout for the view
+   * @param {RezTransformer[]} [transformers] - Custom transformers (uses defaults if not provided)
+   * @throws {Error} If container element not found
+   */
   constructor(container_id, receiver, layout, transformers) {
     const container = document.getElementById(container_id);
     if(!container) {
@@ -801,10 +1445,18 @@ class RezView {
     this.#transformers = transformers ?? this.defaultTransformers();
   }
 
+  /**
+   * The DOM container element for this view.
+   * @type {Element}
+   */
   get container() {
     return this.#container;
   }
 
+  /**
+   * The current root layout.
+   * @type {RezLayout}
+   */
   get layout() {
     return this.#layout;
   }
@@ -813,43 +1465,92 @@ class RezView {
     this.#layout = layout;
   }
 
+  /**
+   * The stack of pushed layouts.
+   * @type {RezLayout[]}
+   */
   get layoutStack() {
     return this.#layoutStack;
   }
 
+  /**
+   * Pushes a new layout onto the stack, making it the current layout.
+   *
+   * Use this when entering a nested layout context. Pop when exiting.
+   *
+   * @param {RezLayout} layout - The layout to push
+   */
   pushLayout(layout) {
     this.layoutStack.push(this.layout);
     this.layout = layout;
   }
 
+  /**
+   * Pops the current layout and restores the previous one.
+   */
   popLayout() {
     this.layout = this.layoutStack.pop();
   }
 
+  /**
+   * Adds content to the current layout.
+   *
+   * @param {RezBlock} content - The content block to add
+   */
   addLayoutContent(content) {
     this.layout.addContent(content);
   }
 
+  /**
+   * Map of registered bindings (keyed by "id.attr").
+   * @type {Map<string, Function>}
+   */
   get bindings() {
     return this.#bindings;
   }
 
+  /**
+   * The event receiver for this view.
+   * @type {Object}
+   */
   get receiver() {
     return this.#receiver;
   }
 
+  /**
+   * The transformers applied after each render.
+   * @type {RezTransformer[]}
+   */
   get transformers() {
     return this.#transformers;
   }
 
-  // Note: Event listeners added by transformers are automatically cleaned up when
-  // innerHTML is replaced - no explicit cleanup needed. The DOM elements holding
-  // the listeners are destroyed, allowing garbage collection of the closures.
+  /**
+   * Renders the layout HTML into the container.
+   *
+   * Note: Event listeners added by transformers are automatically cleaned up
+   * when innerHTML is replaced - no explicit cleanup needed. The DOM elements
+   * holding the listeners are destroyed, allowing garbage collection.
+   */
   render() {
     const html = this.layout.html();
     this.container.innerHTML = html;
   }
 
+  /**
+   * Creates the default set of transformers.
+   *
+   * Default transformers handle:
+   * - Event links (`<a data-event>`)
+   * - Card block references
+   * - Event buttons
+   * - Form submissions
+   * - Data bindings (`rez-bind`)
+   * - Live inputs (`rez-live`)
+   * - Enter key handling
+   *
+   * @returns {RezTransformer[]} Array of default transformers
+   */
   defaultTransformers() {
     return [
       new RezEventLinkTransformer(this.receiver),
@@ -862,20 +1563,47 @@ class RezView {
     ];
   }
 
+  /**
+   * Applies all transformers to the rendered DOM.
+   */
   transform() {
     this.transformers.forEach((transformer) =>
       transformer.transformElements(this)
     );
   }
 
+  /**
+   * Checks if a binding is registered for a given element and attribute.
+   *
+   * @param {string} binding_id - The element ID
+   * @param {string} binding_attr - The attribute name
+   * @returns {boolean} True if binding exists
+   */
   hasBinding(binding_id, binding_attr) {
     return this.bindings.has(`${binding_id}.${binding_attr}`);
   }
 
+  /**
+   * Registers a callback for updating a bound control when data changes.
+   *
+   * @param {string} binding_id - The element ID
+   * @param {string} binding_attr - The attribute name
+   * @param {Function} callback - Function called with new value when data changes
+   */
   registerBinding(binding_id, binding_attr, callback) {
     this.bindings.set(`${binding_id}.${binding_attr}`, callback);
   }
 
+  /**
+   * Updates bound form controls when the underlying data changes.
+   *
+   * Called by game elements when their attributes change to keep
+   * the UI in sync.
+   *
+   * @param {string} binding_id - The element ID
+   * @param {string} binding_attr - The attribute name
+   * @param {*} value - The new value
+   */
   updateBoundControls(binding_id, binding_attr, value) {
     const callback = this.bindings.get(`${binding_id}.${binding_attr}`);
     if (typeof callback === "function") {
@@ -883,16 +1611,34 @@ class RezView {
     }
   }
 
+  /**
+   * Clears all registered bindings.
+   *
+   * Called at the start of each render cycle since bindings are
+   * re-established by transformers.
+   */
   clearBindings() {
     this.bindings.clear();
   }
 
+  /**
+   * Performs a complete view update: clear bindings, render, and transform.
+   *
+   * This is the main method to call when the view needs to refresh.
+   */
   update() {
     this.clearBindings();
     this.render();
     this.transform();
   }
 
+  /**
+   * Creates a copy of this view with copied layouts.
+   *
+   * Bindings are not copied as they are cleared on each render.
+   *
+   * @returns {RezView} A new view with copied state
+   */
   copy() {
     const copy = new RezView(
       this.container.id,
