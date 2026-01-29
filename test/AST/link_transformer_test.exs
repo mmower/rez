@@ -55,6 +55,12 @@ defmodule Rez.AST.LinkTransformerTest do
              "<a data-event=\"attack\" href=\"javascript:void(0)\">Link</a>"
   end
 
+  test "does not double-transform data-event attributes" do
+    assert "<button data-event=\"foo\">Click</button>"
+           |> LinkTransformer.transform() ==
+             "<button data-event=\"foo\">Click</button>"
+  end
+
   test "does not mess with component links" do
     assert "<.foo bar=\"baz\" />" == LinkTransformer.transform("<.foo bar=\"baz\" />")
   end

@@ -129,7 +129,7 @@ class RezGame extends RezBasicObject {
       throw new Error("Cannot save game at this time!");
     }
 
-    this.getAll().forEach((obj) => {obj.runEvent("save_game")});
+    this.getAll().forEach((obj) => {obj.runEvent("object_will_save")});
 
     const file = new File(
       [this.saveData()],
@@ -180,7 +180,7 @@ class RezGame extends RezBasicObject {
       console.log(`Loading data for ${id}`);
       const obj = this.getGameObject(id);
       obj.loadData(obj_data);
-      obj.runEvent("reloaded");
+      obj.runEvent("object_was_reloaded");
     }
 
     // Restore the game state

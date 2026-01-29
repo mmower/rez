@@ -151,7 +151,7 @@ class RezScene extends RezBasicObject {
 
     this.startNewCard(newCard, params);
     this.game.updateView();
-    this.current_card.runEvent("ready", {});
+    this.current_card.runEvent("ready", params);
   }
 
   /**
@@ -187,7 +187,7 @@ class RezScene extends RezBasicObject {
     this.addContentToViewLayout(params);
 
     this.runEvent("start_card", {});
-    card.runEvent("start", {});
+    card.runEvent("start", params);
   }
 
   /**

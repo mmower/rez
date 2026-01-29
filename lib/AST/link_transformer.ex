@@ -3,6 +3,12 @@ defmodule Rez.AST.LinkTransformer do
   Documentation for `LinkTransformer`.
   """
 
+  def transform(html) when is_binary(html) do
+    html
+    |> transform_a_tags()
+    |> transform_button_tags()
+  end
+
   @doc """
   Transforms the given HTML doing the following transformations to <a> tags:
 
@@ -14,23 +20,44 @@ defmodule Rez.AST.LinkTransformer do
   - where there is a resume attribute, replaces it with data-event="resume"
   - where there is an event="handler" attribute, replaces it with data-event="handler"
   """
-  def transform(html) do
+  def transform_a_tags(html) do
     # Split the HTML into parts based on <a> tags
     parts = String.split(html, ~r{(<a\s[^>]*>|<a>|</a>)}, include_captures: true)
 
     # Process each part
     Enum.map_join(parts, "", fn part ->
       case part do
-        "<a" <> _rest -> transform_opening_tag(part)
-        "</a>" -> part
+        "<a" <> _rest -> transform_opening_tag(:a, part)
         _ -> part
       end
     end)
   end
 
-  defp transform_opening_tag(tag) do
+  def transform_button_tags(html) do
+    parts =
+      String.split(html, ~r{(<button(?:\s[^>]*)?>|</button>)}, include_captures: true)
+
+    # Process each part
+    Enum.map_join(parts, "", fn part ->
+      case part do
+        "<button" <> _rest -> transform_opening_tag(:button, part)
+        _ -> part
+      end
+    end)
+  end
+
+  defp transform_opening_tag(:a, tag) do
     tag
     |> add_default_href()
+    |> transform_event_attribute()
+    |> transform_card_attribute()
+    |> transform_scene_attribute()
+    |> transform_interlude_attribute()
+    |> transform_resume_attribute()
+  end
+
+  defp transform_opening_tag(:button, tag) do
+    tag
     |> transform_event_attribute()
     |> transform_card_attribute()
     |> transform_scene_attribute()
@@ -63,6 +90,6 @@ defmodule Rez.AST.LinkTransformer do
   end
 
   defp transform_event_attribute(tag) do
-    Regex.replace(~r/event="([^"]*)"/, tag, "data-event=\"\\1\"")
+    Regex.replace(~r/(?<!-)event="([^"]*)"/, tag, "data-event=\"\\1\"")
   end
 end
