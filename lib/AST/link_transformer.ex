@@ -74,22 +74,22 @@ defmodule Rez.AST.LinkTransformer do
   end
 
   defp transform_card_attribute(tag) do
-    Regex.replace(~r/card="([^"]*)"/, tag, "data-event=\"card\" data-target=\"\\1\"")
+    Regex.replace(~r/(?<=\s)card="([^"]*)"/, tag, "data-event=\"card\" data-target=\"\\1\"")
   end
 
   defp transform_scene_attribute(tag) do
-    Regex.replace(~r/scene="([^"]*)"/, tag, "data-event=\"switch\" data-target=\"\\1\"")
+    Regex.replace(~r/(?<=\s)scene="([^"]*)"/, tag, "data-event=\"switch\" data-target=\"\\1\"")
   end
 
   defp transform_interlude_attribute(tag) do
-    Regex.replace(~r/interlude="([^"]*)"/, tag, "data-event=\"interlude\" data-target=\"\\1\"")
+    Regex.replace(~r/(?<=\s)interlude="([^"]*)"/, tag, "data-event=\"interlude\" data-target=\"\\1\"")
   end
 
   defp transform_resume_attribute(tag) do
-    Regex.replace(~r/resume(?:="[^"]*")?/, tag, "data-event=\"resume\"")
+    Regex.replace(~r/(?<=\s)resume(?:="[^"]*")?/, tag, "data-event=\"resume\"")
   end
 
   defp transform_event_attribute(tag) do
-    Regex.replace(~r/(?<!-)event="([^"]*)"/, tag, "data-event=\"\\1\"")
+    Regex.replace(~r/(?<=\s)event="([^"]*)"/, tag, "data-event=\"\\1\"")
   end
 end

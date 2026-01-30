@@ -159,11 +159,12 @@ class RezEvent {
    * @function flash
    * @memberof RezEvent#
    * @param {string} message - message to display as a flash
+   * @param {string} kind - optional notification kind (default: "")
    * @returns {RezEvent} this event for method chaining
    * @description Adds a flash message to be displayed to the user
    */
-  flash(message) {
-    this.#flashMessages.push(message);
+  flash(message, kind = "") {
+    this.#flashMessages.push({message: message, kind: kind});
     return this;
   }
 
@@ -331,8 +332,8 @@ class RezEvent {
    * @returns {RezEvent} a new event with the flash message
    * @description Creates a new event that displays a flash message
    */
-  static flash(message) {
-    return new RezEvent().flash(message);
+  static flash(message, kind = "") {
+    return new RezEvent().flash(message, kind);
   }
 
   /**
@@ -843,7 +844,7 @@ class RezEventProcessor {
       const card = $(cardId);
       const handler = this.getReceiverEventHandler(card, "input");
       if(handler) {
-        return handler(card, {evt: evt}) || RezEvent.noop();
+        return handler(card, {evt: evt});
       }
     }
 
@@ -852,7 +853,7 @@ class RezEventProcessor {
     if(!handler) {
       return RezEvent.noop();
     }
-    return handler(receiver, {evt: evt}) || RezEvent.noop();
+    return handler(receiver, {evt: evt});
   }
 
   /**

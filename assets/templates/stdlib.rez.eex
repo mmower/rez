@@ -207,8 +207,22 @@
   current_card: ^d:current_scene
 
   layout: ```
-  ${content}
+  <!-- Main Content -->
+  <section class="main-content is-fullheight">
+    <.$flash_messages />
+    <div class="container">${content}</div>
+  </section>
+  <!-- End -->
   ```
+
+  on_after_render: () => {
+    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+      const $notification = $delete.parentNode;
+      $delete.addEventListener('click', () => {
+        $notification.parentNode.removeChild($notification);
+      });
+    });
+  }
 
   tags: #{}
 }
@@ -1877,6 +1891,18 @@
 %% ----------------------------------------------------------------------------
 %% Useful components
 %% ----------------------------------------------------------------------------
+
+@component $flash_messages (bindings, assigns, content) => {
+  if($game.$flash_messages.length < 1) {
+    return "";
+  } else {
+    const messages = $game.$flash_messages.map(({message, kind}) => {
+      const classes = kind === "" ? "rez-flash-message notification" : `rez-flash-message notification ${kind}`;
+      return `<div class="${classes}"><button class="delete"></button>${message}</div>`;
+    });
+    return `<div class="rez-flash-messages">${messages}</div>`;
+  }
+}
 
 @component embed_card (bindings, assigns, content) => {
   let blockSource;

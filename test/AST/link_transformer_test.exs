@@ -61,6 +61,36 @@ defmodule Rez.AST.LinkTransformerTest do
              "<button data-event=\"foo\">Click</button>"
   end
 
+  test "does not transform resume inside data-event value" do
+    assert "<button data-event=\"resume\">Go back</button>"
+           |> LinkTransformer.transform() ==
+             "<button data-event=\"resume\">Go back</button>"
+  end
+
+  test "does not transform card inside data-event value" do
+    assert "<button data-event=\"card\">Click</button>"
+           |> LinkTransformer.transform() ==
+             "<button data-event=\"card\">Click</button>"
+  end
+
+  test "does not transform scene inside data-event value" do
+    assert "<button data-event=\"switch\">Click</button>"
+           |> LinkTransformer.transform() ==
+             "<button data-event=\"switch\">Click</button>"
+  end
+
+  test "does not transform interlude inside data-event value" do
+    assert "<button data-event=\"interlude\">Click</button>"
+           |> LinkTransformer.transform() ==
+             "<button data-event=\"interlude\">Click</button>"
+  end
+
+  test "does not match partial attribute names like data-card" do
+    assert "<a data-card=\"foo\" href=\"#\">Link</a>"
+           |> LinkTransformer.transform() ==
+             "<a data-card=\"foo\" href=\"#\">Link</a>"
+  end
+
   test "does not mess with component links" do
     assert "<.foo bar=\"baz\" />" == LinkTransformer.transform("<.foo bar=\"baz\" />")
   end

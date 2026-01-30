@@ -888,18 +888,7 @@ class RezEventTransformer extends RezTransformer {
     elem.addEventListener(this.eventName, function (evt) {
       evt.preventDefault();
 
-      // A handler should return an object with keys representing the side-
-      // effects of an event.
-      // {scene: "scene_id"}
-      // Load a new scene
-      // {card: "card_id"}
-      // Play a card into the current scene
-      // {flash: "flash message"}
-      // Update the current flash
-      // {render: true}
-      // Trigger a re-render of the view
-      // {error: "Error Message"}
-      // Log an error message
+      // A handler should return a RezEvent object
       const receiver = transformer.receiver;
       receiver.dispatchResponse(receiver.handleBrowserEvent(evt));
     });

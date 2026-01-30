@@ -37,10 +37,20 @@
   layout: ```
   <!-- Main Content -->
   <section class="main-content is-fullheight">
+    <.$flash_messages />
     <div class="container">${content}</div>
   </section>
   <!-- End -->
   ```
+
+  on_after_render: () => {
+    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+      const $notification = $delete.parentNode;
+      $delete.addEventListener('click', () => {
+        $notification.parentNode.removeChild($notification);
+      });
+    });
+  }
 }
 
 @scene sc_main {
