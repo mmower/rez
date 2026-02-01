@@ -143,6 +143,8 @@ defmodule Rez.Parser.TemplateParser do
       sequence(
         [
           ignore(fe_macro()),
+          commit(),
+          iows(),
           ignore(open_paren()),
           iows(),
           js_identifier(),
@@ -173,8 +175,16 @@ defmodule Rez.Parser.TemplateParser do
             end
 
           [iter_id, bound_path, content, [divider]] ->
-            with {:ok, parsed_content} <- wrap_parse_result(TemplateParser.parse(content), "$foreach(#{iter_id}: ...) body"),
-                 {:ok, parsed_divider} <- wrap_parse_result(TemplateParser.parse(divider), "$foreach(#{iter_id}: ...) divider") do
+            with {:ok, parsed_content} <-
+                   wrap_parse_result(
+                     TemplateParser.parse(content),
+                     "$foreach(#{iter_id}: ...) body"
+                   ),
+                 {:ok, parsed_divider} <-
+                   wrap_parse_result(
+                     TemplateParser.parse(divider),
+                     "$foreach(#{iter_id}: ...) divider"
+                   ) do
               {:foreach, iter_id, bound_path, parsed_content, parsed_divider}
             end
         end
@@ -479,7 +489,8 @@ defmodule Rez.Parser.TemplateParser do
     do: cached_parser(sequence([literal("$if"), iows(), literal("(")]))
 
   def la_open_doblock(), do: cached_parser(literal("$do{"))
-  def la_open_foreach(), do: cached_parser(literal("$foreach("))
+  def la_open_foreach(),
+    do: cached_parser(sequence([literal("$foreach"), iows(), literal("(")]))
   def la_open_partial(), do: cached_parser(literal("$partial("))
   def escape_dollar(), do: cached_parser(literal("\\$"))
 

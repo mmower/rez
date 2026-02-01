@@ -240,4 +240,76 @@ defmodule Rez.Parser.TemplateParserTest do
                {:expression, {:bound_path, ["items", {:index, 0}, "name"]}, []}}
             ]} = TP.parse(template)
   end
+
+  # $foreach tests
+
+  test "parses $foreach without space before paren" do
+    template = "$foreach(item: items) {%<li>${item.name}</li>%}"
+
+    assert {:source_template,
+            [
+              {:foreach, "item", {:bound_path, ["items"]},
+               {:source_template,
+                [
+                  "<li>",
+                  {:interpolate, {:expression, {:bound_path, ["item", "name"]}, []}},
+                  "</li>"
+                ]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses $foreach with space before paren" do
+    template = "$foreach (item: items) {%<li>${item.name}</li>%}"
+
+    assert {:source_template,
+            [
+              {:foreach, "item", {:bound_path, ["items"]},
+               {:source_template,
+                [
+                  "<li>",
+                  {:interpolate, {:expression, {:bound_path, ["item", "name"]}, []}},
+                  "</li>"
+                ]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses $foreach with divider" do
+    template = "$foreach(item: items) {%${item.name}%}, {%, %}"
+
+    assert {:source_template,
+            [
+              {:foreach, "item", {:bound_path, ["items"]},
+               {:source_template,
+                [{:interpolate, {:expression, {:bound_path, ["item", "name"]}, []}}]},
+               {:source_template, [", "]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses $foreach with nested binding path" do
+    template = "$foreach(item: player.inventory) {%${item}%}"
+
+    assert {:source_template,
+            [
+              {:foreach, "item", {:bound_path, ["player", "inventory"]},
+               {:source_template,
+                [{:interpolate, {:expression, {:bound_path, ["item"]}, []}}]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses $foreach embedded in HTML" do
+    template = "<ul>$foreach(item: items) {%<li>${item}</li>%}</ul>"
+
+    assert {:source_template,
+            [
+              "<ul>",
+              {:foreach, "item", {:bound_path, ["items"]},
+               {:source_template,
+                [
+                  "<li>",
+                  {:interpolate, {:expression, {:bound_path, ["item"]}, []}},
+                  "</li>"
+                ]}},
+              "</ul>"
+            ]} = TP.parse(template)
+  end
 end

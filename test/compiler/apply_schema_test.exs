@@ -338,4 +338,112 @@ defmodule Rez.Compiler.ExecSchemaTest do
 
     assert [] = result.validation.errors
   end
+
+  test "no_key_overlap rule detects conflicting names between bindings and blocks" do
+    # Create a schema with no_key_overlap validation
+    {:ok, bindings_rules} =
+      SchemaBuilder.build("bindings", [
+        {:kind, [:list]},
+        {:coll_kind, [:list_binding]},
+        {:no_key_overlap, "blocks"}
+      ])
+
+    {:ok, blocks_rules} =
+      SchemaBuilder.build("blocks", [{:kind, [:list]}, {:coll_kind, [:list_binding]}])
+
+    rules = List.flatten([bindings_rules, blocks_rules])
+
+    # Test with conflicting names - "foo" appears in both bindings and blocks
+    card_conflict = %Rez.AST.Card{
+      id: "test_card",
+      attributes: %{
+        "bindings" =>
+          Attribute.list("bindings", [
+            {:list_binding, {"foo", {:elem_ref, "some_object"}}}
+          ]),
+        "blocks" =>
+          Attribute.list("blocks", [
+            {:list_binding, {"foo", {:elem_ref, "some_card"}}}
+          ])
+      },
+      metadata: %{"alias_chain" => ["card"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(card_conflict, rules, %{})
+
+    assert length(result.validation.errors) == 1
+    assert [{"card", "test_card", error_msg}] = result.validation.errors
+    assert String.contains?(error_msg, "bindings")
+    assert String.contains?(error_msg, "blocks")
+    assert String.contains?(error_msg, "foo")
+  end
+
+  test "no_key_overlap rule passes when no conflicts exist" do
+    {:ok, bindings_rules} =
+      SchemaBuilder.build("bindings", [
+        {:kind, [:list]},
+        {:coll_kind, [:list_binding]},
+        {:no_key_overlap, "blocks"}
+      ])
+
+    {:ok, blocks_rules} =
+      SchemaBuilder.build("blocks", [{:kind, [:list]}, {:coll_kind, [:list_binding]}])
+
+    rules = List.flatten([bindings_rules, blocks_rules])
+
+    # Test with no conflicts - different names in bindings and blocks
+    card_no_conflict = %Rez.AST.Card{
+      id: "test_card",
+      attributes: %{
+        "bindings" =>
+          Attribute.list("bindings", [
+            {:list_binding, {"obj", {:elem_ref, "some_object"}}}
+          ]),
+        "blocks" =>
+          Attribute.list("blocks", [
+            {:list_binding, {"card", {:elem_ref, "some_card"}}}
+          ])
+      },
+      metadata: %{"alias_chain" => ["card"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(card_no_conflict, rules, %{})
+    assert [] = result.validation.errors
+  end
+
+  test "no_key_overlap rule handles missing attributes" do
+    {:ok, bindings_rules} =
+      SchemaBuilder.build("bindings", [
+        {:kind, [:list]},
+        {:coll_kind, [:list_binding]},
+        {:no_key_overlap, "blocks"}
+      ])
+
+    rules = List.flatten([bindings_rules])
+
+    # Test with only bindings, no blocks
+    card_bindings_only = %Rez.AST.Card{
+      id: "test_card",
+      attributes: %{
+        "bindings" =>
+          Attribute.list("bindings", [
+            {:list_binding, {"foo", {:elem_ref, "some_object"}}}
+          ])
+      },
+      metadata: %{"alias_chain" => ["card"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(card_bindings_only, rules, %{})
+    assert [] = result.validation.errors
+
+    # Test with neither bindings nor blocks
+    card_empty = %Rez.AST.Card{
+      id: "empty_card",
+      attributes: %{},
+      metadata: %{"alias_chain" => ["card"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(card_empty, rules, %{})
+    assert [] = result.validation.errors
+  end
 end

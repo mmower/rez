@@ -717,6 +717,50 @@ defmodule Rez.Compiler.SchemaBuilder do
     )
   end
 
+  defp rule_fn(attr_name, {:no_key_overlap, other_attr}) do
+    SchemaRule.new(
+      6,
+      "Validate #{attr_name} has no overlapping keys with #{other_attr}",
+      fn node, validation, _lookup ->
+        case {NodeHelper.get_attr(node, attr_name), NodeHelper.get_attr(node, other_attr)} do
+          {nil, _} ->
+            {node, validation}
+
+          {_, nil} ->
+            {node, validation}
+
+          {%{type: :list, value: list1}, %{type: :list, value: list2}} ->
+            keys1 = extract_binding_keys(list1)
+            keys2 = extract_binding_keys(list2)
+            overlap = MapSet.intersection(keys1, keys2)
+
+            if MapSet.size(overlap) > 0 do
+              conflict_list = overlap |> MapSet.to_list() |> Enum.join(", ")
+
+              {node,
+               Validation.add_error(
+                 validation,
+                 node,
+                 "#{attr_name} and #{other_attr} have conflicting names: #{conflict_list}"
+               )}
+            else
+              {node, validation}
+            end
+
+          _ ->
+            {node, validation}
+        end
+      end
+    )
+  end
+
+  defp extract_binding_keys(binding_list) do
+    binding_list
+    |> Enum.filter(fn {kind, _} -> kind == :list_binding end)
+    |> Enum.map(fn {:list_binding, {key, _}} -> key end)
+    |> MapSet.new()
+  end
+
   def elem_type_one_of(lookup, elem_id, elems) do
     %{id_map: id_map} = lookup
 

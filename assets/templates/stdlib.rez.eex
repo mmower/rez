@@ -105,13 +105,14 @@
   $flipped: {kind: :boolean}
   $suppress_wrapper: {kind: :boolean}
 
-  bindings: {kind: :list, coll_kind: :list_binding}
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding}
   css_class: {kind: :string}
 
   on_start: {kind: :function}
+  on_ready: {kind: :function}
+  on_interrupt: {kind: :function}
   on_finish: {kind: :function}
-  on_render: {kind: :function}
 }
 
 @defaults card {
@@ -186,15 +187,22 @@
 
   current_scene_id: {kind: :elem_ref}
 
-  bindings: {kind: :list, coll_kind: :list_binding}
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding}
   links: {kind: :list, coll_kind: :string}
   scripts: {kind: :list, coll_kind: :string}
 
   on_init: {kind: :function}
-  on_start: {kind: :function}
-  on_save: {kind: :function}
-  on_load: {kind: :function}
+  on_ready: {kind: :function}
+  on_game_did_start: {kind: :function}
+  on_will_save: {kind: :function}
+  on_did_load: {kind: :function}
+  on_scene_will_start: {kind: :function}
+  on_scene_did_end: {kind: :function}
+  on_scene_will_pause: {kind: :function}
+  on_scene_did_resume: {kind: :function}
+  on_will_render: {kind: :function}
+  on_did_render: {kind: :function}
 }
 
 @defaults game {
@@ -383,8 +391,8 @@
 
   tags: {kind: :set, coll_kind: :keyword}
 
-  on_begin: {kind: :function}
-  on_tick: {kind: :function}
+  on_start: {kind: :function}
+  on_advance: {kind: :function}
   on_complete: {kind: :function}
 }
 
@@ -434,17 +442,17 @@
   layout_mode: {kind: :keyword, in: [:single :stack]}
   layout_separator: {kind: :string}
   layout_reverse: {kind: :boolean}
-  bindings: {kind: :list, coll_kind: :list_binding}
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding}
 
   on_init: {kind: :function}
   on_start: {kind: :function}
+  on_ready: {kind: :function}
   on_finish: {kind: :function}
   on_interrupt: {kind: :function}
   on_resume: {kind: :function}
-  on_render: {kind: :function}
-  on_start_card: {kind: :function}
-  on_finish_card: {kind: :function}
+  on_card_will_start: {kind: :function}
+  on_card_did_finish: {kind: :function}
 }
 
 @defaults scene {
@@ -529,8 +537,8 @@
   repeats: {kind: :boolean}
   count: {kind: :number, min: 1}
 
-  on_game_started: {kind: :function}
-  on_game_loaded: {kind: :function}
+  on_game_did_start: {kind: :function}
+  on_did_load: {kind: :function}
 }
 
 @defaults timer {
@@ -540,8 +548,8 @@
   auto_start: true
   repeats: true
 
-  on_game_started: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
-  on_game_loaded: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
+  on_game_did_start: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
+  on_did_load: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
 }
 
 %% ----------------------------------------------------------------------------

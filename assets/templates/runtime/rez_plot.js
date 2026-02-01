@@ -11,9 +11,10 @@
  * Each plot has a current stage and a total number of stages. When the current
  * stage equals the total stages, the plot is considered complete.
  *
- * Plots fire an "advance" event each time they progress, allowing authors to
- * trigger side effects like unlocking new areas, updating NPC dialogue, or
- * granting rewards.
+ * Plots fire events at key lifecycle points:
+ * - "start" when the plot begins (first advance from stage 0)
+ * - "advance" each time the stage increases (with `{stage}` param)
+ * - "complete" when the final stage is reached
  *
  * Use plots for:
  * - Main story progression
@@ -27,7 +28,7 @@
  *   stage: 0
  *   stages: 5
  *   on_advance: (plot, evt) => {
- *     console.log(`Advanced to stage ${plot.stage}`);
+ *     console.log(`Advanced to stage ${evt.stage}`);
  *   }
  * }
  *
@@ -60,15 +61,31 @@ class RezPlot extends RezBasicObject {
   /**
    * Advances the plot to the next stage if not already complete.
    *
-   * Increments the `stage` attribute and fires an "advance" event.
+   * Increments the `stage` attribute and fires appropriate events:
+   * - "start" on the first advance (from stage 0 to 1)
+   * - "advance" with `{stage}` param on every advance
+   * - "complete" when reaching the final stage
+   *
    * Does nothing if the plot is already complete.
    *
-   * @fires advance
+   * @fires start - When advancing from stage 0
+   * @fires advance - On every advance, with `{stage}` param
+   * @fires complete - When reaching the final stage
    */
   advance() {
     if(this.stage < this.stages) {
+      const wasAtStart = this.stage === 0;
       this.stage += 1;
-      this.runEvent("advance", {});
+
+      if(wasAtStart) {
+        this.runEvent("start", {});
+      }
+
+      this.runEvent("advance", {stage: this.stage});
+
+      if(this.isComplete) {
+        this.runEvent("complete", {});
+      }
     }
   }
 }

@@ -129,7 +129,7 @@ class RezGame extends RezBasicObject {
       throw new Error("Cannot save game at this time!");
     }
 
-    this.getAll().forEach((obj) => {obj.runEvent("object_will_save")});
+    this.getAll().forEach((obj) => {obj.runEvent("will_save")});
 
     const file = new File(
       [this.saveData()],
@@ -180,11 +180,11 @@ class RezGame extends RezBasicObject {
       console.log(`Loading data for ${id}`);
       const obj = this.getGameObject(id);
       obj.loadData(obj_data);
-      obj.runEvent("object_was_reloaded");
+      obj.runEvent("did_load");
     }
 
     // Restore the game state
-    this.runEvent("load_complete");
+    this.runEvent("did_load");
 
     this.current_scene.resumeFromLoad();
     this.updateViewContent();
@@ -490,7 +490,7 @@ class RezGame extends RezBasicObject {
     // current_scene is a Rez attribute defined by @scene
 
     if(this.current_scene) {
-      this.runEvent("scene_end", {});
+      this.runEvent("scene_did_end", {});
       this.current_scene.finish();
     }
 
@@ -501,7 +501,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_start", params);
+    this.runEvent("scene_will_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -516,7 +516,7 @@ class RezGame extends RezBasicObject {
   interludeSceneWithId(sceneId, params = {}) {
     // current_scene is a Rez attribute defined by @scene
 
-    this.runEvent("scene_pause", {});
+    this.runEvent("scene_will_pause", {});
     this.pushScene();
 
     const scene = this.getTypedGameObject(sceneId, "scene", true);
@@ -526,7 +526,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_start", params);
+    this.runEvent("scene_will_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -542,15 +542,20 @@ class RezGame extends RezBasicObject {
       throw new Error("Cannot resume without a scene on the stack!");
     } else {
       // Let the interlude know we're done
-      this.runEvent("scene_end", {});
+      this.runEvent("scene_did_end", {});
       this.current_scene.finish();
       this.popScene(params);
-      this.runEvent("scene_resume", {});
+      this.runEvent("scene_did_resume", {});
 
       const layout = this.current_scene.getViewLayout();
       // Merge any new params into the existing params
       layout.params = {...layout.params, ...params};
       this.updateView();
+
+      // Fire ready on the card since its DOM is re-rendered
+      if(this.current_scene.current_card) {
+        this.current_scene.current_card.runEvent("ready", params);
+      }
     }
   }
 
@@ -588,9 +593,9 @@ class RezGame extends RezBasicObject {
    * game event handlers
    */
   updateView() {
-    this.runEvent("before_render", {});
+    this.runEvent("will_render", {});
     this.#view.update();
-    this.runEvent("after_render", {});
+    this.runEvent("did_render", {});
     this.clearFlashMessages();
   }
 
@@ -667,7 +672,7 @@ class RezGame extends RezBasicObject {
     // each object a chance to respond to the game being about
     // to start
     this.getAll().forEach((obj) => {
-      obj.runEvent("game_started", {})
+      obj.runEvent("game_did_start", {})
     });
 
     // Give the game a last chance to do something before we

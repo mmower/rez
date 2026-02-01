@@ -79,4 +79,27 @@ defmodule Rez.Compiler.BuildSchemaTest do
              }
            ] = item_schema
   end
+
+  test "builds no_key_overlap rule" do
+    {:ok, rules} =
+      SchemaBuilder.build("bindings", [
+        {:kind, [:list]},
+        {:coll_kind, [:list_binding]},
+        {:no_key_overlap, "blocks"}
+      ])
+
+    # Should have 3 rules: kind, coll_kind, and no_key_overlap
+    assert length(rules) == 3
+
+    # Find the no_key_overlap rule
+    overlap_rule =
+      Enum.find(rules, fn rule ->
+        String.contains?(rule.description, "no overlapping keys")
+      end)
+
+    assert overlap_rule != nil
+    assert overlap_rule.priority == 6
+    assert String.contains?(overlap_rule.description, "bindings")
+    assert String.contains?(overlap_rule.description, "blocks")
+  end
 end

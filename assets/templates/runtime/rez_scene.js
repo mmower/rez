@@ -163,7 +163,7 @@ class RezScene extends RezBasicObject {
   finishCurrentCard() {
     if(this.current_card) {
       this.current_card.runEvent("finish", {});
-      this.runEvent("finish_card", {});
+      this.runEvent("card_did_finish", {});
       if(this.isStackLayout) {
         this.current_card.current_block.flipped = true;
       }
@@ -186,7 +186,7 @@ class RezScene extends RezBasicObject {
 
     this.addContentToViewLayout(params);
 
-    this.runEvent("start_card", {});
+    this.runEvent("card_will_start", {});
     card.runEvent("start", params);
   }
 
@@ -244,7 +244,8 @@ class RezScene extends RezBasicObject {
    * @function resume
    * @memberof RezScene#
    * @param {object} params - parameters passed from the interlude scene
-   * @description Resumes the scene after an interlude, triggering the scene's resume event
+   * @description Resumes the scene after an interlude, triggering the scene's resume event.
+   * Note: Card resume/ready events are fired by RezGame.resumePrevScene after the view is updated.
    */
   resume(params = {}) {
     console.log(`Resuming scene |${this.id}|`);

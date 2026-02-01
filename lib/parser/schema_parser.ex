@@ -178,6 +178,7 @@ defmodule Rez.Parser.SchemaParser do
       schema_validate_xor(),
       schema_validate_or(),
       schema_validate_and(),
+      schema_validate_no_key_overlap(),
       schema_validate_min(),
       schema_validate_max(),
       schema_validate_ref_elem(),
@@ -291,6 +292,20 @@ defmodule Rez.Parser.SchemaParser do
       label: "validate-and",
       ast: fn [attrs] ->
         {:and, attrs}
+      end
+    )
+  end
+
+  defp schema_validate_no_key_overlap() do
+    sequence(
+      [
+        iliteral("no_key_overlap:"),
+        iws(),
+        string_value()
+      ],
+      label: "validate-no-key-overlap",
+      ast: fn [{type, other_attr}] when type in [:string, :dstring] ->
+        {:no_key_overlap, other_attr}
       end
     )
   end

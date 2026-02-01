@@ -942,7 +942,7 @@ class RezBasicObject {
     this.changedAttributes.add(attrName);
 
     if(notifyObservers) {
-      this.runEvent("set_attr", {attrName: attrName, oldValue: oldValue, newValue: newValue});
+      this.runEvent("attr_change", {attrName: attrName, oldValue: oldValue, newValue: newValue});
       this.game.elementAttributeHasChanged(
         this,
         attrName,

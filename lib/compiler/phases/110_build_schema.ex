@@ -34,9 +34,11 @@ defmodule Rez.Compiler.Phases.BuildSchema do
     compilation
   end
 
+  alias Rez.AST.Schema
+
   def build_schema(schema_nodes) do
     schema_nodes
-    |> Enum.reduce(%{}, fn %{element: element, rules: rules}, schema ->
+    |> Enum.reduce(%{}, fn %Schema{element: element, rules: rules}, schema ->
       Map.put(schema, element, rules)
     end)
   end
