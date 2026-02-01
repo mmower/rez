@@ -223,7 +223,7 @@
   <!-- End -->
   ```
 
-  on_after_render: () => {
+  on_did_render: () => {
     (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
       const $notification = $delete.parentNode;
       $delete.addEventListener('click', () => {
@@ -389,6 +389,8 @@
   stages: {kind: :number, min: 1, required: true}
   priority: {kind: :number, min: 1, max: 100, required: true}
 
+  subscribers: {kind: :list, coll_kind: :elem_ref, required: true}
+
   tags: {kind: :set, coll_kind: :keyword}
 
   on_start: {kind: :function}
@@ -403,6 +405,7 @@
 
   stage: 0
   active: false
+  subscribers: []
   tags: #{}
 }
 
@@ -453,6 +456,8 @@
   on_resume: {kind: :function}
   on_card_will_start: {kind: :function}
   on_card_did_finish: {kind: :function}
+  on_will_render: {kind: :function}
+  on_did_render: {kind: :function}
 }
 
 @defaults scene {

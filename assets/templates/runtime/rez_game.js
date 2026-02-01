@@ -589,12 +589,14 @@ class RezGame extends RezBasicObject {
   /**
    * @function updateView
    * @memberof RezGame#
-   * @description re-renders the view calling the 'before_render' and 'after_render'
-   * game event handlers
+   * @description re-renders the view calling 'will_render' and 'did_render'
+   * event handlers on both game and current scene
    */
   updateView() {
     this.runEvent("will_render", {});
+    this.current_scene?.runEvent("will_render", {});
     this.#view.update();
+    this.current_scene?.runEvent("did_render", {});
     this.runEvent("did_render", {});
     this.clearFlashMessages();
   }
