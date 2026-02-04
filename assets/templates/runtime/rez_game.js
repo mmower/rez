@@ -551,11 +551,6 @@ class RezGame extends RezBasicObject {
       // Merge any new params into the existing params
       layout.params = {...layout.params, ...params};
       this.updateView();
-
-      // Fire ready on the card since its DOM is re-rendered
-      if(this.current_scene.current_card) {
-        this.current_scene.current_card.runEvent("ready", params);
-      }
     }
   }
 
@@ -595,7 +590,11 @@ class RezGame extends RezBasicObject {
   updateView() {
     this.runEvent("will_render", {});
     this.current_scene?.runEvent("will_render", {});
+    this.current_scene?.current_card?.runEvent("will_render", {});
+
     this.#view.update();
+
+    this.current_scene?.current_card?.runEvent("did_render", {});
     this.current_scene?.runEvent("did_render", {});
     this.runEvent("did_render", {});
     this.clearFlashMessages();
@@ -674,15 +673,17 @@ class RezGame extends RezBasicObject {
     // each object a chance to respond to the game being about
     // to start
     this.getAll().forEach((obj) => {
-      obj.runEvent("game_did_start", {})
+      obj.runEvent("game_will_start", {});
     });
 
     // Give the game a last chance to do something before we
     // start painting the view
-    this.runEvent("ready", {});
+    this.runEvent("game_will_start", {});
 
     this.buildView();
     this.startSceneWithId(this.initial_scene_id);
+
+    this.runEvent("game_did_start", {});
   }
 
   /**

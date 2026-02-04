@@ -148,10 +148,7 @@ class RezScene extends RezBasicObject {
    */
   playCard(newCard, params = {}) {
     this.finishCurrentCard();
-
     this.startNewCard(newCard, params);
-    this.game.updateView();
-    this.current_card.runEvent("ready", params);
   }
 
   /**
@@ -163,7 +160,8 @@ class RezScene extends RezBasicObject {
   finishCurrentCard() {
     if(this.current_card) {
       this.current_card.runEvent("finish", {});
-      this.runEvent("card_did_finish", {});
+      this.runEvent("card_did_finish", {card_id: this.current_card.id});
+      this.game.runEvent("card_did_finish", {card_id: this.current_card.id});
       if(this.isStackLayout) {
         this.current_card.current_block.flipped = true;
       }
@@ -181,13 +179,18 @@ class RezScene extends RezBasicObject {
    * and triggers the appropriate start events.
    */
   startNewCard(card, params = {}) {
+    this.game.runEvent("card_will_start", {card_id: card.id, params: params});
+    this.runEvent("card_will_start", {card_id: card.id, params: params});
+    card.runEvent("will_start", params);
+
     card.scene = this;
     this.current_card = card;
-
     this.addContentToViewLayout(params);
+    this.game.updateView();
 
-    this.runEvent("card_will_start", {});
-    card.runEvent("start", params);
+    this.current_card.runEvent("did_start", params);
+    this.runEvent("card_did_start", {card_id: card.id, params: params});
+    this.game.runEvent("card_did_start", {card_id: card.id, params: params});
   }
 
   /**

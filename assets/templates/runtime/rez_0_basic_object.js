@@ -854,7 +854,7 @@ class RezBasicObject {
    */
   runEvent(eventName, params) {
     if(RezBasicObject.game.$debug_events) {
-      console.log("Run on_" + eventName + " handler on " + this.id);
+      console.log(`Run on_${eventName} handler on '${this.id}'`);
     }
     let handler = this.eventHandler(eventName);
     if(handler != null && typeof handler == "function") {

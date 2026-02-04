@@ -59,7 +59,7 @@ class RezPlot extends RezBasicObject {
    * @type {boolean}
    */
   get isComplete() {
-    return this.stage == this.stages;
+    return this.stage === this.stages;
   }
 
   /**
@@ -83,6 +83,8 @@ class RezPlot extends RezBasicObject {
   /**
    * Advances the plot to the next stage.
    *
+   * @param {number} n - number of stages to advance (default :1)
+   *
    * Increments the `stage` attribute and fires appropriate events:
    * - "advance" with `{stage}` param on every advance
    * - "complete" when reaching the final stage
@@ -92,12 +94,12 @@ class RezPlot extends RezBasicObject {
    * @fires advance - On every advance, with `{stage}` param
    * @fires complete - When reaching the final stage
    */
-  advance() {
+  advance(n = 1) {
     if(!this.active || this.isComplete) {
       return;
     }
 
-    this.stage += 1;
+    this.stage = min(this.stage + n, this.stages);
 
     this.runEvent("advance", {stage: this.stage});
     this.notifySubscribers("plot_did_advance", {stage: this.stage});

@@ -33,9 +33,9 @@ class RezActor extends RezBasicObject {
     if (this.willHandleEvent("accept_item")) {
       this.runEvent("accept_item", {
         decision: decision,
-        inventoryId: inventoryId,
-        slotId: slotId,
-        itemId: itemId,
+        inventory_id: inventoryId,
+        slot_id: slotId,
+        item_id: itemId,
       });
     }
     return decision;
@@ -65,13 +65,13 @@ class RezActor extends RezBasicObject {
       const fromLocationId = this.getAttributeValue("location_id");
       this.runEvent("leave", {location_id: fromLocationId});
       const fromLocation = $(fromLocationId);
-      fromLocation.runEvent("leave", { actor_id: this.id });
+      fromLocation.runEvent("leave", {actor_id: this.id});
     }
 
     this.setAttribute("location_id", destLocationId);
-    this.runEvent("enter", { location_id: destLocationId });
+    this.runEvent("enter", {location_id: destLocationId});
     const destLocation = $(destLocationId);
-    destLocation.runEvent("enter", { actor_id: this.id });
+    destLocation.runEvent("enter", {actor_id: this.id});
   }
 }
 

@@ -1326,7 +1326,39 @@ Extra care should be taken here that they are well-formed.
 
 == Plot (Element)
 
+A `@plot` element represents a 'plot clock' or 'progress track' such as you might find in games like
+'Blades in the Dark' and 'IronSworn: Starforged'. Each `@plot` has a number of stages and can be
+advanced.
+
+As well as the plot itself firing events when advancing, it notifies it's subcribers (which can be
+other plots).
+
+In general the plot mechanism can be satisifed with a simple variable on any other object such as
+the game or an actor. However where plot requirements are more complex the `@plot` is available.
+
 === Example
+
+....
+@plot main_quest {
+  stages: 5
+  priority: 100
+}
+
+@plot build_fortress {
+  %% The build_fortress quest is automatically triggered when the main
+  %% quest reaches stage 3
+  on_init: (plot) => {
+    $("main_quest").subscribe(plot.id);
+  }
+
+  on_did_advance_plot: (plot, params) => {
+    const {plot_id, stage} = params;
+    if(plot_id === "main_quest" && stage == 3) {
+      plot.start();
+    }
+  }
+}
+....
 
 === Required Attributes
 
