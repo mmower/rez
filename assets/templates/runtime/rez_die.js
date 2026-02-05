@@ -4,6 +4,7 @@
 
 /**
  * @class RezDie
+ * @category Utilities
  * @description Represents a single die with a configurable number of sides.
  *
  * Provides basic rolling functionality including standard rolls and "open" (exploding)
@@ -23,7 +24,9 @@ class RezDie {
   #sides;
 
   /**
-   * Creates a new die.
+   * @function constructor
+   * @memberof RezDie
+   * @description Creates a new die.
    *
    * @param {number} [sides=6] - The number of sides on the die
    */
@@ -75,6 +78,7 @@ window.Rez.RezDie = RezDie;
 
 /**
  * @class RezDieRoll
+ * @category Utilities
  * @description Represents a dice roll configuration with multiple dice, modifiers, and special rules.
  *
  * Supports:
@@ -113,7 +117,9 @@ class RezDieRoll {
   #disadvantage;
 
   /**
-   * Creates a new dice roll configuration.
+   * @function constructor
+   * @memberof RezDieRoll
+   * @description Creates a new dice roll configuration.
    *
    * @param {number} count - Number of dice to roll
    * @param {number} [sides=6] - Number of sides per die

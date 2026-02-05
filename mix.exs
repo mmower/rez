@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.9.4-rc9"
+  @version "1.9.4-rc10"
 
   def project do
     [

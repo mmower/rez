@@ -5,6 +5,7 @@
 /**
  * @class RezSystem
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a game system in the Rez game engine. Systems are used to implement
  * cross-cutting game mechanics that operate on events and game state. They can define
  * before_event and after_event handlers that are called during event processing, allowing

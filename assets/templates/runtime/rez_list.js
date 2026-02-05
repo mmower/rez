@@ -5,6 +5,7 @@
 /**
  * @class RezList
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a list of values with multiple selection strategies. Lists provide
  * various ways to retrieve values - from simple indexed access to sophisticated random
  * selection algorithms that prevent repetition or starvation.

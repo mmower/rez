@@ -5,6 +5,7 @@
 /**
  * @class RezGame
  * @extends RezBasicObject
+ * @category Elements
  * @description The central singleton that manages the entire game runtime. RezGame is
  * automatically instantiated with id "game" and is accessible globally via `$game`.
  *
@@ -675,10 +676,6 @@ class RezGame extends RezBasicObject {
     this.getAll().forEach((obj) => {
       obj.runEvent("game_will_start", {});
     });
-
-    // Give the game a last chance to do something before we
-    // start painting the view
-    this.runEvent("game_will_start", {});
 
     this.buildView();
     this.startSceneWithId(this.initial_scene_id);

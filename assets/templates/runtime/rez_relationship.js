@@ -5,6 +5,7 @@
 /**
  * @class RezRelationship
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a relationship between two game objects in the Rez game engine.
  * Relationships are directional (source -> target) and can have attributes like strength,
  * type, or other relationship-specific data. Each relationship automatically gets

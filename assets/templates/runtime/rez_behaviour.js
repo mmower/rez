@@ -5,6 +5,7 @@
 /**
  * @class RezBehaviour
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a node in the Rez game engine's behaviour tree system.
  * Behaviours are reusable templates that define game logic and can be composed
  * into trees with parent-child relationships.

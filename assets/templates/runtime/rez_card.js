@@ -5,6 +5,7 @@
 /**
  * @class RezCard
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a card in the Rez game engine. Cards are the primary content
  * containers that display narrative text, choices, and interactive elements to the player.
  *

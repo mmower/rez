@@ -4,6 +4,7 @@
 
 /**
  * @class RezEvent
+ * @category Utilities
  * @description Represents a game event response in the Rez game engine. Events are used to communicate
  * the results of user interactions and specify what actions should be taken (scene changes, card plays,
  * flash messages, etc.). Supports method chaining for building complex event responses.
@@ -435,6 +436,7 @@ window.Rez.RezEvent = RezEvent;
 
 /**
  * @class RezEventProcessor
+ * @category Internal
  * @description Processes events in the Rez game engine. Handles browser events (clicks, inputs, submits),
  * custom game events, timer events, and system events. Routes events to appropriate handlers and manages
  * the event lifecycle including system pre/post processing and undo manager integration.

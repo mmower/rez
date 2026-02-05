@@ -4,6 +4,7 @@
 
 /**
  * @class RezDecision
+ * @category Utilities
  * @description Represents a decision that can be made by user-written filters in the Rez game engine.
  * This is a simplified abstraction of RezDynamicLink that allows code to make yes/no decisions
  * with optional reasons and data. Decisions can be made explicitly or use default values.

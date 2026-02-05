@@ -57,6 +57,7 @@ function evaluateExpression(expression, bindings, rval = true) {
 
 /**
  * @class RezBlock
+ * @category Internal
  * @description Represents a renderable block of content within the view hierarchy.
  *
  * A block wraps a source element (typically a card or other game element)
@@ -88,7 +89,9 @@ class RezBlock {
   #params;
 
   /**
-   * Creates a new RezBlock.
+   * @function constructor
+   * @memberof RezBlock
+   * @description Creates a new RezBlock.
    *
    * @param {string} blockType - The type of block ("block" or "card")
    * @param {Object} source - The source element to render (e.g., a RezCard)
@@ -498,6 +501,7 @@ window.Rez.RezBlock = RezBlock;
  * @class RezLayout
  * @extends RezBlock
  * @abstract
+ * @category Internal
  * @description Abstract base class for layout blocks.
  *
  * A layout is a special type of block that can contain other blocks as content.
@@ -511,7 +515,9 @@ window.Rez.RezBlock = RezBlock;
  */
 class RezLayout extends RezBlock {
   /**
-   * Creates a new RezLayout.
+   * @function constructor
+   * @memberof RezLayout
+   * @description Creates a new RezLayout.
    *
    * @param {string} blockType - The type of layout
    * @param {Object} source - The source element for this layout
@@ -582,6 +588,7 @@ class RezLayout extends RezBlock {
 /**
  * @class RezSingleLayout
  * @extends RezLayout
+ * @category Internal
  * @description A layout that holds exactly one content block.
  *
  * Use this layout when you need to wrap a single piece of content
@@ -592,7 +599,9 @@ class RezSingleLayout extends RezLayout {
   #content;
 
   /**
-   * Creates a new RezSingleLayout.
+   * @function constructor
+   * @memberof RezSingleLayout
+   * @description Creates a new RezSingleLayout.
    *
    * @param {string} sourceName - The block type name
    * @param {Object} source - The source element for this layout
@@ -656,6 +665,7 @@ window.Rez.RezSingleLayout = RezSingleLayout;
 /**
  * @class RezStackLayout
  * @extends RezLayout
+ * @category Internal
  * @description A layout that holds a list of content blocks rendered in sequence.
  *
  * Content blocks are rendered in order (or reversed order if `layout_reverse`
@@ -670,7 +680,9 @@ class RezStackLayout extends RezLayout {
   #contents;
 
   /**
-   * Creates a new RezStackLayout.
+   * @function constructor
+   * @memberof RezStackLayout
+   * @description Creates a new RezStackLayout.
    *
    * @param {string} sourceName - The block type name
    * @param {Object} source - The source element for this layout
@@ -757,6 +769,7 @@ window.Rez.RezStackLayout = RezStackLayout;
 /**
  * @class RezTransformer
  * @abstract
+ * @category Internal
  * @description Base class for DOM transformers.
  *
  * A transformer uses a CSS selector to find certain elements in the rendered
@@ -775,7 +788,9 @@ class RezTransformer {
   #receiver;
 
   /**
-   * Creates a new RezTransformer.
+   * @function constructor
+   * @memberof RezTransformer
+   * @description Creates a new RezTransformer.
    *
    * @param {string} selector - CSS selector for elements to transform
    * @param {string|null} [eventName=null] - Event name for event-based transformers
@@ -850,6 +865,7 @@ class RezTransformer {
 /**
  * @class RezEventTransformer
  * @extends RezTransformer
+ * @category Internal
  * @description A transformer that adds event listeners to matching elements.
  *
  * The receiver is expected to implement:
@@ -865,7 +881,9 @@ class RezTransformer {
  */
 class RezEventTransformer extends RezTransformer {
   /**
-   * Creates a new RezEventTransformer.
+   * @function constructor
+   * @memberof RezEventTransformer
+   * @description Creates a new RezEventTransformer.
    *
    * @param {string} selector - CSS selector for elements to transform
    * @param {string} event - Event name to listen for (e.g., "click", "submit")
@@ -912,6 +930,7 @@ class RezEventTransformer extends RezTransformer {
 /**
  * @class RezBlockTransformer
  * @extends RezTransformer
+ * @category Internal
  * @description Transformer that links DOM elements to their corresponding card objects.
  *
  * Operates on `<div class="card" data-card="...">` elements, adding a
@@ -919,7 +938,9 @@ class RezEventTransformer extends RezTransformer {
  */
 class RezBlockTransformer extends RezTransformer {
   /**
-   * Creates a new RezBlockTransformer.
+   * @function constructor
+   * @memberof RezBlockTransformer
+   * @description Creates a new RezBlockTransformer.
    */
   constructor() {
     super("div.rez-card div[data-card]");
@@ -947,6 +968,7 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
 /**
  * @class RezEventLinkTransformer
  * @extends RezEventTransformer
+ * @category Internal
  * @description Transformer for event links (`<a data-event="...">`) in cards.
  *
  * Adds click handlers to links within active or front-facing cards that
@@ -955,7 +977,9 @@ window.Rez.RezBlockTransformer = RezBlockTransformer;
  */
 class RezEventLinkTransformer extends RezEventTransformer {
   /**
-   * Creates a new RezEventLinkTransformer.
+   * @function constructor
+   * @memberof RezEventLinkTransformer
+   * @description Creates a new RezEventLinkTransformer.
    *
    * @param {Object} receiver - Object that handles click events
    */
@@ -973,6 +997,7 @@ window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
 /**
  * @class RezButtonTransformer
  * @extends RezEventTransformer
+ * @category Internal
  * @description Transformer for event buttons (`<button data-event="...">`) in cards.
  *
  * Adds click handlers to buttons that have a `data-event` attribute and
@@ -980,7 +1005,9 @@ window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
  */
 class RezButtonTransformer extends RezEventTransformer {
   /**
-   * Creates a new RezButtonTransformer.
+   * @function constructor
+   * @memberof RezButtonTransformer
+   * @description Creates a new RezButtonTransformer.
    *
    * @param {Object} receiver - Object that handles click events
    */
@@ -998,6 +1025,7 @@ window.Rez.RezButtonTransformer = RezButtonTransformer;
 /**
  * @class RezFormTransformer
  * @extends RezEventTransformer
+ * @category Internal
  * @description Transformer for live forms (`<form rez-live>`) in cards.
  *
  * Adds submit handlers to forms with the `rez-live` attribute. Form
@@ -1005,7 +1033,9 @@ window.Rez.RezButtonTransformer = RezButtonTransformer;
  */
 class RezFormTransformer extends RezEventTransformer {
   /**
-   * Creates a new RezFormTransformer.
+   * @function constructor
+   * @memberof RezFormTransformer
+   * @description Creates a new RezFormTransformer.
    *
    * @param {Object} receiver - Object that handles form submissions
    */
@@ -1023,6 +1053,7 @@ window.Rez.RezFormTransformer = RezFormTransformer;
 /**
  * @class RezInputTransformer
  * @extends RezEventTransformer
+ * @category Internal
  * @description Transformer for live input elements in cards.
  *
  * Adds input event handlers to form elements (input, select, textarea)
@@ -1030,7 +1061,9 @@ window.Rez.RezFormTransformer = RezFormTransformer;
  */
 class RezInputTransformer extends RezEventTransformer {
   /**
-   * Creates a new RezInputTransformer.
+   * @function constructor
+   * @memberof RezInputTransformer
+   * @description Creates a new RezInputTransformer.
    *
    * @param {Object} receiver - Object that handles input events
    */
@@ -1048,6 +1081,7 @@ window.Rez.RezInputTransformer = RezInputTransformer;
 /**
  * @class RezEnterKeyTransformer
  * @extends RezEventTransformer
+ * @category Internal
  * @description Transformer that handles Enter key presses in form inputs.
  *
  * Listens for keydown events on text-like inputs within `rez-live` forms.
@@ -1059,7 +1093,9 @@ window.Rez.RezInputTransformer = RezInputTransformer;
  */
 class RezEnterKeyTransformer extends RezEventTransformer {
   /**
-   * Creates a new RezEnterKeyTransformer.
+   * @function constructor
+   * @memberof RezEnterKeyTransformer
+   * @description Creates a new RezEnterKeyTransformer.
    *
    * @param {Object} receiver - Object that handles submit events
    */
@@ -1115,6 +1151,7 @@ window.Rez.RezEnterKeyTransformer = RezEnterKeyTransformer;
 /**
  * @class RezBindingTransformer
  * @extends RezTransformer
+ * @category Internal
  * @description Transformer that creates two-way data bindings between form elements and game state.
  *
  * Operates on form elements (input, select, textarea) with the `rez-bind`
@@ -1137,7 +1174,9 @@ window.Rez.RezEnterKeyTransformer = RezEnterKeyTransformer;
  */
 class RezBindingTransformer extends RezTransformer {
   /**
-   * Creates a new RezBindingTransformer.
+   * @function constructor
+   * @memberof RezBindingTransformer
+   * @description Creates a new RezBindingTransformer.
    *
    * @param {Object} receiver - Event receiver (unused, for API compatibility)
    */
@@ -1376,6 +1415,7 @@ window.Rez.RezBindingTransformer = RezBindingTransformer;
 
 /**
  * @class RezView
+ * @category Internal
  * @description The main view controller that manages rendering and DOM transformations.
  *
  * RezView is responsible for:
@@ -1412,8 +1452,9 @@ class RezView {
   #transformers;
 
   /**
-   * Creates a new RezView.
-   *
+   * @function constructor
+   * @memberof RezView
+   * @description Creates a new RezView.
    * @param {string} container_id - ID of the DOM container element
    * @param {Object} receiver - Event receiver for handling user interactions
    * @param {RezLayout} layout - The root layout for the view

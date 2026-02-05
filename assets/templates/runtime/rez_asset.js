@@ -5,6 +5,7 @@
 /**
  * @class RezAsset
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a media asset in the Rez game engine. Assets can be images, audio, video,
  * or text files. Provides methods for determining asset type and generating HTML elements for display.
  * Asset MIME types are detected during compilation and stored in the $detected_mime_type attribute.

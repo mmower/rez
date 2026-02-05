@@ -5,6 +5,7 @@
 /**
  * @class RezInventory
  * @extends RezBasicObject
+ * @category Elements
  * @description Manages a collection of slots that can hold items.
  *
  * An inventory is a container system that organizes items into typed slots.
@@ -137,7 +138,7 @@ class RezInventory extends RezBasicObject {
 
   /**
    * @function appendItemToSlot
-   * @member RezInventory
+   * @memberof RezInventory
    * @param {string} slot_id
    * @param {string} item_id
    * @description appends the given item to the given slot

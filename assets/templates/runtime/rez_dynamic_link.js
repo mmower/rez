@@ -4,6 +4,7 @@
 
 /**
  * @class RezDynamicLink
+ * @category Utilities
  * @description Represents a conditional link that can be shown, hidden, or disabled based on game state.
  *
  * Dynamic links are used in templates to create links whose appearance and behavior
@@ -38,7 +39,9 @@ class RezDynamicLink {
   #markup;
 
   /**
-   * Creates a new dynamic link.
+   * @function constructor
+   * @memberof RezDynamicLink
+   * @description Creates a new dynamic link.
    *
    * @param {Object} card - The card this link belongs to
    */

@@ -5,6 +5,7 @@
 /**
  * @class RezEffect
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents an effect in the Rez game engine. Effects are typically
  * applied to or removed from objects when items are equipped, consumed, or used.
  * They can modify object attributes, add temporary abilities, or trigger events.

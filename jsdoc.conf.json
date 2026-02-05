@@ -1,0 +1,23 @@
+{
+  "source": {
+    "include": ["./assets/templates/runtime/"],
+    "includePattern": "rez_.*\\.js$",
+    "exclude": []
+  },
+  "opts": {
+    "destination": "./docs/api/",
+    "recurse": true,
+    "template": "node_modules/better-docs"
+  },
+  "tags": {
+    "allowUnknownTags": true
+  },
+  "plugins": ["plugins/markdown", "node_modules/better-docs/category"],
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "metadata": {
+    "title": "Rez JavaScript Runtime API"
+  }
+}

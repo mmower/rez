@@ -5,6 +5,7 @@
 /**
  * @class RezPlot
  * @extends RezBasicObject
+ * @category Elements
  * @description Tracks the progression of a storyline or quest through discrete stages.
  *
  * A plot represents a linear sequence of stages that the player advances through.
@@ -50,7 +51,9 @@
  */
 class RezPlot extends RezBasicObject {
   /**
-   * Creates a new RezPlot.
+   * @function constructor
+   * @memberof RezPlot
+   * @description Creates a new RezPlot.
    *
    * @param {string} id - Unique identifier for this plot
    * @param {Object} attributes - Initial attributes (should include `stage` and `stages`)

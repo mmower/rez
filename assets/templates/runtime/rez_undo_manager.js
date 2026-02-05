@@ -4,6 +4,7 @@
 
 /**
  * @class RezUndoManager
+ * @category Utilities
  * @description Manages undo functionality by tracking changes to game state.
  *
  * The undo manager records changes made during each turn/action and allows
@@ -39,7 +40,9 @@ class RezUndoManager {
   #performingUndo;
 
   /**
-   * Creates a new RezUndoManager.
+   * @function constructor
+   * @memberof RezUndoManager
+   * @description Creates a new RezUndoManager.
    *
    * @param {number} [maxSize=16] - Maximum number of change records to keep
    */

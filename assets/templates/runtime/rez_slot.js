@@ -5,6 +5,7 @@
 /**
  * @class RezSlot
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents an inventory slot in the Rez game engine. Slots define
  * compartments within inventories where items can be stored. Each slot has properties
  * like capacity, item type restrictions, and accessor names for template binding.

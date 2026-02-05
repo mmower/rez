@@ -2,6 +2,13 @@
 // Actor
 //-----------------------------------------------------------------------------
 
+/**
+ * @class RezActor
+ * @extends RezBasicObject
+ * @category Elements
+ * @description Represents an actor in the Rez game engine. Actors are game
+ * entities that can hold inventories, check items, and participate in game events.
+ */
 class RezActor extends RezBasicObject {
   constructor(id, attributes) {
     super("actor", id, attributes);

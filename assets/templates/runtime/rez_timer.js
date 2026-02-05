@@ -1,6 +1,7 @@
 /**
  * @class RezTimer
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a timer in the Rez game engine. Timers can be configured to run once or repeatedly,
  * with optional count-down functionality. When triggered, they dispatch timer events through the game's event processor.
  */

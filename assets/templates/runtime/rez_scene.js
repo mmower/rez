@@ -5,6 +5,7 @@
 /**
  * @class RezScene
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a scene in the Rez game engine. Scenes are containers that manage
  * the flow of cards and content, handling transitions between different parts of the game
  * narrative.

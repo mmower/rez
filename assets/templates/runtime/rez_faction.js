@@ -5,6 +5,7 @@
 /**
  * @class RezFaction
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a faction or group affiliation in the Rez game engine.
  * Factions can be used to organize actors, track reputation, implement conflict systems,
  * or manage group-based game mechanics. Faction objects can have attributes like

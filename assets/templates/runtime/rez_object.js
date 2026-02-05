@@ -5,6 +5,7 @@
 /**
  * @class RezObject
  * @extends RezBasicObject
+ * @category Elements
  * @description A generic game object for author-defined data structures.
  *
  * RezObject provides a way for authors to define custom object types that
@@ -34,7 +35,9 @@
  */
 class RezObject extends RezBasicObject {
   /**
-   * Creates a new RezObject.
+   * @function constructor
+   * @memberof RezObject
+   * @description Creates a new RezObject.
    *
    * @param {string} id - Unique identifier for this object
    * @param {Object} attributes - Initial attribute values

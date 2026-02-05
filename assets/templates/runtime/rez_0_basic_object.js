@@ -47,6 +47,7 @@ function normalizeRefs(value) {
 
 /**
  * @class RezBasicObject
+ * @category Internal
  * @description The foundational base class for all Rez game objects. Bridges Rez language
  * elements (defined in .rez source files) to living JavaScript objects at runtime.
  *

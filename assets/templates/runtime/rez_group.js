@@ -8,6 +8,7 @@
 /**
  * @class RezGroup
  * @extends RezBasicObject
+ * @category Elements
  * @description Represents a dynamically generated group of assets in the Rez game engine.
  * Groups filter assets based on type, include_tags, and exclude_tags attributes.
  * Provides methods for getting random assets from the filtered collection.

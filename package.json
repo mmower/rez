@@ -5,9 +5,11 @@
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
+    "better-docs": "^2.7.3",
     "jsdoc": "^4.0.4"
   },
   "scripts": {
+    "postinstall": "node scripts/patch-better-docs.js",
     "docs:js": "jsdoc -c jsdoc.conf.json",
     "docs:watch": "jsdoc -c jsdoc.conf.json --watch"
   }
