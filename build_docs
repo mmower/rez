@@ -10,4 +10,4 @@ npm run docs:js
 #asciidoctor docs/*.adoc
 
 # Sync documentation to www directory
-rsync -av --delete docs ../www/content/
+rsync -av --delete docs ../www/static/

@@ -18,16 +18,16 @@
  * - Grouping related configuration values
  * - Prototyping new object types before formalizing them
  *
- * @example
- * // Define in Rez
- * @object weather_system {
+ * **Define in Rez:**
+ * <pre><code>
+ * &#64;object weather_system {
  *   current_weather: "sunny"
  *   temperature: 72
  *   wind_speed: 5
  * }
+ * </code></pre>
  *
- * @example
- * // Access at runtime
+ * @example <caption>Access at runtime</caption>
  * const weather = $("weather_system");
  * weather.temperature = 65;
  * weather.current_weather = "rainy";

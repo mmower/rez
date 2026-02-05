@@ -25,23 +25,28 @@
  * - Tutorial sequences
  * - Achievement tracking
  *
- * @example
- * // Define in Rez
- * @plot main_quest {
+ * **Define in Rez:**
+ * <pre><code>
+ * &#64;plot main_quest {
  *   stages: 5
- *   on_start: (plot, evt) => {
+ *   on_did_start: (plot, evt) => {
  *     console.log("Quest begun!");
  *   }
- *   on_advance: (plot, evt) => {
+ *   on_did_advance: (plot, evt) => {
  *     console.log(`Advanced to stage ${evt.stage}`);
  *   }
  * }
+ * </code></pre>
  *
- * @example
- * // Start and advance the plot at runtime
+ * @example <caption>Start the plot at runtime</caption>
  * const quest = $("main_quest");
- * quest.start();  // Activates the plot, fires on_start
- * quest.advance(); // Moves to stage 1
+ * // Activates the plot, fires on_start, sends on_plot_did_start to subscribers
+ * quest.start();
+ * // Moves to stage 1, fires on_advance, sends on_plot_did_advance to subscribers
+ * quest.advance();
+ * // Moves to stage 5, as with stage 1 but since the plot is now at stage 5 (complete)
+ * // also fires on_complete, sends on_plot_did_complete to subscribers
+ * quest.advance(4);
  */
 class RezPlot extends RezBasicObject {
   /**

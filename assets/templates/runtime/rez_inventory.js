@@ -21,15 +21,15 @@
  * attribute that determines the attribute name used to store its contents
  * (e.g., a slot with accessor "weapon" stores items in `weapon_contents`).
  *
- * @example
- * // Define in Rez
- * @inventory player_inv {
+ * **Define in Rez:**
+ * <pre><code>
+ * &#64;inventory player_inv {
  *   slots: [#slot_weapon, #slot_armor]
  *   initial_weapon: [#item_sword]
  * }
+ * </code></pre>
  *
- * @example
- * // Add an item at runtime
+ * @example <caption>Add an item at runtime</caption>
  * const inv = $("player_inv");
  * if (inv.canAddItemForSlot("slot_weapon", "item_axe").result) {
  *   inv.addItemToSlot("slot_weapon", "item_axe");

@@ -84,16 +84,16 @@ In this example of our game the player can decide which of the antagonists they 
 @rel #sam_spade -> #joel_cairo {affinity: -2}
 @rel #sam_spade -> #kaspar_gutman {affinity: -4}
 
+
+
 @actor joel_cairo {
   name: "Joel Cairo"
-  stats: {
-    gunplay: 3
-    fisticuffs: 3
-    drinking: 5
-    flirting: 9
-    sleuthing: 6
-    chat: 8
-  }
+  gunplay: 3
+  fisticuffs: 3
+  drinking: 5
+  flirting: 9
+  sleuthing: 6
+  chat: 8
   container: #joels_stuff
 }
 
@@ -103,14 +103,12 @@ In this example of our game the player can decide which of the antagonists they 
 
 @actor miss_wonderly {
   name: "Ruth Wonderly"
-  stats: {
-    gunplay: 4
-    fisticuffs: 2
-    drinking: 5
-    flirting: 10
-    sleuthing: 4
-    chat: 9
-  }
+  gunplay: 4
+  fisticuffs: 2
+  drinking: 5
+  flirting: 10
+  sleuthing: 4
+  chat: 9
   container: #ruths_stuff
 }
 
@@ -120,14 +118,12 @@ In this example of our game the player can decide which of the antagonists they 
 
 @actor kaspar_gutman {
   name: "Kaspar Gutman"
-  stats: {
-    gunplay: 1,
-    fisticuffs: 3,
-    drinking: 9,
-    flirting: 2,
-    sleuthing: 7,
-    chat: 9
-  }
+  gunplay: 1,
+  fisticuffs: 3,
+  drinking: 9,
+  flirting: 2,
+  sleuthing: 7,
+  chat: 9
   container: #kaspar_stuff
 }
 
@@ -1379,6 +1375,24 @@ the game or an actor. However where plot requirements are more complex the `@plo
 
 This script will be called during game initialization and before the game has
 started.
+
+==== on_plot_did_start
+
+: `(plot, {}) => {...}`
+
+Called when the plot is started.
+
+==== on_plot_did_advance
+
+: `(plot, {stage: stage}) => {...}`
+
+Called whenever the plot has advanced by 1 or more stages.
+
+==== on_plot_did_component
+
+: `(plot, {}) => {...}`
+
+Called when the plot has advanced to the final stage and is considered completed.
 
 == Relationship (Element)
 
