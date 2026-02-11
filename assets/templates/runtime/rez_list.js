@@ -67,14 +67,14 @@ class RezList extends RezBasicObject {
    */
   elementInitializer() {
     const includes = this.getAttributeValue("includes", []);
-    if (includes.length > 0) {
+    if(includes.length > 0) {
       // Get own values (may be empty array if only using includes)
       const ownValues = this.getAttributeValue("values", []);
 
       // Collect values from all included lists
       const includedValues = includes.flatMap(listId => {
         const list = $(listId);
-        if (!list) {
+        if(!list) {
           throw new Error(`List '${this.id}' includes non-existent list: '${listId}'`);
         }
         return list.values;
@@ -170,12 +170,12 @@ class RezList extends RezBasicObject {
     stats = stats.map((element) => element+1);
 
     // Find elements that are now starving
-    let starvingIndices = stats
+    const starvingIndices = stats
       .map((el, idx) => el >= max ? idx : -1)
       .filter(idx => idx !== -1);
 
     // Choose: starving element if any exist, otherwise random
-    let choice = starvingIndices.length > 0
+    const choice = starvingIndices.length > 0
       ? starvingIndices.randomElement()
       : stats.randomIndex();
 
@@ -237,7 +237,7 @@ class RezList extends RezBasicObject {
    * removing it. Prefer using randomFromBag() for typical use cases.
    */
   randomRemaining(bagId) {
-    let bag = this.getBag(bagId);
+    const bag = this.getBag(bagId);
     if(bag.length === 0) {
       return undefined;
     } else {
@@ -255,7 +255,7 @@ class RezList extends RezBasicObject {
    */
   takeFrom(bagId, value) {
     let bag = this.getBag(bagId);
-    bag = bag.filter((elem) => elem != value);
+    bag = bag.filter((elem) => elem !== value);
     this.setBag(bagId, bag);
   }
 
@@ -316,7 +316,7 @@ class RezList extends RezBasicObject {
    */
   randomWalk(walkId) {
     let walk = this.getWalk(walkId);
-    if(walk.length == 0) {
+    if(walk.length === 0) {
       walk = this.resetWalk(walkId);
     }
 
@@ -333,7 +333,7 @@ class RezList extends RezBasicObject {
    * @description Gets the current walk state, creating it if it doesn't exist.
    */
   getWalk(walkId) {
-    let walk = this.getAttributeValue(`walk_${walkId}`);
+    const walk = this.getAttributeValue(`walk_${walkId}`);
     if(typeof(walk) === "undefined") {
       return this.resetWalk(walkId);
     } else {

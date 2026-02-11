@@ -19,7 +19,7 @@
  * @example
  * // In a card's event handler
  * const link = new RezDynamicLink(this);
- * if (player.hasKey) {
+ * if(player.hasKey) {
  *   link.allow("Open the door", "card_behind_door");
  * } else {
  *   link.deny("The door is locked", false);
@@ -109,7 +109,7 @@ class RezDynamicLink {
    */
   allow(response, targetId) {
     this.#choosen = true;
-    if (typeof response === "function") {
+    if(typeof response === "function") {
       this.#markup = response();
     } else {
       this.#markup = `<a href="javascript:void(0)" data-event="card" data-target="${targetId}">${response}</a>`;
@@ -151,7 +151,7 @@ class RezDynamicLink {
    *
    * @example
    * // Hide the secret passage unless discovered
-   * if (!player.foundSecretPassage) {
+   * if(!player.foundSecretPassage) {
    *   link.hide();
    * }
    */

@@ -2,7 +2,6 @@
 // Do not modify as it will be overwritten when the game is next compiled.
 
 (function() {
-  "use strict";
   window.Rez = window.Rez ?? {};
 
   <%= @constants %>
@@ -25,9 +24,7 @@
    * @returns {boolean} true if value is an element reference object
    * @description checks if a value is an element reference in {$ref: "id"} format
    */
-  Rez.isElementRef = function(value) {
-    return value && typeof value === 'object' && '$ref' in value;
-  };
+  Rez.isElementRef = (value) => value && typeof value === 'object' && '$ref' in value;
 
   /**
    * @function extractId
@@ -36,7 +33,7 @@
    * @returns {string} the extracted ID string
    * @description extracts ID from either plain string or {$ref: "id"} format
    */
-  Rez.extractId = function(idOrRef) {
+  Rez.extractId = (idOrRef) => {
     if (typeof idOrRef === 'string') return idOrRef;
     if (idOrRef?.$ref) return idOrRef.$ref;
     throw new Error(`Invalid reference format: ${String(idOrRef)}`);
@@ -51,7 +48,7 @@
   }
 
   if(window.$game.getAttributeValue("$warn_before_reload", false)) {
-    window.addEventListener("beforeunload", function(evt) {
+    window.addEventListener("beforeunload", (evt) => {
       evt.preventDefault();
       evt.returnValue = "";
     });

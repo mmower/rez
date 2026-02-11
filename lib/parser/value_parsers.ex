@@ -18,6 +18,7 @@ defmodule Rez.Parser.ValueParsers do
   import Rez.Parser.IdentifierParser
   import Rez.Parser.UtilityParsers
   import Rez.Parser.DelimitedParser
+  import Rez.Parser.JSFunctionParser
 
   # String
 
@@ -323,101 +324,6 @@ defmodule Rez.Parser.ValueParsers do
     )
   end
 
-  # Function
-  # function(...) {...}
-  def traditional_function_value() do
-    cached_parser(
-      sequence(
-        [
-          ignore(literal("function")),
-          iows(),
-          ignore(open_paren()),
-          iows(),
-          optional(
-            sequence(
-              [
-                js_identifier(),
-                iows(),
-                many(
-                  sequence([
-                    ignore(comma()),
-                    iows(),
-                    js_identifier()
-                  ])
-                )
-              ],
-              ast: &List.flatten/1
-            )
-          ),
-          ignore(close_paren()),
-          iows(),
-          delimited_text(?{, ?})
-        ],
-        label: "function-value",
-        debug: true,
-        ast: fn
-          [args, body] ->
-            {:function, {:std, args, body}}
-
-          [body] ->
-            {:function, {:std, [], body}}
-        end
-      )
-    )
-  end
-
-  # Arrow function
-  # (...) => {...}
-  def arrow_function_value() do
-    cached_parser(
-      sequence(
-        [
-          ignore(open_paren()),
-          iows(),
-          optional(
-            sequence(
-              [
-                js_identifier(),
-                iows(),
-                many(
-                  sequence([
-                    ignore(comma()),
-                    iows(),
-                    js_identifier()
-                  ])
-                )
-              ],
-              ast: &List.flatten/1
-            )
-          ),
-          ignore(close_paren()),
-          iows(),
-          ignore(arrow()),
-          iows(),
-          delimited_text(?{, ?})
-        ],
-        label: "function-value",
-        debug: true,
-        ast: fn
-          [args, body] ->
-            {:function, {:arrow, args, body}}
-
-          [body] ->
-            {:function, {:arrow, [], body}}
-        end
-      )
-    )
-  end
-
-  def function_value() do
-    cached_parser(
-      choice([
-        traditional_function_value(),
-        arrow_function_value()
-      ])
-    )
-  end
-
   # Dice
   # ndX+-m
   # 2d+6, 3d8-2, 1d10+1
@@ -483,7 +389,7 @@ defmodule Rez.Parser.ValueParsers do
   end
 
   def read_javascript(raw_js) do
-    case Ergo.parse(function_value(), raw_js) do
+    case Ergo.parse(js_function(), raw_js) do
       %{status: :ok, ast: fun_val} ->
         fun_val
 
@@ -598,7 +504,7 @@ defmodule Rez.Parser.ValueParsers do
           string_value(),
           keyword_value(),
           template_value(),
-          function_value(),
+          js_function(),
           property_value(),
           dice_value(),
           elem_ref_value(),

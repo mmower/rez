@@ -52,7 +52,7 @@ class RezTimer extends RezBasicObject {
    */
   dec_counter() {
     if(this.hasAttribute("count")) {
-      let count = this.getAttribute("count") - 1;
+      const count = this.getAttribute("count") - 1;
       if(count === 0) {
         this.stop();
       }

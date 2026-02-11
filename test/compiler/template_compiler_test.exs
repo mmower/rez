@@ -7,7 +7,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
 
   # @tag :skip
   test "compiles string chunk to string function" do
-    assert "function(bindings) {return `The rain in Spain falls mainly on the plain.`;}" =
+    assert "() => `The rain in Spain falls mainly on the plain.`" =
              C.compile_chunk("The rain in Spain falls mainly on the plain.")
   end
 
@@ -15,7 +15,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   test "compile interpolate chunk to interpolate function" do
     {:ok, chunk} = TEP.parse("player.name")
 
-    assert ~s|function(bindings) {return (function(bindings) {return bindings.player.name;})(bindings);}| =
+    assert ~s|(bindings) => ((bindings) => bindings.player.name)(bindings)| =
              C.compile_chunk({:interpolate, chunk})
   end
 
@@ -29,7 +29,7 @@ defmodule Rez.Compiler.TemplateCompilerTest do
   test "compile conditional chunk into render function" do
     chunk = {:conditional, [{"player.health < 50", {:source_template, ["<div>wounded!</div>"]}}]}
 
-    assert "function(bindings) { \n    if(evaluateExpression(`player.health < 50`, bindings)) {\n      const sub_template = function(bindings) {return [function(bindings) {return `<div>wounded!</div>`;}].reduce(function(text, f) {return text + f(bindings)}, \"\");};\n      return sub_template(bindings);\n    }\n      else {\n        return \"\";\n      }\n      ;}" =
+    assert "(bindings) => {\n    if(evaluateExpression(`player.health < 50`, bindings)) {\n      const sub_template = (bindings) => [() => `<div>wounded!</div>`].reduce((text, f) => text + f(bindings), \"\");\n      return sub_template(bindings);\n    }\n      else {\n        return \"\";\n      }\n      }" =
              C.compile_chunk(chunk)
   end
 
@@ -40,14 +40,14 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     """
 
     assert {:compiled_template,
-            ~s|function(bindings) {return [function(bindings) {return `This is text containing an interpolation `;},function(bindings) {return (function(bindings) {return bindings.player.name;})(bindings);},function(bindings) {return ` of the players name.\n`;}].reduce(function(text, f) {return text + f(bindings)}, \"\");}|} =
+            ~s|(bindings) => [() => `This is text containing an interpolation `,(bindings) => ((bindings) => bindings.player.name)(bindings),() => ` of the players name.\n`].reduce((text, f) => text + f(bindings), "")|} =
              template |> P.parse() |> C.compile()
   end
 
   # @tag :skip
   test "compiler" do
     assert {:compiled_template,
-            ~s|function(bindings) {return [function(bindings) {return (function(bindings) {return bindings.person.age;})(bindings);}].reduce(function(text, f) {return text + f(bindings)}, \"\");}|} =
+            ~s|(bindings) => [(bindings) => ((bindings) => bindings.person.age)(bindings)].reduce((text, f) => text + f(bindings), "")|} =
              "${person.age}" |> P.parse() |> C.compile()
   end
 
@@ -56,12 +56,12 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     template = P.parse("${\"year\" | pluralize: player.age}")
 
     assert {:compiled_template,
-            ~s|function(bindings) {return [function(bindings) {return [function(bindings, value) {return Rez.template_expression_filters.pluralize(value, (function(bindings) {return bindings.player.age;})(bindings));}].reduce(function(value, expr_filter) {return expr_filter(bindings, value);}, (function(bindings) {return \"year\";})(bindings));}].reduce(function(text, f) {return text + f(bindings)}, \"\");}|} =
+            ~s|(bindings) => [(bindings) => [(bindings, value) => {return Rez.template_expression_filters.pluralize(value, ((bindings) => bindings.player.age)(bindings));}].reduce((value, expr_filter) => expr_filter(bindings, value), "year")].reduce((text, f) => text + f(bindings), "")|} =
              C.compile(template)
   end
 
   test "filter content" do
-    expr = ~s|(function(bindings) {return bindings.content;})(bindings)|
+    expr = ~s|((bindings) => bindings.content)(bindings)|
 
     template = P.parse("The rain in span falls mainly on the ${content} plain")
     {:compiled_template, ct} = C.compile(template)

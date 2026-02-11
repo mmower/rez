@@ -56,7 +56,7 @@
       const score_field = event.form.elements["target_score"];
       const score = score_field.value;
 
-      if(name != "") {
+      if(name !== "") {
         const player = card.$("player");
         player.setAttribute("name", name);
         player.setAttribute("target_score", score);

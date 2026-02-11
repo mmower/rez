@@ -21,6 +21,7 @@ defmodule Rez.Parser.DirectiveParsers do
   import Rez.Parser.SchemaParser, only: [schema_directive: 0]
   import Rez.Utils, only: [attr_list_to_map: 1]
   import Rez.Parser.ParserCache, only: [cached_parser: 1]
+  import Rez.Parser.JSFunctionParser, only: [js_arrow_function: 0]
 
   defp behaviour_template_directive() do
     sequence(
@@ -53,7 +54,7 @@ defmodule Rez.Parser.DirectiveParsers do
         iws(),
         js_identifier("name"),
         iws(),
-        arrow_function_value()
+        js_arrow_function()
       ],
       label: "@component",
       ctx: fn %Context{ast: [name, impl_fn]} = ctx ->

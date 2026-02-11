@@ -37,7 +37,7 @@ class RezActor extends RezBasicObject {
   checkItem(inventoryId, slotId, itemId) {
     const decision = new RezDecision("Filter Item");
     decision.defaultYes();
-    if (this.willHandleEvent("accept_item")) {
+    if(this.willHandleEvent("accept_item")) {
       this.runEvent("accept_item", {
         decision: decision,
         inventory_id: inventoryId,
@@ -54,7 +54,7 @@ class RezActor extends RezBasicObject {
    * @description initializes properties of RezActor
    */
   elementInitializer() {
-    if (this.hasAttribute("initial_location")) {
+    if(this.hasAttribute("initial_location")) {
       this.moveTo(this.getAttributeValue("initial_location"));
     }
   }
@@ -68,7 +68,7 @@ class RezActor extends RezBasicObject {
   moveTo(destLocationId) {
     console.log(`Moving |${this.id}| to |${destLocationId}|`);
 
-    if (this.hasAttribute("location_id")) {
+    if(this.hasAttribute("location_id")) {
       const fromLocationId = this.getAttributeValue("location_id");
       this.runEvent("leave", {location_id: fromLocationId});
       const fromLocation = $(fromLocationId);

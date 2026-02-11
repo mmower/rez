@@ -190,7 +190,8 @@ defmodule Rez.Parser.SchemaParser do
       # For assets
       schema_validate_existing_file(),
       # For functions
-      schema_validate_params(),
+      schema_validate_min_arity(),
+      schema_validate_max_arity(),
       schema_validate_param_count(),
       # For items
       schema_validate_is_a(),
@@ -422,16 +423,30 @@ defmodule Rez.Parser.SchemaParser do
     )
   end
 
-  defp schema_validate_params() do
+  defp schema_validate_min_arity() do
     sequence(
       [
-        iliteral("params:"),
+        iliteral("min_arity:"),
         iws(),
-        identifiers()
+        number_value()
       ],
-      label: "validate-params",
-      ast: fn [params] ->
-        {:params, params}
+      label: "validate-min-arity",
+      ast: fn [{:number, min}] ->
+        {:min_arity, min}
+      end
+    )
+  end
+
+  defp schema_validate_max_arity() do
+    sequence(
+      [
+        iliteral("max_arity:"),
+        iws(),
+        number_value()
+      ],
+      label: "validate-max-arity",
+      ast: fn [{:number, max}] ->
+        {:max_arity, max}
       end
     )
   end

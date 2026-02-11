@@ -121,16 +121,12 @@ class RezCard extends RezBasicObject {
    * no flipped template exists). Otherwise returns the $content_template.
    * @throws {Error} if the card has no content template defined
    */
-  getViewTemplate(flipped) {
-    if (arguments.length === 0) {
-      flipped = this.$flipped;
-    }
-
+  getViewTemplate(flipped = this.$flipped) {
     const template = flipped
       ? (this.$flipped_template || this.$content_template)
       : this.$content_template;
 
-    if (!template) {
+    if(!template) {
       throw new Error(`Card |${this.id}| has no content template!`);
     }
 
@@ -149,7 +145,7 @@ class RezCard extends RezBasicObject {
    */
   handleCustomEvent(event_name, evt) {
     const handler = this.eventHandler(event_name);
-    if(handler && typeof handler == "function") {
+    if(handler && typeof handler === "function") {
       return handler(this, evt);
     } else {
       return {

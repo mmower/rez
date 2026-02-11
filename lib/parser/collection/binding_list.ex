@@ -19,6 +19,7 @@ defmodule Rez.Parser.Collection.BindingList do
   import Rez.Parser.IdentifierParser, only: [js_identifier: 0]
 
   import Rez.Parser.JSBindingParser, only: [binding_path: 0]
+  import Rez.Parser.JSFunctionParser, only: [js_function: 0]
 
   import Rez.Parser.ValueParsers,
     only: [
@@ -27,7 +28,6 @@ defmodule Rez.Parser.Collection.BindingList do
       number_value: 0,
       bool_value: 0,
       elem_ref_value: 0,
-      function_value: 0,
       code_block_value: 0
     ]
 
@@ -112,7 +112,7 @@ defmodule Rez.Parser.Collection.BindingList do
             elem_ref_value(),
             binding_path(),
             code_block_value(),
-            function_value()
+            js_function()
           ])
         ],
         label: "bound-source",

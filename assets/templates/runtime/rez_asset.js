@@ -31,7 +31,7 @@ class RezAsset extends RezBasicObject {
    */
   get assetType() {
     const mime_type = this.getAttributeValue("$detected_mime_type");
-    if (typeof mime_type == "undefined") {
+    if(typeof mime_type === "undefined") {
       throw new Error(`No MIME information available for asset: ${this.id}`);
     }
     return mime_type.split("/")[0];
@@ -97,12 +97,12 @@ class RezAsset extends RezBasicObject {
    * @throws {Error} if no width is specified and no default is provided
    */
   getWidth(w) {
-    if (typeof w != "undefined") {
+    if(typeof w !== "undefined") {
       return w;
     }
 
     const width = this.getAttribute("width");
-    if (typeof width != "undefined") {
+    if(typeof width !== "undefined") {
       return width;
     }
 
@@ -119,12 +119,12 @@ class RezAsset extends RezBasicObject {
    * @throws {Error} if no height is specified and no default is provided
    */
   getHeight(h) {
-    if (typeof h != "undefined") {
+    if(typeof h !== "undefined") {
       return h;
     }
 
     const height = this.getAttribute("height");
-    if (typeof height != "undefined") {
+    if(typeof height !== "undefined") {
       return height;
     }
 

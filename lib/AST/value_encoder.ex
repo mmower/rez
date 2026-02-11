@@ -138,8 +138,9 @@ defmodule Rez.AST.ValueEncoder do
 
   @doc """
   The template `t` is a function(bindings, filters) that returns the content
-  of the template. A challenge is that the 'this' binding is undefined for
-  some reason (it's not even 'Window') and so we cannot supply a context.
+  of the template. The implicit binding for the owning object is 'self'
+  (not 'this', which is a JS reserved keyword and cannot be used as a
+  function parameter name in evaluateExpression).
   """
   def encode_value({:compiled_template, template_fn}) do
     ~s|{template: #{template_fn}}|
@@ -156,6 +157,10 @@ defmodule Rez.AST.ValueEncoder do
 
   defp encode_ptable_entry({:string, s}, p) do
     [s, p]
+  end
+
+  defp encode_ptable_entry({:keyword, k}, p) do
+    [k, p]
   end
 
   defp encode_list(l) do

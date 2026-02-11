@@ -1808,9 +1808,9 @@ Create your own template expression filters:
     const match = dice_notation.match(/(\d+)d(\d+)(?:\+(\d+))?/);
     if (!match) return 0;
 
-    const count = parseInt(match[1]);
-    const sides = parseInt(match[2]);
-    const modifier = parseInt(match[3]) || 0;
+    const count = parseInt(match[1], 10);
+    const sides = parseInt(match[2], 10);
+    const modifier = parseInt(match[3], 10) || 0;
 
     return rollDice(count, sides, modifier);
   }

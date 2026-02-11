@@ -13,27 +13,27 @@
  */
 function normalizeRefs(value) {
   // Primitives pass through
-  if (value === null || value === undefined || typeof value !== 'object') {
+  if(value === null || value === undefined || typeof value !== 'object') {
     return value;
   }
 
   // Check for pure ref: {$ref: "id"} with only that property
-  if ('$ref' in value && Object.keys(value).length === 1) {
+  if('$ref' in value && Object.keys(value).length === 1) {
     return value.$ref;
   }
 
   // Handle Arrays
-  if (Array.isArray(value)) {
+  if(Array.isArray(value)) {
     return value.map(normalizeRefs);
   }
 
   // Handle Sets - must recreate
-  if (value instanceof Set) {
+  if(value instanceof Set) {
     return new Set([...value].map(normalizeRefs));
   }
 
   // Handle plain objects - recurse into properties
-  if (value.constructor === Object) {
+  if(value.constructor === Object) {
     const result = {};
     for (const [k, v] of Object.entries(value)) {
       result[k] = normalizeRefs(v);
@@ -272,8 +272,8 @@ class RezBasicObject {
       throw new Error("Attempting to load attributes from improper object!");
     }
     for (const [attrName, attrValue] of Object.entries(attrs)) {
-      if(typeof(attrValue) === "object" && attrValue.hasOwnProperty("json$safe")) {
-        if(attrValue["type"] === "function") {
+      if(typeof(attrValue) === "object" && Object.hasOwn(attrValue, "json$safe")) {
+        if(attrValue.type === "function") {
           const functionBody = attrValue.value;
           try {
             // Use the Function constructor to create a new function
@@ -283,7 +283,7 @@ class RezBasicObject {
             console.error(`Failed to restore function for attribute '${attrName}':`, error);
           }
         } else {
-          console.error(`Failed to restore unknwon type for attribute '${attrName}' (${attrValue["type"]})`);
+          console.error(`Failed to restore unknwon type for attribute '${attrName}' (${attrValue.type})`);
         }
       } else {
         this.setAttribute(attrName, attrValue);
@@ -331,15 +331,15 @@ class RezBasicObject {
    */
   init_1() {
     // Initialize Mixins
-    for(let mixin_ref of this.getAttributeValue("$mixins", [])) {
+    for(const mixin_ref of this.getAttributeValue("$mixins", [])) {
       const mixin_id = (typeof mixin_ref === "object" && mixin_ref.$ref) ? mixin_ref.$ref : mixin_ref;
       const mixin = window.Rez.mixins[mixin_id];
 
       // Apply properties
-      for (let [propName, propDef] of Object.entries(mixin)) {
+      for(const [propName, propDef] of Object.entries(mixin)) {
         if(propDef.property) {
           this.createCustomProperty(propName, propDef);
-        } else if (typeof propDef === 'function') {
+        } else if(typeof propDef === 'function') {
           // Apply methods directly
           this[propName] = propDef.bind(this);
         }
@@ -357,7 +357,7 @@ class RezBasicObject {
    */
   init_2() {
     // Templates don't initialise like regular objects
-    if (!this.isTemplateObject()) {
+    if(!this.isTemplateObject()) {
       this.elementInitializer();
       this.runEvent("init", {});
     }
@@ -387,7 +387,7 @@ class RezBasicObject {
       configurable: true,
     });
 
-    if (attrName.endsWith("_id")) {
+    if(attrName.endsWith("_id")) {
       const directAttrName = attrName.slice(0, -3);
       Object.defineProperty(this, directAttrName, {
         get: function () {
@@ -420,7 +420,7 @@ class RezBasicObject {
    * for each one, creating JavaScript property accessors for the entire attribute set.
    */
   createStaticProperties() {
-    for(let [attrName, _] of Object.entries(this.attributes)) {
+    for(const [attrName, _] of Object.entries(this.attributes)) {
       this.createStaticProperty(attrName);
     }
   }
@@ -438,20 +438,20 @@ class RezBasicObject {
    * Skipped for template objects since they don't need runtime property initialization.
    */
   createDynamicProperties() {
-    if (this.getAttributeValue("$template", false)) {
+    if(this.getAttributeValue("$template", false)) {
       return;
     }
 
-    for (let attrName of Object.keys(this.attributes)) {
+    for (const attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
-      if (typeof value == "object") {
-        if (value.hasOwnProperty("ptable")) {
+      if(typeof value === "object") {
+        if(Object.hasOwn(value, "ptable")) {
           this.createProbabilityTable(attrName, value);
-        } else if (value.hasOwnProperty("property")) {
+        } else if(Object.hasOwn(value, "property")) {
           this.createCustomProperty(attrName, value);
-        } else if (value.hasOwnProperty("bht")) {
+        } else if(Object.hasOwn(value, "bht")) {
           this.createBehaviourTreeAttribute(attrName, value);
-        } else if(value.hasOwnProperty("template")) {
+        } else if(Object.hasOwn(value, "template")) {
           this.createTemplateProperty(attrName, value);
         }
       }
@@ -469,14 +469,14 @@ class RezBasicObject {
    * that evaluates the template with `this` bound to the object.
    */
   createTemplateProperty(attrName, value) {
-    const template_fn = value["template"];
+    const template_fn = value.template;
     this[attrName] = template_fn;
 
     // Regular templates get compiled to an attribute
     // $<attr_name>_template
     // and this is what RezView expects for layout:
     // and content: attributes. However we can unwrap
-    // this for regular attributes and bind 'this' to
+    // this for regular attributes and bind 'self' to
     // the object in question.
     if(attrName.startsWith("$") && attrName.endsWith("_template")) {
       const directAttrName = attrName.slice(1, -9);
@@ -485,7 +485,7 @@ class RezBasicObject {
         get: function() {
           const templateFn = this.getAttribute(attrName);
           const bindings = {
-            this: this
+            self: this
           };
           return templateFn(bindings);
         }
@@ -515,31 +515,37 @@ class RezBasicObject {
     const copy_initializers = [[], [], [], [], [], [], [], [], [], []];
     const delegates = [];
 
-    for(let attrName of Object.keys(this.attributes)) {
+    for(const attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
-      if(typeof value == "object") {
-        if(value.hasOwnProperty("initializer")) {
-          const prio = parseInt(value["priority"]);
+      if(typeof value === "object") {
+        if(Object.hasOwn(value, "initializer")) {
+          const prio = parseInt(value.priority, 10);
           dyn_initializers[prio-1].push([attrName, value]);
-        } else if(value.hasOwnProperty("$copy")) {
-          const prio = parseInt(value["priority"]);
+        } else if(Object.hasOwn(value, "$copy")) {
+          const prio = parseInt(value.priority, 10);
           copy_initializers[prio-1].push([attrName, value]);
-        } else if(value.hasOwnProperty("$delegate")) {
-          delegates.push([attrName, value["$delegate"]]);
+        } else if(Object.hasOwn(value, "$delegate")) {
+          delegates.push([attrName, value.$delegate]);
         }
       }
     }
 
     copy_initializers.flat().forEach(
-      ([attrName, elem_ref]) => this.createAttributeByCopying(attrName, elem_ref)
+      ([attrName, elem_ref]) => {
+        this.createAttributeByCopying(attrName, elem_ref);
+      }
     );
 
     delegates.forEach(
-      ([attrName, targetAttr]) => this.createDelegateProperty(attrName, targetAttr)
+      ([attrName, targetAttr]) => {
+        this.createDelegateProperty(attrName, targetAttr);
+      }
     );
 
     dyn_initializers.flat().forEach(
-      ([attrName, value]) => this.createDynamicallyInitializedAttribute(attrName, value)
+      ([attrName, value]) => {
+        this.createDynamicallyInitializedAttribute(attrName, value);
+      }
     );
   }
 
@@ -558,13 +564,13 @@ class RezBasicObject {
   createProbabilityTable(attrName, value) {
     delete this[attrName];
 
-    const pTable = JSON.parse(value["ptable"]);
+    const pTable = JSON.parse(value.ptable);
 
     Object.defineProperty(this, attrName, {
-      get: function () {
+      get: () => {
         const p = Math.random();
         const idx = pTable.findIndex((pair) => p <= pair[1]);
-        if (idx == -1) {
+        if(idx === -1) {
           throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
@@ -573,10 +579,10 @@ class RezBasicObject {
     });
 
     Object.defineProperty(this, `${attrName}_roll`, {
-      get: function () {
+      get: () => {
         const p = Math.random();
         const idx = pTable.findIndex((pair) => p <= pair[1]);
-        if(idx == -1) {
+        if(idx === -1) {
           throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
@@ -596,9 +602,7 @@ class RezBasicObject {
    */
   createCustomProperty(attrName, value) {
     delete this[attrName];
-    const propertyDef = value["property"];
-    const propertySrc = `function() {${propertyDef}}`;
-    eval(`Object.defineProperty(this, "${attrName}", {get: ${propertySrc}})`);
+    Object.defineProperty(this, attrName, {get: new Function(value.property)});
   }
 
   /**
@@ -612,12 +616,11 @@ class RezBasicObject {
    * The attribute is set without notifying observers (third parameter is false).
    */
   createDynamicallyInitializedAttribute(attrName, value) {
-    if(value.constructor == RezDie) {
+    if(value.constructor === RezDie) {
       this.setAttribute(attrName, value.roll(), false);
     } else {
-      const initializerDef = value["initializer"];
-      const initializerSrc = `(function() {${initializerDef}}).call(this)`;
-      this.setAttribute(attrName, eval(initializerSrc), false);
+      const initializerFn = new Function(value.initializer);
+      this.setAttribute(attrName, initializerFn.call(this), false);
     }
   }
 
@@ -631,7 +634,7 @@ class RezBasicObject {
    * stores the new copy's ID in this attribute.
    */
   createAttributeByCopying(attrName, value) {
-    const elem_ref = value["$copy"];
+    const elem_ref = value.$copy;
     const source = $(elem_ref);
     this.setAttribute(attrName, source.addCopy().id);
   }
@@ -650,11 +653,11 @@ class RezBasicObject {
     Object.defineProperty(this, attrName, {
       get: function() {
         const target = this[targetAttr];
-        if (target == null) {
+        if(target == null) {
           return undefined;
         }
         const value = target[attrName];
-        if (typeof value === "function") {
+        if(typeof value === "function") {
           return value.bind(target);
         }
         return value;
@@ -675,11 +678,9 @@ class RezBasicObject {
   createBehaviourTreeAttribute(attrName, value) {
     delete this[attrName];
 
-    const tree = this.instantiateBehaviourTree(value["bht"]);
+    const tree = this.instantiateBehaviourTree(value.bht);
     Object.defineProperty(this, attrName, {
-      get: function() {
-        return tree;
-      }
+      get: () => tree
     });
   }
 
@@ -693,9 +694,9 @@ class RezBasicObject {
    * Child specifications are recursively instantiated before the parent.
    */
   instantiateBehaviourTree(treeSpec) {
-    const behaviour_template = $(treeSpec["behaviour"], true);
-    const options = treeSpec["options"];
-    const children = treeSpec["children"].map((spec) => this.instantiateBehaviourTree(spec));
+    const behaviour_template = $(treeSpec.behaviour, true);
+    const options = treeSpec.options;
+    const children = treeSpec.children.map((spec) => this.instantiateBehaviourTree(spec));
 
     return behaviour_template.instantiate(this, options, children);
   }
@@ -749,7 +750,7 @@ class RezBasicObject {
     const lastId = this.getAttribute("$auto_id_idx");
     const nextId = lastId + 1;
     this.setAttribute("$auto_id_idx", nextId);
-    return this.id + "_" + nextId;
+    return `${this.id}_${nextId}`;
   }
 
   /**
@@ -801,7 +802,7 @@ class RezBasicObject {
       throw new Error("Cannot unmap attributes that do not relate to an element id!");
     }
 
-    if(!this.hasOwnProperty(attr_name)) {
+    if(!Object.hasOwn(this, attr_name)) {
       throw new Error("Cannot unmap attribute not defined on this object!");
     }
 
@@ -841,7 +842,7 @@ class RezBasicObject {
    */
   willHandleEvent(eventName) {
     const handler = this.eventHandler(eventName);
-    const doesHandleEvent = handler != null && typeof handler == "function";
+    const doesHandleEvent = handler != null && typeof handler === "function";
     return doesHandleEvent;
   }
 
@@ -857,8 +858,8 @@ class RezBasicObject {
     if(RezBasicObject.game.$debug_events) {
       console.log(`Run on_${eventName} handler on '${this.id}'`);
     }
-    let handler = this.eventHandler(eventName);
-    if(handler != null && typeof handler == "function") {
+    const handler = this.eventHandler(eventName);
+    if(handler != null && typeof handler === "function") {
       return handler(this, params);
     } else {
       return false;
@@ -872,7 +873,7 @@ class RezBasicObject {
    * @returns {boolean} true if the object defines the specified attribute
    */
   hasAttribute(attrName) {
-    return this.attributes.hasOwnProperty(attrName);
+    return Object.hasOwn(this.attributes, attrName);
   }
 
   /**
@@ -897,15 +898,15 @@ class RezBasicObject {
    */
   getAttributeValue(name, defaultValue) {
     const attr = this.getAttribute(name);
-    if(typeof attr == "undefined") {
-      if(typeof defaultValue == "undefined") {
+    if(typeof attr === "undefined") {
+      if(typeof defaultValue === "undefined") {
         throw new Error(`Attempt to get value of attribute |${name}| which is not defined on |${this.id}|`);
       } else {
         return defaultValue;
       }
-    } else if(typeof attr == "function") {
+    } else if(typeof attr === "function") {
       return attr(this);
-    } else if(attr.constructor == RezDie) {
+    } else if(attr.constructor === RezDie) {
       return attr.roll();
     } else {
       return attr;
@@ -934,7 +935,7 @@ class RezBasicObject {
    * @param {boolean} notify_observers whether observers should be notified that the value has changed
    */
   setAttribute(attrName, newValue, notifyObservers = true) {
-    if(typeof newValue == "undefined") {
+    if(typeof newValue === "undefined") {
       throw new Error(`Call to setAttribute(${attrName}, …) with undefined value!`);
     }
 
@@ -1015,10 +1016,14 @@ class RezBasicObject {
     const oldTags = this.getAttributeValue("tags", new Set());
 
     const tagsToRemove = oldTags.difference(newTags);
-    tagsToRemove.forEach((tag) => this.removeTag(tag));
+    tagsToRemove.forEach((tag) => {
+      this.removeTag(tag);
+    });
 
     const tagsToAdd = newTags.difference(oldTags);
-    tagsToAdd.forEach((tag) => this.addTag(tag));
+    tagsToAdd.forEach((tag) => {
+      this.addTag(tag);
+    });
   }
 
   /**
@@ -1046,15 +1051,7 @@ class RezBasicObject {
    * actually apply the effect's modifications.
    */
   applyEffect(effectId, slotId, itemId) {
-    console.log(
-      "Been asked to apply effect |" +
-        effectId +
-        "| from item |" +
-        itemId +
-        "| to |" +
-        this.id +
-        "|"
-    );
+    console.log(`Apply effect |${effectId}| of item |${itemId}| in slot ${slotId} to |${this.id}|`);
   }
 
   /**
@@ -1068,15 +1065,7 @@ class RezBasicObject {
    * actually remove the effect's modifications.
    */
    removeEffect(effectId, slotId, itemId) {
-    console.log(
-      "Been asked to remove effect |" +
-        effectId +
-        "| from item |" +
-        itemId +
-        "| to |" +
-        this.id +
-        "|"
-    );
+    console.log(`Remove effect |${effectId}| of item |${itemId}| in slot ${slotId} to |${this.id}|`);
   }
 }
 

@@ -32,7 +32,7 @@
  *
  * @example <caption>Add an item at runtime</caption>
  * const inv = $("player_inv");
- * if (inv.canAddItemForSlot("slot_weapon", "item_axe").result) {
+ * if(inv.canAddItemForSlot("slot_weapon", "item_axe").result) {
  *   inv.addItemToSlot("slot_weapon", "item_axe");
  * }
  */
@@ -155,7 +155,9 @@ class RezInventory extends RezBasicObject {
    */
   appendToSlot(slotId, itemOrItems) {
     if(Array.isArray(itemOrItems)) {
-      itemOrItems.forEach((itemid) => this.appendItemToSlot(slotId, itemid));
+      itemOrItems.forEach((itemid) => {
+        this.appendItemToSlot(slotId, itemid);
+      });
     } else {
       this.appendItemToSlot(slotId, itemOrItems);
     }
@@ -280,7 +282,7 @@ class RezInventory extends RezBasicObject {
       decision.no("does not fit").setData("failed_on", "capacity");
     } else if(this.owner != null) {
       const actorDecision = this.owner.checkItem(this.id, slotId, itemId);
-      if (actorDecision.result) {
+      if(actorDecision.result) {
         decision.yes();
       } else {
         decision.no(actorDecision.reason()).setData("failed_on", "actor");
@@ -383,7 +385,7 @@ class RezInventory extends RezBasicObject {
     }
 
     const item = $(itemId);
-    if (!item.hasAttribute("effects")) {
+    if(!item.hasAttribute("effects")) {
       // This item doesn't have any effects
       return false;
     }
@@ -405,7 +407,7 @@ class RezInventory extends RezBasicObject {
    */
   removeItemFromSlot(slotId, itemId) {
     const contents = this.getItemsForSlot(slotId);
-    if (!contents.includes(itemId)) {
+    if(!contents.includes(itemId)) {
       throw new Error(
         "Attempt to remove item |" +
         itemId +
@@ -418,7 +420,7 @@ class RezInventory extends RezBasicObject {
     }
 
     this.setItemsForSlot(slotId, contents.filter((id) => {
-      return id != itemId;
+      return id !== itemId;
     }));
 
     const slot = $(slotId);
@@ -444,7 +446,7 @@ class RezInventory extends RezBasicObject {
     }
 
     const item = $(itemId);
-    if (!item.hasAttribute("effects")) {
+    if(!item.hasAttribute("effects")) {
       return false;
     }
 
@@ -462,7 +464,9 @@ class RezInventory extends RezBasicObject {
    */
   clearSlot(slotId) {
     const items = this.getItemsForSlot(slotId);
-    items.forEach((itemId) => this.removeItemFromSlot(slotId, itemId));
+    items.forEach((itemId) => {
+      this.removeItemFromSlot(slotId, itemId);
+    });
   }
 }
 

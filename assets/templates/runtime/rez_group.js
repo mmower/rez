@@ -65,11 +65,11 @@ class RezGroup extends RezBasicObject {
     if(excludeTags.size > 0) {
       assets = assets.filter((asset) => {
         const tags = asset.getAttributeValue("tags");
-        return tags.intersection(excludeTags).size == 0;
+        return tags.intersection(excludeTags).size === 0;
       });
     }
 
-    if(assets.size == 0) {
+    if(assets.size === 0) {
       console.log("Attempt to create group that matches 0 assets!");
     }
 
@@ -87,7 +87,7 @@ class RezGroup extends RezBasicObject {
    * @throws {Error} if no matching assets are found
    */
   randomAssetId() {
-    if(this.assets.size == 0) {
+    if(this.assets.size === 0) {
       this.filterAssets();
     }
 

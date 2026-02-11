@@ -97,7 +97,7 @@ class RezScene extends RezBasicObject {
    * @returns {*} the template used to render this scene's layout
    * @description Returns the layout template for rendering this scene. The flipped parameter is ignored since scenes cannot be flipped.
    */
-  getViewTemplate(flipped) {
+  getViewTemplate(_flipped) {
     // Scenes can't be flipped, only cards
     return this.$layout_template;
   }

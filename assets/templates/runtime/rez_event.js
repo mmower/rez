@@ -23,6 +23,7 @@ class RezEvent {
   #sceneResumeEvent;
   #renderEvent;
   #errorMessage;
+  #afterHandlers;
 
   /**
    * @function constructor
@@ -39,6 +40,7 @@ class RezEvent {
     this.#sceneResumeEvent = false;
     this.#renderEvent = false;
     this.#errorMessage = null;
+    this.#afterHandlers = [];
   }
 
   /**
@@ -305,6 +307,29 @@ class RezEvent {
   }
 
   /**
+   * @function after
+   * @memberof RezEvent#
+   * @param {function} callback - a parameterless callback the runs after processing
+   * @return {RezEvent} this event for method chaining
+   * @description Adds a callback to be run after event processing is finished
+   */
+  after(callback) {
+    this.#afterHandlers.push(callback);
+    return this;
+  }
+
+  /**
+   * @function runAfter
+   * @memberof RezEvent#
+   * @description Run any after callbacks
+   */
+  runAfterHandlers() {
+    this.#afterHandlers.forEach((callback) => {
+      callback();
+    });
+  }
+
+  /**
    * @function noop
    * @memberof RezEvent#
    * @returns {RezEvent} this event for method chaining
@@ -420,6 +445,18 @@ class RezEvent {
   }
 
   /**
+   * @function after
+   * @memberof RezEvent
+   * @static
+   * @param {function} callback - a parameterless callback the runs after processing
+   * @returns {RezEvent} a new event that will run the callback after processing
+   * @description Creates a new event that runs the specified callback after being processed
+   */
+  static after(callback) {
+    return new RezEvent().after(callback);
+  }
+
+  /**
    * @function error
    * @memberof RezEvent
    * @static
@@ -492,7 +529,7 @@ class RezEventProcessor {
   dispatchResponse(response) {
     if(response instanceof RezEvent) {
       if(response.hasFlash) {
-        for(let message of response.flashMessages) {
+        for(const message of response.flashMessages) {
           this.game.addFlashMessage(message);
         }
       }
@@ -516,6 +553,8 @@ class RezEventProcessor {
       if(response.isError) {
         console.log(`Error: ${response.errorMessage}`);
       }
+
+      response.runAfterHandlers();
     } else {
       throw new Error("Event handlers must return a RezEvent object!");
     }
@@ -591,6 +630,19 @@ class RezEventProcessor {
   }
 
   /**
+   * @function raiseWindowEvent
+   * @memberof RezEventProcessor#
+   * @param {string} eventName - the name of the window event (e.g. "wheel", "resize")
+   * @param {Event} browserEvt - the native browser event
+   * @returns {*} the result of processing the window event
+   * @description Creates and processes a custom window event that wraps a native browser event
+   */
+  raiseWindowEvent(eventName, browserEvt) {
+    const evt = new CustomEvent("window_event", {detail: {event_name: eventName, event: browserEvt}});
+    return this.handleBrowserEvent(evt);
+  }
+
+  /**
    * @function isAutoUndoEvent
    * @memberof RezEventProcessor#
    * @param {Event} evt - the event to check
@@ -620,16 +672,18 @@ class RezEventProcessor {
 
     let result;
 
-    if (evt.type === "click") {
+    if(evt.type === "click") {
       result = this.handleBrowserClickEvent(evt);
-    } else if (evt.type === "input") {
+    } else if(evt.type === "input") {
       result = this.handleBrowserInputEvent(evt);
-    } else if (evt.type === "submit") {
+    } else if(evt.type === "submit") {
       result = this.handleBrowserSubmitEvent(evt);
     } else if(evt.type === "timer") {
       result = this.handleTimerEvent(evt);
     } else if(evt.type === "key_binding") {
       result = this.handleKeyBindingEvent(evt);
+    } else if(evt.type === "window_event") {
+      result = this.handleWindowEvent(evt);
     } else {
       result = RezEvent.error(`No handler for event of type '${evt.type}'!`);
     }
@@ -686,6 +740,29 @@ class RezEventProcessor {
   }
 
   /**
+   * @function handleWindowEvent
+   * @memberof RezEventProcessor#
+   * @param {CustomEvent} evt - the window event with event name and browser event details
+   * @returns {*} the result of handling the window event
+   * @description Handles window events by routing them to custom event handlers with
+   * the "window_" prefix (e.g. "wheel" becomes "window_wheel")
+   */
+  handleWindowEvent(evt) {
+    const eventName = evt.detail.event_name;
+    const browserEvt = evt.detail.event;
+    const handlerName = `window_${eventName}`;
+    const [receiver, handler] = this.getEventHandler(handlerName);
+    if(!handler) {
+      return RezEvent.noop();
+    }
+
+    if(RezBasicObject.game.$debug_events) {
+      console.log(`Routing event |${handlerName}| to |${receiver.id}|`);
+    }
+    return handler(receiver, {event: browserEvt});
+  }
+
+  /**
    * @function handleBrowserClickEvent
    * @memberof RezEventProcessor#
    * @param {Event} evt - the click event
@@ -703,13 +780,13 @@ class RezEventProcessor {
       return RezEvent.error("Received event without an event name. Cannot process it!");
     }
 
-    if (eventName === "card") {
+    if(eventName === "card") {
       return this.handleCardEvent(target, params);
-    } else if (eventName === "switch") {
+    } else if(eventName === "switch") {
       return this.handleSwitchEvent(target, params);
-    } else if (eventName === "interlude") {
+    } else if(eventName === "interlude") {
       return this.handleInterludeEvent(target, params);
-    } else if (eventName === "resume") {
+    } else if(eventName === "resume") {
       return this.handleResumeEvent(params);
     } else {
       return this.handleCustomEvent(eventName, params);
@@ -725,7 +802,7 @@ class RezEventProcessor {
    * @description Gets an event handler function from a receiver object
    */
   getReceiverEventHandler(receiver, eventname) {
-    let handler = receiver.eventHandler(eventname);
+    const handler = receiver.eventHandler(eventname);
     if(handler && typeof(handler) === "function") {
       return handler;
     } else {
@@ -744,7 +821,7 @@ class RezEventProcessor {
   getEventHandler(eventName) {
     const receivers = [this.card, this.scene, this.game];
     const handlers = receivers.map((receiver) => [receiver, this.getReceiverEventHandler(receiver, eventName)]);
-    return handlers.find(([receiver, handler]) => handler) ?? [null, null];
+    return handlers.find(([_receiver, handler]) => handler) ?? [null, null];
   }
 
   /**

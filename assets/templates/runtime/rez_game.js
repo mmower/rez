@@ -90,14 +90,16 @@ class RezGame extends RezBasicObject {
       now.getMinutes(),
       now.getSeconds(),
     ];
-    const dateMapped = date_parts.map(formatter);
-    const dateJoined = dateMapped.join("");
-    return prefix.toSnakeCase() + "_" + dateJoined + ".json";
+    const date = date_parts.map(formatter).join("");
+    const casedPrefix = prefix.toSnakeCase();
+    return `${casedPrefix}_${date}.json`;
   }
 
   dataArchive() {
     const archive = {};
-    this.gameObjects.forEach((obj, id) => {obj.archiveInto(archive)});
+    this.gameObjects.forEach((obj, _id) => {
+      obj.archiveInto(archive);
+    });
     return archive;
   }
 
@@ -113,7 +115,7 @@ class RezGame extends RezBasicObject {
   }
 
   get canSave() {
-    return this.#view && this.#view.layoutStack.length == 0;
+    return this.#view && this.#view.layoutStack.length === 0;
   }
 
    /**
@@ -126,11 +128,13 @@ class RezGame extends RezBasicObject {
    * link.
    */
   save() {
-    if (!this.canSave) {
+    if(!this.canSave) {
       throw new Error("Cannot save game at this time!");
     }
 
-    this.getAll().forEach((obj) => {obj.runEvent("will_save")});
+    this.getAll().forEach((obj) => {
+      obj.runEvent("will_save");
+    });
 
     const file = new File(
       [this.saveData()],
@@ -158,18 +162,18 @@ class RezGame extends RezBasicObject {
   load(source) {
     const wrapper = JSON.parse(source);
 
-    const archiveFormat = wrapper["archive_format"];
+    const archiveFormat = wrapper.archive_format;
     const currentFormat = this.getAttribute("archive_format");
 
     if(typeof archiveFormat === "undefined") {
       throw new Error("JSON does not represent a Rez game archive!");
-    } else if(archiveFormat != currentFormat) {
+    } else if(archiveFormat !== currentFormat) {
       throw new Error(`JSON version v${archiveFormat} different to current v${currentFormat})!`);
     } else {
       console.log(`Matching archive format: ${archiveFormat}`);
     }
 
-    const data = wrapper["data"];
+    const data = wrapper.data;
     if(typeof data === "undefined") {
       throw new Error("JSON does not contain data archive!");
     } else {
@@ -218,7 +222,7 @@ class RezGame extends RezBasicObject {
    */
   addToAttrIndex(elem) {
     if(!elem.isTemplateObject()) {
-      Object.entries(elem.attributes).forEach(([k, v]) => {
+      Object.entries(elem.attributes).forEach(([k, _v]) => {
         this.indexAttribute(elem.id, k);
       });
     }
@@ -226,7 +230,7 @@ class RezGame extends RezBasicObject {
 
   removeFromAttrIndex(elem) {
     if(!elem.isTemplateObject()) {
-      Object.entries(elem.attributes).forEach(([k, v]) => {
+      Object.entries(elem.attributes).forEach(([k, _v]) => {
         this.unindexAttribute(elem.id, k);
       });
     }
@@ -239,13 +243,13 @@ class RezGame extends RezBasicObject {
    * @param {string} attr_name
    */
   indexAttribute(elemId, attrName) {
-    let index = this.#attrIndex[attrName] ?? new Set();
+    const index = this.#attrIndex[attrName] ?? new Set();
     index.add(elemId);
     this.#attrIndex[attrName] = index;
   }
 
   unindexAttribute(elemId, attrName) {
-    let index = this.#attrIndex[attrName];
+    const index = this.#attrIndex[attrName];
     if(index !== undefined) {
       index.delete(elemId);
 
@@ -278,7 +282,7 @@ class RezGame extends RezBasicObject {
    */
   indexObjectForTag(obj, tag) {
     let objects = this.#tagIndex[tag];
-    if (!objects) {
+    if(!objects) {
       objects = new Set([obj.id]);
       this.#tagIndex[tag] = objects;
     } else {
@@ -294,7 +298,7 @@ class RezGame extends RezBasicObject {
    * @description removes the specified tag from the specified game-object
    */
   unindexObjectForTag(obj, tag) {
-    let objects = this.#tagIndex[tag];
+    const objects = this.#tagIndex[tag];
     if(objects) {
       objects.delete(obj.id);
 
@@ -312,7 +316,9 @@ class RezGame extends RezBasicObject {
    */
   addToTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
-    tags.forEach((tag) => this.indexObjectForTag(obj, tag));
+    tags.forEach((tag) => {
+      this.indexObjectForTag(obj, tag);
+    });
   }
 
   /**
@@ -323,7 +329,9 @@ class RezGame extends RezBasicObject {
    */
   removeFromTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
-    tags.forEach((tag) => this.unindexObjectForTag(obj, tag));
+    tags.forEach((tag) => {
+      this.unindexObjectForTag(obj, tag);
+    });
   }
 
   /**
@@ -438,19 +446,19 @@ class RezGame extends RezBasicObject {
    * and getRelationship("b", "a") are different RezRelationship objects.
    */
   getRelationship(sourceId, targetId) {
-    const relId = "rel_" + sourceId + "_" + targetId;
+    const relId = `rel_${sourceId}_${targetId}`;
     return this.getTypedGameObject(relId, "relationship", false);
   }
 
   getRelationshipsOf(sourceId) {
     return this.filterObjects(
-      (o) => o.element == "relationship" && o.id.startsWith(`rel_${sourceId}_`)
+      (o) => o.element === "relationship" && o.id.startsWith(`rel_${sourceId}_`)
     );
   }
 
   getRelationshipsOn(targetId) {
     return this.filterObjects(
-      (o) => o.element == "relationship" && o.id.endsWith(`_${targetId}`)
+      (o) => o.element === "relationship" && o.id.endsWith(`_${targetId}`)
     );
   }
 
@@ -651,6 +659,27 @@ class RezGame extends RezBasicObject {
   }
 
   /**
+   * @function installWindowEvents
+   * @memberof RezGame#
+   * @description Reads the $window_events attribute and installs window-level event
+   * listeners that route through the event processor's custom event handling.
+   * Each event name in the list (e.g. "wheel") maps to a handler named
+   * "on_window_<event_name>" (e.g. "on_window_wheel").
+   */
+  installWindowEvents() {
+    const windowEvents = this.getAttributeValue("$window_events", []);
+    const eventProcessor = this.#eventProcessor;
+
+    windowEvents.forEach((eventName) => {
+      const listener = (browserEvt) => {
+        const result = eventProcessor.raiseWindowEvent(eventName, browserEvt);
+        eventProcessor.dispatchResponse(result);
+      };
+      window.addEventListener(eventName, listener, {passive: false});
+    });
+  }
+
+  /**
    * @function start
    * @memberof RezGame#
    * @param {string} container_id id of the HTML element into which game content is rendered
@@ -678,6 +707,7 @@ class RezGame extends RezBasicObject {
     });
 
     this.buildView();
+    this.installWindowEvents();
     this.startSceneWithId(this.initial_scene_id);
 
     this.runEvent("game_did_start", {});

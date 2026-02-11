@@ -1077,11 +1077,11 @@
     do {
       roll = die.roll();
       total += roll;
-      if(roll == sides) {
+      if(roll === sides) {
         aces += 1;
       }
       console.log(`Rolls ${roll}${roll === sides ? " with an ace!" : ""}`);
-    } while(roll == sides);
+    } while(roll === sides);
 
     return [total, aces];
   }
@@ -1106,7 +1106,7 @@
     do {
       roll = die.roll();
       total += roll;
-    } while(roll == sides);
+    } while(roll === sides);
 
     return total;
   }

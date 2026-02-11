@@ -9,5 +9,8 @@ npm run docs:js
 # Build AsciiDoc documentation (uncomment if needed)
 #asciidoctor docs/*.adoc
 
-# Sync documentation to www directory
-rsync -av --delete docs ../www/static/
+# Sync API docs (generated HTML) to static — served as-is by Hugo
+rsync -av --delete docs/api/ ../www/static/docs/api/
+
+# Sync everything else (adoc files, images) to content/docs — processed by Hugo
+rsync -av --delete --exclude='api' docs/ ../www/content/docs/

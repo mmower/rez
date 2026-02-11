@@ -27,8 +27,11 @@ function evaluateExpression(expression, bindings, rval = true) {
   const proxy = new Proxy(
     {},
     {
-      get: (target, property) => {
-        if (bindings.hasOwnProperty(property)) {
+      // We ignore the target ({} above) its just there to act
+      // as a blank canvas for the proxy which will route everything
+      // to bindings.
+      get: (_target, property) => {
+        if(Object.hasOwn(bindings, property)) {
           return bindings[property];
         }
         return undefined;
@@ -50,6 +53,9 @@ function evaluateExpression(expression, bindings, rval = true) {
   // Invoke the function with the values from the bindings
   return func(...argValues);
 }
+
+// Expose globally so functions restored from saves (via new Function()) can access it
+window.evaluateExpression = evaluateExpression;
 
 //-----------------------------------------------------------------------------
 // Block
@@ -196,7 +202,7 @@ class RezBlock {
    * @returns {*} The function's return value
    */
   instantiateFunctionBinding(bindings, f) {
-    if (this.parentBlock) {
+    if(this.parentBlock) {
       return f(this, this.parentBlock.source, bindings);
     } else {
       return f(this, null, bindings);
@@ -242,12 +248,12 @@ class RezBlock {
     const { source, literal, deref } = bindingObject;
 
     // Handle literal values first
-    if (literal !== undefined) {
+    if(literal !== undefined) {
       return literal;
     }
 
     // Validate source
-    if (source === undefined || source === null) {
+    if(source === undefined || source === null) {
       throw new Error('Binding source is undefined or null');
     }
 
@@ -272,17 +278,17 @@ class RezBlock {
    */
   extractBindingValue(bindings, source, deref = false) {
     let value;
-    if (typeof source === "string") {
+    if(typeof source === "string") {
       value = this.instantiateIdBinding(source);
     } else if(Rez.isElementRef(source)) {
       value = this.instantiateIdBinding(source.$ref);
-    } else if (typeof source === "function") {
+    } else if(typeof source === "function") {
       value = this.instantiateFunctionBinding(bindings, source);
-    } else if (source && typeof source.binding === "function") {
+    } else if(source && typeof source.binding === "function") {
       value = this.instantiatePathBinding(source.binding, bindings);
 
       // Apply dereferencing only for path bindings when deref is true
-      if (deref) {
+      if(deref) {
         value = this.dereferenceBoundValue(value);
       }
     } else {
@@ -303,7 +309,7 @@ class RezBlock {
    * @returns {Object|Array<Object>} The dereferenced element(s)
    */
   dereferenceBoundValue(value) {
-    if (Array.isArray(value)) {
+    if(Array.isArray(value)) {
       return value.map(ref => $(ref));  // $(ref) now handles both string and {$ref: "id"} formats
     }
 
@@ -332,7 +338,7 @@ class RezBlock {
     }
 
     return sourceBindings.reduce((bindings, bindingObject) => {
-      const prefix = bindingObject["prefix"];
+      const prefix = bindingObject.prefix;
       const value = this.resolveBindingValue(bindings, bindingObject);
 
       bindings[prefix] = value;
@@ -409,7 +415,7 @@ class RezBlock {
    * @returns {Object} Parent bindings or empty object
    */
   parentBindings() {
-    if (this.parentBlock) {
+    if(this.parentBlock) {
       return this.parentBlock.bindValues();
     } else {
       return {};
@@ -448,10 +454,10 @@ class RezBlock {
    * @throws {Error} If block type is not recognized
    */
   css_classes() {
-    if (this.blockType == "block") {
+    if(this.blockType === "block") {
       return "rez-block";
-    } else if (this.blockType == "card") {
-      if (this.flipped) {
+    } else if(this.blockType === "card") {
+      if(this.flipped) {
         return "rez-card rez-flipped-card";
       } else {
         return "rez-card rez-active-card";
@@ -515,25 +521,13 @@ window.Rez.RezBlock = RezBlock;
  */
 class RezLayout extends RezBlock {
   /**
-   * @function constructor
-   * @memberof RezLayout
-   * @description Creates a new RezLayout.
-   *
-   * @param {string} blockType - The type of layout
-   * @param {Object} source - The source element for this layout
-   */
-  constructor(blockType, source) {
-    super(blockType, source);
-  }
-
-  /**
    * Adds a content block to this layout.
    *
    * @abstract
    * @param {RezBlock} block - The block to add
    * @throws {Error} Must be implemented by subclass
    */
-  addContent(block) {
+  addContent(_block) {
     throw new Error("Must implement addContent(block)");
   }
 
@@ -649,7 +643,7 @@ class RezSingleLayout extends RezLayout {
     copy.parentBlock = this.parentBlock;
     copy.flipped = this.flipped;
     copy.params = this.params;
-    if (this.#content) {
+    if(this.#content) {
       copy.addContent(this.#content.copy());
     }
     return copy;
@@ -720,7 +714,7 @@ class RezStackLayout extends RezLayout {
   addContent(block) {
     block.parentBlock = this;
 
-    if (this.reversed) {
+    if(this.reversed) {
       this.#contents.unshift(block);
     } else {
       this.#contents.push(block);
@@ -736,7 +730,7 @@ class RezStackLayout extends RezLayout {
    */
   renderContents() {
     let separator = "";
-    if (this.source.layout_separator) {
+    if(this.source.layout_separator) {
       separator = this.source.layout_separator;
     }
 
@@ -853,7 +847,7 @@ class RezTransformer {
    * @param {RezView} view - The view being transformed
    * @throws {Error} Must be implemented by subclass
    */
-  transformElement(elem, view) {
+  transformElement(_elem, _view) {
     throw new Error("Transformers must implement transformElement(elem, view)!");
   }
 }
@@ -881,19 +875,6 @@ class RezTransformer {
  */
 class RezEventTransformer extends RezTransformer {
   /**
-   * @function constructor
-   * @memberof RezEventTransformer
-   * @description Creates a new RezEventTransformer.
-   *
-   * @param {string} selector - CSS selector for elements to transform
-   * @param {string} event - Event name to listen for (e.g., "click", "submit")
-   * @param {Object} receiver - Object that handles events
-   */
-  constructor(selector, event, receiver) {
-    super(selector, event, receiver);
-  }
-
-  /**
    * Adds the event listener to an element.
    *
    * The listener prevents default behavior and routes the event through
@@ -902,13 +883,14 @@ class RezEventTransformer extends RezTransformer {
    * @param {Element} elem - The DOM element
    */
   addEventListener(elem) {
-    const transformer = this;
-    elem.addEventListener(this.eventName, function (evt) {
-      evt.preventDefault();
+    if(RezBasicObject.game.$debug_events) {
+      console.log(`Attach event handler for ${this.eventName} to elem ${elem}`);
+    }
 
-      // A handler should return a RezEvent object
-      const receiver = transformer.receiver;
-      receiver.dispatchResponse(receiver.handleBrowserEvent(evt));
+    const receiver = this.receiver;
+    elem.addEventListener(this.eventName, (evt) => {
+      evt.preventDefault();
+      receiver.dispatchResponse(this.receiver.handleBrowserEvent(evt));
     });
   }
 
@@ -918,7 +900,7 @@ class RezEventTransformer extends RezTransformer {
    * @param {Element} elem - The DOM element
    * @param {RezView} view - The view being transformed
    */
-  transformElement(elem, view) {
+  transformElement(elem, _view) {
     this.addEventListener(elem);
   }
 }
@@ -952,7 +934,7 @@ class RezBlockTransformer extends RezTransformer {
    * @param {Element} elem - The DOM element with data-card attribute
    * @param {RezView} view - The view being transformed
    */
-  transformElement(elem, view) {
+  transformElement(elem, _view) {
     const elem_id = elem.dataset.card;
     elem.rez_card = $(elem_id);
   }
@@ -962,61 +944,34 @@ class RezBlockTransformer extends RezTransformer {
 window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 //-----------------------------------------------------------------------------
-// Link Transformers
+// Click Transformer
 //-----------------------------------------------------------------------------
 
 /**
- * @class RezEventLinkTransformer
+ * @class RezClickTransformer
  * @extends RezEventTransformer
  * @category Internal
- * @description Transformer for event links (`<a data-event="...">`) in cards.
+ * @description Transformer for click events on any element with a `data-event`
+ * attribute in cards.
  *
- * Adds click handlers to links within active or front-facing cards that
- * have a `data-event` attribute. When clicked, the event is routed through
- * the receiver's event handling system.
+ * Adds click handlers to elements within active or front-facing cards that
+ * have a `data-event` attribute and are not marked as inactive. When clicked,
+ * the event is routed through the receiver's event handling system.
  */
-class RezEventLinkTransformer extends RezEventTransformer {
+class RezClickTransformer extends RezEventTransformer {
   /**
    * @function constructor
-   * @memberof RezEventLinkTransformer
-   * @description Creates a new RezEventLinkTransformer.
+   * @memberof RezClickTransformer
+   * @description Creates a new RezClickTransformer.
    *
    * @param {Object} receiver - Object that handles click events
    */
   constructor(receiver) {
-    super("div.rez-evented a[data-event], div.rez-active-card a[data-event]", "click", receiver);
+    super("div.rez-evented [data-event]:not(.inactive), div.rez-active-card [data-event]:not(.inactive)", "click", receiver);
   }
 }
 
-window.Rez.RezEventLinkTransformer = RezEventLinkTransformer;
-
-//-----------------------------------------------------------------------------
-// Button Transformer
-//-----------------------------------------------------------------------------
-
-/**
- * @class RezButtonTransformer
- * @extends RezEventTransformer
- * @category Internal
- * @description Transformer for event buttons (`<button data-event="...">`) in cards.
- *
- * Adds click handlers to buttons that have a `data-event` attribute and
- * are not marked as inactive. Only targets buttons within front-facing cards.
- */
-class RezButtonTransformer extends RezEventTransformer {
-  /**
-   * @function constructor
-   * @memberof RezButtonTransformer
-   * @description Creates a new RezButtonTransformer.
-   *
-   * @param {Object} receiver - Object that handles click events
-   */
-  constructor(receiver) {
-    super("div.rez-evented button[data-event]:not(.inactive)", "click", receiver);
-  }
-}
-
-window.Rez.RezButtonTransformer = RezButtonTransformer;
+window.Rez.RezClickTransformer = RezClickTransformer;
 
 //-----------------------------------------------------------------------------
 // FormTransformer
@@ -1109,8 +1064,7 @@ class RezEnterKeyTransformer extends RezEventTransformer {
    * @param {Element} elem - The input element
    */
   addEventListener(elem) {
-    const transformer = this;
-    elem.addEventListener(this.eventName, function (evt) {
+    elem.addEventListener(this.eventName, (evt) => {
       if(evt.key === "Enter") {
         evt.preventDefault();
 
@@ -1131,8 +1085,8 @@ class RezEnterKeyTransformer extends RezEventTransformer {
           Object.defineProperty(submitEvent, 'type', { value: 'submit', enumerable: true });
 
           // Use the receiver's handleBrowserEvent method (which routes to handleBrowserSubmitEvent)
-          transformer.receiver.dispatchResponse(
-            transformer.receiver.handleBrowserEvent(submitEvent)
+          this.receiver.dispatchResponse(
+            this.receiver.handleBrowserEvent(submitEvent)
           );
         } else {
           console.error("RezEnterKeyTransformer: No rez-live form found!");
@@ -1180,7 +1134,7 @@ class RezBindingTransformer extends RezTransformer {
    *
    * @param {Object} receiver - Event receiver (unused, for API compatibility)
    */
-  constructor(receiver) {
+  constructor(_receiver) {
     super("div.rez-evented input[rez-bind], div.rez-evented select[rez-bind], div.rez-evented textarea[rez-bind]");
   }
 
@@ -1193,7 +1147,7 @@ class RezBindingTransformer extends RezTransformer {
    */
   decodeBinding(binding_expr) {
     const [binding_id, binding_attr] = binding_expr.split(".");
-    if (
+    if(
       typeof binding_id === "undefined" ||
       typeof binding_attr === "undefined"
     ) {
@@ -1224,7 +1178,7 @@ class RezBindingTransformer extends RezTransformer {
       return card_el.rez_card;
     } else {
       return $(binding_id);
-    };
+    }
   }
 
   /**
@@ -1258,6 +1212,20 @@ class RezBindingTransformer extends RezTransformer {
     if(typeof(elem) === "undefined") {
       throw new Error(`Failed to find game element for attribute binding: ${boundRezElementId}`);
     }
+
+    // Coerce string values back to the attribute's original type
+    if(typeof value === "string") {
+      const currentValue = elem.getAttribute(boundAttrName);
+      if(typeof currentValue === "number") {
+        const num = Number(value);
+        if(!Number.isNaN(num)) {
+          value = num;
+        }
+      } else if(typeof currentValue === "boolean") {
+        value = value === "true";
+      }
+    }
+
     elem.setAttribute(boundAttrName, value);
   }
 
@@ -1270,15 +1238,13 @@ class RezBindingTransformer extends RezTransformer {
    * @param {string} binding_attr - The attribute name
    */
   transformTextInput(view, input, binding_id, binding_attr) {
-    const transformer = this;
-
-    view.registerBinding(binding_id, binding_attr, function (value) {
+    view.registerBinding(binding_id, binding_attr, (value) => {
       input.value = value;
     });
 
     input.value = this.getBoundValue(input, binding_id, binding_attr);
-    input.addEventListener("input", function (evt) {
-      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.value);
+    input.addEventListener("input", (evt) => {
+      this.setBoundValue(input, binding_id, binding_attr, evt.target.value);
     });
   }
 
@@ -1291,14 +1257,12 @@ class RezBindingTransformer extends RezTransformer {
    * @param {string} binding_attr - The attribute name
    */
   transformCheckboxInput(view, input, binding_id, binding_attr) {
-    const transformer = this;
-
-    view.registerBinding(binding_id, binding_attr, function (value) {
+    view.registerBinding(binding_id, binding_attr, (value) => {
       input.checked = value;
     });
     input.checked = this.getBoundValue(input, binding_id, binding_attr);
-    input.addEventListener("input", function (evt) {
-      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.checked);
+    input.addEventListener("input", (evt) => {
+      this.setBoundValue(input, binding_id, binding_attr, evt.target.checked);
     });
   }
 
@@ -1310,8 +1274,8 @@ class RezBindingTransformer extends RezTransformer {
    */
   setRadioGroupValue(group_name, value) {
     const radios = document.getElementsByName(group_name);
-    for (let radio of radios) {
-      if (radio.value == value) {
+    for(const radio of radios) {
+      if(radio.value === String(value)) {
         radio.checked = true;
       }
     }
@@ -1325,7 +1289,7 @@ class RezBindingTransformer extends RezTransformer {
    */
   trackRadioGroupChange(group_name, callback) {
     const radios = document.getElementsByName(group_name);
-    for (let radio of radios) {
+    for(const radio of radios) {
       radio.addEventListener("input", callback);
     }
   }
@@ -1341,18 +1305,17 @@ class RezBindingTransformer extends RezTransformer {
    * @param {string} binding_attr - The attribute name
    */
   transformRadioInput(view, input, binding_id, binding_attr) {
-    const transformer = this;
-    if (!view.hasBinding(binding_id, binding_attr)) {
+    if(!view.hasBinding(binding_id, binding_attr)) {
       // We only need to bind the first radio in the group
-      view.registerBinding(binding_id, binding_attr, function (value) {
-        transformer.setRadioGroupValue(input.name, value);
+      view.registerBinding(binding_id, binding_attr, (value) => {
+        this.setRadioGroupValue(input.name, value);
       });
     }
 
     this.setRadioGroupValue(input.name, this.getBoundValue(input, binding_id, binding_attr));
 
-    this.trackRadioGroupChange(input.name, function (evt) {
-      transformer.setBoundValue(input, binding_id, binding_attr, evt.target.value);
+    this.trackRadioGroupChange(input.name, (evt) => {
+      this.setBoundValue(input, binding_id, binding_attr, evt.target.value);
     });
   }
 
@@ -1365,14 +1328,12 @@ class RezBindingTransformer extends RezTransformer {
    * @param {string} binding_attr - The attribute name
    */
   transformSelect(view, select, binding_id, binding_attr) {
-    const transformer = this;
-
-    view.registerBinding(binding_id, binding_attr, function (value) {
+    view.registerBinding(binding_id, binding_attr, (value) => {
       select.value = value;
     });
     select.value = this.getBoundValue(select, binding_id, binding_attr);
-    select.addEventListener("input", function (evt) {
-      transformer.setBoundValue(select, binding_id, binding_attr, evt.target.value);
+    select.addEventListener("input", (evt) => {
+      this.setBoundValue(select, binding_id, binding_attr, evt.target.value);
     });
   }
 
@@ -1390,13 +1351,13 @@ class RezBindingTransformer extends RezTransformer {
       input.getAttribute("rez-bind")
     );
 
-    if (input.type === "text" || input.tagName.toLowerCase() === "textarea") {
+    if(input.type === "text" || input.tagName.toLowerCase() === "textarea") {
       this.transformTextInput(view, input, binding_id, binding_attr);
-    } else if (input.type === "checkbox") {
+    } else if(input.type === "checkbox") {
       this.transformCheckboxInput(view, input, binding_id, binding_attr);
-    } else if (input.type === "radio") {
+    } else if(input.type === "radio") {
       this.transformRadioInput(view, input, binding_id, binding_attr);
-    } else if (
+    } else if(
       input.type === "select-one" ||
       input.type === "select-multiple"
     ) {
@@ -1571,9 +1532,8 @@ class RezView {
    * Creates the default set of transformers.
    *
    * Default transformers handle:
-   * - Event links (`<a data-event>`)
+   * - Click events (`[data-event]`)
    * - Card block references
-   * - Event buttons
    * - Form submissions
    * - Data bindings (`rez-bind`)
    * - Live inputs (`rez-live`)
@@ -1583,9 +1543,8 @@ class RezView {
    */
   defaultTransformers() {
     return [
-      new RezEventLinkTransformer(this.receiver),
+      new RezClickTransformer(this.receiver),
       new RezBlockTransformer(),
-      new RezButtonTransformer(this.receiver),
       new RezFormTransformer(this.receiver),
       new RezBindingTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
@@ -1597,9 +1556,9 @@ class RezView {
    * Applies all transformers to the rendered DOM.
    */
   transform() {
-    this.transformers.forEach((transformer) =>
-      transformer.transformElements(this)
-    );
+    this.transformers.forEach((transformer) => {
+      transformer.transformElements(this);
+    });
   }
 
   /**
@@ -1636,7 +1595,7 @@ class RezView {
    */
   updateBoundControls(binding_id, binding_attr, value) {
     const callback = this.bindings.get(`${binding_id}.${binding_attr}`);
-    if (typeof callback === "function") {
+    if(typeof callback === "function") {
       callback(value);
     }
   }

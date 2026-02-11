@@ -27,7 +27,7 @@
  *
  * @example
  * // Undo is typically triggered via game events
- * if ($game.undoManager.canUndo) {
+ * if($game.undoManager.canUndo) {
  *   $game.undoManager.undo();
  * }
  */
@@ -222,13 +222,13 @@ class RezUndoManager {
 
         // Apply all regular changes
         changes.forEach((change) => {
-          if (change.changeType === "newElement") {
+          if(change.changeType === "newElement") {
             this.#undoNewElement(change);
-          } else if (change.changeType === "setAttribute") {
+          } else if(change.changeType === "setAttribute") {
             this.#undoSetAttribute(change);
-          } else if (change.changeType === "removeElement") {
+          } else if(change.changeType === "removeElement") {
             this.#undoRemoveElement(change);
-          } else if (change.changeType === "view") {
+          } else if(change.changeType === "view") {
             this.#undoViewChange(change);
           } else {
             throw new Error(`Unknown change type: ${change.changeType}`);

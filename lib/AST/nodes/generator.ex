@@ -35,8 +35,8 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
     const customize = list.getAttribute("customize");
     const objects = [];
     for(let idx = 0; idx < copies; idx += 1) {
-      let copy = source.copyWithAutoId();
-      if(typeof(customize) == "function") {
+      const copy = source.copyWithAutoId();
+      if(typeof(customize) === "function") {
         customize(copy);
       }
       objects.push(copy.id);
@@ -56,7 +56,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
     generator =
       generator
       |> NodeHelper.set_attr_value("values", {:list, []})
-      |> NodeHelper.set_std_func_attr("on_init", {["list", "event"], @on_init_src})
+      |> NodeHelper.set_arrow_func_attr("on_init", {["list", "_event"], @on_init_src})
 
     ~s"""
     new RezList(

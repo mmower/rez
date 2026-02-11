@@ -16,10 +16,10 @@
   tags: {kind: :set, coll_kind: :keyword}
 
   container_id: {kind: :elem_ref, ref_elem: @inventory}
-  on_accept_item: {kind: :function, params: [actor event]}
-  on_enter: {kind: :function, params: [actor event]}
-  on_leave: {kind: :function, params: [actor event]}
-  on_turn: {kind: :function, params: [actor event]}
+  on_accept_item: {kind: :function, min_arity: 2, max_arity: 2}
+  on_enter: {kind: :function, min_arity: 2, max_arity: 2}
+  on_leave: {kind: :function, min_arity: 2, max_arity: 2}
+  on_turn: {kind: :function, min_arity: 2, max_arity: 2}
   behaviours: {kind: :bht}
 }
 
@@ -69,7 +69,7 @@
 
   tags: {kind: :set, coll_kind: :keyword}
 
-  execute: {kind: :function, params: [behaviour], required: true}
+  execute: {kind: :function, min_arity: 1, max_arity: 1, required: true}
 
   options: {kind: :list, coll_kind: :keyword}
   expected_keys: {kind: :list, coll_kind: :keyword}
@@ -585,7 +585,7 @@
   patch: "Boolean"
   function: "rand"
   impl: function() {
-    return Math.random() < 0.5 ? true : false;
+    return Math.random() < 0.5;
   }
 }
 
@@ -602,7 +602,7 @@
       }
 
       // Check for circular reference
-      if (seen.has(value)) {
+      if(seen.has(value)) {
         return seen.get(value);
       }
 
@@ -615,7 +615,7 @@
 
     const copyObject = (obj) => {
       // Handle null or undefined
-      if (obj === null || typeof obj === 'undefined') {
+      if(obj === null || typeof obj === 'undefined') {
         return obj;
       }
 
@@ -624,7 +624,7 @@
       if(obj instanceof Set) {
         copiedObj = new Set();
         seen.set(obj, copiedObj);
-        for (const item of obj) {
+        for(const item of obj) {
           copiedObj.add(deepCopy(item));
         }
         return copiedObj;
@@ -633,7 +633,7 @@
       if(obj instanceof Map) {
         copiedObj = new Map();
         seen.set(obj, copiedObj);
-        for (const [key, value] of obj) {
+        for(const [key, value] of obj) {
           copiedObj.set(deepCopy(key), deepCopy(value));
         }
         return copiedObj;
@@ -655,19 +655,19 @@
       if (Array.isArray(obj)) {
         copiedObj = [];
         seen.set(obj, copiedObj);
-        for (const item of obj) {
+        for(const item of obj) {
           copiedObj.push(deepCopy(item));
         }
         return copiedObj;
       }
 
       // Handle object
-      if (typeof obj === 'object') {
+      if(typeof obj === 'object') {
         // Use the same constructor as the original object to preserve prototype chain
         try {
           // Try to create a new instance using the constructor
           copiedObj = new obj.constructor();
-        } catch (e) {
+        } catch(_ex) {
           // If constructor fails, fall back to creating object with same prototype
           copiedObj = Object.create(Object.getPrototypeOf(obj));
         }
@@ -676,19 +676,19 @@
         seen.set(obj, copiedObj);
 
         // Copy all enumerable properties
-        for (const key in obj) {
-          if (obj.hasOwnProperty(key)) {
+        for(const key in obj) {
+          if(Object.hasOwn(obj, key)) {
             copiedObj[key] = deepCopy(obj[key]);
           }
         }
 
         // Copy non-enumerable properties
         Object.getOwnPropertyNames(obj).forEach(key => {
-          if (!copiedObj.hasOwnProperty(key)) {
+          if(!Object.hasOwn(copiedObj, key)) {
             const descriptor = Object.getOwnPropertyDescriptor(obj, key);
-            if (descriptor) {
+            if(descriptor) {
               // For accessor properties (getters/setters), preserve them
-              if (descriptor.get || descriptor.set) {
+              if(descriptor.get || descriptor.set) {
                 Object.defineProperty(copiedObj, key, descriptor);
               } else {
                 // For data properties, deep copy the value
@@ -706,9 +706,9 @@
         // Copy symbol properties
         Object.getOwnPropertySymbols(obj).forEach(sym => {
           const descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-          if (descriptor) {
+          if(descriptor) {
             // For accessor properties (getters/setters), preserve them
-            if (descriptor.get || descriptor.set) {
+            if(descriptor.get || descriptor.set) {
               Object.defineProperty(copiedObj, sym, descriptor);
             } else {
               // For data properties, deep copy the value
@@ -785,7 +785,7 @@
   method: "englishList"
   impl: function(amp) {
     let connector = "and";
-    if(amp != undefined && amp) {
+    if(amp !== undefined && amp) {
       connector = "&";
     }
 
@@ -800,7 +800,7 @@
         return this.join(` ${connector} `);
 
       default:
-        return this.slice(0, -1).join(", ") + `, ${connector} ` + this[this.length - 1];
+        return `${this.slice(0, -1).join(", ")}, ${connector} ${this[this.length - 1]}`;
     }
   }
 }
@@ -861,7 +861,7 @@
     const freqs = new Map();
     for(const v of this) {
       let val = freqs.get(v);
-      if(typeof(val) == "undefined") {
+      if(typeof(val) === "undefined") {
         val = 1;
       } else {
         val = val + 1;
@@ -877,7 +877,7 @@
   patch: "Array"
   method: "normalizePTable"
   impl: function() {
-    const sum = this.reduce((sum, [value, freq]) => sum + freq, 0);
+    const sum = this.reduce((sum, [_value, freq]) => sum + freq, 0);
 
     let cumProbability = 0.0;
     return this.map(([value, freq]) => {
@@ -922,7 +922,7 @@
   patch: "Array"
   method: "to_pairs"
   impl: function() {
-    let pairs = [];
+    const pairs = [];
     for(let i = 0; i < this.length; i += 2) {
       if(this[i + 1] !== undefined) {
         pairs.push([this[i], this[i + 1]]);
@@ -1074,9 +1074,9 @@
   method: "possessive"
   impl: function() {
     if(this.endsWith("s")) {
-      return this + "'";
+      return `${this}'`;
     } else {
-      return this + "'s";
+      return `${this}'s`;
     }
   }
 }
@@ -1086,9 +1086,7 @@
   patch: "String"
   method: "toCamelCase"
   impl: function() {
-    return this.replace(/[_.-](\w|$)/g, function (_, x) {
-	  	return x.toUpperCase();
-	  });
+    return this.replace(/[_.-](\w|$)/g, (_, x) => x.toUpperCase());
   }
 }
 
@@ -1097,9 +1095,7 @@
   patch: "String"
   method: "toPascalCase"
   impl: function() {
-    const camelCase = this.replace(/[_.-](\w|$)/g, function (_, x) {
-	  	return x.toUpperCase();
-	  });
+    const camelCase = this.replace(/[_.-](\w|$)/g, (_, x) => x.toUpperCase());
     return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
   }
 }
@@ -1138,12 +1134,12 @@
       throw new Error(`Invalid time string: '${this}' (expected format: "HH:MM" or "HH:MMp")`);
     }
 
-    let hour = parseInt(time_components[1]);
+    let hour = parseInt(time_components[1], 10);
     if (Number.isNaN(hour)) {
       throw new Error(`Invalid time string (hour): '${this}'`);
     }
 
-    const mins = parseInt(time_components[2]);
+    const mins = parseInt(time_components[2], 10);
     if (Number.isNaN(mins)) {
       throw new Error(`Invalid time string (mins): '${this}'`);
     }
@@ -1245,13 +1241,13 @@
     const secondLastDigit = Math.floor((this % 100) / 10);
 
     if (lastDigit === 1 && secondLastDigit !== 1) {
-      return this + 'st';
+      return `${this}st`;
     } else if (lastDigit === 2 && secondLastDigit !== 1) {
-      return this + 'nd';
+      return `${this}nd`
     } else if (lastDigit === 3 && secondLastDigit !== 1) {
-      return this + 'rd';
+      return `${this}rd`
     } else {
-      return this + 'th';
+      return `${this}th`;
     }
   }
 }
@@ -1262,7 +1258,7 @@
   patch: "Number"
   method: "roundp"
   impl: function(precision) {
-    var multiplier = Math.pow(10, precision || 0);
+    var multiplier = 10 ** (precision || 0);
     return Math.round(this * multiplier) / multiplier;
   }
 }
@@ -1493,7 +1489,7 @@
 
     const p = Math.random();
     const idx = table.findIndex((pair) => p <= pair[1]);
-    if (idx == -1) {
+    if(idx === -1) {
       throw new Error("Invalid p_table. Must contain range 0<n<1");
     }
     return table[idx][0];
@@ -1701,7 +1697,7 @@
 
   %% any -> String
   name: "string"
-  impl: (s) => {return ""+s;}
+  impl: (s) => {return `${s}`;}
 }
 
 @filter STRING_APPEND_FILTER {
@@ -1872,7 +1868,7 @@
 
   name: "event"
   impl: (event, title) => {
-    return "<a href='javascript:void(0);' class='event' data-event='" + event + "'>" + title + "</a>";
+    return `<a href='javascript:void(0);' class='event' data-event='${event}'>${title}</a>`;
   }
 }
 
@@ -1884,10 +1880,10 @@
   name: "dyn_link"
   impl: (card, action) => {
     const link_handler = card.getAttribute(action);
-    if(typeof(link_handler) != "function") {
+    if(typeof(link_handler) !== "function") {
       throw `Attribute |${action}| of card |${card.id}| is not a handler function!`;
     } else {
-      let link = new RezDynamicLink(card);
+      const link = new RezDynamicLink(card);
       link_handler(link);
       if(!link.choosen) {
         throw new Error("Choice must call one of hide/deny/allow!");
@@ -1905,7 +1901,7 @@
 %% Useful components
 %% ----------------------------------------------------------------------------
 
-@component $flash_messages (bindings, assigns, content) => {
+@component $flash_messages (_bindings, _assigns, _content) => {
   if($game.$flash_messages.length < 1) {
     return "";
   } else {
@@ -1917,7 +1913,7 @@
   }
 }
 
-@component embed_card (bindings, assigns, content) => {
+@component embed_card (bindings, assigns, _content) => {
   let blockSource;
   if(typeof(assigns.card) === "string") {
     // We expect the id of a card
@@ -1934,16 +1930,16 @@
   return block.html();
 }
 
-@component img (bindings, assigns, content) => {
-  const asset = $(assigns["name"]);
+@component img (_bindings, assigns, _content) => {
+  const asset = $(assigns.name);
   const path = asset.$dist_path;
 
   // Use assigns width/height if provided, otherwise use asset dimensions
-  const w = assigns["width"] || asset.width;
-  const h = assigns["height"] || asset.height;
+  const w = assigns.width || asset.width;
+  const h = assigns.height || asset.height;
 
   // Extract name, width and height from assigns so we don't duplicate them
-  const { name, width, height, ...otherAssigns } = assigns;
+  const {name, width, height, ...otherAssigns} = assigns;
 
   // Build additional attributes string from remaining assigns
   const otherAttributes = Object.entries(otherAssigns)
@@ -1977,13 +1973,13 @@
   </form>
   ```
 
-  on_load_form: (card, data) => {
+  on_load_form: (_card, data) => {
     console.log("In the load form handler!");
     const form = data.form;
     const file_input = form.querySelector("input[type=file]");
     const [file] = file_input.files;
     const reader = new FileReader();
-    reader.addEventListener("load", function() {
+    reader.addEventListener("load", () => {
       $game.load(reader.result);
     });
     reader.readAsText(file);
@@ -2000,7 +1996,7 @@
 
   enabled: false
   priority: 10
-  after_event: (system, evt, result) => {
+  after_event: (_system, evt, result) => {
     if(evt.target.dataset.event === "behaviours") {
       console.log("Running actor_behaviours system");
       const game = evt.game;
@@ -2077,7 +2073,7 @@
   configure: (behaviour) => {
     const p = behaviour.intOption("p");
     if(p < 0 || p > 100) {
-      throw "Behaviour: " + behaviour.id + " invalid 'p' option specified.";
+      throw new Error(`Behaviour: ${behaviour.id} invalid 'p' option specified.`);
     }
   }
 
@@ -2242,7 +2238,7 @@
     const stateKey = `behavior_${behaviour.id}_state`;
     let child_walk = behaviour.owner.getAttribute(stateKey);
 
-    if(typeof(child_walk) == "undefined" || child_walk.length == 0) {
+    if(typeof(child_walk) === "undefined" || child_walk.length === 0) {
       child_walk = Array.from(Array(behaviour.childCount).keys()).fyShuffle();
     }
 
@@ -2309,7 +2305,7 @@
   options: []
   max_children: 0
 
-  execute: (behaviour) => {
+  execute: (_behaviour) => {
     return false;
   }
 }
@@ -2322,7 +2318,7 @@
   options: []
   max_children: 0
 
-  execute: (behaviour) => {
+  execute: (_behaviour) => {
     return true;
   }
 }

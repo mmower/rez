@@ -236,10 +236,10 @@ class RezDecision {
    * @description Returns a descriptive string explaining the decision result, reason, and visibility
    */
   explain() {
-    if (this.result) {
+    if(this.result) {
       return `Result was yes`;
     } else {
-      if (this.hidden) {
+      if(this.hidden) {
         return `Result was no (${this.reason}) and hide the decision`;
       } else {
         return `Result was no (${this.reason})`;

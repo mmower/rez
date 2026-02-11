@@ -560,14 +560,14 @@ Container components like `<.event_button>` have their contents available in the
 A `@const` directive declares a named value that is available both within the Rez sources and as a Javascript global.
 
 ....
-@const PI = 3.14
+@const BAD_PI = 3.14
 ....
 
 Allow you to use PI as an attribute value:
 
 ....
 @object math_professor {
-  knows_that_pi_is: PIE
+  knows_that_pi_is: $BAD_PI
 }
 ....
 
@@ -575,13 +575,11 @@ Also in action and event handlers:
 
 ....
 @object math_professor {
-  bad_circumference: function(r) => {
-    return r * $PI * PI;
+  bad_circumference: (r) => {
+    return r * $BAD_PI * $BAD_PI;
   }
 }
 ....
-
-
 
 == Declare (Directive)
 

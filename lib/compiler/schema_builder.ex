@@ -358,24 +358,57 @@ defmodule Rez.Compiler.SchemaBuilder do
     )
   end
 
-  defp rule_fn(attr_name, {:params, expected_params}) when is_list(expected_params) do
+  defp rule_fn(attr_name, {:min_arity, min}) do
     SchemaRule.new(
       5,
-      "Validate #{attr_name} is has params #{inspect(expected_params)}",
+      "Validate #{attr_name} has at least #{min} params",
       fn node, validation, _lookup ->
         case NodeHelper.get_attr(node, attr_name) do
           nil ->
             {node, validation}
 
           %{type: :function, value: {_type, params, _body}} ->
-            if expected_params == params do
+            if length(params) >= min do
               {node, validation}
             else
               {node,
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} is expected to be a function of params #{inspect(expected_params)} but got #{inspect(params)}"
+                 "#{attr_name} is expected to be a function with at least #{min} params but found #{length(params)}"
+               )}
+            end
+
+          %{type: t} ->
+            {node,
+             Validation.add_error(
+               validation,
+               node,
+               "#{attr_name} is expected to be a function but was #{inspect(t)}"
+             )}
+        end
+      end
+    )
+  end
+
+  defp rule_fn(attr_name, {:max_arity, max}) do
+    SchemaRule.new(
+      5,
+      "Validate #{attr_name} has at most #{max} params",
+      fn node, validation, _lookup ->
+        case NodeHelper.get_attr(node, attr_name) do
+          nil ->
+            {node, validation}
+
+          %{type: :function, value: {_type, params, _body}} ->
+            if length(params) <= max do
+              {node, validation}
+            else
+              {node,
+               Validation.add_error(
+                 validation,
+                 node,
+                 "#{attr_name} is expected to be a function with at most #{max} params but found #{length(params)}"
                )}
             end
 

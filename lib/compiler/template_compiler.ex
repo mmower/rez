@@ -19,8 +19,13 @@ defmodule Rez.Compiler.TemplateCompiler do
   alias Rez.Compiler.TemplateCompiler.Filters
   alias Rez.Compiler.TemplateCompiler.Values
 
-  def js_create_fn(expr, ret),
-    do: ~s|function(bindings) {#{if ret, do: "return"} #{expr};}|
+  def js_create_fn(expr, true) do
+    ~s|(bindings) => #{expr}|
+  end
+
+  def js_create_fn(expr, false) do
+    ~s|(bindings) => {#{expr}}|
+  end
 
   @doc """
   Converts a bound path (which may contain index/key tokens) to JavaScript property access.
@@ -66,7 +71,7 @@ defmodule Rez.Compiler.TemplateCompiler do
         error
 
       compiled_chunks ->
-        reducer = ~s|function(text, f) {return text + f(bindings)}|
+        reducer = ~s|(text, f) => text + f(bindings)|
         body = ~s|#{compiled_chunks}.reduce(#{reducer}, "")|
         {:compiled_template, js_create_fn(body, true)}
     end
@@ -92,7 +97,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     a problem as Rez template expressions are in other chunks.
   """
   def compile_chunk(s) when is_binary(s) do
-    js_create_fn(~s|`#{s}`|, true)
+    ~s|() => `#{s}`|
   end
 
   def compile_chunk({:interpolate, {:expression, expr, []}}) do
@@ -144,7 +149,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     assigns = component_assigns(attributes)
 
     body = ~s|
-    const user_component = window.Rez.user_components['#{name}'];
+    const user_component = window.Rez.user_components.#{name};
 
     if(typeof user_component === "undefined") {
       throw `No user @macro #{name} defined!`;
@@ -165,7 +170,7 @@ defmodule Rez.Compiler.TemplateCompiler do
         assigns = component_assigns(attributes)
 
         body = ~s|
-        const user_component = window.Rez.user_components['#{name}'];
+        const user_component = window.Rez.user_components.#{name};
 
         const sub_template = #{compiled_template};
         const sub_content = sub_template(bindings);
@@ -319,25 +324,25 @@ defmodule Rez.Compiler.TemplateCompiler do
     Javascript code generation for bound values
     """
     def js_make_fn(bindings_map_name, expr),
-      do: ~s|function(#{bindings_map_name}) {return #{expr};}|
+      do: ~s|(#{bindings_map_name}) => #{expr}|
 
     def js_apply_fn(bindings_map_name, expr) do
       f = js_make_fn(bindings_map_name, expr)
       ~s|(#{f})(#{bindings_map_name})|
     end
 
-    def js_exp(bindings_map_name, {:string, s}),
-      do: js_apply_fn(bindings_map_name, ~s|"#{s}"|)
+    def js_exp(_bindings_map_name, {:string, s}),
+      do: ~s|"#{s}"|
 
-    def js_exp(bindings_map_name, {:number, n}),
-      do: js_apply_fn(bindings_map_name, to_string(n))
+    def js_exp(_bindings_map_name, {:number, n}),
+      do: to_string(n)
 
-    def js_exp(bindings_map_name, {:bool, b}),
-      do: js_apply_fn(bindings_map_name, to_string(b))
+    def js_exp(_bindings_map_name, {:bool, b}),
+      do: to_string(b)
 
     def js_exp(bindings_map_name, {:list, l}) do
       list = Enum.map_join(l, ",", fn val -> js_exp(bindings_map_name, val) end)
-      js_apply_fn(bindings_map_name, "[#{list}]")
+      "[#{list}]"
     end
 
     def js_exp(bindings_map_name, {:bound_path, bound_path}) do
@@ -356,11 +361,11 @@ defmodule Rez.Compiler.TemplateCompiler do
     alias Rez.Compiler.TemplateCompiler.Values
 
     def js_function([], body) do
-      "function() {#{body}}"
+      "() => {#{body}}"
     end
 
     def js_function(args, body) do
-      "function(#{Enum.join(args, ", ")}) {#{body}}"
+      "(#{Enum.join(args, ", ")}) => {#{body}}"
     end
 
     def js_params(_bindings_map_name, []), do: ""
@@ -405,7 +410,7 @@ defmodule Rez.Compiler.TemplateCompiler do
       expr_filter_list = js_expr_filter_list(bindings_map_name, expr_filters)
 
       expr_filter_call =
-        "function(value, expr_filter) {return expr_filter(#{bindings_map_name}, value);}"
+        "(value, expr_filter) => expr_filter(#{bindings_map_name}, value)"
 
       "#{expr_filter_list}.reduce(#{expr_filter_call}, #{initial_value})"
     end

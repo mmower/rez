@@ -10,7 +10,7 @@ const path = require('path');
 
 const publishPath = path.join(__dirname, '..', 'node_modules', 'better-docs', 'publish.js');
 
-if (!fs.existsSync(publishPath)) {
+if(!fs.existsSync(publishPath)) {
   console.log('better-docs not installed, skipping patch');
   process.exit(0);
 }
@@ -26,20 +26,20 @@ const patched = `  var categoryOrder = ['Elements', 'Utilities', 'Internal']
   Object.keys(categorised).sort(function(a, b) {
     var ai = categoryOrder.indexOf(a)
     var bi = categoryOrder.indexOf(b)
-    if (ai === -1) ai = categoryOrder.length
-    if (bi === -1) bi = categoryOrder.length
+    if(ai === -1) ai = categoryOrder.length
+    if(bi === -1) bi = categoryOrder.length
     return ai - bi
   }).forEach(function (category) {
     nav += buildGroupNav(categorised[category], category)
   })
   nav += buildGroupNav(rootScope)`;
 
-if (src.includes(patched)) {
+if(src.includes(patched)) {
   console.log('better-docs already patched');
   process.exit(0);
 }
 
-if (!src.includes(original)) {
+if(!src.includes(original)) {
   console.warn('WARNING: better-docs publish.js has unexpected content, skipping patch');
   process.exit(0);
 }

@@ -68,7 +68,7 @@ class RezDie {
     do {
       roll = this.roll();
       total += roll;
-    } while(roll == this.sides);
+    } while(roll === this.sides);
 
     return total;
   }
@@ -190,7 +190,6 @@ class RezDieRoll {
       this.#advantage = false;
       this.#disadvantage = false;
     }
-    return this;
   }
 
   /**
@@ -207,7 +206,6 @@ class RezDieRoll {
       this.#exploding = false;
       this.#disadvantage = false;
     }
-    return this;
   }
 
   /**
@@ -224,7 +222,6 @@ class RezDieRoll {
       this.#exploding = false;
       this.#advantage = false;
     }
-    return this;
   }
 
   /**
@@ -249,7 +246,7 @@ class RezDieRoll {
    */
   rollDice() {
     let sum = this.modifier;
-    for (let i = 0; i < this.count; i++) {
+    for(let i = 0; i < this.count; i++) {
       if(this.#exploding) {
         sum += this.die.open_roll();
       } else {
@@ -302,7 +299,7 @@ class RezDieRoll {
    * @returns {number} The final roll result
    */
   roll() {
-    if(this.rounds == 1) {
+    if(this.rounds === 1) {
       return this.rollRound();
     } else {
       const sum = Math.range(1, this.rounds)
@@ -375,18 +372,18 @@ window.Rez.RezDieRoll = RezDieRoll;
  * @example
  * const roll = Rez.makeDie("d20a"); // d20 with advantage
  */
-window.Rez.makeDie = function(diceStr) {
-  const regex = /^(\d+)?d(\d+)([\+\-]\d+)?([!ad])?$/i;
+window.Rez.makeDie = (diceStr) => {
+  const regex = /^(\d+)?d(\d+)([+-]\d+)?([!ad])?$/i;
   const match = diceStr.match(regex);
 
-  if (!match) {
+  if(!match) {
     throw new Error('Invalid dice format');
   }
 
   const [_, count = '1', sides, modifier = '0', special] = match;
-  const numDice = parseInt(count);
-  const numSides = parseInt(sides);
-  const mod = parseInt(modifier);
+  const numDice = parseInt(count, 10);
+  const numSides = parseInt(sides, 10);
+  const mod = parseInt(modifier, 10);
 
   const die = new RezDieRoll(numDice, numSides, mod);
 
