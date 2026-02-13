@@ -167,4 +167,24 @@ defmodule Rez.Parser.AttributeParserTest do
     input = ~s|#foo|
     assert %Context{status: :ok, ast: {:elem_ref, "foo"}} = Ergo.parse(value(), input)
   end
+
+  test "bare identifier value produces helpful error" do
+    input = "initial_card_id: c_day_start"
+    result = Ergo.parse(attribute(), input)
+
+    assert {status, reasons} = result.status
+    assert status in [:error, :fatal]
+
+    error_codes = Enum.map(reasons, fn {code, _, _} -> code end)
+    assert :bad_value in error_codes
+
+    bad_value_error = Enum.find(reasons, fn {code, _, _} -> code == :bad_value end)
+    {_, _, message} = bad_value_error
+    assert message =~ "Expected an attribute value"
+    assert message =~ "true/false"
+    assert message =~ "#element_id"
+
+    # :no_valid_choice should NOT appear in the error list
+    refute :no_valid_choice in error_codes
+  end
 end

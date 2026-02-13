@@ -1863,7 +1863,7 @@ The `magic_sword` item is valid because `:sword` derives from `:weapon`, which m
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :ref}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
   tags: {kind: :set, coll_kind: :keyword}

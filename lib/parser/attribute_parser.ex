@@ -24,9 +24,13 @@ defmodule Rez.Parser.AttributeParser do
           ValueParsers.value(),
           BTreeParser.bt_parser()
         ],
-        err: fn ctx ->
-          ctx
-          |> Context.add_error(:bad_value, "Cannot read attribute value")
+        err: fn %Context{status: {code, _}, line: line, col: col} = ctx ->
+          message =
+            "Expected an attribute value, for example: " <>
+              ~s|true/false, 42, "text", :keyword, #element_id, $constant, | <>
+              "[list], function() {}, ```template```"
+
+          %{ctx | ast: nil, status: {code, [{:bad_value, {line, col}, message}]}}
         end,
         label: "attr-value"
       )
@@ -48,7 +52,7 @@ defmodule Rez.Parser.AttributeParser do
         err: fn ctx ->
           case ctx.partial_ast do
             [attr_name, nil, nil] ->
-              Context.add_error(ctx, :bad_attr, "Unable to read attribute #{attr_name}")
+              Context.add_error(ctx, :bad_attr, "Unable to read value for attribute '#{attr_name}'")
 
             _ ->
               Context.add_error(ctx, :bad_attr, "Unable to read attribute")

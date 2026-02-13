@@ -10,7 +10,7 @@
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :ref}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
   tags: {kind: :set, coll_kind: :keyword}
@@ -34,7 +34,7 @@
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :ref}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :set, coll_kind: :keyword}
   $js_runtime: {kind: :boolean}
   $js_defer: {kind: :boolean}
@@ -64,7 +64,7 @@
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :ref}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
   tags: {kind: :set, coll_kind: :keyword}
@@ -94,7 +94,7 @@
   $global: {kind: :boolean}
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
-  $init_after: {kind: :list, coll_kind: :ref}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
   tags: {kind: :set, coll_kind: :keyword}
@@ -106,7 +106,7 @@
   $suppress_wrapper: {kind: :boolean}
 
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
-  blocks: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
   css_class: {kind: :string}
 
   on_start: {kind: :function}
@@ -188,7 +188,7 @@
   current_scene_id: {kind: :elem_ref}
 
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
-  blocks: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
   links: {kind: :list, coll_kind: :string}
   scripts: {kind: :list, coll_kind: :string}
 
@@ -415,8 +415,8 @@
   $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
-  source_id: {kind: :ref, required: true}
-  target_id: {kind: :ref, required: true}
+  source_id: {kind: :elem_ref, required: true}
+  target_id: {kind: :elem_ref, required: true}
 
   tags: {kind: :set, coll_kind: :keyword}
 }
@@ -446,7 +446,7 @@
   layout_separator: {kind: :string}
   layout_reverse: {kind: :boolean}
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
-  blocks: {kind: :list, coll_kind: :list_binding}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
 
   on_init: {kind: :function}
   on_start: {kind: :function}

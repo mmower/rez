@@ -411,6 +411,166 @@ defmodule Rez.Compiler.ExecSchemaTest do
     assert [] = result.validation.errors
   end
 
+  describe "ref_elem with list_binding collections" do
+    test "valid elem_ref in list_binding passes validation" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{
+          "blocks" =>
+            Attribute.list("blocks", [
+              {:list_binding, {"sidebar", {:source, false, {:elem_ref, "c_sidebar"}}}}
+            ])
+        },
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      sidebar_card = %Rez.AST.Card{
+        id: "c_sidebar",
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      result =
+        ApplySchema.apply_schema_to_node(card, rules, %{
+          id_map: %{"c_sidebar" => sidebar_card}
+        })
+
+      assert [] = result.validation.errors
+    end
+
+    test "invalid elem_ref in list_binding fails validation" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{
+          "blocks" =>
+            Attribute.list("blocks", [
+              {:list_binding, {"sidebar", {:source, false, {:elem_ref, "c_nonexistent"}}}}
+            ])
+        },
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      result = ApplySchema.apply_schema_to_node(card, rules, %{id_map: %{}})
+
+      assert length(result.validation.errors) == 1
+
+      assert [{"card", "test_card", error_msg}] = result.validation.errors
+      assert String.contains?(error_msg, "c_nonexistent")
+    end
+
+    test "wrong element type in list_binding fails validation" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{
+          "blocks" =>
+            Attribute.list("blocks", [
+              {:list_binding, {"sidebar", {:source, false, {:elem_ref, "a_hero"}}}}
+            ])
+        },
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      actor = %Rez.AST.Actor{
+        id: "a_hero",
+        metadata: %{"alias_chain" => ["actor"]}
+      }
+
+      result =
+        ApplySchema.apply_schema_to_node(card, rules, %{
+          id_map: %{"a_hero" => actor}
+        })
+
+      assert length(result.validation.errors) == 1
+
+      assert [{"card", "test_card", error_msg}] = result.validation.errors
+      assert String.contains?(error_msg, "a_hero")
+    end
+
+    test "literal binding in list is skipped (no error)" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{
+          "blocks" =>
+            Attribute.list("blocks", [
+              {:list_binding, {"label", {:literal, {:string, "hello"}}}}
+            ])
+        },
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      result = ApplySchema.apply_schema_to_node(card, rules, %{id_map: %{}})
+
+      assert [] = result.validation.errors
+    end
+
+    test "missing blocks attribute produces no error" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{},
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      result = ApplySchema.apply_schema_to_node(card, rules, %{id_map: %{}})
+
+      assert [] = result.validation.errors
+    end
+
+    test "empty list produces no error" do
+      {:ok, rules} =
+        SchemaBuilder.build("blocks", [
+          {:kind, [:list]},
+          {:coll_kind, [:list_binding]},
+          {:ref_elem, ["card"]}
+        ])
+
+      card = %Rez.AST.Card{
+        id: "test_card",
+        attributes: %{
+          "blocks" => Attribute.list("blocks", [])
+        },
+        metadata: %{"alias_chain" => ["card"]}
+      }
+
+      result = ApplySchema.apply_schema_to_node(card, rules, %{id_map: %{}})
+
+      assert [] = result.validation.errors
+    end
+  end
+
   test "no_key_overlap rule handles missing attributes" do
     {:ok, bindings_rules} =
       SchemaBuilder.build("bindings", [

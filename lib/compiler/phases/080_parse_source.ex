@@ -59,7 +59,7 @@ defmodule Rez.Compiler.Phases.ParseSource do
   end
 
   # Infrastructure error codes that wrap more specific errors
-  @infrastructure_errors ~w(block_not_matched bad_attr bad_value bad_syntax)a
+  @infrastructure_errors ~w(block_not_matched bad_attr bad_value bad_syntax no_valid_choice)a
 
   defp format_errors(reasons) do
     # Separate semantic errors from infrastructure errors

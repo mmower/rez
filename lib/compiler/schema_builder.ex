@@ -328,21 +328,24 @@ defmodule Rez.Compiler.SchemaBuilder do
             end
 
           %{type: t, value: values} when t in [:list, :set] ->
-            if Enum.all?(values, fn {:elem_ref, ref} ->
-                 elem_type_one_of(lookup, ref, elems)
-               end) do
+            ref_ids =
+              Enum.flat_map(values, fn item ->
+                case extract_elem_ref(item) do
+                  {:ok, ref} -> [ref]
+                  :skip -> []
+                end
+              end)
+
+            invalid_refs = Enum.reject(ref_ids, &elem_type_one_of(lookup, &1, elems))
+
+            if Enum.empty?(invalid_refs) do
               {node, validation}
             else
-              mappings =
-                Enum.map(values, fn id ->
-                  validation.id_map[id]
-                end)
-
               {node,
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name}(#{t}) is a ref a non correct type #{inspect(elems)}/#{inspect(values)} - #{inspect(mappings)}"
+                 "#{attr_name} references invalid element ids: #{Enum.map_join(invalid_refs, ", ", &"##{&1}")}"
                )}
             end
 
@@ -793,6 +796,13 @@ defmodule Rez.Compiler.SchemaBuilder do
     |> Enum.map(fn {:list_binding, {key, _}} -> key end)
     |> MapSet.new()
   end
+
+  defp extract_elem_ref({:elem_ref, ref}), do: {:ok, ref}
+
+  defp extract_elem_ref({:list_binding, {_prefix, {:source, _deref, {:elem_ref, ref}}}}),
+    do: {:ok, ref}
+
+  defp extract_elem_ref(_), do: :skip
 
   def elem_type_one_of(lookup, elem_id, elems) do
     %{id_map: id_map} = lookup
