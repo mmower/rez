@@ -316,15 +316,17 @@ defmodule Rez.Compiler.SchemaBuilder do
             {node, validation}
 
           %{type: type, value: elem_id} when type in [:elem_ref, :copy_initializer] ->
-            if elem_type_one_of(lookup, elem_id, elems) do
-              {node, validation}
-            else
-              {node,
-               Validation.add_error(
-                 validation,
-                 node,
-                 "#{attr_name} refers to an element id (##{elem_id}) that cannot be found"
-               )}
+            case elem_type_check(lookup, elem_id, elems) do
+              :ok ->
+                {node, validation}
+
+              check_result ->
+                {node,
+                 Validation.add_error(
+                   validation,
+                   node,
+                   elem_type_error_message(attr_name, elem_id, elems, check_result)
+                 )}
             end
 
           %{type: t, value: values} when t in [:list, :set] ->
@@ -336,16 +338,24 @@ defmodule Rez.Compiler.SchemaBuilder do
                 end
               end)
 
-            invalid_refs = Enum.reject(ref_ids, &elem_type_one_of(lookup, &1, elems))
+            invalid_results =
+              ref_ids
+              |> Enum.map(fn ref_id -> {ref_id, elem_type_check(lookup, ref_id, elems)} end)
+              |> Enum.reject(fn {_ref_id, result} -> result == :ok end)
 
-            if Enum.empty?(invalid_refs) do
+            if Enum.empty?(invalid_results) do
               {node, validation}
             else
+              errors =
+                Enum.map_join(invalid_results, ", ", fn {ref_id, result} ->
+                  elem_type_error_message(attr_name, ref_id, elems, result)
+                end)
+
               {node,
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} references invalid element ids: #{Enum.map_join(invalid_refs, ", ", &"##{&1}")}"
+                 errors
                )}
             end
 
@@ -805,15 +815,40 @@ defmodule Rez.Compiler.SchemaBuilder do
   defp extract_elem_ref(_), do: :skip
 
   def elem_type_one_of(lookup, elem_id, elems) do
+    case elem_type_check(lookup, elem_id, elems) do
+      :ok -> true
+      _ -> false
+    end
+  end
+
+  defp elem_type_check(lookup, elem_id, elems) do
     %{id_map: id_map} = lookup
 
     case Map.get(id_map, elem_id) do
       nil ->
-        false
+        :not_found
 
       %{} = node ->
-        alias_chain = NodeHelper.get_meta(node, "alias_chain", [Node.node_type(node)])
-        Enum.any?(alias_chain, &(&1 in elems))
+        node_type = Node.node_type(node)
+        alias_chain = NodeHelper.get_meta(node, "alias_chain", [node_type])
+
+        if Enum.any?(alias_chain, &(&1 in elems)) do
+          :ok
+        else
+          {:wrong_type, node_type}
+        end
+    end
+  end
+
+  defp elem_type_error_message(attr_name, elem_id, elems, check_result) do
+    expected = Enum.map_join(elems, ", ", &"@#{&1}")
+
+    case check_result do
+      :not_found ->
+        "#{attr_name} refers to a #{expected} element with id ##{elem_id} that cannot be found"
+
+      {:wrong_type, actual_type} ->
+        "#{attr_name} refers to ##{elem_id} which is a @#{actual_type} element but expected #{expected}"
     end
   end
 
@@ -884,27 +919,31 @@ defmodule Rez.Compiler.SchemaBuilder do
             {node, validation}
 
           %{type: :elem_ref, value: elem_id} ->
-            if elem_type_one_of(lookup, elem_id, elems) do
-              {node, validation}
-            else
-              {node,
-               Validation.add_error(
-                 validation,
-                 node,
-                 "#{attr_name} is a ref to a non-existent element (##{elem_id})"
-               )}
+            case elem_type_check(lookup, elem_id, elems) do
+              :ok ->
+                {node, validation}
+
+              check_result ->
+                {node,
+                 Validation.add_error(
+                   validation,
+                   node,
+                   elem_type_error_message(attr_name, elem_id, elems, check_result)
+                 )}
             end
 
           %{type: :copy_initializer, value: {elem_id, _prio}} ->
-            if elem_type_one_of(lookup, elem_id, elems) do
-              {node, validation}
-            else
-              {node,
-               Validation.add_error(
-                 validation,
-                 node,
-                 "#{attr_name} is a ref to a non-existent element (##{elem_id})"
-               )}
+            case elem_type_check(lookup, elem_id, elems) do
+              :ok ->
+                {node, validation}
+
+              check_result ->
+                {node,
+                 Validation.add_error(
+                   validation,
+                   node,
+                   elem_type_error_message(attr_name, elem_id, elems, check_result)
+                 )}
             end
 
           %{type: t} ->

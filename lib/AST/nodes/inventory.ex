@@ -26,21 +26,11 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     NodeHelper.get_attr_value(inventory, "$js_ctor", "RezInventory")
   end
 
-  def process(inventory, %{id_map: id_map}) do
-    # Add attributes corresponding to the slots
+  def process(inventory, _resources) do
     slots = NodeHelper.get_attr_value(inventory, "slots")
 
-    Enum.reduce(slots, inventory, fn {:elem_ref, slot_id}, inventory ->
-      slot = Map.get(id_map, slot_id)
-      accessor = NodeHelper.get_attr_value(slot, "accessor")
-
-      # We don't put in an id but we create an attribute with a placeholder to
-      # ensure the shape of the inventory is set at the beginning
-      NodeHelper.set_elem_ref_attr(inventory, "#{accessor}_id", "")
-      # This attribute will hold the contents for the given slot
-      NodeHelper.set_list_attr(inventory, "#{accessor}_contents", [])
-      # We anticipate an attribute "accessor_initial_content" if the
-      # slot is to be prefilled
+    Enum.reduce(slots, inventory, fn {:list_binding, {prefix, _source}}, inventory ->
+      NodeHelper.set_list_attr(inventory, "#{prefix}_contents", [])
     end)
   end
 end

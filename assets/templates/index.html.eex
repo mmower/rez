@@ -44,7 +44,9 @@
     </script>
   </body>
   <script>
-    $game.start("game-container");
+    Rez.loadMods().then(function() {
+      $game.start("game-container");
+    });
   </script>
   <script>
   <%= for {:list_binding, {js_event_name, {:literal, {:string, rez_event_name}}}} <- NodeHelper.get_attr_value(@game, "start_events", %{}) do %>

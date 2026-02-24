@@ -699,6 +699,8 @@ class RezGame extends RezBasicObject {
       obj.init();
     }, this);
 
+    this.initMods();
+
     // Now everything is guaranteed to be initialized, give
     // each object a chance to respond to the game being about
     // to start
@@ -711,6 +713,17 @@ class RezGame extends RezBasicObject {
     this.startSceneWithId(this.initial_scene_id);
 
     this.runEvent("game_did_start", {});
+  }
+
+  initMods() {
+    for(const {name, initFn} of Rez.mods) {
+      try {
+        console.log(`Init mod: ${name}`);
+        initFn(this);
+      } catch (e) {
+        console.error(`Error initializing mod ${name}: ${e}`);
+      }
+    }
   }
 
   /**

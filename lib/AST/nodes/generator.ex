@@ -35,12 +35,18 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
     const customize = list.getAttribute("customize");
     const objects = [];
     for(let idx = 0; idx < copies; idx += 1) {
-      const copy = source.copyWithAutoId();
+      let copy = source.copyWithAutoId();
       if(typeof(customize) === "function") {
-        customize(copy);
+        copy = customize(copy, idx);
+        if(copy === undefined) {
+          throw new Error(`Generator ${list.id} did not return an object from customize!`);
+        }
       }
       objects.push(copy.id);
       game.addGameObject(copy);
+    }
+    if(list.getAttributeValue("shuffle", false)) {
+      objects.fyShuffle();
     }
     list.setAttribute("values", objects);
   }

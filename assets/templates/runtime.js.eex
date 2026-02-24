@@ -4,6 +4,66 @@
 (function() {
   window.Rez = window.Rez ?? {};
 
+  Rez.mods = [];
+
+  Rez.typeHierarchy = <%= @type_hierarchy %>;
+
+  Rez.isTypeOf = function(type, targetType) {
+    if (type === targetType) return true;
+    const parents = Rez.typeHierarchy[type];
+    if (!parents) return false;
+    for (const parent of parents) {
+      if (Rez.isTypeOf(parent, targetType)) return true;
+    }
+    return false;
+  };
+
+  Rez.registerMod = function(name, initFn) {
+    if (typeof initFn !== "function") {
+      console.error("Mod " + name + " does not provide an init function");
+      return;
+    }
+    Rez.mods.push({name: name, initFn: initFn});
+  };
+
+  Rez.loadMods = function() {
+    return new Promise(function(resolve) {
+      var script = document.createElement("script");
+      script.src = "mods.js";
+      script.onload = function() {
+        var modPaths = Rez.modManifest || [];
+        var next = function(i) {
+          if (i >= modPaths.length) return resolve();
+          Rez.loadMod(modPaths[i]).then(function() { next(i + 1); });
+        };
+        next(0);
+      };
+      script.onerror = function() {
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+  };
+
+  Rez.loadMod = function(url) {
+    return new Promise(function(resolve) {
+      const modCount = Rez.mods.length;
+      const script = document.createElement("script");
+      script.src = url;
+      script.onload = function() {
+        if (Rez.mods.length === modCount) {
+          console.warn("Mod " + url + " loaded but did not call Rez.registerMod()");
+        }
+        resolve();
+      };
+      script.onerror = function() {
+        console.error("Failed to load mod: " + url);
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+  };
+
   <%= @constants %>
   <%= @patch_js_objects %>
   <%= @js_stdlib %>

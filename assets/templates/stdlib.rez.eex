@@ -151,6 +151,8 @@
   $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
+  member_ids: {kind: :set, coll_kind: :elem_ref}
+
   tags: {kind: :set, coll_kind: :keyword}
 }
 
@@ -159,6 +161,10 @@
   $template: false
   $auto_id_idx: 0
   tags: #{}
+
+  members: ^p{
+    return this.member_ids.refs();
+  }
 }
 
 @schema filter {
@@ -243,6 +249,7 @@
   priority: {kind: :number, min: 1, max: 100, required: true}
   source_id: {kind: :elem_ref, required: true}
   copies: {kind: [:number :roll :function], min: 0}
+  shuffle: {kind: :boolean, required: true}
 
   customize: {kind: :function}
 }
@@ -252,7 +259,8 @@
   $template: false
 
   priority: 1
-  customize: (obj) => {return obj;}
+  shuffle: false
+  customize: (obj, _idx) => {return obj;}
 }
 
 @schema group {
@@ -286,7 +294,7 @@
   tags: {kind: :set, coll_kind: :keyword}
 
   owner: {kind: :elem_ref}
-  slots: {kind: :set, coll_kind: :elem_ref, ref_elem: @slot, required: true, min_length: 1}
+  slots: {kind: :list, coll_kind: :list_binding, ref_elem: @slot, required: true, min_length: 1}
   apply_effects: {kind: :boolean}
 
   on_insert: {kind: :function}
@@ -485,13 +493,13 @@
   $js_ctor: {kind: :string}
 
   accepts: {kind: :keyword, required: true, type_exists}
-  accessor: {kind: :keyword, required: true}
 
   tags: {kind: :set, coll_kind: :keyword}
 
   name: {kind: :string}
   apply_effects: {kind: :boolean}
 
+  has_capacity: {kind: :boolean}
   capacity: {kind: :number, min: 0}
 
   on_insert: {kind: :function}
@@ -505,6 +513,8 @@
 
   apply_effects: true
   tags: #{}
+
+  has_capacity: false
 }
 
 @schema system {

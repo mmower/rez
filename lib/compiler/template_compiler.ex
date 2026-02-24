@@ -145,6 +145,25 @@ defmodule Rez.Compiler.TemplateCompiler do
     js_create_fn(body, false)
   end
 
+  def compile_chunk({:break, expr}) do
+    expr = String.trim(expr)
+
+    body =
+      if expr == "" do
+        ~s|
+    debugger;
+    return "";
+    |
+      else
+        ~s|
+    if(evaluateExpression(`#{expr}`, bindings)) { debugger; }
+    return "";
+    |
+      end
+
+    js_create_fn(body, false)
+  end
+
   def compile_chunk({:user_component, name, attributes, nil}) do
     assigns = component_assigns(attributes)
 

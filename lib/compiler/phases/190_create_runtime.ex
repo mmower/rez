@@ -12,6 +12,7 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
   alias Rez.AST.NodeHelper
 
   alias Rez.AST.Asset
+  alias Rez.AST.TypeHierarchy
 
   alias Rez.AST.ValueEncoder
 
@@ -112,6 +113,7 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
         js_stdlib: @js_stdlib,
         js_userlib: js_userlib_content(assets),
         constants: generate_constants(constants),
+        type_hierarchy: TypeHierarchy.to_json(compilation.type_hierarchy),
         patch_js_objects: patch_js_objects(patches: patches),
         bind_keys: bind_keys(keybindings: keybindings),
         user_components: user_components(user_components: user_components),

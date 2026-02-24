@@ -214,7 +214,7 @@ defmodule Rez.Parser.ParserTest do
     @inventory inv_1 {
       tags: #\{:shopping}
       owner: #player
-      slots: #\{#main_hand_slot #off_hand_slot #two_handed_slot}
+      slots: [main_hand: #main_hand_slot, off_hand: #off_hand_slot, two_handed: #two_handed_slot]
     }
     """
 
@@ -240,12 +240,11 @@ defmodule Rez.Parser.ParserTest do
 
     tags = MapSet.new([{:keyword, "shopping"}])
 
-    slots =
-      MapSet.new([
-        {:elem_ref, "main_hand_slot"},
-        {:elem_ref, "off_hand_slot"},
-        {:elem_ref, "two_handed_slot"}
-      ])
+    slots = [
+      {:list_binding, {"main_hand", {:source, false, {:elem_ref, "main_hand_slot"}}}},
+      {:list_binding, {"off_hand", {:source, false, {:elem_ref, "off_hand_slot"}}}},
+      {:list_binding, {"two_handed", {:source, false, {:elem_ref, "two_handed_slot"}}}}
+    ]
 
     assert %Rez.AST.Inventory{
              id: "inv_1",
@@ -257,7 +256,7 @@ defmodule Rez.Parser.ParserTest do
                },
                "slots" => %Rez.AST.Attribute{
                  name: "slots",
-                 type: :set,
+                 type: :list,
                  value: ^slots
                },
                "owner" => %Rez.AST.Attribute{

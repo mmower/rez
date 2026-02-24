@@ -59,6 +59,7 @@ defmodule Rez.Parser.TemplateParser do
   def fe_macro(), do: cached_parser(literal("$foreach"))
   def ps_macro(), do: cached_parser(literal("$partial"))
   def do_macro(), do: cached_parser(literal("$do"))
+  def break_macro(), do: cached_parser(literal("$break"))
   def open_body(), do: cached_parser(literal("{%"))
   def close_body(), do: cached_parser(literal("%}"))
   def entails(), do: cached_parser(literal("->"))
@@ -287,6 +288,19 @@ defmodule Rez.Parser.TemplateParser do
     )
   end
 
+  def breakblock() do
+    cached_parser(
+      DP.text_delimited_by_prefix_and_nested_parsers(
+        ignore(break_macro()),
+        open_brace(),
+        close_brace()
+      )
+      |> transform(fn [code] ->
+        {:break, code}
+      end)
+    )
+  end
+
   def interpolation() do
     cached_parser(
       sequence(
@@ -489,8 +503,11 @@ defmodule Rez.Parser.TemplateParser do
     do: cached_parser(sequence([literal("$if"), iows(), literal("(")]))
 
   def la_open_doblock(), do: cached_parser(literal("$do{"))
+  def la_open_breakblock(), do: cached_parser(literal("$break{"))
+
   def la_open_foreach(),
     do: cached_parser(sequence([literal("$foreach"), iows(), literal("(")]))
+
   def la_open_partial(), do: cached_parser(literal("$partial("))
   def escape_dollar(), do: cached_parser(literal("\\$"))
 
@@ -501,6 +518,7 @@ defmodule Rez.Parser.TemplateParser do
           choice([
             la_open_conditional(),
             la_open_doblock(),
+            la_open_breakblock(),
             open_interpolation(),
             la_open_foreach(),
             la_open_partial(),
@@ -531,6 +549,7 @@ defmodule Rez.Parser.TemplateParser do
           cancel_interpolation_marker(),
           conditional(),
           doblock(),
+          breakblock(),
           interpolation(),
           foreach(),
           partial(),
