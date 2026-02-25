@@ -53,6 +53,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ApplySchema,
     # Pragmas with :after_schema_apply timing run here
     Rez.Compiler.Phases.CompileTemplates,
+    Rez.Compiler.Phases.ValidateComponents,
     Rez.Compiler.Phases.ProcessAST,
     # Pragmas with :after_process_ast timing run here (before ReprocessAST)
     Rez.Compiler.Phases.ReprocessAST,

@@ -171,7 +171,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     const user_component = window.Rez.user_components.#{name};
 
     if(typeof user_component === "undefined") {
-      throw `No user @macro #{name} defined!`;
+      throw `No user @component #{name} defined!`;
     } else {
       return user_component(bindings, {#{assigns}}, null);
     }
@@ -195,7 +195,7 @@ defmodule Rez.Compiler.TemplateCompiler do
         const sub_content = sub_template(bindings);
 
         if(typeof user_component === "undefined") {
-          throw `No user @macro #{name} defined!`;
+          throw `No user @component #{name} defined!`;
         } else {
           return user_component(bindings, {#{assigns}}, sub_content);
         }
