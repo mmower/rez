@@ -312,4 +312,75 @@ defmodule Rez.Parser.TemplateParserTest do
               "</ul>"
             ]} = TP.parse(template)
   end
+
+  # @component / user_component tests
+
+  test "parses self-closing component with no attributes" do
+    template = "<.foo />"
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", %{}, nil}
+            ]} = TP.parse(template)
+  end
+
+  test "parses self-closing component with string attribute" do
+    template = ~s|<.foo bar="x" />|
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", %{"bar" => {:string, "x"}}, nil}
+            ]} = TP.parse(template)
+  end
+
+  test "parses self-closing component with dynamic attribute" do
+    template = "<.foo bar={player.name} />"
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", %{"bar" => {:attr_expr, "player.name"}}, nil}
+            ]} = TP.parse(template)
+  end
+
+  test "parses self-closing component with number attribute" do
+    template = "<.foo count=3 />"
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", %{"count" => {:number, 3}}, nil}
+            ]} = TP.parse(template)
+  end
+
+  test "parses container component with text content" do
+    template = "<.foo>hello</.foo>"
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", [], {:source_template, ["hello"]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses container component with attributes and interpolated content" do
+    template = ~s|<.card title="intro">${player.name}</.card>|
+
+    assert {:source_template,
+            [
+              {:user_component, "card", [{"title", {:string, "intro"}}],
+               {:source_template,
+                [
+                  {:interpolate, {:expression, {:bound_path, ["player", "name"]}, []}}
+                ]}}
+            ]} = TP.parse(template)
+  end
+
+  test "parses component embedded in HTML" do
+    template = "<div><.greeting /> more text</div>"
+
+    assert {:source_template,
+            [
+              "<div>",
+              {:user_component, "greeting", %{}, nil},
+              " more text</div>"
+            ]} = TP.parse(template)
+  end
 end

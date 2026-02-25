@@ -137,4 +137,49 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     assert "bindings.matrix[bindings.row][bindings.col]" =
              C.bound_path_to_js(["matrix", {:bound_index, ["row"]}, {:bound_index, ["col"]}])
   end
+
+  # @component / user_component compilation tests
+
+  test "compile self-closing component references user_components" do
+    compiled = C.compile_chunk({:user_component, "foo", %{}, nil})
+
+    assert String.contains?(compiled, "window.Rez.user_components.foo")
+    assert String.contains?(compiled, ~s|No user @component foo defined!|)
+  end
+
+  test "compile self-closing component with string attribute" do
+    compiled = C.compile_chunk({:user_component, "foo", %{"bar" => {:string, "x"}}, nil})
+
+    assert String.contains?(compiled, ~s|bar: "x"|)
+    assert String.contains?(compiled, "window.Rez.user_components.foo")
+  end
+
+  test "compile self-closing component with dynamic attribute" do
+    compiled = C.compile_chunk({:user_component, "foo", %{"bar" => {:attr_expr, "player.name"}}, nil})
+
+    assert String.contains?(compiled, "bar: evaluateExpression")
+    assert String.contains?(compiled, "player.name")
+  end
+
+  test "compile container component includes sub_template and sub_content" do
+    content = {:source_template, ["hello"]}
+    compiled = C.compile_chunk({:user_component, "foo", %{}, content})
+
+    assert String.contains?(compiled, "window.Rez.user_components.foo")
+    assert String.contains?(compiled, "sub_template")
+    assert String.contains?(compiled, "sub_content")
+    assert String.contains?(compiled, ~s|No user @component foo defined!|)
+  end
+
+  test "component_assigns handles mixed attribute types" do
+    # Test via compile_chunk since component_assigns is private
+    compiled = C.compile_chunk({:user_component, "widget", %{
+      "title" => {:string, "hello"},
+      "count" => {:number, 42},
+      "active" => {:boolean, true},
+      "name" => {:attr_expr, "player.name"}
+    }, nil})
+
+    assert String.contains?(compiled, "window.Rez.user_components.widget")
+  end
 end

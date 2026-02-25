@@ -79,6 +79,10 @@ defmodule Rez.Parser.ElementsParser do
     cached_parser(block_with_id("plot", Rez.AST.Plot))
   end
 
+  def quest_element() do
+    cached_parser(block_with_id("quest", Rez.AST.Quest))
+  end
+
   def scene_element() do
     cached_parser(block_with_id("scene", Rez.AST.Scene))
   end
@@ -114,6 +118,7 @@ defmodule Rez.Parser.ElementsParser do
           mixin_element(),
           object_element(),
           plot_element(),
+          quest_element(),
           relationship_elem(),
           scene_element(),
           slot_element(),

@@ -417,6 +417,36 @@
   tags: #{}
 }
 
+@schema quest {
+  $global: {kind: :boolean}
+  $template: {kind: :boolean}
+  $auto_id_idx: {kind: :number}
+  $init_after: {kind: :list, coll_kind: :elem_ref}
+  $js_ctor: {kind: :string}
+
+  tags: {kind: :set, coll_kind: :keyword}
+
+  status: {kind: :keyword, in: [:unknown, :mentioned, :accepted, :achieved, :completed, :botched]}
+
+  subscribers: {kind: :list, coll_kind: :elem_ref, required: true}
+  on_mentioned: {kind: :function}
+  on_accepted: {kind: :function}
+  on_achieved: {kind: :function}
+  on_completed: {kind: :function}
+  on_bothced: {kind: :function}
+}
+
+@defaults quest {
+  $global: false
+  $template: false
+  $auto_id_idx: 0
+
+  status: :unknown
+
+  subscribers: []
+  tags: #{}
+}
+
 @schema rel {
   $global: {kind: :boolean}
   $template: {kind: :boolean}

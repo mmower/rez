@@ -144,3 +144,93 @@ class RezPlot extends RezBasicObject {
 }
 
 window.Rez.RezPlot = RezPlot;
+
+/**
+ * @class RezQuest
+ * @extends RezBasicObject
+ * @category Elements
+ * @description Tracks the progression of a storyline or quest through discrete stages.
+ */
+
+class RezQuest extends RezBasicObject {
+  /**
+   * @function constructor
+   * @memberof RezQuest
+   * @description Creates a new RezQuest.
+   *
+   * @param {string} id - Unique identifier for this quest
+   * @param {Object} attributes - Initial attributes
+   */
+  constructor(id, attributes) {
+    super("quest", id, attributes);
+  }
+
+  mentioned() {
+    if(this.status === "unknown") {
+      this.status = "mentioned";
+      this.notifySubscribers("quest_mentioned");
+    }
+  }
+
+  accepted() {
+    if(this.status === "mentioned") {
+      this.status = "accepted";
+      this.notifySubscribers("quest_accepted");
+    }
+  }
+
+  achieved() {
+    if(this.status === "accepted") {
+      this.status = "achieved";
+      this.notifySubscriber("quest_achieved");
+    }
+  }
+
+  completed() {
+    if(this.status === "achieved") {
+      this.status = "completed";
+      this.notifySubscriber("quest_completed");
+    }
+  }
+
+  botch() {
+    if(this.status !== "botched" && this.status in ["mentioned", "accepted"]) {
+      this.setAttribute("old_status", this.status);
+      this.status = "botched";
+      this.notifySubscribers("quest_botched");
+    }
+  }
+
+  unbotch() {
+    if(this.status === "botched") {
+      this.status = this.getAttribute("old_status");
+      this.notifySubscribers("quest_unbotched");
+    }
+  }
+
+  subscribe(subscriber_id) {
+    if($(subscriber_id, false) === undefined) {
+      throw new Error(`Attempt to subscribe to quest ${this.id} with invalid subscriber id: ${subscriber_id} must be game object id!`);
+    }
+    this.subscribers.push(subscriber_id);
+  }
+
+  unsubscribe(subscriber_id) {
+    this.subscribers = this.subscribers.filter(sub_id => sub_id !== subscriber_id);
+  }
+
+  /**
+   * Notify every subscriber to this plot about a plot related event.
+   * Subscribers are notified in priority order (highest first, default 0).
+   */
+  notifySubscribers(event, params = {}) {
+    this.subscribers
+      .refs()
+      .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+      .forEach((subscriber) => {
+        subscriber.runEvent(event, {...params, plot_id: this.id});
+      });
+  }
+}
+
+window.Rez.RezQuest = RezQuest;
