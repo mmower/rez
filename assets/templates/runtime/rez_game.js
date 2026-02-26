@@ -446,6 +446,19 @@ class RezGame extends RezBasicObject {
    * and getRelationship("b", "a") are different RezRelationship objects.
    */
   getRelationship(sourceId, targetId) {
+    if(typeof(sourceId) === "object") {
+      sourceId = sourceId.id;
+    }
+    if(typeof(sourceId) !== "string") {
+      throw new Error(`Invalid sourceId parameter!`);
+    }
+    if(typeof(targetId) === "object") {
+      targetId = targetId.id;
+    }
+    if(typeof(targetId) !== "string") {
+      throw new Error(`Invalid sourceId parameter!`);
+    }
+
     const relId = `rel_${sourceId}_${targetId}`;
     return this.getTypedGameObject(relId, "relationship", false);
   }

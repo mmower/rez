@@ -178,6 +178,7 @@
   $js_ctor: {kind: :string}
   $scene_stack: {kind: :list}
   $flash_messages: {kind: :list}
+
   start_events: {kind: :list, coll_kind: :list_binding}
 
   tags: {kind: :set, coll_kind: :keyword}
@@ -1337,7 +1338,7 @@
   $built_in: true
   patch: "Number"
   method: "round_to_nearest"
-  impl: function(n) {
+  impl: function(n = 1) {
     if(n === 0) {
       return this;
     } else {
