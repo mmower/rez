@@ -220,6 +220,24 @@ defmodule Rez.Parser.ValueParsers do
     )
   end
 
+  # Element Name
+  # @typename — matches all elements declared with that tag/alias
+
+  def elem_name_value() do
+    cached_parser(
+      sequence(
+        [
+          ignore(at()),
+          commit(),
+          js_identifier()
+        ],
+        label: "elem-name-value",
+        debug: true,
+        ast: fn [type_name] -> {:elem_name, type_name} end
+      )
+    )
+  end
+
   def priority() do
     cached_parser(
       optional(
@@ -508,6 +526,7 @@ defmodule Rez.Parser.ValueParsers do
           property_value(),
           dice_value(),
           elem_ref_value(),
+          elem_name_value(),
           const_ref_value(),
           dynamic_initializer_value(),
           copy_initializer_value(),

@@ -50,6 +50,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.MapAliases,
     Rez.Compiler.Phases.ApplyDefaults,
     Rez.Compiler.Phases.ResolveConstants,
+    Rez.Compiler.Phases.ExpandTagRefs,
     Rez.Compiler.Phases.ApplySchema,
     # Pragmas with :after_schema_apply timing run here
     Rez.Compiler.Phases.CompileTemplates,

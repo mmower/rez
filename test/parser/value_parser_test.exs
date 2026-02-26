@@ -95,4 +95,21 @@ defmodule Rez.Parser.ValueParserTest do
     result = Ergo.parse(ValueParsers.delegate_value(), input)
     assert {:fatal, _} = result.status
   end
+
+  test "parses elem name (tag ref) values" do
+    input = "@card"
+
+    assert %Context{status: :ok, ast: {:elem_name, "card"}} =
+             Ergo.parse(ValueParsers.elem_name_value(), input)
+
+    assert %Context{status: :ok, ast: {:elem_name, "card"}} =
+             Ergo.parse(ValueParsers.value(), input)
+  end
+
+  test "parses elem name with underscores" do
+    input = "@my_location"
+
+    assert %Context{status: :ok, ast: {:elem_name, "my_location"}} =
+             Ergo.parse(ValueParsers.elem_name_value(), input)
+  end
 end
