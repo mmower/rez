@@ -36,6 +36,9 @@
     <%= for {:string, url} <- NodeHelper.get_attr_value(@game, "scripts", []) do %>
       <script src="<%= url %>"></script>
     <% end %>
+    <%= for js_asset <- @js_body_runtime_assets do %>
+      <%= Asset.asset_tag(js_asset) %>
+    <% end %>
     <script type="text/javascript">
       // Custom game scripts
       <%= for script <- @scripts do %>

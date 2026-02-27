@@ -39,6 +39,7 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
 
     js_pre_runtime_assets = js_pre_runtime_assets(assets)
     js_post_runtime_assets = js_post_runtime_assets(assets)
+    js_body_runtime_assets = js_body_runtime_assets(assets)
     style_assets = style_assets(assets)
 
     html =
@@ -48,7 +49,8 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
         scripts: scripts,
         style_assets: style_assets,
         js_pre_runtime_assets: js_pre_runtime_assets,
-        js_post_runtime_assets: js_post_runtime_assets
+        js_post_runtime_assets: js_post_runtime_assets,
+        js_body_runtime_assets: js_body_runtime_assets
       )
 
     output_path = Path.join(dist_path, "index.html")
@@ -65,12 +67,21 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
 
   def js_pre_runtime_assets(assets) do
     assets
-    |> Enum.filter(&(Asset.compile_time_script?(&1) && Asset.pre_runtime?(&1)))
+    |> Enum.filter(
+      &(Asset.compile_time_script?(&1) && Asset.load_in_head?(&1) && Asset.pre_runtime?(&1))
+    )
   end
 
   def js_post_runtime_assets(assets) do
     assets
-    |> Enum.filter(&(Asset.compile_time_script?(&1) && !Asset.pre_runtime?(&1)))
+    |> Enum.filter(
+      &(Asset.compile_time_script?(&1) && Asset.load_in_head?(&1) && !Asset.pre_runtime?(&1))
+    )
+  end
+
+  def js_body_runtime_assets(assets) do
+    assets
+    |> Enum.filter(&(Asset.compile_time_script?(&1) && Asset.load_in_body?(&1)))
   end
 
   def style_assets(assets) do

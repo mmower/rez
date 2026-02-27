@@ -70,6 +70,14 @@ defmodule Rez.AST.Asset do
     real_asset?(asset) && extension(asset) == ".js"
   end
 
+  def load_in_head?(%Asset{} = asset) do
+    !NodeHelper.get_attr_value(asset, "$load_in_body", false)
+  end
+
+  def load_in_body?(%Asset{} = asset) do
+    NodeHelper.get_attr_value(asset, "$load_in_body", false)
+  end
+
   def pre_runtime?(%Asset{} = asset) do
     NodeHelper.get_attr_value(asset, "$pre_runtime", false)
   end
