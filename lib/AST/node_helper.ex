@@ -400,4 +400,11 @@ defmodule Rez.AST.NodeHelper do
   def html_processor(_node, _attr) do
     &Function.identity/1
   end
+
+  def element_kind(node) do
+    node.__struct__
+    |> Module.split()
+    |> List.last()
+    |> String.downcase()
+  end
 end

@@ -38,4 +38,22 @@ defmodule Rez.Compiler.ConsolidateNodesTest do
              ^o_2
            ] = post_compilation.content
   end
+
+  test "Errors when the same id is used by different element types" do
+    actor = %Rez.AST.Actor{id: "heavy", attributes: %{}}
+    object = %Rez.AST.Object{id: "heavy", attributes: %{}}
+
+    pre_compilation = %Compilation{
+      status: :ok,
+      content: [actor, object]
+    }
+
+    post_compilation = ConsolidateNodes.run_phase(pre_compilation)
+
+    assert :error = post_compilation.status
+    assert [error] = post_compilation.errors
+    assert error =~ "heavy"
+    assert error =~ "actor"
+    assert error =~ "object"
+  end
 end

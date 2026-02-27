@@ -24,8 +24,6 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
   @on_init_src ~s"""
   {
     // Lookup the object the generator is copying
-    const source_id = list.getAttribute("source_id");
-    const source = $(source_id);
     let copies = list.getAttribute("copies");
     if(copies instanceof RezDieRoll) {
       copies = copies.roll();
@@ -35,7 +33,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Generator do
     const customize = list.getAttribute("customize");
     const objects = [];
     for(let idx = 0; idx < copies; idx += 1) {
-      let copy = source.copyWithAutoId();
+      let copy = $(list.source_id).copyWithAutoId();
       if(typeof(customize) === "function") {
         copy = customize(copy, idx);
         if(copy === undefined) {

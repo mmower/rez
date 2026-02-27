@@ -574,7 +574,7 @@ class RezBasicObject {
           throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
-        return pTable[idx][0];
+        return normalizeRefs(pTable[idx][0]);
       },
     });
 
@@ -586,7 +586,7 @@ class RezBasicObject {
           throw new Error("Invalid p_table. Must contain range 0<n<1");
         }
 
-        return { p: p, obj: pTable[idx][0] };
+        return { p: p, obj: normalizeRefs(pTable[idx][0]) };
       },
     });
   }
