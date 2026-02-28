@@ -1327,6 +1327,18 @@ class RezBindingTransformer extends RezTransformer {
    * @param {string} binding_id - The binding target ID
    * @param {string} binding_attr - The attribute name
    */
+  transformNumberInput(view, input, binding_id, binding_attr) {
+    view.registerBinding(binding_id, binding_attr, (value) => {
+      input.value = value;
+    });
+    input.value = this.getBoundValue(input, binding_id, binding_attr);
+    input.addEventListener("input", (evt) => {
+      const raw = evt.target.value;
+      const value = raw.includes(".") ? parseFloat(raw) : parseInt(raw, 10);
+      this.setBoundValue(input, binding_id, binding_attr, isNaN(value) ? raw : value);
+    });
+  }
+
   transformSelect(view, select, binding_id, binding_attr) {
     view.registerBinding(binding_id, binding_attr, (value) => {
       select.value = value;
@@ -1353,6 +1365,8 @@ class RezBindingTransformer extends RezTransformer {
 
     if(input.type === "text" || input.tagName.toLowerCase() === "textarea") {
       this.transformTextInput(view, input, binding_id, binding_attr);
+    } else if(input.type === "number") {
+      this.transformNumberInput(view, input, binding_id, binding_attr);
     } else if(input.type === "checkbox") {
       this.transformCheckboxInput(view, input, binding_id, binding_attr);
     } else if(input.type === "radio") {
