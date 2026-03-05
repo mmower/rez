@@ -72,7 +72,6 @@ defmodule Rez.Parser.RelationshipParsers do
             StructureParsers.create_block(
               Rez.AST.Relationship,
               rel_id,
-              [],
               attributes,
               source_file,
               source_line,

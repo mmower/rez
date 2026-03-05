@@ -33,14 +33,13 @@ defmodule Rez.Compiler.Phases.ValidateMixins do
   end
 
   def get_missing_mixins(node, mixin_ids) do
-    case NodeHelper.get_attr_value(node, "$mixins", []) do
-      [] ->
-        []
-
-      node_mixins when is_list(node_mixins) ->
-        node_mixins = Enum.map(node_mixins, fn {:elem_ref, mixin} -> mixin end)
-        # Find any of this mixin ids that isn't in the list of mixin_ids
-        node_mixins -- mixin_ids
-    end
+    node
+    |> NodeHelper.get_attr_value("$mixins", MapSet.new())
+    |> then(fn
+      items when is_list(items) -> items
+      items -> MapSet.to_list(items)
+    end)
+    |> Enum.map(fn {:elem_ref, mixin} -> mixin end)
+    |> then(fn node_mixins -> node_mixins -- mixin_ids end)
   end
 end

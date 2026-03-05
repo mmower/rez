@@ -10,14 +10,9 @@ defmodule Rez.Parser.StructureParsers do
 
   alias LogicalFile
 
-  alias Rez.AST.NodeHelper
-
   import Rez.Parser.UtilityParsers
   import Rez.Parser.AttributeParser
   import Rez.Parser.IdentifierParser, only: [js_identifier: 1]
-  import Rez.Parser.DefaultParser, only: [default: 2]
-  import Rez.Parser.ValueParsers, only: [elem_ref_value: 0]
-
   import Rez.Utils, only: [attr_list_to_map: 1]
   import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
@@ -40,30 +35,14 @@ defmodule Rez.Parser.StructureParsers do
   #   Map.merge(default_attributes, attributes)
   # end
 
-  # def merge_attributes(default_attributes, attributes, mixins) do
-  #   merge_list = fn _key, old, new -> old ++ new end
-
-  #   default_attributes
-  #   |> Map.merge(attributes)
-  #   |> Map.merge(%{"$mixins" => Attribute.list("$mixins", mixins)}, merge_list)
-  # end
-
   @doc """
   `create_block` returns a struct instance filling in the meta attributes
   related to parsing.
   """
-  def create_block(block_struct, id, mixins, attributes, source_file, source_line, col)
-      when is_list(mixins) and is_map(attributes) and is_binary(source_file) do
-    node =
-      struct(
-        block_struct,
-        id: id,
-        position: {source_file, source_line, col}
-      )
-
-    node
+  def create_block(block_struct, id, attributes, source_file, source_line, col)
+      when is_map(attributes) and is_binary(source_file) do
+    struct(block_struct, id: id, position: {source_file, source_line, col})
     |> Map.put(:attributes, attributes)
-    |> NodeHelper.set_list_attr("$mixins", mixins)
   end
 
   # Does the twin jobs of setting the AST to point to the block and map the ID of
@@ -128,7 +107,7 @@ defmodule Rez.Parser.StructureParsers do
               } = ctx ->
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
-        block = create_block(block_struct, id, [], attributes, source_file, source_line, col)
+        block = create_block(block_struct, id, attributes, source_file, source_line, col)
         ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
@@ -166,7 +145,7 @@ defmodule Rez.Parser.StructureParsers do
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
         auto_id = id_fn.(attributes)
-        block = create_block(block_struct, auto_id, [], attributes, source_file, source_line, col)
+        block = create_block(block_struct, auto_id, attributes, source_file, source_line, col)
         ctx_with_block_and_id_mapped(ctx, block, auto_id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
@@ -187,7 +166,6 @@ defmodule Rez.Parser.StructureParsers do
         iws(),
         commit(),
         js_identifier("#{label}_id"),
-        mixins(),
         iws(),
         block_begin(),
         attribute_list(),
@@ -198,23 +176,12 @@ defmodule Rez.Parser.StructureParsers do
       debug: true,
       ctx: fn %Context{
                 entry_points: [{line, col} | _],
-                ast: [id, {:mixins, mixins}, attr_list | []],
+                ast: [id, attr_list | []],
                 data: %{source: source}
               } = ctx ->
         attributes = attr_list_to_map(attr_list)
         {source_file, source_line} = LogicalFile.resolve_line(source, line)
-
-        block =
-          create_block(
-            block_struct,
-            id,
-            mixins,
-            attributes,
-            source_file,
-            source_line,
-            col
-          )
-
+        block = create_block(block_struct, id, attributes, source_file, source_line, col)
         ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
       end,
       err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
@@ -224,35 +191,6 @@ defmodule Rez.Parser.StructureParsers do
           "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
         )
       end
-    )
-  end
-
-  def mixins() do
-    cached_parser(
-      optional(
-        sequence(
-          [
-            ignore(left_angle_bracket()),
-            iows(),
-            commit(),
-            elem_ref_value(),
-            many(
-              sequence([
-                iows(),
-                ignore(comma()),
-                iows(),
-                elem_ref_value()
-              ])
-            ),
-            iows(),
-            ignore(right_angle_bracket())
-          ],
-          ast: fn ast ->
-            {:mixins, ast |> List.flatten()}
-          end
-        )
-      )
-      |> default({:mixins, []})
     )
   end
 end

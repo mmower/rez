@@ -398,7 +398,7 @@
   stages: {kind: :number, min: 1, required: true}
   priority: {kind: :number, min: 1, max: 100, required: true}
 
-  subscribers: {kind: :list, coll_kind: :elem_ref, required: true}
+  subscriber_ids: {kind: :list, coll_kind: :elem_ref, required: true}
 
   tags: {kind: :set, coll_kind: :keyword}
 
@@ -411,10 +411,12 @@
   $global: false
   $template: false
   $auto_id_idx: 0
+  $mixins: #{#$has_subscribers}
 
-  stage: 0
   active: false
-  subscribers: []
+  priority: 1
+  stage: 0
+  subscriber_ids: []
   tags: #{}
 }
 
@@ -429,7 +431,7 @@
 
   status: {kind: :keyword, in: [:unknown, :mentioned, :accepted, :achieved, :completed, :botched]}
 
-  subscribers: {kind: :list, coll_kind: :elem_ref, required: true}
+  subscriber_ids: {kind: :list, coll_kind: :elem_ref, required: true}
   on_mentioned: {kind: :function}
   on_accepted: {kind: :function}
   on_achieved: {kind: :function}
@@ -441,10 +443,12 @@
   $global: false
   $template: false
   $auto_id_idx: 0
+  $mixins: #{#$has_subscribers}
 
   status: :unknown
+  priority: 1
 
-  subscribers: []
+  subscriber_ids: []
   tags: #{}
 }
 
@@ -1554,6 +1558,7 @@
     return `${n} ${s}`;
   }
 }
+
 @filter COMPARE_EQ_FILTER {
   $built_in: true
 
@@ -1935,6 +1940,41 @@
         return "";
       }
     }
+  }
+}
+
+%% ----------------------------------------------------------------------------
+%% Useful mixins
+%% ----------------------------------------------------------------------------
+
+@mixin $has_subscribers {
+  subscribe: function(refOrId) {
+    const id = Rez.getGameObjectId(refOrId);
+    if(id === undefined) {
+      throw new Error(`Invalid subscriber reference for subscribe!`);
+    }
+    this.subscriber_ids = [...this.subscriber_ids, id];
+  }
+
+  unsubscribe: function(refOrId) {
+    const id = Rez.getGameObjectId(refOrId);
+    if(id === undefined) {
+      throw new Error(`Invalid subscriber reference for unsubscribe!`);
+    }
+    this.subscriber_ids = this.subscriber_ids.filter(subscriber_id => subscriber_id !== id);
+  }
+
+  %%
+  %% Notify every subscriber to this element about an event.
+  %% Subscribers are notified in priority order (highest first, default 0).
+  %%
+  notifySubscribers: function(event, params = {}) {
+    this.subscriber_ids
+      .refs()
+      .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+      .forEach((subscriber) => {
+        subscriber.runEvent(event, {...params, source: this});
+      });
   }
 }
 

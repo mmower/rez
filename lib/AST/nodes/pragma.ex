@@ -186,7 +186,7 @@ defmodule Rez.AST.Pragma do
       ) do
     content
     |> Enum.filter(fn node ->
-      !NodeHelper.get_attr_value(node, "$built_in", false)
+      Map.get(node, :game_element, false) && !NodeHelper.get_attr_value(node, "$built_in", false)
     end)
     |> Enum.group_by(&PrintableGroup.node_type/1)
     |> Enum.filter(&PrintableGroup.printable_group/1)
@@ -247,8 +247,13 @@ defmodule PrintableGroup do
 
   def print_node(%{id: id} = node) do
     {file, line, _col} = node.position
-    file = Path.relative_to_cwd(file)
-    IO.puts("#{node_type_name(node)} ##{id} — #{file}:#{line}")
+
+    if file do
+      file = Path.relative_to_cwd(file)
+      IO.puts("#{node_type_name(node)} ##{id} — #{file}:#{line}")
+    else
+      IO.puts("#{node_type_name(node)} ##{id} — no position")
+    end
   end
 
   def print_node(_) do

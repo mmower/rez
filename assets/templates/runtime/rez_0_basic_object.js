@@ -854,7 +854,7 @@ class RezBasicObject {
    * @returns {*|boolean} returns a response object, or false if the event was not handled
    * @description attempts to run the event handler function for the event name, passing the specified params to the handler
    */
-  runEvent(eventName, params) {
+  runEvent(eventName, params = {}) {
     if(RezBasicObject.game.$debug_events) {
       console.log(`Run on_${eventName} handler on '${this.id}'`);
     }

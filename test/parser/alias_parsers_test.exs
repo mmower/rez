@@ -14,23 +14,8 @@ defmodule Rez.Parser.AliasParsesTest do
 
     assert %{
              status: :ok,
-             data: %{aliases: %{"standard_scene" => {"scene", {:mixins, []}}}}
+             data: %{aliases: %{"standard_scene" => "scene"}}
            } = ctx
-  end
-
-  test "parse alias definition with parents" do
-    input = """
-    @elem standard_scene = scene<#foo, #bar>
-    """
-
-    source = dummy_source(input)
-
-    assert %{status: :ok, data: %{aliases: aliases}} =
-             Ergo.parse(alias_directive(), input, data: %{source: source, aliases: %{}})
-
-    assert %{
-             "standard_scene" => {"scene", {:mixins, [{:elem_ref, "foo"}, {:elem_ref, "bar"}]}}
-           } = aliases
   end
 
   test "parse alias use" do
@@ -47,13 +32,12 @@ defmodule Rez.Parser.AliasParsesTest do
                data: %{
                  id_map: %{},
                  source: source,
-                 aliases: %{"ring" => {"item", {:mixins, [{:elem_ref, "ring"}]}}}
+                 aliases: %{"ring" => "item"}
                }
              )
 
     assert %Rez.AST.Item{id: "magic_ring"} = ast
     assert %Rez.AST.Attribute{value: true} = NodeHelper.get_attr(ast, "magic")
-    assert %Rez.AST.Attribute{value: [{:elem_ref, "ring"}]} = NodeHelper.get_attr(ast, "$mixins")
   end
 
   # test "parse merges default & defined tags" do

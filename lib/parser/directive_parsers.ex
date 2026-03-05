@@ -319,10 +319,8 @@ defmodule Rez.Parser.DirectiveParsers do
           behaviour_template_directive(),
           component_directive(),
           const_directive(),
-          # declare_directive(),
           defaults_directive(),
           derive_directive(),
-          # enum_directive(),
           keybinding_directive(),
           schema_directive(),
           pragma_directive()

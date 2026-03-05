@@ -726,16 +726,28 @@ class RezGame extends RezBasicObject {
     const game_objects = this.getAttribute("$init_order");
     game_objects.forEach(function (obj_id) {
       const obj = this.getGameObject(obj_id);
-      obj.init();
+      try {
+        obj.init();
+      } catch(e) {
+        throw new Error(`Failed to initialize object '${obj_id}'`, {cause: e});
+      }
     }, this);
 
-    this.initMods();
+    try {
+      this.initMods();
+    } catch(e) {
+      console.log(`Unable to initialize mods: ${e}`);
+    }
 
     // Now everything is guaranteed to be initialized, give
     // each object a chance to respond to the game being about
     // to start
     this.getAll().forEach((obj) => {
-      obj.runEvent("game_will_start", {});
+      try {
+        obj.runEvent("game_will_start", {});
+      } catch(e) {
+        console.error(`Error in game_will_start handler on '${obj.id}': ${e}`);
+      }
     });
 
     this.buildView();

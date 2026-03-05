@@ -102,12 +102,11 @@ defmodule Rez.Parser.AliasParsers do
           iows(),
           ignore(equals()),
           iows(),
-          elem_tag(),
-          mixins()
+          elem_tag()
         ],
         label: "elem",
         ctx: fn %Context{
-                  ast: [alias_tag, target_tag, mixins],
+                  ast: [alias_tag, target_tag],
                   data: %{aliases: aliases} = data
                 } = ctx ->
           existing_aliases = Map.keys(aliases)
@@ -147,8 +146,7 @@ defmodule Rez.Parser.AliasParsers do
               alias = %Rez.AST.Alias{
                 position: resolve_position(ctx),
                 name: alias_tag,
-                target: target_tag,
-                mixins: mixins
+                target: target_tag
               }
 
               %{
@@ -156,7 +154,7 @@ defmodule Rez.Parser.AliasParsers do
                 | ast: alias,
                   data: %{
                     data
-                    | aliases: Map.put(aliases, alias_tag, {target_tag, mixins})
+                    | aliases: Map.put(aliases, alias_tag, target_tag)
                   }
               }
           end
@@ -167,11 +165,8 @@ defmodule Rez.Parser.AliasParsers do
 
   def aliased_struct(tag, aliases) when is_binary(tag) and is_map(aliases) do
     case Map.get(aliases, tag) do
-      nil ->
-        NodeHelper.node_for_tag(tag)
-
-      {alias, _mixins} ->
-        aliased_struct(alias, aliases)
+      nil -> NodeHelper.node_for_tag(tag)
+      target -> aliased_struct(target, aliases)
     end
   end
 
@@ -221,21 +216,11 @@ defmodule Rez.Parser.AliasParsers do
               |> Context.add_error(:undefined_alias, "Undefined alias #{alias_tag} found.")
               |> Context.make_error_fatal()
 
-            {target_tag, {:mixins, mixins}} ->
+            target_tag ->
               target_module = aliased_struct(target_tag, aliases)
               attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
               {source_file, source_line} = LogicalFile.resolve_line(source, line)
-
-              block =
-                create_block(
-                  target_module,
-                  alias_id,
-                  mixins,
-                  attributes,
-                  source_file,
-                  source_line,
-                  col
-                )
+              block = create_block(target_module, alias_id, attributes, source_file, source_line, col)
 
               ctx_with_block_and_id_mapped(
                 ctx,

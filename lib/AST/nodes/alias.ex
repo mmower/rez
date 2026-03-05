@@ -7,7 +7,6 @@ defmodule Rez.AST.Alias do
             position: {nil, 0, 0},
             name: nil,
             target: nil,
-            mixins: [],
             metadata: %{},
             validation: nil
 end
