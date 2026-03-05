@@ -354,6 +354,12 @@ class RezGame extends RezBasicObject {
     return obj;
   }
 
+  /**
+   * @function unmapObject
+   * @memberof RezGame#
+   * @param {object} obj game-object
+   * @description removes a game object from the object registry.
+   */
   unmapObject(obj) {
     if(!(obj instanceof RezBasicObject)) {
       throw new Error("Attempt to unmap non-game object!");
@@ -367,6 +373,17 @@ class RezGame extends RezBasicObject {
     }
 
     this.#undoManager?.recordRemoveElement(obj);
+  }
+
+  /**
+   * @function isGameObjectRef
+   * @memberof RezGame#
+   * @param {string} id to test
+   * @returns {boolean} true if a known game object, otherwise false
+   * @description given a string return true if it corresponds to a known game element
+   */
+  isGameObjectRef(id) {
+    return this.#gameObjects.has(id);
   }
 
   /**

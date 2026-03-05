@@ -17,6 +17,6 @@ let el;
   el = <%= Node.js_initializer(node) %>;
   game.addGameObject(el);
   <%= if NodeHelper.get_attr_value(node, "$global", false) do %>
-    window.$<%= node.id %> = el;
+    Object.defineProperty(window, "$<%= node.id %>", {value: el, writable: false, configurable: false, enumerable: true});
   <% end %>
 <% end %>
