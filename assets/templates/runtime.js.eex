@@ -20,7 +20,7 @@
 
   Rez.registerMod = function(name, initFn) {
     if (typeof initFn !== "function") {
-      console.error("Mod " + name + " does not provide an init function");
+      console.error(`Mod ${name} does not provide an init function`);
       return;
     }
     Rez.mods.push({name: name, initFn: initFn});
@@ -52,12 +52,12 @@
       script.src = url;
       script.onload = function() {
         if (Rez.mods.length === modCount) {
-          console.warn("Mod " + url + " loaded but did not call Rez.registerMod()");
+          console.warn(`Mod ${url} loaded but did not call Rez.registerMod()`);
         }
         resolve();
       };
       script.onerror = function() {
-        console.error("Failed to load mod: " + url);
+        console.error(`Failed to load mod: ${url}`);
         resolve();
       };
       document.head.appendChild(script);

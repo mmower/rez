@@ -355,7 +355,7 @@
   $template: true
 
   monster: true
-  name: ^i{"Chief " + $("troll_names").randomElement()}
+  name: ^i{return `Chief ${$("troll_names").randomElement()}`}
   description: "A huge, formidable, troll wielding an iron shod club"
 
   wildcard: true
@@ -412,7 +412,7 @@
   $template: true
 
   monster: true
-  name: ^i{"Chief " + $("goblin_names").randomElement()}
+  name: ^i{return `Chief ${$("goblin_names").randomElement()}`}
   description: "A large, tough, looking goblin wielding a flail"
 
   wildcard: true
@@ -468,7 +468,7 @@
   $template: true
 
   monster: true
-  name: ^i{"Queen " + $("spider_names").randomElement()}
+  name: ^i{return `Queen ${$("spider_names").randomElement()}`}
   description: "A huge spider with glowing eyes and terrible fangs"
 
   wildcard: true
@@ -523,7 +523,7 @@
   $template: true
 
   monster: true
-  name: ^i{"Chief " + $("orc_names").randomElement()}
+  name: ^i{return `Chief ${$("orc_names").randomElement()}`}
   description: "A huge tusked humanoid with green skin, wielding a great sword"
 
   wildcard: true
@@ -907,7 +907,7 @@
   monster: _
   on_start: (scene) => {
     scene.monster = $(scene.current_block.monster_id);
-    console.log("Starting battle scene with monster: " + scene.monster.name);
+    console.log(`Starting battle scene with monster: ${scene.monster.name}`);
   }
   layout_mode: :stack
   layout: ```

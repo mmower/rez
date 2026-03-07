@@ -45,7 +45,7 @@ defmodule Rez.Compiler.Phases.BuildSchema do
 
   def build_defaults(default_nodes) do
     Enum.reduce(default_nodes, %{}, fn node, defaults_map ->
-      Map.put(defaults_map, node.elem, node.attributes)
+      Map.update(defaults_map, node.elem, node.attributes, &Map.merge(&1, node.attributes))
     end)
   end
 

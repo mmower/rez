@@ -5,6 +5,7 @@
 /**
  * @class RezPlot
  * @extends RezBasicObject
+ * @mixes HasSubscribers
  * @category Elements
  * @description Tracks the progression of a storyline or quest through discrete stages.
  *
@@ -137,6 +138,7 @@ window.Rez.RezPlot = RezPlot;
 /**
  * @class RezQuest
  * @extends RezBasicObject
+ * @mixes HasSubscribers
  * @category Elements
  * @description Tracks the progression of a storyline or quest through discrete stages.
  */
@@ -154,6 +156,12 @@ class RezQuest extends RezBasicObject {
     super("quest", id, attributes);
   }
 
+  /**
+   * @function mentioned
+   * @memberof RezQuest
+   * @description Advances the quest state from unknown to mentioned
+   * @fires quest_did_update
+   */
   mentioned() {
     if(this.status === "unknown") {
       this.status = "mentioned";
@@ -161,6 +169,12 @@ class RezQuest extends RezBasicObject {
     }
   }
 
+  /**
+   * @function accepted
+   * @memberof RezQuest
+   * @description Advances the quest state from mentioned to accepted
+   * @fires quest_did_update
+   */
   accepted() {
     if(this.status === "mentioned") {
       this.status = "accepted";
@@ -168,6 +182,12 @@ class RezQuest extends RezBasicObject {
     }
   }
 
+  /**
+   * @function achieved
+   * @memberof RezQuest
+   * @description Advances the quest state from accepted to achieved
+   * @fires quest_did_update
+   */
   achieved() {
     if(this.status === "accepted") {
       this.status = "achieved";
@@ -175,6 +195,12 @@ class RezQuest extends RezBasicObject {
     }
   }
 
+  /**
+   * @function completed
+   * @memberof RezQuest
+   * @description Advances the quest state from achieved to completed
+   * @fires quest_did_update
+   */
   completed() {
     if(this.status === "achieved") {
       this.status = "completed";
@@ -182,15 +208,27 @@ class RezQuest extends RezBasicObject {
     }
   }
 
-  botch() {
-    if(["mentioned", "accepted"].includes(this.status)) {
+  /**
+   * @function botched
+   * @memberof RezQuest
+   * @description Changes the quest state from mentioned|accepted|achieved to botched
+   * @fires quest_did_update
+   */
+  botched() {
+    if(["mentioned", "accepted", "achieved"].includes(this.status)) {
       this.setAttribute("old_status", this.status);
       this.status = "botched";
       this.notifySubscribers("quest_did_update");
     }
   }
 
-  unbotch() {
+  /**
+   * @function unbotched
+   * @memberof RezQuest
+   * @description Returns the quest state from botched to its previous good state
+   * @fires quest_did_update
+   */
+  unbotched() {
     if(this.status === "botched") {
       this.status = this.getAttribute("old_status");
       this.notifySubscribers("quest_did_update");

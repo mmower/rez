@@ -9,7 +9,7 @@ defmodule Rez.Parser.Collection.Set do
   import Ergo.Combinators, only: [sequence: 1, sequence: 2, optional: 1, many: 1, ignore: 1]
 
   import Rez.Parser.UtilityParsers,
-    only: [iws: 0, iows: 0, hash: 0, plus: 0, open_brace: 0, close_brace: 0]
+    only: [iws: 0, iows: 0, hash: 0, plus: 0, open_brace: 0, close_brace: 0, comma: 0]
 
   import Rez.Parser.ValueParsers, only: [value: 0]
 
@@ -29,6 +29,7 @@ defmodule Rez.Parser.Collection.Set do
               many(
                 sequence([
                   iws(),
+                  ignore(optional(sequence([comma(), iws()]))),
                   value()
                 ])
               )

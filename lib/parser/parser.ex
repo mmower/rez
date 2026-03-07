@@ -28,13 +28,17 @@ defmodule Rez.Parser.Parser do
           string()
         ],
         label: "bad_element",
-        ctx: fn %Context{entry_points: [{line, col} | _], ast: name, data: %{aliases: aliases}} =
+        ctx: fn %Context{entry_points: [{line, col} | _], ast: [name], data: %{aliases: aliases}} =
                   ctx ->
+          message =
+            if Map.has_key?(aliases, name) do
+              "Aliased element '@#{name}' requires an id: '@#{name} <id> { ... }' at #{line}:#{col}"
+            else
+              "Unknown element: #{name} at #{line}:#{col} [Known aliases: #{aliases |> Map.keys() |> Enum.join(", ")}]"
+            end
+
           ctx
-          |> Context.add_error(
-            :bad_syntax,
-            "Unknown element: #{name} at #{line}:#{col} [Known aliases: #{aliases |> Map.keys() |> Enum.join(", ")}]"
-          )
+          |> Context.add_error(:bad_syntax, message)
           |> Context.make_error_fatal()
         end
       )

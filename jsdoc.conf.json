@@ -12,7 +12,7 @@
   "tags": {
     "allowUnknownTags": true
   },
-  "plugins": ["plugins/markdown", "node_modules/better-docs/category"],
+  "plugins": ["plugins/markdown", "node_modules/better-docs/category", "./jsdoc-plugins/exclude-inherited"],
   "templates": {
     "cleverLinks": false,
     "monospaceLinks": false
