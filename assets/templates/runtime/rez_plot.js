@@ -157,28 +157,28 @@ class RezQuest extends RezBasicObject {
   mentioned() {
     if(this.status === "unknown") {
       this.status = "mentioned";
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 
   accepted() {
     if(this.status === "mentioned") {
       this.status = "accepted";
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 
   achieved() {
     if(this.status === "accepted") {
       this.status = "achieved";
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 
   completed() {
     if(this.status === "achieved") {
       this.status = "completed";
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 
@@ -186,14 +186,14 @@ class RezQuest extends RezBasicObject {
     if(["mentioned", "accepted"].includes(this.status)) {
       this.setAttribute("old_status", this.status);
       this.status = "botched";
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 
   unbotch() {
     if(this.status === "botched") {
       this.status = this.getAttribute("old_status");
-      this.notifySubscribers("quest_did_advance");
+      this.notifySubscribers("quest_did_update");
     }
   }
 }

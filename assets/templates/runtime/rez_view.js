@@ -89,8 +89,8 @@ class RezBlock {
   #blockType;
   /** @type {Object} */
   #source;
-  /** @type {boolean} */
-  #flipped;
+  /** @type {string|null} */
+  #currentFace;
   /** @type {Object} */
   #params;
 
@@ -107,7 +107,7 @@ class RezBlock {
     this.#parentBlock = null;
     this.#blockType = blockType;
     this.#source = source;
-    this.#flipped = false;
+    this.#currentFace = null;
     this.#params = params;
   }
 
@@ -148,15 +148,20 @@ class RezBlock {
   }
 
   /**
-   * Whether this block is showing its flipped (back) side.
-   * @type {boolean}
+   * The current face being displayed by this block.
+   * When null, delegates to the source element's current_face attribute so
+   * that setting card.current_face is reflected at render time. When explicitly
+   * set (e.g. by the stack layout finishing a card), the override takes precedence
+   * and is independent of the card's own current_face — allowing two blocks
+   * wrapping the same card to show different faces.
+   * @type {string}
    */
-  get flipped() {
-    return this.#flipped;
+  get currentFace() {
+    return this.#currentFace ?? this.source.current_face;
   }
 
-  set flipped(is_flipped) {
-    this.#flipped = is_flipped;
+  set currentFace(face) {
+    this.#currentFace = face;
   }
 
   /**
@@ -406,7 +411,7 @@ class RezBlock {
    * @returns {Function} Template function that accepts bindings and returns HTML
    */
   getViewTemplate() {
-    return this.source.getViewTemplate(this.flipped);
+    return this.source.getViewTemplate(this.currentFace);
   }
 
   /**
@@ -457,10 +462,10 @@ class RezBlock {
     if(this.blockType === "block") {
       return "rez-block";
     } else if(this.blockType === "card") {
-      if(this.flipped) {
-        return "rez-card rez-flipped-card";
-      } else {
+      if(this.currentFace === "content") {
         return "rez-card rez-active-card";
+      } else {
+        return "rez-card rez-flipped-card";
       }
     } else {
       throw new Error(`Attempt to get css_classes for unexpected block type: '${this.blockType}'`);
@@ -492,7 +497,7 @@ class RezBlock {
   copy() {
     const copy = new RezBlock(this.blockType, this.source, this.params);
     copy.parentBlock = this.parentBlock;
-    copy.flipped = this.flipped;
+    copy.currentFace = this.currentFace;
     return copy;
   }
 };
@@ -641,7 +646,7 @@ class RezSingleLayout extends RezLayout {
   copy() {
     const copy = new RezSingleLayout(this.blockType, this.source);
     copy.parentBlock = this.parentBlock;
-    copy.flipped = this.flipped;
+    copy.currentFace = this.currentFace;
     copy.params = this.params;
     if(this.#content) {
       copy.addContent(this.#content.copy());
@@ -745,7 +750,7 @@ class RezStackLayout extends RezLayout {
   copy() {
     const copy = new RezStackLayout(this.blockType, this.source);
     copy.parentBlock = this.parentBlock;
-    copy.flipped = this.flipped;
+    copy.currentFace = this.currentFace;
     copy.params = this.params;
     for (const block of this.#contents) {
       copy.addContent(block.copy());

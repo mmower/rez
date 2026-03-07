@@ -16,9 +16,10 @@
  *
  * ## Template System
  * Cards use templates to render their content:
- * - `$content_template` - The main content template (required)
- * - `$flipped_template` - Optional back-side template for use in stack layouts
- * - `$flipped` - Boolean indicating whether to show the flipped template
+ * - `$content_template` - The primary face template (required)
+ * - `$back_template` - Optional back-face template for use in stack layouts
+ * - `current_face` - The active face name (default `"content"`)
+ * - `faces` - Set of face names declared on this card (default `#{:content, :back}`)
  *
  * ## Scene Relationship
  * Cards have a transient reference to their containing scene, set when the scene
@@ -114,20 +115,17 @@ class RezCard extends RezBasicObject {
   /**
    * @function getViewTemplate
    * @memberof RezCard#
-   * @param {boolean} [flipped] - whether to get the flipped template. Defaults to the card's $flipped attribute.
-   * @returns {function} the template function for rendering this card
-   * @description Returns the appropriate template for rendering this card based on flip state.
-   * If flipped is true, returns the $flipped_template (falling back to $content_template if
-   * no flipped template exists). Otherwise returns the $content_template.
-   * @throws {Error} if the card has no content template defined
+   * @param {string} [face] - the face name to get the template for. Defaults to the card's current_face attribute.
+   * @returns {function} the template function for rendering this card's current face
+   * @description Returns the template for the specified face. The face name maps to a compiled
+   * template attribute: face "content" → `$content_template`, face "back" → `$back_template`, etc.
+   * @throws {Error} if the card has no template for the requested face
    */
-  getViewTemplate(flipped = this.$flipped) {
-    const template = flipped
-      ? (this.$flipped_template || this.$content_template)
-      : this.$content_template;
+  getViewTemplate(face = this.current_face) {
+    const template = this[`$${face}_template`];
 
-    if(!template) {
-      throw new Error(`Card |${this.id}| has no content template!`);
+    if (!template) {
+      throw new Error(`Card |${this.id}| has no template for face "${face}"!`);
     }
 
     return template;

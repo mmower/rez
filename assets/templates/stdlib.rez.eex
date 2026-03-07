@@ -97,13 +97,14 @@
   $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
+  $suppress_wrapper: {kind: :boolean}
+
   tags: {kind: :set, coll_kind: :keyword}
 
+  faces: {kind: :set, coll_kind: :keyword}
+  current_face: {kind: :keyword}
   content: {kind: :source_template, required: true}
-  flipped_content: {kind: :source_template}
-
-  $flipped: {kind: :boolean}
-  $suppress_wrapper: {kind: :boolean}
+  back: {kind: :source_template}
 
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
@@ -119,8 +120,9 @@
   $global: false
   $template: false
   $auto_id_idx: 0
-  $flipped: false
   $suppress_wrapper: false
+  faces: #{:content :back}
+  current_face: :content
   tags: #{}
 }
 

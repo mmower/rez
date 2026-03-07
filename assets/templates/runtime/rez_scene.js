@@ -164,7 +164,7 @@ class RezScene extends RezBasicObject {
       this.runEvent("card_did_finish", {card_id: this.current_card.id});
       this.game.runEvent("card_did_finish", {card_id: this.current_card.id});
       if(this.isStackLayout) {
-        this.current_card.current_block.flipped = true;
+        this.current_card.current_block.currentFace = "back";
       }
       this.last_card_id = this.current_card_id;
       this.current_card_id = "";
@@ -180,12 +180,13 @@ class RezScene extends RezBasicObject {
    * and triggers the appropriate start events.
    */
   startNewCard(card, params = {}) {
+    card.scene = this;
+    this.current_card = card;
+
     this.game.runEvent("card_will_start", {card_id: card.id, params: params});
     this.runEvent("card_will_start", {card_id: card.id, params: params});
     card.runEvent("will_start", params);
 
-    card.scene = this;
-    this.current_card = card;
     this.addContentToViewLayout(params);
     this.game.updateView();
 

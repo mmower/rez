@@ -292,8 +292,8 @@ defmodule Rez.Parser.TemplateParser do
     cached_parser(
       DP.text_delimited_by_prefix_and_nested_parsers(
         ignore(break_macro()),
-        open_brace(),
-        close_brace()
+        open_paren(),
+        close_paren()
       )
       |> transform(fn [code] ->
         {:break, code}
@@ -503,7 +503,7 @@ defmodule Rez.Parser.TemplateParser do
     do: cached_parser(sequence([literal("$if"), iows(), literal("(")]))
 
   def la_open_doblock(), do: cached_parser(literal("$do{"))
-  def la_open_breakblock(), do: cached_parser(literal("$break{"))
+  def la_open_breakblock(), do: cached_parser(literal("$break("))
 
   def la_open_foreach(),
     do: cached_parser(sequence([literal("$foreach"), iows(), literal("(")]))

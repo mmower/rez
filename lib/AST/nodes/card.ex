@@ -40,33 +40,27 @@ defimpl Rez.AST.Node, for: Rez.AST.Card do
 
   def process(card, _), do: card
 
-  def html_processor(card, "content") do
-    fn html ->
-      if NodeHelper.get_attr_value(card, "$suppress_wrapper", false) do
-        html
-      else
-        custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
-        css_classes = Utils.add_css_class("rez-front-face rez-evented", custom_css_class)
-
-        ~s|<div id="card_#{card.id}" data-card="#{card.id}" data-flipped="false" class="#{css_classes}">#{html}</div>|
-      end
-    end
-  end
-
-  def html_processor(card, "flipped_content") do
-    fn html ->
-      if NodeHelper.get_attr_value(card, "$suppress_wrapper", false) do
-        html
-      else
-        custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
-        css_classes = Utils.add_css_class("rez-flipped-face", custom_css_class)
-
-        ~s|<div data-card="#{card.id}" data-flipped="true" class="#{css_classes}">#{html}</div>|
-      end
-    end
-  end
-
   def html_processor(card, attr) do
-    NodeHelper.html_processor(card, attr)
+    faces = NodeHelper.get_attr_value(card, "faces", MapSet.new([:content, :back]))
+    face_names = faces |> Enum.map(fn
+      {:keyword, name} -> name
+      name -> to_string(name)
+    end) |> MapSet.new()
+
+    if MapSet.member?(face_names, attr) do
+      fn html ->
+        if NodeHelper.get_attr_value(card, "$suppress_wrapper", false) do
+          html
+        else
+          custom_css_class = NodeHelper.get_attr_value(card, "css_class", "")
+          css_classes = Utils.add_css_class("rez-face-#{attr} rez-evented", custom_css_class)
+          id_attr = if attr == "content", do: ~s| id="card_#{card.id}"|, else: ""
+
+          ~s|<div#{id_attr} data-card="#{card.id}" data-face="#{attr}" class="#{css_classes}">#{html}</div>|
+        end
+      end
+    else
+      NodeHelper.html_processor(card, attr)
+    end
   end
 end
