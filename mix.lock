@@ -15,7 +15,7 @@
   "hpax": {:hex, :hpax, "1.0.3", "ed67ef51ad4df91e75cc6a1494f851850c0bd98ebc0be6e81b026e765ee535aa", [:mix], [], "hexpm", "8eab6e1cfa8d5918c2ce4ba43588e894af35dbd8e91e6e55c817bca5847df34a"},
   "inflectorex": {:hex, :inflectorex, "0.1.2", "921598c07910c0dabd64bc9516940f77cbff2886fbbbc4e6d13118f890500827", [:mix], [], "hexpm", "28221bcbfe2769dc880c2b60199af81dd5135ad99969dd58ef8091eebc5d2ea9"},
   "jason": {:hex, :jason, "1.4.4", "b9226785a9aa77b6857ca22832cffa5d5011a667207eb2a0ad56adb5db443b8a", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "c5eb0cab91f094599f94d55bc63409236a8ec69a21a67814529e8d5f6cc90b3b"},
-  "logical_file": {:hex, :logical_file, "1.1.1", "85ff8114b23d02dccc598ea34b08e77978c87a3bdc24f1184675d0149022c090", [:mix], [], "hexpm", "c0dee160af9590a239ca4895d6a69304561ce94b0d99ee5de044100e07f31382"},
+  "logical_file": {:hex, :logical_file, "1.1.2", "453c5f91b5736acf3d001e8c631a5c983c64f3cef6be780130bac8e3f3624af4", [:mix], [], "hexpm", "749e88da933562a2f776187448b0bf9ebf523906001e749b3a68740b29783927"},
   "lua": {:hex, :lua, "0.3.0", "891d03c61e1fd90ae1afda944954af154cdbf4eca61ca7d3f92d3ad53145f198", [:mix], [{:luerl, "~> 1.4.1", [hex: :luerl, repo: "hexpm", optional: false]}], "hexpm", "c4be73f5befb1a60f6fad64bd719ff30f0d0fc2fb17306ee657a7caee8752b53"},
   "luerl": {:hex, :luerl, "1.4.1", "0018b5002849a3ba401bc2dc5a67e45de4c404aacfd1b9d3c2fc50fde599ff12", [:rebar3], [], "hexpm", "618ff8967d23d8f8d5800a3784625aeafba7fa42648fd9af4f05fcd1383cb860"},
   "mime": {:hex, :mime, "2.0.7", "b8d739037be7cd402aee1ba0306edfdef982687ee7e9859bee6198c1e7e2f128", [:mix], [], "hexpm", "6171188e399ee16023ffc5b76ce445eb6d9672e2e241d2df6050f3c771e80ccd"},

@@ -161,6 +161,14 @@ defmodule Rez.Compiler.TemplateCompilerTest do
     assert String.contains?(compiled, "player.name")
   end
 
+  test "compile self-closing component with dstring attribute uses evaluateExpression" do
+    compiled = C.compile_chunk({:user_component, "foo", %{"card" => {:dstring, "${actor.look_id}"}}, nil})
+
+    assert String.contains?(compiled, "card: evaluateExpression")
+    assert String.contains?(compiled, "actor.look_id")
+    refute String.contains?(compiled, ~s|card: `${actor.look_id}`|)
+  end
+
   test "compile container component includes sub_template and sub_content" do
     content = {:source_template, ["hello"]}
     compiled = C.compile_chunk({:user_component, "foo", %{}, content})

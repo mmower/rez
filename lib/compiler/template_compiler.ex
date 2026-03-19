@@ -333,6 +333,10 @@ defmodule Rez.Compiler.TemplateCompiler do
       {key, {:attr_expr, expr}} ->
         ~s|#{key}: evaluateExpression("#{String.replace(expr, "\"", "\\\"")}", bindings)|
 
+      {key, {:dstring, s}} ->
+        escaped = String.replace(s, "\"", "\\\"")
+        ~s|#{key}: evaluateExpression("`#{escaped}`", bindings)|
+
       {key, value} ->
         ~s|#{key}: #{ValueEncoder.encode_value(value)}|
     end)
