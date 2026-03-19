@@ -2008,7 +2008,8 @@
     throw new Error(`Attempt to embed card with bad 'card' assign! (${typeof(assigns.card)})`);
   }
   blockSource.$parent = bindings.source;
-  const block = new RezBlock("block", blockSource);
+  const {card, ...params} = assigns;
+  const block = new RezBlock("block", blockSource, params);
   block.parentBlock = bindings.block;
   return block.html();
 }
