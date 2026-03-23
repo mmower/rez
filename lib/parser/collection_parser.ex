@@ -12,6 +12,7 @@ defmodule Rez.Parser.CollectionParser do
   alias Rez.Parser.Collection.BindingList
   alias Rez.Parser.Collection.List
   alias Rez.Parser.Collection.ProbabilityTable
+  alias Rez.Parser.Collection.Table
 
   import Ergo.Combinators, only: [choice: 1, lazy: 1]
 
@@ -22,6 +23,7 @@ defmodule Rez.Parser.CollectionParser do
         Set.merge_set(),
         Set.set(),
         ProbabilityTable.probability_table(),
+        lazy(Table.table()),
         lazy(List.list())
       ])
     )

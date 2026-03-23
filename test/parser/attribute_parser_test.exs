@@ -11,6 +11,7 @@ defmodule Rez.Parser.AttributeParserTest do
 
   import Rez.Parser.Collection.List, only: [list: 0]
   import Rez.Parser.Collection.Set, only: [set: 0]
+  import Rez.Parser.Collection.Table, only: [table: 0]
 
   import Rez.Parser.ValueParsers,
     only: [
@@ -88,63 +89,63 @@ defmodule Rez.Parser.AttributeParserTest do
     assert %{value: [{:number, 1}, {:keyword, "a"}]} = ast
   end
 
-  # test "parses empty table value" do
-  #   input = """
-  #   {}
-  #   """
+  test "parses empty table value" do
+    input = """
+    {}
+    """
 
-  #   assert %Context{status: :ok, ast: {:table, %{}}} = Ergo.parse(table(), input)
-  # end
+    assert %Context{status: :ok, ast: {:table, %{}}} = Ergo.parse(table(), input)
+  end
 
-  # test "parses one level table value" do
-  #   input = """
-  #   {
-  #     alpha: true
-  #     beta: 1
-  #     delta: "delta"
-  #     epsilon: #foo
-  #     gamma: 2.0
-  #   }
-  #   """
+  test "parses one level table value" do
+    input = """
+    {
+      alpha: true
+      beta: 1
+      delta: "delta"
+      epsilon: #foo
+      gamma: 2.0
+    }
+    """
 
-  #   assert %Context{
-  #            status: :ok,
-  #            ast:
-  #              {:table,
-  #               %{
-  #                 "alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true},
-  #                 "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1},
-  #                 "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"},
-  #                 "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"},
-  #                 "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}
-  #               }}
-  #          } = Ergo.parse(table(), input)
-  # end
+    assert %Context{
+             status: :ok,
+             ast:
+               {:table,
+                %{
+                  "alpha" => %Rez.AST.Attribute{name: "alpha", type: :boolean, value: true},
+                  "beta" => %Rez.AST.Attribute{name: "beta", type: :number, value: 1},
+                  "delta" => %Rez.AST.Attribute{name: "delta", type: :string, value: "delta"},
+                  "epsilon" => %Rez.AST.Attribute{name: "epsilon", type: :elem_ref, value: "foo"},
+                  "gamma" => %Rez.AST.Attribute{name: "gamma", type: :number, value: 2.0}
+                }}
+           } = Ergo.parse(table(), input)
+  end
 
-  # test "parses nested table value" do
-  #   input = """
-  #   {
-  #     alpha: {
-  #       beta: true
-  #     }
-  #   }
-  #   """
+  test "parses nested table value" do
+    input = """
+    {
+      alpha: {
+        beta: true
+      }
+    }
+    """
 
-  #   assert %Context{
-  #            status: :ok,
-  #            ast:
-  #              {:table,
-  #               %{
-  #                 "alpha" => %Rez.AST.Attribute{
-  #                   name: "alpha",
-  #                   type: :table,
-  #                   value: %{
-  #                     "beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}
-  #                   }
-  #                 }
-  #               }}
-  #          } = Ergo.parse(table(), input)
-  # end
+    assert %Context{
+             status: :ok,
+             ast:
+               {:table,
+                %{
+                  "alpha" => %Rez.AST.Attribute{
+                    name: "alpha",
+                    type: :table,
+                    value: %{
+                      "beta" => %Rez.AST.Attribute{name: "beta", type: :boolean, value: true}
+                    }
+                  }
+                }}
+           } = Ergo.parse(table(), input)
+  end
 
   test "parse double iows" do
     parser = sequence([literal("a"), iows(), iows(), literal("b")])

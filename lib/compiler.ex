@@ -43,6 +43,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ReadSource,
     Rez.Compiler.Phases.ParseSource,
     Rez.Compiler.Phases.ConsolidateNodes,
+    Rez.Compiler.Phases.ExpandInlineElements,
     Rez.Compiler.Phases.CollectConstants,
     Rez.Compiler.Phases.ValidateMixins,
     Rez.Compiler.Phases.BuildSchema,
