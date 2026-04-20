@@ -555,6 +555,8 @@ Let's write this component:
 
 Container components like `<.event_button>` have their contents available in the `content` argument, attribute values in `assigns`, and all bindings available at the component site in `bindings`. Self contained components have no content specified.
 
+Note: In components you cannot use links like `<a card="card_id">` or `<a interlude="scene_id">` as these are only supported in template attributes. But they are anyway merely syntax sugar for `<a data-event="card" data-target="card_id">` and `<a data-event="interlude" data-target="scene_id">`. In your components remember to use `data-event` and `data-target` attributes.
+
 == Const (Directive)
 
 A `@const` directive declares a named value that is available both within the Rez sources and as a Javascript global.
@@ -1937,6 +1939,10 @@ See also: <<Type Hierarchy>>
 |`capacity`
 |Number
 |the sum of the sizes of `@item`s that fit in the slot, see <<Item>> `size` attribute
+
+|`excludes`
+|Set of Slot Refs
+|set of `@slot` ids that are mutually exclusive with this slot — if any position using an excluded slot type is occupied, this slot cannot accept items (and vice versa)
 |===
 
 === Event Handlers

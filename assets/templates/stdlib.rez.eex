@@ -114,6 +114,8 @@
   on_ready: {kind: :function}
   on_interrupt: {kind: :function}
   on_finish: {kind: :function}
+  on_will_embed: {kind: :function}
+  on_did_embed: {kind: :function}
 }
 
 @defaults card {
@@ -530,6 +532,7 @@
   $js_ctor: {kind: :string}
 
   accepts: {kind: :keyword, required: true, type_exists}
+  excludes: {kind: :set, coll_kind: :elem_ref}
 
   tags: {kind: :set, coll_kind: :keyword}
 
@@ -1996,6 +1999,11 @@
   }
 }
 
+%% This component can be used to embed one card in another. You use it as:
+%% <.embed_card card="<card id>" />
+%% You can see which card did the embedding by inspecting block.parentBlock.source
+%% Additionally the embedded card will receive an `on_will_embed` event call before
+%% embedding.
 @component embed_card (bindings, assigns, _content) => {
   let blockSource;
   if(typeof(assigns.card) === "string") {
@@ -2011,7 +2019,9 @@
   const {card, ...params} = assigns;
   const block = new RezBlock("block", blockSource, params);
   block.parentBlock = bindings.block;
-  return block.html();
+  blockSource.runEvent("will_embed", params);
+  const html = block.html();
+  return html;
 }
 
 @component img (_bindings, assigns, _content) => {
@@ -2019,18 +2029,23 @@
   const path = asset.$dist_path;
 
   // Use assigns width/height if provided, otherwise use asset dimensions
-  const w = assigns.width || asset.width;
-  const h = assigns.height || asset.height;
+  const w = assigns.width ? parseFloat(assigns.width) : asset.width;
+  const h = assigns.height ? parseFloat(assigns.height) : asset.height;
 
-  // Extract name, width and height from assigns so we don't duplicate them
-  const {name, width, height, ...otherAssigns} = assigns;
+  // Apply scale factor (defaults to 1.0)
+  const scale = assigns.scale !== undefined ? parseFloat(assigns.scale) : 1.0;
+  const scaledW = Math.round(w * scale);
+  const scaledH = Math.round(h * scale);
+
+  // Extract name, width, height, and scale from assigns so we don't duplicate them
+  const {name, width, height, scale: _scale, ...otherAssigns} = assigns;
 
   // Build additional attributes string from remaining assigns
   const otherAttributes = Object.entries(otherAssigns)
     .map(([key, value]) => `${key}="${value}"`)
     .join(" ");
 
-  return `<img src="${path}" width="${w}" height="${h}" ${otherAttributes} />`;
+  return `<img src="${path}" width="${scaledW}" height="${scaledH}" ${otherAttributes} />`;
 }
 
 %% ----------------------------------------------------------------------------

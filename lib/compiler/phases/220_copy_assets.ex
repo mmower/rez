@@ -40,23 +40,30 @@ defmodule Rez.Compiler.Phases.CopyAssets do
     if ignore_asset?(asset) do
       compilation
     else
-      # Get the $dist_path which includes relative structure (e.g., "assets/images/foo.png")
       asset_dist_path = NodeHelper.get_attr_value(asset, "$dist_path")
-      # Strip leading "assets/" to get relative portion
-      relative_path = String.replace_prefix(asset_dist_path, "assets/", "")
-      destination_path = Path.join([dist_path, Config.asset_path_name(), relative_path])
       source_path = NodeHelper.get_attr_value(asset, "$source_path")
 
-      if is_nil(source_path) do
-        Compilation.add_error(
-          compilation,
-          "Unable to identify source path for asset: #{asset.id}"
-        )
-      else
-        compilation
-        |> check_asset_exists(source_path)
-        |> ensure_destination_dir(destination_path)
-        |> copy_asset_file(source_path, destination_path)
+      cond do
+        is_nil(asset_dist_path) ->
+          Compilation.add_error(
+            compilation,
+            "Unable to determine dist path for asset: #{asset.id} (file may not exist)"
+          )
+
+        is_nil(source_path) ->
+          Compilation.add_error(
+            compilation,
+            "Unable to identify source path for asset: #{asset.id}"
+          )
+
+        true ->
+          relative_path = String.replace_prefix(asset_dist_path, "assets/", "")
+          destination_path = Path.join([dist_path, Config.asset_path_name(), relative_path])
+
+          compilation
+          |> check_asset_exists(source_path)
+          |> ensure_destination_dir(destination_path)
+          |> copy_asset_file(source_path, destination_path)
       end
     end
   end

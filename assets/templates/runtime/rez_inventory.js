@@ -49,6 +49,7 @@ class RezInventory extends RezBasicObject {
    */
   elementInitializer() {
     this.addInitialContents();
+    this.addInitialEnabledStates();
   }
 
   addInitialContents() {
@@ -57,6 +58,13 @@ class RezInventory extends RezBasicObject {
       for(const contentId of initialContents) {
         this.addItemToSlot(prefix, contentId);
       }
+    }
+  }
+
+  addInitialEnabledStates() {
+    for(const {prefix} of this.getAttributeValue("slots")) {
+      const enabled = this.getAttributeValue(`initial_${prefix}_enabled`, true);
+      this.setAttribute(`${prefix}_enabled`, enabled);
     }
   }
 
@@ -73,6 +81,23 @@ class RezInventory extends RezBasicObject {
       this.setAttribute(attrName, []);
       this.createStaticProperty(attrName);
     }
+  }
+
+  /**
+   * @function getSlotBindings
+   * @memberof RezInventory
+   * @returns {array} array of {prefix, slot} objects for every slot position in this inventory
+   * @example
+   * for(const {prefix, slot} of inv.getSlotBindings()) {
+   *   const available = inv.isSlotAvailable(prefix);
+   *   // render slot UI using prefix (binding name) and slot (RezSlot object with name, accepts, etc.)
+   * }
+   */
+  getSlotBindings() {
+    return this.getAttributeValue("slots").map(({prefix, source}) => ({
+      prefix,
+      slot: $t(source, "slot", true)
+    }));
   }
 
   /**
@@ -119,6 +144,71 @@ class RezInventory extends RezBasicObject {
    */
   slotIsOccupied(slotBinding) {
     return this.countItemsInSlot(slotBinding) > 0;
+  }
+
+  /**
+   * @function isSlotAvailable
+   * @memberof RezInventory
+   * @param {string} slotBinding - the binding prefix identifying the slot position
+   * @returns {boolean} true if the slot is not blocked by any exclusion rule
+   * @description Useful for greying out slot categories in inventory UI.
+   */
+  isSlotAvailable(slotBinding) {
+    return !this.isBlockedByExclusion(slotBinding);
+  }
+
+  /**
+   * @function isSlotEnabled
+   * @memberof RezInventory
+   * @param {string} slotBinding - the binding prefix identifying the slot position
+   * @returns {boolean} true if the slot has been enabled
+   * @description Slots default to enabled. Use `initial_{prefix}_enabled: false` in the
+   * inventory definition to start a slot disabled, then call `enableSlot()` at runtime
+   * when the player unlocks it (e.g. on reaching a required level).
+   * @example <caption>Define a locked slot in Rez</caption>
+   * // @inventory player_equip {
+   * //   slots: [ring1: #s_ring, ring2: #s_ring]
+   * //   initial_ring2_enabled: false
+   * // }
+   * @example <caption>Unlock at runtime</caption>
+   * if(player.level >= 5) {
+   *   $("player_equip").enableSlot("ring2");
+   * }
+   * @example <caption>Check in UI</caption>
+   * for(const {prefix, slot} of inv.getSlotBindings()) {
+   *   const enabled = inv.isSlotEnabled(prefix);
+   *   const available = inv.isSlotAvailable(prefix);
+   *   // enabled=false → locked; available=false → excluded by another equipped item
+   * }
+   */
+  isSlotEnabled(slotBinding) {
+    return this.getAttributeValue(`${slotBinding}_enabled`, true);
+  }
+
+  /**
+   * @function enableSlot
+   * @memberof RezInventory
+   * @param {string} slotBinding - the binding prefix identifying the slot position
+   * @description Enables the slot so items can be added to it.
+   * @example
+   * $("player_equip").enableSlot("ring2");
+   */
+  enableSlot(slotBinding) {
+    this.getSlot(slotBinding); // validates binding exists
+    this.setAttribute(`${slotBinding}_enabled`, true);
+  }
+
+  /**
+   * @function disableSlot
+   * @memberof RezInventory
+   * @param {string} slotBinding - the binding prefix identifying the slot position
+   * @description Disables the slot so no further items can be added to it.
+   * @example
+   * $("player_equip").disableSlot("ring2");
+   */
+  disableSlot(slotBinding) {
+    this.getSlot(slotBinding); // validates binding exists
+    this.setAttribute(`${slotBinding}_enabled`, false);
   }
 
   /**
@@ -241,6 +331,36 @@ class RezInventory extends RezBasicObject {
   }
 
   /**
+   * @function isBlockedByExclusion
+   * @memberof RezInventory
+   * @param {string} slotBinding
+   * @returns {boolean} true if an occupied slot excludes this slot, or this slot excludes an occupied slot
+   */
+  isBlockedByExclusion(slotBinding) {
+    const allSlots = this.getAttributeValue("slots");
+    const targetSlotId = allSlots.find(b => b.prefix === slotBinding).source;
+    const targetExcludes = this.getSlot(slotBinding).getAttributeValue("excludes", new Set());
+
+    for(const {prefix, source} of allSlots) {
+      if(prefix === slotBinding) continue;
+      if(!this.slotIsOccupied(prefix)) continue;
+
+      // Direction 1: target slot excludes this occupied position's slot type
+      if([...targetExcludes].some(ref => ref.$ref === source)) {
+        return true;
+      }
+
+      // Direction 2: this occupied position's slot type excludes the target slot
+      const otherExcludes = $t(source, "slot", true).getAttributeValue("excludes", new Set());
+      if([...otherExcludes].some(ref => ref.$ref === targetSlotId)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * @function slotAcceptsItem
    * @memberof RezInventory
    * @param {string} slotBinding
@@ -265,10 +385,14 @@ class RezInventory extends RezBasicObject {
   canAddItemForSlot(slotBinding, itemId) {
     const decision = new RezDecision("canItemForSlot");
 
-    if(!this.slotAcceptsItem(slotBinding, itemId)) {
+    if(!this.isSlotEnabled(slotBinding)) {
+      decision.no("slot is not enabled").setData("failed_on", "enabled");
+    } else if(!this.slotAcceptsItem(slotBinding, itemId)) {
       decision
         .no("slot doesn't take this kind of item")
         .setData("failed_on", "accepts");
+    } else if(this.isBlockedByExclusion(slotBinding)) {
+      decision.no("slot is blocked by exclusion").setData("failed_on", "excludes");
     } else if(!this.itemFitsInSlot(slotBinding, itemId)) {
       decision.no("does not fit").setData("failed_on", "capacity");
     } else if(this.owner != null) {
