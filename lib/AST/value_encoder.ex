@@ -25,8 +25,7 @@ defmodule Rez.AST.ValueEncoder do
   end
 
   def encode_value({:placeholder, _}) do
-    # "_placeHolderValue"
-    ~s|""|
+    "Rez._placeHolderValue"
   end
 
   def encode_value({:number, n}) do

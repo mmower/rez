@@ -275,7 +275,7 @@ defmodule Rez.Compiler.TemplateCompiler do
       const partial = $(partial_id);
       partial.$parent = bindings.source;
       const block = new RezBlock("block", partial);
-      block.parent_block = bindings.block;
+      block.parentBlock = bindings.block;
       block.params = {#{params}};
       return block.renderBlock();
     |

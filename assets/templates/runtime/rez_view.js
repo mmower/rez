@@ -315,10 +315,14 @@ class RezBlock {
    */
   dereferenceBoundValue(value) {
     if(Array.isArray(value)) {
-      return value.map(ref => $(ref));  // $(ref) now handles both string and {$ref: "id"} formats
+      return value.map(ref => {
+        if(ref === window.Rez._placeHolderValue) return undefined;
+        return $(ref);
+      });
     }
 
-    return $(value);  // $(value) now handles both string and {$ref: "id"} formats
+    if(value === window.Rez._placeHolderValue) return undefined;
+    return $(value);
   }
 
   /**

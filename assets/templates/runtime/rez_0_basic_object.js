@@ -392,6 +392,7 @@ class RezBasicObject {
       Object.defineProperty(this, directAttrName, {
         get: function () {
           const ref_id = this.getAttribute(attrName);
+          if(ref_id === _placeHolderValue) return undefined;
           return $(ref_id);
         },
         set: function (ref) {
@@ -407,6 +408,7 @@ class RezBasicObject {
       Object.defineProperty(this, syntheticAttrName, {
         get: function() {
           const attr = this.getAttribute(attrName);
+          if(attr === _placeHolderValue) return undefined;
           return attr.roll();
         }
       })
@@ -877,6 +879,17 @@ class RezBasicObject {
   }
 
   /**
+   * @function hasValue
+   * @memberof RezBasicObject#
+   * @param {string} attrName name of the attribute
+   * @returns {boolean} true if the attribute exists and has been assigned a non-placeholder value
+   */
+  hasValue(attrName) {
+    const value = this.getAttribute(attrName);
+    return typeof value !== "undefined" && value !== _placeHolderValue;
+  }
+
+  /**
    * @function getAttribute
    * @memberof RezBasicObject#
    * @param {string} name name of the attribute
@@ -1069,6 +1082,7 @@ class RezBasicObject {
   }
 }
 
-const _placeHolderValue = new RezBasicObject("placeholder", "$place_holder_value", {});
+const _placeHolderValue = new RezBasicObject("placeholder", " ", {});
 
 window.Rez.RezBasicObject = RezBasicObject;
+window.Rez._placeHolderValue = _placeHolderValue;

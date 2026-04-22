@@ -2020,7 +2020,13 @@
   const block = new RezBlock("block", blockSource, params);
   block.parentBlock = bindings.block;
   blockSource.runEvent("will_embed", params);
-  const html = block.html();
+  let html;
+  try {
+    html = block.html();
+  } catch(e) {
+    console.error(`embed_card: Error rendering card '${blockSource.id}':`, e);
+    html = `<div class="rez-embed-error">Error rendering embedded card '${blockSource.id}': ${e}</div>`;
+  }
   return html;
 }
 

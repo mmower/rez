@@ -402,6 +402,7 @@ defmodule Rez.Parser.TemplateParser do
       sequence(
         [
           open_container_user_component(),
+          commit(),
           DP.text_delimited_by_nested_parsers(
             open_nested_container_user_component(),
             close_container_user_component(),
