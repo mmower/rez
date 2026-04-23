@@ -522,6 +522,7 @@ defmodule Rez.Parser.ValueParsers do
           string_value(),
           keyword_value(),
           template_value(),
+          js_append_function(),
           js_function(),
           property_value(),
           dice_value(),

@@ -453,4 +453,14 @@ defmodule Rez.Parser.JSFunctionParser do
       ])
     )
   end
+
+  def js_append_function() do
+    cached_parser(
+      sequence(
+        [ignore(char(?+)), js_function()],
+        label: "js-append-function",
+        ast: fn [{:function, f}] -> {:append_function, f} end
+      )
+    )
+  end
 end

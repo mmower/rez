@@ -12,6 +12,7 @@ defmodule Rez.AST.Attribute do
   :string -> double-quoted or Heredoc style
   :boolean -> (true|false or, interchangably, yes|no)
   :function -> arrow-style Javascript function body
+  :append_function -> like :function but chains after any existing handler
   :list -> list of other values seperated by whitespace
   :keyword -> a keyword prefixed by ":"
   :elem_ref -> an id prefixed by "#"
@@ -26,6 +27,7 @@ defmodule Rez.AST.Attribute do
   def create(name, {:string, value}), do: string(name, value)
   def create(name, {:function, {:std, params, body}}), do: std_function(name, {params, body})
   def create(name, {:function, {:arrow, params, body}}), do: arrow_function(name, {params, body})
+  def create(name, {:append_function, f}), do: append_function(name, f)
   def create(name, {:elem_ref, value}), do: elem_ref(name, value)
   def create(name, {:const_ref, value}), do: const_ref(name, value)
   def create(name, {:keyword, value}), do: keyword(name, value)
@@ -54,6 +56,10 @@ defmodule Rez.AST.Attribute do
 
   def arrow_function(name, {params, body}) do
     %Attribute{name: name, type: :function, value: {:arrow, params, body}}
+  end
+
+  def append_function(name, f) do
+    %Attribute{name: name, type: :append_function, value: f}
   end
 
   def elem_ref(name, value) do
