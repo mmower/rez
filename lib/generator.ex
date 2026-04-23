@@ -83,6 +83,19 @@ defmodule Rez.Generator do
     lib_path = Path.join(name, "lib")
     File.mkdir_p!(lib_path)
 
+    cookbook_lib_path = Path.join(lib_path, "cookbook")
+    File.mkdir_p!(cookbook_lib_path)
+
+    cookbook_deps_path = Path.join(name, "cookbook.deps")
+
+    if !File.exists?(cookbook_deps_path) || overwrite do
+      File.write!(cookbook_deps_path, """
+      # Rez Cookbook Dependencies
+      # Run 'rez cookbook list' to see available modules.
+      # Run 'rez cookbook get <category/module>' to add a module.
+      """)
+    end
+
     Debug.v_log("Generate stdlib template")
     stdlib_path = Path.join(lib_path, "stdlib.rez")
 

@@ -175,6 +175,39 @@ defmodule Rez.Parser.JSFunctionParserTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Append functions
+  # ---------------------------------------------------------------------------
+
+  describe "append functions" do
+    test "arrow append function" do
+      input = "+(obj, evt) => {doSomething();}"
+
+      assert %Context{
+               status: :ok,
+               ast: {:append_function, {:arrow, ["obj", "evt"], "{doSomething();}"}}
+             } = Ergo.parse(js_append_function(), input)
+    end
+
+    test "traditional append function" do
+      input = "+function(obj, evt) {doSomething();}"
+
+      assert %Context{
+               status: :ok,
+               ast: {:append_function, {:std, ["obj", "evt"], "{doSomething();}"}}
+             } = Ergo.parse(js_append_function(), input)
+    end
+
+    test "append function with no params" do
+      input = "+() => {doSomething();}"
+
+      assert %Context{
+               status: :ok,
+               ast: {:append_function, {:arrow, [], "{doSomething();}"}}
+             } = Ergo.parse(js_append_function(), input)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Complex combinations
   # ---------------------------------------------------------------------------
 

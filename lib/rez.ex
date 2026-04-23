@@ -89,6 +89,11 @@ defmodule Rez do
             :error -> quit.(1)
           end
 
+        "cookbook" ->
+          game_root = Map.get(options, :wdir) || File.cwd!()
+          Rez.Cookbook.run(args, game_root)
+          quit.(0)
+
         "profile" ->
           quit = quit_fn(:quit)
 

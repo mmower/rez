@@ -22,4 +22,9 @@ defmodule Rez.Compiler.Config do
   def lib_path_name() do
     @lib_path_name
   end
+
+  @cookbook_path_name "cookbook"
+  def cookbook_path_name() do
+    @cookbook_path_name
+  end
 end
