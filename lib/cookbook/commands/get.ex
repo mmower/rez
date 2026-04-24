@@ -26,26 +26,28 @@ defmodule Rez.Cookbook.Commands.Get do
   end
 
   def run(game_root, module_paths) do
-    case Manifest.read(game_root) do
-      {:ok, existing_entries} ->
-        entries =
-          Enum.map(module_paths, fn module_path ->
-            case List.keyfind(existing_entries, module_path, 0) do
-              {^module_path, version_ref} -> {module_path, version_ref}
-              nil -> {module_path, Config.default_ref()}
-            end
-          end)
+    with {:ok, tag} <- Fetcher.fetch_latest_tag(),
+         {:ok, existing_entries} <- Manifest.read(game_root) do
+      default_ref = Config.default_ref()
 
-        result = fetch_and_report(game_root, entries)
-
-        Enum.each(entries, fn {module_path, version_ref} ->
-          Manifest.put_entry(game_root, module_path, version_ref)
+      entries =
+        Enum.map(module_paths, fn module_path ->
+          case List.keyfind(existing_entries, module_path, 0) do
+            {^module_path, ref} when ref != default_ref -> {module_path, ref}
+            _ -> {module_path, tag}
+          end
         end)
 
-        result
+      result = fetch_and_report(game_root, entries)
 
+      Enum.each(entries, fn {module_path, version_ref} ->
+        Manifest.put_entry(game_root, module_path, version_ref)
+      end)
+
+      result
+    else
       {:error, reason} ->
-        IO.puts(reason)
+        IO.puts("Error: #{reason}")
         :error
     end
   end

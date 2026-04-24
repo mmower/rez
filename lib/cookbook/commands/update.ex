@@ -2,51 +2,54 @@ defmodule Rez.Cookbook.Commands.Update do
   alias Rez.Cookbook.{Config, Fetcher, Manifest}
 
   def run(game_root, []) do
-    case Manifest.read(game_root) do
-      {:ok, []} ->
-        IO.puts("cookbook.deps is empty.")
-        :ok
-
-      {:ok, entries} ->
-        fetch_and_report(game_root, entries)
-
-      {:error, reason} ->
-        IO.puts(reason)
-        :error
+    with {:ok, tag} <- fetch_tag(),
+         {:ok, entries} <- Manifest.read(game_root) do
+      case entries do
+        [] -> IO.puts("cookbook.deps is empty."); :ok
+        _ -> fetch_and_report(game_root, entries, tag)
+      end
+    else
+      {:error, reason} -> IO.puts("Error: #{reason}"); :error
     end
   end
 
   def run(game_root, module_paths) do
-    case Manifest.read(game_root) do
-      {:ok, entries} ->
-        targets =
-          Enum.map(module_paths, fn module_path ->
-            case List.keyfind(entries, module_path, 0) do
-              {^module_path, version_ref} -> {module_path, version_ref}
-              nil -> {module_path, Config.default_ref()}
-            end
-          end)
+    with {:ok, tag} <- fetch_tag(),
+         {:ok, entries} <- Manifest.read(game_root) do
+      targets =
+        Enum.map(module_paths, fn module_path ->
+          case List.keyfind(entries, module_path, 0) do
+            {^module_path, version_ref} -> {module_path, version_ref}
+            nil -> {module_path, Config.default_ref()}
+          end
+        end)
 
-        fetch_and_report(game_root, targets)
-
-      {:error, reason} ->
-        IO.puts(reason)
-        :error
+      fetch_and_report(game_root, targets, tag)
+    else
+      {:error, reason} -> IO.puts("Error: #{reason}"); :error
     end
   end
 
-  defp fetch_and_report(game_root, entries) do
+  defp fetch_tag do
+    case Fetcher.fetch_latest_tag() do
+      {:ok, tag} -> {:ok, tag}
+      {:error, reason} -> {:error, "Could not determine latest cookbook version: #{reason}"}
+    end
+  end
+
+  defp fetch_and_report(game_root, entries, tag) do
     results =
-      Enum.map(entries, fn {module_path, version_ref} ->
-        case Fetcher.fetch_module(module_path, version_ref) do
+      Enum.map(entries, fn {module_path, _old_ref} ->
+        case Fetcher.fetch_module(module_path, tag) do
           {:ok, content} ->
             dest = Config.module_file_path(game_root, module_path)
             File.mkdir_p!(Path.dirname(dest))
             File.write!(dest, content)
-            {:ok, module_path, version_ref}
+            Manifest.put_entry(game_root, module_path, tag)
+            {:ok, module_path, tag}
 
           {:error, reason} ->
-            {:error, module_path, version_ref, reason}
+            {:error, module_path, tag, reason}
         end
       end)
 

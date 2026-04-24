@@ -23,6 +23,14 @@ defmodule Rez.Cookbook.Config do
     "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/main/index.json"
   end
 
+  def releases_latest_url do
+    "https://api.github.com/repos/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/releases/latest"
+  end
+
+  def tags_url do
+    "https://api.github.com/repos/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/git/refs/tags"
+  end
+
   def manifest_path(game_root) do
     Path.join(game_root, @cookbook_manifest_file)
   end

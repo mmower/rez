@@ -789,7 +789,7 @@ class RezEventProcessor {
     } else if(eventName === "resume") {
       return this.handleResumeEvent(params);
     } else {
-      return this.handleCustomEvent(eventName, params);
+      return this.handleCustomEvent(eventName, params, target);
     }
   }
 
@@ -818,8 +818,14 @@ class RezEventProcessor {
    * @description Finds an event handler by checking card, scene, and game in that order.
    * Returns the first receiver that has a handler for the event.
    */
-  getEventHandler(eventName) {
+  getEventHandler(eventName, targetId = null) {
     const receivers = [this.card, this.scene, this.game];
+    if(targetId) {
+      const targetElem = $(targetId);
+      if(targetElem) {
+        receivers.unshift(targetElem);
+      }
+    }
     const handlers = receivers.map((receiver) => [receiver, this.getReceiverEventHandler(receiver, eventName)]);
     return handlers.find(([_receiver, handler]) => handler) ?? [null, null];
   }
@@ -832,8 +838,8 @@ class RezEventProcessor {
    * @returns {RezEvent} the result of the event handler or an error event
    * @description Handles custom events by finding and calling the appropriate event handler
    */
-  handleCustomEvent(eventName, params) {
-    const [receiver, handler] = this.getEventHandler(eventName);
+  handleCustomEvent(eventName, params, target = null) {
+    const [receiver, handler] = this.getEventHandler(eventName, target);
     if(!handler) {
       return RezEvent.error(`Unable to find an event handler for |${eventName}|`);
     } else {

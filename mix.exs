@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.9.6-rc11"
+  @version "1.9.6-rc12"
 
   def project do
     [
@@ -10,13 +10,12 @@ defmodule Rez.MixProject do
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      releases: releases()
+      escript: [main_module: Rez]
     ]
   end
 
   def application do
     [
-      mod: {Rez, []},
       extra_applications: [:logger, :eex, :crypto, :iex, :tools]
     ]
   end
