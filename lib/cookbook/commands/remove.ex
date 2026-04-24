@@ -1,5 +1,5 @@
 defmodule Rez.Cookbook.Commands.Remove do
-  alias Rez.Cookbook.{Config, Manifest}
+  alias Rez.Cookbook.{Config, CookbookFile, Manifest}
 
   def run(_game_root, []) do
     IO.puts("Usage: rez cookbook remove <category/module> [...]")
@@ -20,6 +20,7 @@ defmodule Rez.Cookbook.Commands.Remove do
       Manifest.remove_entry(game_root, module_path)
     end)
 
+    CookbookFile.regenerate(game_root)
     :ok
   end
 end

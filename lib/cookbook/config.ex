@@ -39,6 +39,10 @@ defmodule Rez.Cookbook.Config do
     Path.join([game_root, "lib", @cookbook_dir_name])
   end
 
+  def cookbook_rez_path(game_root) do
+    Path.join([game_root, "lib", "#{@cookbook_dir_name}.rez"])
+  end
+
   def module_file_path(game_root, module_path) do
     Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.rez"])
   end

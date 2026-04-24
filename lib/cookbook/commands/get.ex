@@ -1,5 +1,5 @@
 defmodule Rez.Cookbook.Commands.Get do
-  alias Rez.Cookbook.{Config, Fetcher, Manifest}
+  alias Rez.Cookbook.{Config, CookbookFile, Fetcher, Manifest}
 
   def run(game_root, []) do
     case Manifest.read(game_root) do
@@ -44,6 +44,7 @@ defmodule Rez.Cookbook.Commands.Get do
         Manifest.put_entry(game_root, module_path, version_ref)
       end)
 
+      CookbookFile.regenerate(game_root)
       result
     else
       {:error, reason} ->

@@ -1,5 +1,5 @@
 defmodule Rez.Cookbook.Commands.Update do
-  alias Rez.Cookbook.{Config, Fetcher, Manifest}
+  alias Rez.Cookbook.{Config, CookbookFile, Fetcher, Manifest}
 
   def run(game_root, []) do
     with {:ok, tag} <- fetch_tag(),
@@ -59,6 +59,7 @@ defmodule Rez.Cookbook.Commands.Update do
     unless Enum.empty?(updated), do: IO.puts("Updated:  #{Enum.join(updated, ", ")}")
     unless Enum.empty?(failed), do: IO.puts("Failed:   #{Enum.join(failed, ", ")}")
 
+    CookbookFile.regenerate(game_root)
     if Enum.empty?(failed), do: :ok, else: :error
   end
 end
