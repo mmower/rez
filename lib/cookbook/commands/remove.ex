@@ -8,10 +8,12 @@ defmodule Rez.Cookbook.Commands.Remove do
 
   def run(game_root, module_paths) do
     Enum.each(module_paths, fn module_path ->
-      file = Config.module_file_path(game_root, module_path)
+      rez_file = Config.module_file_path(game_root, module_path)
+      lua_file = Config.module_lua_file_path(game_root, module_path)
 
-      if File.exists?(file) do
-        File.rm!(file)
+      if File.exists?(rez_file) or File.exists?(lua_file) do
+        if File.exists?(rez_file), do: File.rm!(rez_file)
+        if File.exists?(lua_file), do: File.rm!(lua_file)
         IO.puts("Removed:  #{module_path}")
       else
         IO.puts("Not found: #{module_path} (file not present)")

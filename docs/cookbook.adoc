@@ -2,553 +2,87 @@
 title = "Rez Cookbook"
 author = "Matt Mower"
 draft = false
-date = 2024-03-16
+date = 2026-04-24
 +++
 = Cookbook
 
-The following is a guide to some of Rez's features and common things you may want to be able to do.
+The Rez Cookbook is an optional library of functionality that you can include into your
+games. It is hosted via a Github https://github.com/mmower/rez-cookbook[repository].
 
-== Including custom Javascript
+== Getting Started
 
-To include a custom Javascript file into your game add the .js file to your assets folder and a corresponding `@asset` element to your game. Use the `$js_runtime` attribute to tell Rez that it should be included in the runtime.js file.
-
-....
-@asset custom_js {
-  file: "custom.js"
-
-  $js_runtime: true
-}
-....
-
-To have a Javascript file included as a separate file, included before runtime.js, use `$pre_runtime: true`.
-
-To apply the `defer` attribute to the corresponding `<script>` tag use `$js_defer: true`.
-
-== Using `@object`
-
-Rez defines a number of generally useful elements like `@actor`, `@item`, `@inventory`, `@scene` and so forth. These elements have built-in behaviours designed to be useful but flexible.
-
-For example `@item` and `@inventory` can be used to define much more than physical objects. You could have an inventory representing things different actors know about and use an item for individual topics/thoughts. Or items could represent spells in an inventory spell-book. The `@item`/`@inventory` elements are flexible enough to cover a range of container/containment situations.
-
-However, there are going to be a range of concepts in a game for which Rez cannot plan or which may require very customised behaviour. A good example is that of "classes" as in RPG classes. There are so many possible ways to have a class work in a game that Rez cannot really offer a useful starting point. For this type of situation there is `@object`.
-
-The `@object` element allows you to create a fully-custom object that has no built-in behaviours (beyond what you get from the `__basic_object__` runtime prototype that all in-game objects share).
-
-Let's look at an example:
+To start run the command:
 
 ....
-@object soldier {
-  specialisation: :combat
-  perks: #{#two_weapon_style #pounce #shield_bash #second_wind}
-}
-
-@object two_weapon_style {
-  level: 3
-  label: "Fight with two weapons almost as well as one"
-}
-
-@object pounce {
-  level: 5
-  label: "Close distance to an enemy and engage them quicker"
-}
-
-@object shield_bash {
-  level: 7
-  label: "Shields can be a weapon in the right hands"
-}
-
-@object second_wind {
-  level: 9
-  label: "When the chips are down, you come out fighting"
-}
-
-@object wizard {
-  specialisation: :magic
-  perks: #{#fast_cast #mana_surge #concentration #max_damage}
-}
-
-@object fast_cast {
-  level: 3
-  label: "Faster than a speeding magic missile"
-}
-
-@object mana_surge {
-  level: 5
-  label: "You can always reach down for just one more spell"
-}
-
-@object concentration {
-  level: 7
-  label: "Nothing can distract you"
-}
-
-@object max_damage {
-  level: 9
-  label: "Your fireballs are the crispiest"
-}
-
-@actor thaugrim_the_wise {
-  %% Code dealing with this actor can lookup available perks from
-  %% the Wizards class object
-  class: #wizard
-}
+rez cookbook init
 ....
 
-How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviours that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
-
-== Avoiding Duplication with Aliases
-
-A common scenario is a number of scenes wanting to share the same layout. While it is possible to supply the same `layout:` attribute and duplicate the content Rez does offer a better way: aliases.
-
-An alias has a name, element type, and one or more objects to base instances of the alias upon. These objects will define the default attributes.
+Which will initialize the local end of the cookbook. Then to see what cookbook libs are
+available:
 
 ....
-@item magic_item_template {
-  magical: true
-}
-
-@elem magic_item = item<#magic_item_template>
-
-@magic_item magic_ring {
-  description: "A plain golden band. Probably nobody is interested in this ring at all."
-}
+rez cookbook list
 ....
 
-Another example might be wanting to specify a common layout for a group of scenes:
+You will see something like:
 
 ....
-@scene standard_scene {
-  layout_format: :markdown
-  layout: ```${content}```
-}
+Fetching module list from mmower/rez-cookbook...
 
-@elem standard_scene = scene<#standard_scene>
+Available modules (mmower/rez-cookbook @ v0.1.2):
 
-@standard_scene scene_01 {
-  %% scene specific content here
-}
+  mmower/actions  Flexible, inverse-parser, actions generator to reduce/remove hard-coded links.  (by Matt Mower, since 0.1.0)
 ....
 
-== Multiple elements sharing a unique random value
+== Using a Library
 
-In some circumstances you want multiple elements to have an attribute that shares the same random value. This is easily achieved using an extra object and attribute refs. Here is an example:
-
-....
-@object holds_random_value {
-  %% this will be assigned a random value when the game is initialized
-  rand: &{Math.rand_int(1, 10)}
-}
-
-@actor player {
-  %% this will refer to the value from the object
-  rand: &hold_random_value.rand
-}
-
-@actor npc {
-  %% as will this
-  rand: &hold_random_value.rand
-}
-....
-
-Note that you can change the value, but only in the object that holds it.
-
-== Using Decisions
-
-`RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
-
-You can use a decision like this:
+To add a library to your game:
 
 ....
-const decision = new RezDecision("Include Adult themes", {info: "Toggle this on to include themes of sex & violence that might not be suitable for all. Leave it off for a family friendly experience."});
-decision.default_no();
-some_function_making_the_decision(decision);
-if(decision.result) {
-  // do something
-} else {
-  // do something else
-}
+rez cookbook add mmower/action
 ....
 
-In this case the `some_function_making_the_decision(decision)` is expected to call either `decision.yes()` or `decision.no("reason")` before returning. In most cases you will be passing a decision to a script. In this case if neither function gets called the decision will default to 'no' (`false`). If we had used `decision.default_yes()` it would work the other way around.
+This will download the library file into `lib/cookbook` and create (or update) `lib/cookbook.rez` which will load all of your installed cookbook libraries.
 
-You can pass data into a decision either through the second argument to `new RezDecision()` or using the `setData(key, value)` API. After receiving a decision you can use the `data()` API to retrieve data. This way the callee can pass other information back with the decision.
-
-== Linking to things
-
-The current scene will render its card which can include links to render other cards and other scenes. This is done by specifying either a card or scene id in a link.
-
-If the id is of a card then the new card will be rendered as part of the layout of the existing scene. Depending on the scenes layout mode it will either replace the content of the previous card, or be appended to it.
-
-If the id is of a scene then a transition to the new scene will be started.
-
-== Static Links
-
-A static link is always embedded and points directly at a card or scene. It is equivalent to a Twine passage link and has the same syntax as follows:
+Now in your game add:
 
 ....
-[[Main Street]]
+%(../lib/cookbook.rez)
 ....
 
-This will embed a link to load a card with the id `main_street` and is syntactic sugar for writing:
+And the library you have added will be automatically included into your game.
 
+== Updating Libraries
+
+The command:
 ....
-[[Main Street|main_street]]
-....
-
-If no id is included the link text is converted into lower case and spacres are replaced with underscores, so "Main Street" becomes "main_street".
-
-== Event Links
-
-Somes you want to do more than simply link to another card and event links are how you can do that. You write an event link as:
-
-....
-[[Title|*event]]
+rez cookbook status
 ....
 
-e.g.
+Will tell you when the cookbook has been updated either with a new library or an updated
+version of an existing library.
 
+When a new version of the library is available use:
 ....
-[[Roll the dice|*roll]]
-....
-
-This creates a link that will attempt to find an `on_roll` event handler attribute in the current card. If one is found it will be called and can decide how to respond to the event. Event handlers are expected to return an object.
-
-....
-on_roll: (card, evt) => {
-  ...
-  return {
-    card: "after_roll"
-  };
-}
+rez cookbook update
 ....
 
-In this case the handler, after doing its work, plays the card `#after_roll`.
+To download and install it into `lib/cookbook`.
 
-== Dynamic Links
-
-Sometimes you want more control over whether links are displayed at all, can be clicked, and what text they present. For example an option may be disabled with a message that informs the player why they can't take that action at present. Or hidden because it doesn't make sense yet.
-
-Rez supports dynamic links that give you this level of control. For example if you write:
-
+To see what commands are available:
 ....
-[[*main_street]]
+rez cookbook
 ....
 
-Rez will look for a `main_street` script attribute of the card and will call that script to determine whether a link should be displayed, what the text of the link should be, and whether the player can click it or not, and even what happens when they do.
+== Submitting Libraries
 
-The options are:
+To submit a library for the Cookbook it needs to be added to the Github repo.
 
-* **allow** which will display the link and point to the id of a card or scene to load if the player clicks it.
-* **deny** which will present the link text but disable the link so that it cannot be selected.
-* **hide** which will return empty text so that no link is presented at all
+1. clone the https://github.com/mmower/rez-cookbook[cookbook repository]
+2. in your working copy create a folder for your libraries (mine is `mmower`)
+3. add the library (e.g. `actions.rez`) to your folder
+4. update `index.json` with your new module details
+5. commit a change with your new library included.
+6. submit a PR with your change
 
-Example
-
-....
-@card side_street {
-  main_street: (choice) => {
-    if choice.game.is("dark") {
-      choice.deny("You can't see a thing, maybe use your flashlight or a match.");
-    } else {
-      choice.allow("Head to Main st.", "main_street");
-    }
-  }
-}
-....
-
-You can also take over what happens when a link is clicked:
-
-....
-@card side_street {
-  on_main_street: (game, evt) => {
-    // do what you want here
-  }
-}
-....
-
-== Forms and Inputs
-
-Rez has built in support for forms and inputs that is enabled by adding `rez-live` to the `<form>` or `<input>` tag. For example to process a form when it is submitted:
-
-  <form name="foo" rez-live>
-    …
-  </form>
-
-When this form is submitted a handler `on_foo` will be invoked on the `Card` that contains the form.
-
-Alternatively if you just want an input that is "live" you can use:
-
-<input id="…" rez-live … />
-
-Whenever the input generates an event (e.g. the user changes the value of the field) a corresponding handler will be called on the enclosing Card:
-
-....
-on_input: (game, evt) => {
-  // do something with evt.input
-}
-....
-
-The potential uses for this are endless but typically you will either be updating a stored value or triggering a new scene/interlude.
-
-== Switching Scenes
-
-There are two ways to change the scene:
-
-A scene switch is where we move from one scene to another as part of the narrative flow of the game.
-
-A scene interlude is where we suspend the current scene and temporarily switch to another scene before resuming the original scene. Scenes are held in a stack so we can also interlude from an interlude but always with the ability to backtrack to the original scene.
-
-Rez provides three filters to create these links, `scene_switch`, `scene_interlude`, and `scene_resume`:
-
-....
-${card | scene_shift: <scene-id>, 'Title'}
-${card | scene_interlude: <scene-id>, 'Title'}
-${card | scene_resume: 'Title'}
-....
-
-with the respective shorthand syntaxes:
-
-....
-[[Title|>scene_id]] # Switches to a new scene
-[[Title|!scene_id]] # Creates an interlude to the new scene
-....
-
-Alternatively you can use Scene API to resume after an iterlude.
-
-== Asset Management
-
-Rez has built in support for assets including images, sounds, and movie files.
-You specify the assets you want to use in your source file.
-
-....
-@asset frobzz_1 {
-  tags: #[:background]
-  file_name: "scary_dungeon.jpg"
-end
-....
-
-Rez will automatically copy asset files into the games distribution folder.
-
-Rez provides a filter to generate references to the asset file in the distribution folder:
-
-....
-${asset_id | asset_path}
-${asset_id | asset_tag}
-....
-
-to generate appropriate markup to embed the asset into the game. Rez assets auto-detect the MIME type of the asset file and generate the appropriate HTML tag for the asset.
-
-=== Using your own prototypes
-
-The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `$js_ctor` attribute on any object.
-
-....
-@actor kaspar_gutman {
-  $js_ctor: "Gutman"
-  name: "Kaspar Gutman"
-  villain: true
-end
-....
-
-Now, instead of using the `RezActor()` constructor function the initialization code will look for a `Gutman()` constructor function. Constructor functions are passed the id (in this case `kaspar_gutman`) and a map of attributes.
-
-It is advisable to base your object on the object you are replacing.
-
-=== Procedural Generation
-
-Procedural generation is about content that is created at run-time and Rez has good support for this through it's `copyAssigningId()` and `copyWithAutoId()` methods in `basic_object`
-
-Rez supports the idea that you will create 'template' elements that are designed to be copied and modified to create something new. You do this by applying the `$template` attribute to it and then calling the appropriate copy method.
-
-Although most objects support copying, by specifying `$template: true` you will suppress some of Rez's automatic initialization. This means that the copy will get its own initialization.
-
-....
-@actor basic_npc {
-  $template: true
-end
-....
-
-[[implementing-conversations]]
-== Implementing a Conversation System
-
-A common requirement in IF games is conversation with NPCs. Here is a sample implementation of a conversation system.
-
-We make use of `@inventory` and `@item` to implement what the NPC knows about and `@card` for displaying conversation elements. In this context the inventory is kind of the NPCs memory and the items are individual things they know and/or can talk about.
-
-Let's set things up:
-....
-
-@actor sam_spade {
-  topic_inventory_id: #inv_sam_spade_topics
-
-  topics: function() {
-    return this.topics_inventory.getItemsForSlot("slot_topics");
-  }
-}
-
-@slot slot_topics {
-  accepts: :topic
-}
-
-@inventory inv_sam_spade_topics {
-  slots: #{#slot_topics}
-}
-
-@elem topic = item
-
-@defaults topic {
-  type: :topic
-  read: false
-
-  sname: "topic name"
-  card_id: _
-}
-....
-
-We've created an inventory with a slot that holds items of type `topic `. And we've created an element alias `topic` that is an item with a type compatible with the slot. Let's create a few things Sam can talk about:
-
-....
-
-@inventory inv_sam_spade_topics {
-  slots: #{#slot_topics}
-  initial_contents: {topics_slot: [#t_who_is_miles_archer]}
-}
-
-@topic t_who_is_miles_archer {
-  title: "Who is Miles Archer?"
-  card_id: #c_who_is_miles_archer
-  leads_to: [#t_who_killed_miles]
-}
-
-@card c_who_is_miles_archer {
-  bindings: [
-    player: #player
-    sam: #sam_spade
-  ]
-  content: ```
-  <.dialog speaker={player}>Who was Miles Archer?</.dialog>
-  <.dialog speaker={sam}>Miles was my partner, not my friend. But he was my partner, and when someone kill's your partner, you're supposed to do something about it. That's the way it works.</.dialog>
-  ```
-}
-
-@topic t_who_killed_miles {
-  title: "Who killed Miles?"
-  card_id: #c_who_killed_miles
-}
-
-@card c_who_killed_miles {
-  bindings: [
-    player: #player
-    sam: #sam_spade
-  ]
-  content: ```
-  <.dialog speaker={player}>Who killed Miles?</.dialog>
-  <.dialog speaker={sam}>That's what I'm going to find out. Miles got himself shot in the back in Burritt Alley last night. Could've been the man we were tailing - Floyd Thursby - but somebody put a bullet in him too, about twenty minutes later.</.dialog>
-  ```
-}
-....
-
-We've added two topics you can talk to Sam Spade about. But only one is available at the beginning of the game (the initial contents of the topics slot). Each topic has an associated card that is used to present related dialog to the player. Now how would we make use of this?
-
-....
-@component topics (bindings, assigns, content) => {
-  const {actor} = assigns;
-
-  const topicLinks = actor.topics().map(
-    (topic) => {
-      const textClass = topic.read ? "has-text-grey" : "has-text-link";
-      return `<li><a data-event="selected_topic" data-topic-id="${topic.id} class="${textClass}">${topic.title}</a></li>`;
-    }
-  );
-
-  return `<ul>${topicLinks}</ul>`;
-}
-
-@scene sc_conversation {
-  actor_id: _
-
-  layout_mode: :stack
-  layout: ```
-  <div class="columns is-centered">
-    <div class="rez-front-face column is-one-fifth">
-      <.topics actor={scene.actor} />
-    </div>
-    <div class="column">${content}</div>
-  </div>
-  ```
-
-  initial_card_id: #c_start_conversation
-
-  on_start: (scene, params) => {
-    const {actorId} = params;
-    scene.actor_id = actorId;
-  }
-
-  on_selected_topic: (scene, params) => {
-    const {topicId} = params;
-    const topic = $t(topicId, "item", true);
-    topic.read = true;
-    if(topic.leads_to) {
-      topic.leads_to.forEach((relatedTopicId) => {
-        scene.actor.addTopic(relatedTopicId)
-      });
-    }
-    return RezEvent.playCard(topic.card_id);
-  }
-}
-
-@card c_start_conversation {
-  content: ```
-  <p class="block">What do you want to talk to ${scene.actor.name} about?</p>
-  ```
-}
-....
-
-The scene has a two-column layout. Topics are presented in the left-hand column. The `.topics` component is used to keep the topic processing code tucked away. The player can select a topic by clicking its link and we track whether the topic has already been viewed (potentially we could reset this if the actor has more to say on that topic later on).
-
-Instead of using normal `data-event="card"` we use a custom `data-event="selected_topic"` event that we handle in the conversation scene. This does two things:
-
-* we can record that the topic has been used
-* we can add new topics to the actors knowledge
-
-When the player accesses a topic with the `lead_to:` attribute, it adds those related topics to those the actor presents to the player.
-
-Otherwise we use the standard card loading mechanism, and the scene uses the stack layout so that each conversation card is presented one after another.
-
-== Common Problems
-
-=== Accidentally assigning to window.location ([object%20Object] in the URL bar)
-
-When writing event handlers you might do as I did:
-
-....
-@card c_search {
-  on_start: (card) => {
-    location = $player.location
-    // Nothing matters from this point...
-  }
-}
-....
-
-It looks pretty inoccuous but this is accidentally assigning the location object to the Javascript `window.location` property rather than a locally scoped `location` variable.
-
-Rather unexpected this will change the browser URL by appending `[object Object]` to it (the string representation of most objects) so you will end up with something like:
-
-....
-file:///Users/matt/Projects/Gaming/NarrativeDrift/cloak_of_darkness/dist/[object%20Object]
-....
-
-And now your game is broken. That was a bit of a headscratcher the first time it happened to me.
-
-This is a weakness of the Javascript model that we might be able to work around in future (e.g. using `strict` mode).
-
-The fix is simple, make sure you scope your variables in event handlers.
-
-....
-@card c_search {
-  on_start: (card) => {
-    const location = $player.location
-    ...
-  }
-}
-....
+Follow a similar process for updating an existing library but do not change `index.json`.

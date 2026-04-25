@@ -116,7 +116,7 @@ defmodule Rez.AST.Pragma do
   end
 
   def build(name, timing, values, position) when timing in @valid_timings do
-    with {:ok, lua_script} <- File.read("pragmas/#{name}.lua") do
+    with {:ok, lua_script} <- load_lua_script(name) do
       {:ok,
        %Pragma{
          position: position,
@@ -130,6 +130,14 @@ defmodule Rez.AST.Pragma do
 
   def build(_name, timing, _values, _position) do
     {:error, {:invalid_timing, timing}}
+  end
+
+  defp load_lua_script(name) do
+    if String.contains?(name, "/") do
+      File.read(Path.join(["lib", "cookbook", "#{name}.lua"]))
+    else
+      File.read("pragmas/#{name}.lua")
+    end
   end
 
   def run(

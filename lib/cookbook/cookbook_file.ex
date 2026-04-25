@@ -21,7 +21,8 @@ defmodule Rez.Cookbook.CookbookFile do
   defp write(game_root, entries) do
     includes =
       entries
-      |> Enum.map(fn {module_path, _version_ref} ->
+      |> Enum.filter(fn {_path, _ref, type} -> type in ["lib", "both"] end)
+      |> Enum.map(fn {module_path, _ref, _type} ->
         "%(../lib/#{Config.dir_name()}/#{module_path}.rez)"
       end)
       |> Enum.join("\n")

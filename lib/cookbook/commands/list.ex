@@ -36,12 +36,13 @@ defmodule Rez.Cookbook.Commands.List do
 
     Enum.each(modules, fn module ->
       name = module["name"] || "?"
+      type = module["type"] || "lib"
       desc = module["description"] || ""
       author = module["author"]
       since = module["since"]
       meta = [if(author, do: "by #{author}"), if(since, do: "since #{since}")] |> Enum.reject(&is_nil/1) |> Enum.join(", ")
       meta_str = if meta != "", do: "  (#{meta})", else: ""
-      IO.puts("  #{String.pad_trailing(name, name_width)}  #{desc}#{meta_str}")
+      IO.puts("  #{String.pad_trailing(name, name_width)}  [#{type}]  #{desc}#{meta_str}")
     end)
 
     IO.puts("")

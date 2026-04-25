@@ -6,6 +6,24 @@ defmodule Rez.Parser.IdentifierParser do
   import Ergo.Combinators
   import Ergo.Terminals
 
+  def pragma_path_name(label \\ "pragma_path_name") do
+    Rez.Parser.ParserCache.get_parser("pragma_path_name_#{label}", fn ->
+      sequence(
+        [
+          js_identifier("path_segment"),
+          many(
+            sequence(
+              [ignore(char(?/)), js_identifier("path_segment")],
+              ast: fn [seg] -> seg end
+            )
+          )
+        ],
+        label: label,
+        ast: fn [first, rest] -> Enum.join([first | rest], "/") end
+      )
+    end)
+  end
+
   def js_identifier(label \\ "js_identifier") do
     Rez.Parser.ParserCache.get_parser("js_identifier_#{label}", fn ->
       sequence(

@@ -8,9 +8,12 @@ defmodule Rez.Cookbook.Commands.Get do
         :ok
 
       {:ok, entries} ->
-        missing = Enum.reject(entries, fn {module_path, _} ->
-          File.exists?(Config.module_file_path(game_root, module_path))
-        end)
+        missing =
+          Enum.reject(entries, fn {module_path, _ref, type} ->
+            rez_present = type in ["pragma"] or File.exists?(Config.module_file_path(game_root, module_path))
+            lua_present = type in ["lib"] or File.exists?(Config.module_lua_file_path(game_root, module_path))
+            rez_present and lua_present
+          end)
 
         if Enum.empty?(missing) do
           IO.puts("All cookbook modules already present.")
@@ -27,21 +30,27 @@ defmodule Rez.Cookbook.Commands.Get do
 
   def run(game_root, module_paths) do
     with {:ok, tag} <- Fetcher.fetch_latest_tag(),
-         {:ok, existing_entries} <- Manifest.read(game_root) do
+         {:ok, existing_entries} <- Manifest.read(game_root),
+         {:ok, index_modules} <- fetch_index_type_map() do
       default_ref = Config.default_ref()
 
       entries =
         Enum.map(module_paths, fn module_path ->
-          case List.keyfind(existing_entries, module_path, 0) do
-            {^module_path, ref} when ref != default_ref -> {module_path, ref}
-            _ -> {module_path, tag}
-          end
+          type = Map.get(index_modules, module_path, "lib")
+
+          ref =
+            case List.keyfind(existing_entries, module_path, 0) do
+              {^module_path, existing_ref, _type} when existing_ref != default_ref -> existing_ref
+              _ -> tag
+            end
+
+          {module_path, ref, type}
         end)
 
       result = fetch_and_report(game_root, entries)
 
-      Enum.each(entries, fn {module_path, version_ref} ->
-        Manifest.put_entry(game_root, module_path, version_ref)
+      Enum.each(entries, fn {module_path, version_ref, type} ->
+        Manifest.put_entry(game_root, module_path, version_ref, type)
       end)
 
       CookbookFile.regenerate(game_root)
@@ -53,18 +62,70 @@ defmodule Rez.Cookbook.Commands.Get do
     end
   end
 
+  defp fetch_index_type_map do
+    case Fetcher.fetch_index() do
+      {:ok, body} when is_map(body) ->
+        map =
+          body
+          |> Map.get("modules", [])
+          |> Enum.reduce(%{}, fn module, acc ->
+            name = module["name"]
+            type = module["type"] || "lib"
+            if name, do: Map.put(acc, name, type), else: acc
+          end)
+
+        {:ok, map}
+
+      {:ok, _} ->
+        {:ok, %{}}
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
   defp fetch_and_report(game_root, entries) do
     results =
-      Enum.map(entries, fn {module_path, version_ref} ->
-        case Fetcher.fetch_module(module_path, version_ref) do
-          {:ok, content} ->
-            dest = Config.module_file_path(game_root, module_path)
-            File.mkdir_p!(Path.dirname(dest))
-            File.write!(dest, content)
-            {:ok, module_path, version_ref}
+      Enum.map(entries, fn {module_path, version_ref, type} ->
+        rez_result =
+          if type in ["lib", "both"] do
+            case Fetcher.fetch_module(module_path, version_ref) do
+              {:ok, content} ->
+                dest = Config.module_file_path(game_root, module_path)
+                File.mkdir_p!(Path.dirname(dest))
+                File.write!(dest, content)
+                :ok
 
-          {:error, reason} ->
-            {:error, module_path, version_ref, reason}
+              {:error, reason} ->
+                {:error, reason}
+            end
+          else
+            :ok
+          end
+
+        lua_result =
+          if type in ["pragma", "both"] do
+            case Fetcher.fetch_pragma(module_path, version_ref) do
+              {:ok, content} ->
+                dest = Config.module_lua_file_path(game_root, module_path)
+                File.mkdir_p!(Path.dirname(dest))
+                File.write!(dest, content)
+                :ok
+
+              :not_found ->
+                {:error, "pragma .lua not found in cookbook repo"}
+
+              {:error, reason} ->
+                {:error, reason}
+            end
+          else
+            :ok
+          end
+
+        case {rez_result, lua_result} do
+          {:ok, :ok} -> {:ok, module_path, version_ref}
+          {{:error, reason}, _} -> {:error, module_path, version_ref, reason}
+          {_, {:error, reason}} -> {:error, module_path, version_ref, reason}
         end
       end)
 

@@ -2,13 +2,14 @@ defmodule Rez.Cookbook.Manifest do
   @moduledoc """
   `Rez.Cookbook.Manifest` handles reading and writing the `cookbook.deps` manifest file.
 
-  Each non-comment line is: `<category/module> [<version_ref>]`
+  Each non-comment line is: `<category/module> [<version_ref>] [<type>]`
+  where type is one of: lib, pragma, both (defaults to lib if absent).
   """
 
   alias Rez.Cookbook.Config
 
   @doc """
-  Reads the manifest and returns `{:ok, [{module_path, version_ref}]}` or `{:error, reason}`.
+  Reads the manifest and returns `{:ok, [{module_path, version_ref, type}]}` or `{:error, reason}`.
   """
   def read(game_root) do
     path = Config.manifest_path(game_root)
@@ -23,7 +24,7 @@ defmodule Rez.Cookbook.Manifest do
   @doc """
   Adds or replaces an entry for `module_path` in the manifest.
   """
-  def put_entry(game_root, module_path, version_ref) do
+  def put_entry(game_root, module_path, version_ref, type \\ "lib") do
     path = Config.manifest_path(game_root)
     content = if File.exists?(path), do: File.read!(path), else: ""
     lines = String.split(content, "\n")
@@ -31,10 +32,10 @@ defmodule Rez.Cookbook.Manifest do
     updated =
       if Enum.any?(lines, &entry_matches?(&1, module_path)) do
         Enum.map(lines, fn line ->
-          if entry_matches?(line, module_path), do: format_entry(module_path, version_ref), else: line
+          if entry_matches?(line, module_path), do: format_entry(module_path, version_ref, type), else: line
         end)
       else
-        lines ++ [format_entry(module_path, version_ref)]
+        lines ++ [format_entry(module_path, version_ref, type)]
       end
 
     File.write!(path, Enum.join(updated, "\n"))
@@ -70,9 +71,10 @@ defmodule Rez.Cookbook.Manifest do
   end
 
   defp parse_line(line) do
-    case String.split(String.trim(line), ~r/\s+/, parts: 2) do
-      [name, version_ref] -> {name, version_ref}
-      [name] when name != "" -> {name, Rez.Cookbook.Config.default_ref()}
+    case String.split(String.trim(line), ~r/\s+/, parts: 3) do
+      [name, version_ref, type] -> {name, version_ref, type}
+      [name, version_ref] -> {name, version_ref, "lib"}
+      [name] when name != "" -> {name, Rez.Cookbook.Config.default_ref(), "lib"}
       _ -> nil
     end
   end
@@ -91,11 +93,8 @@ defmodule Rez.Cookbook.Manifest do
       end
   end
 
-  defp format_entry(module_path, version_ref) do
-    if version_ref == Config.default_ref() do
-      module_path
-    else
-      "#{module_path} #{version_ref}"
-    end
+  defp format_entry(module_path, version_ref, type) do
+    base = if version_ref == Config.default_ref(), do: module_path, else: "#{module_path} #{version_ref}"
+    if type == "lib", do: base, else: "#{base} #{type}"
   end
 end

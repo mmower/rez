@@ -251,13 +251,14 @@ defmodule Rez.Parser.DirectiveParsers do
         [
           iliteral("@pragma"),
           commit(),
+          iws(),
           ignore(open_paren()),
           iws(),
           pragma_timing(),
           iws(),
           ignore(close_paren()),
           iws(),
-          js_identifier("pragma_name"),
+          pragma_path_name("pragma_name"),
           optional(
             sequence(
               [

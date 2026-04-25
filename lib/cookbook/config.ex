@@ -19,6 +19,10 @@ defmodule Rez.Cookbook.Config do
     "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/#{version_ref}/#{module_path}.rez"
   end
 
+  def raw_lua_url(module_path, version_ref) do
+    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/#{version_ref}/#{module_path}.lua"
+  end
+
   def index_url do
     "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/main/index.json"
   end
@@ -45,5 +49,9 @@ defmodule Rez.Cookbook.Config do
 
   def module_file_path(game_root, module_path) do
     Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.rez"])
+  end
+
+  def module_lua_file_path(game_root, module_path) do
+    Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.lua"])
   end
 end

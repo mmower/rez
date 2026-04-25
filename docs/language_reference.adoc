@@ -469,6 +469,8 @@ executed.
 * `RezEvent.playCard("card_id")` - Play a new card in the current scene
 * `RezEvent.switchScene("scene_id")` - Start a new scene
 * `RezEvent.flash("message")` - Show a flash message to the player
+* `RezEvent.modalMessage("message", {title: "Modal Title"})` - Show a modal to the player with an optional title
+* `RezEvent.modalCard("card_id", params)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title.
 * `RezEvent.render()` - Re-render the current view
 * `RezEvent.noop()` - do nothing
 
