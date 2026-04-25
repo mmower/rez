@@ -203,6 +203,7 @@ class RezEvent {
    */
   modal(message, options = {}) {
     this.#modalMessage = {message, title: options.title || null};
+    this.#renderEvent = true;
     return this;
   }
 
@@ -234,6 +235,7 @@ class RezEvent {
    */
   modalCard(cardId, params = {}) {
     this.#modalCard = {cardId, params};
+    this.#renderEvent = true;
     return this;
   }
 

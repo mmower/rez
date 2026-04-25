@@ -4,14 +4,9 @@ defmodule Rez.Cookbook.Commands.List do
   def run(_game_root) do
     IO.puts("Fetching module list from mmower/rez-cookbook...")
 
-    tag = case Fetcher.fetch_latest_tag() do
-      {:ok, t} -> t
-      {:error, _} -> nil
-    end
-
     case Fetcher.fetch_index() do
       {:ok, body} when is_map(body) ->
-        print_modules(Map.get(body, "modules", []), tag)
+        print_modules(Map.get(body, "modules", []))
         :ok
 
       {:ok, _} ->
@@ -24,25 +19,25 @@ defmodule Rez.Cookbook.Commands.List do
     end
   end
 
-  defp print_modules([], _tag) do
+  defp print_modules([]) do
     IO.puts("No modules available yet.")
   end
 
-  defp print_modules(modules, tag) do
-    ref = tag || "main"
-    IO.puts("\nAvailable modules (mmower/rez-cookbook @ #{ref}):\n")
+  defp print_modules(modules) do
+    IO.puts("\nAvailable modules (mmower/rez-cookbook):\n")
 
     name_width = modules |> Enum.map(&String.length(&1["name"] || "")) |> Enum.max()
 
     Enum.each(modules, fn module ->
       name = module["name"] || "?"
       type = module["type"] || "lib"
+      version = module["version"] || "?"
       desc = module["description"] || ""
       author = module["author"]
       since = module["since"]
       meta = [if(author, do: "by #{author}"), if(since, do: "since #{since}")] |> Enum.reject(&is_nil/1) |> Enum.join(", ")
       meta_str = if meta != "", do: "  (#{meta})", else: ""
-      IO.puts("  #{String.pad_trailing(name, name_width)}  [#{type}]  #{desc}#{meta_str}")
+      IO.puts("  #{String.pad_trailing(name, name_width)}  [#{type}]  #{version}  #{desc}#{meta_str}")
     end)
 
     IO.puts("")

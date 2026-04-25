@@ -29,19 +29,19 @@ defmodule Rez.Cookbook.Commands.Get do
   end
 
   def run(game_root, module_paths) do
-    with {:ok, tag} <- Fetcher.fetch_latest_tag(),
-         {:ok, existing_entries} <- Manifest.read(game_root),
-         {:ok, index_modules} <- fetch_index_type_map() do
+    with {:ok, module_index} <- Fetcher.fetch_module_index(),
+         {:ok, existing_entries} <- Manifest.read(game_root) do
       default_ref = Config.default_ref()
 
       entries =
         Enum.map(module_paths, fn module_path ->
-          types = Manifest.index_type_to_list(Map.get(index_modules, module_path, "lib"))
+          info = Map.get(module_index, module_path, %{})
+          types = Manifest.index_type_to_list(info["type"] || "lib")
 
           ref =
             case List.keyfind(existing_entries, module_path, 0) do
               {^module_path, existing_ref, _type} when existing_ref != default_ref -> existing_ref
-              _ -> tag
+              _ -> info["version"] || default_ref
             end
 
           {module_path, ref, types}
@@ -59,28 +59,6 @@ defmodule Rez.Cookbook.Commands.Get do
       {:error, reason} ->
         IO.puts("Error: #{reason}")
         :error
-    end
-  end
-
-  defp fetch_index_type_map do
-    case Fetcher.fetch_index() do
-      {:ok, body} when is_map(body) ->
-        map =
-          body
-          |> Map.get("modules", [])
-          |> Enum.reduce(%{}, fn module, acc ->
-            name = module["name"]
-            type = module["type"] || "lib"
-            if name, do: Map.put(acc, name, type), else: acc
-          end)
-
-        {:ok, map}
-
-      {:ok, _} ->
-        {:ok, %{}}
-
-      {:error, _} = err ->
-        err
     end
   end
 

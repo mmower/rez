@@ -2,16 +2,21 @@ defmodule Rez.Cookbook.Commands.Update do
   alias Rez.Cookbook.{Config, CookbookFile, Fetcher, Manifest}
 
   def run(game_root, []) do
-    with {:ok, tag} <- fetch_tag(),
-         {:ok, entries} <- Manifest.read(game_root),
-         {:ok, index_type_map} <- fetch_index_type_map() do
+    with {:ok, module_index} <- Fetcher.fetch_module_index(),
+         {:ok, entries} <- Manifest.read(game_root) do
       case entries do
-        [] -> IO.puts("cookbook.toml is empty."); :ok
+        [] ->
+          IO.puts("cookbook.toml is empty.")
+          :ok
+
         _ ->
           updated_entries = Enum.map(entries, fn {module_path, _ref, _old_types} ->
-            types = Manifest.index_type_to_list(Map.get(index_type_map, module_path, "lib"))
-            {module_path, tag, types}
+            info = Map.get(module_index, module_path, %{})
+            types = Manifest.index_type_to_list(info["type"] || "lib")
+            version = info["version"] || Config.default_ref()
+            {module_path, version, types}
           end)
+
           fetch_and_report(game_root, updated_entries)
       end
     else
@@ -20,57 +25,28 @@ defmodule Rez.Cookbook.Commands.Update do
   end
 
   def run(game_root, module_paths) do
-    with {:ok, tag} <- fetch_tag(),
-         {:ok, entries} <- Manifest.read(game_root),
-         {:ok, index_type_map} <- fetch_index_type_map() do
+    with {:ok, module_index} <- Fetcher.fetch_module_index(),
+         {:ok, entries} <- Manifest.read(game_root) do
       targets =
         Enum.map(module_paths, fn module_path ->
-          types =
-            case Map.get(index_type_map, module_path) do
-              nil ->
-                case List.keyfind(entries, module_path, 0) do
-                  {^module_path, _ref, existing_types} -> existing_types
-                  nil -> ["lib"]
-                end
-              index_type ->
-                Manifest.index_type_to_list(index_type)
+          info = Map.get(module_index, module_path)
+
+          {types, version} =
+            if info do
+              {Manifest.index_type_to_list(info["type"] || "lib"), info["version"] || Config.default_ref()}
+            else
+              case List.keyfind(entries, module_path, 0) do
+                {^module_path, existing_ref, existing_types} -> {existing_types, existing_ref}
+                nil -> {["lib"], Config.default_ref()}
+              end
             end
 
-          {module_path, tag, types}
+          {module_path, version, types}
         end)
 
       fetch_and_report(game_root, targets)
     else
       {:error, reason} -> IO.puts("Error: #{reason}"); :error
-    end
-  end
-
-  defp fetch_tag do
-    case Fetcher.fetch_latest_tag() do
-      {:ok, tag} -> {:ok, tag}
-      {:error, reason} -> {:error, "Could not determine latest cookbook version: #{reason}"}
-    end
-  end
-
-  defp fetch_index_type_map do
-    case Fetcher.fetch_index() do
-      {:ok, body} when is_map(body) ->
-        map =
-          body
-          |> Map.get("modules", [])
-          |> Enum.reduce(%{}, fn module, acc ->
-            name = module["name"]
-            type = module["type"] || "lib"
-            if name, do: Map.put(acc, name, type), else: acc
-          end)
-
-        {:ok, map}
-
-      {:ok, _} ->
-        {:ok, %{}}
-
-      {:error, _} = err ->
-        err
     end
   end
 

@@ -2,9 +2,9 @@ defmodule Rez.Cookbook.Commands.Status do
   alias Rez.Cookbook.{Config, Fetcher, Manifest}
 
   def run(game_root) do
-    latest_tag = case Fetcher.fetch_latest_tag() do
-      {:ok, tag} -> tag
-      {:error, _} -> nil
+    module_index = case Fetcher.fetch_module_index() do
+      {:ok, idx} -> idx
+      {:error, _} -> %{}
     end
 
     case Manifest.read(game_root) do
@@ -13,12 +13,12 @@ defmodule Rez.Cookbook.Commands.Status do
         :ok
 
       {:ok, entries} ->
-        header = if latest_tag, do: "Cookbook status (latest: #{latest_tag}):", else: "Cookbook status (latest: unknown):"
-        IO.puts("\n#{header}\n")
+        IO.puts("\nCookbook status:\n")
 
         Enum.each(entries, fn {module_path, version_ref, types} ->
           present = files_present(game_root, module_path, types)
-          note = version_note(version_ref, latest_tag)
+          latest = get_in(module_index, [module_path, "version"])
+          note = version_note(version_ref, latest)
           IO.puts("  #{String.pad_trailing(module_path, 30)}  #{String.pad_trailing(version_ref, 12)}  [#{Enum.join(types, ",")}]  #{present}#{note}")
         end)
 
