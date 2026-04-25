@@ -38,6 +38,8 @@
   <!-- Main Content -->
   <section class="main-content is-fullheight">
     <.$flash_messages />
+    <.$modal_message />
+    <.$modal_card />
     <div class="container">${content}</div>
   </section>
   <!-- End -->

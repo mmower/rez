@@ -668,12 +668,26 @@ Use `<a card="card_id">` to switch to another card in the same scene:
 <a card="forest_clearing">Enter the forest</a>
 ....
 
+This is a syntax sugar for the full form:
+....
+<a data-event="card" data-target="forest_clearing">Enter the forest</a>
+....
+
+You need to use the full form if returning links from user components.
+
 ==== Switching Scenes
 
 Use `<a scene="scene_id">` to start a new scene:
 ....
 <a scene="dungeon_entrance">Enter the dungeon</a>
 ....
+
+This is a syntax sugar for the full form:
+....
+<a data-event="switch" data-target="dungeon_entrance">Enter the dungeon</a>
+....
+
+You need to use the full form if returning links from user components.
 
 ==== Scene Interludes
 
@@ -688,6 +702,13 @@ Using an interlude we 'put a bookmark' in the current scene, switch another scen
 ....
 
 When the user clicks an `<a resume>` link the interlude scene goes away and the original scene is resumed from the point where the player left it.
+
+These are syntax sugar for the full forms:
+....
+<a data-event="interlude" data-target="conversation">Talk to the Hermit</a>
+
+<a data-event="resume">...</a>
+....
 
 ==== Event Links
 

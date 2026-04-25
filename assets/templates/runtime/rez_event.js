@@ -16,6 +16,8 @@
 class RezEvent {
   #params;
   #flashMessages;
+  #modalMessage;
+  #modalCard;
   #cardId;
   #sceneId;
   #sceneChangeEvent;
@@ -33,6 +35,8 @@ class RezEvent {
   constructor() {
     this.#params = {};
     this.#flashMessages = [];
+    this.#modalMessage = null;
+    this.#modalCard = null;
     this.#cardId = null;
     this.#sceneId = null;
     this.#sceneChangeEvent = false;
@@ -168,6 +172,68 @@ class RezEvent {
    */
   flash(message, kind = "") {
     this.#flashMessages.push({message: message, kind: kind});
+    return this;
+  }
+
+  /**
+   * @function hasModal
+   * @memberof RezEvent#
+   * @returns {boolean} true if this event has a modal message to display
+   */
+  get hasModal() {
+    return this.#modalMessage != null;
+  }
+
+  /**
+   * @function modalMessage
+   * @memberof RezEvent#
+   * @returns {object|null} the modal message config, or null
+   */
+  get modalMessage() {
+    return this.#modalMessage;
+  }
+
+  /**
+   * @function modal
+   * @memberof RezEvent#
+   * @param {string} message - message to display in the modal body
+   * @param {object} [options={}] - optional config; supports `title` (string)
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets a modal message to be displayed to the user
+   */
+  modal(message, options = {}) {
+    this.#modalMessage = {message, title: options.title || null};
+    return this;
+  }
+
+  /**
+   * @function hasModalCard
+   * @memberof RezEvent#
+   * @returns {boolean} true if this event has a card to display in a modal
+   */
+  get hasModalCard() {
+    return this.#modalCard != null;
+  }
+
+  /**
+   * @function modalCardConfig
+   * @memberof RezEvent#
+   * @returns {object|null} the modal card config ({cardId, params}), or null
+   */
+  get modalCardConfig() {
+    return this.#modalCard;
+  }
+
+  /**
+   * @function modalCard
+   * @memberof RezEvent#
+   * @param {string} cardId - ID of the card to render in the modal
+   * @param {object} [params={}] - optional params passed to the card on will_embed
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets a card to be displayed as a modal dialog
+   */
+  modalCard(cardId, params = {}) {
+    this.#modalCard = {cardId, params};
     return this;
   }
 
@@ -363,6 +429,32 @@ class RezEvent {
   }
 
   /**
+   * @function modal
+   * @memberof RezEvent
+   * @static
+   * @param {string} message - modal body message
+   * @param {object} [options={}] - optional config; supports `title` (string)
+   * @returns {RezEvent} a new event with the modal message set
+   * @description Creates a new event that displays a modal dialog
+   */
+  static modal(message, options = {}) {
+    return new RezEvent().modal(message, options);
+  }
+
+  /**
+   * @function modalCard
+   * @memberof RezEvent
+   * @static
+   * @param {string} cardId - ID of the card to render in the modal
+   * @param {object} [params={}] - optional params passed to the card on will_embed
+   * @returns {RezEvent} a new event with the modal card set
+   * @description Creates a new event that displays a card as a modal dialog
+   */
+  static modalCard(cardId, params = {}) {
+    return new RezEvent().modalCard(cardId, params);
+  }
+
+  /**
    * @function playCard
    * @memberof RezEvent
    * @static
@@ -532,6 +624,14 @@ class RezEventProcessor {
         for(const message of response.flashMessages) {
           this.game.addFlashMessage(message);
         }
+      }
+
+      if(response.hasModal) {
+        this.game.setModal(response.modalMessage);
+      }
+
+      if(response.hasModalCard) {
+        this.game.setModalCard(response.modalCardConfig);
       }
 
       if(response.shouldChangeScene) {

@@ -109,6 +109,7 @@
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
   css_class: {kind: :string}
+  title: {kind: :string}
 
   on_start: {kind: :function}
   on_ready: {kind: :function}
@@ -182,6 +183,8 @@
   $js_ctor: {kind: :string}
   $scene_stack: {kind: :list}
   $flash_messages: {kind: :list}
+  $modal_message: {kind: [:map :boolean]}
+  $modal_card: {kind: [:map :boolean]}
 
   start_events: {kind: :list, coll_kind: :list_binding}
 
@@ -220,6 +223,8 @@
   $global: true
   $scene_stack: []
   $flash_messages: []
+  $modal_message: false
+  $modal_card: false
   start_events: []
 
   current_scene_id: _
@@ -229,6 +234,8 @@
   <!-- Main Content -->
   <section class="main-content is-fullheight">
     <.$flash_messages />
+    <.$modal_message />
+    <.$modal_card />
     <div class="container">${content}</div>
   </section>
   <!-- End -->
@@ -1997,6 +2004,63 @@
     });
     return `<div class="rez-flash-messages">${messages}</div>`;
   }
+}
+
+@component $modal_message (_bindings, _assigns, _content) => {
+  if(!$game.$modal_message) {
+    return "";
+  }
+  const {message, title} = $game.$modal_message;
+  const headerHtml = title
+    ? `<header class="modal-card-head"><p class="modal-card-title">${title}</p></header>`
+    : ``;
+  const bodyStyle = title ? `` : ` style="border-radius: 6px 6px 0 0"`;
+  return `<div class="modal is-active">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      ${headerHtml}
+      <section class="modal-card-body"${bodyStyle}>
+        <div class="content">${message}</div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" data-rez-dismiss-modal>OK</button>
+      </footer>
+    </div>
+  </div>`;
+}
+
+@component $modal_card (_bindings, _assigns, _content) => {
+  if(!$game.$modal_card) {
+    return "";
+  }
+  const {cardId, params} = $game.$modal_card;
+  const card = $t(cardId, "card");
+  card.runEvent("will_embed", params);
+  const block = new RezBlock("block", card, params);
+  let cardHtml;
+  try {
+    cardHtml = block.html();
+  } catch(e) {
+    console.error(`$modal_card: Error rendering card '${cardId}':`, e);
+    cardHtml = `<div class="rez-embed-error">Error rendering card '${cardId}': ${e}</div>`;
+  }
+  const title = card.title || null;
+  const headerHtml = title
+    ? `<header class="modal-card-head"><p class="modal-card-title">${title}</p></header>`
+    : ``;
+  const bodyStyle = title ? `` : ` style="border-radius: 6px 6px 0 0"`;
+  return `<div class="modal is-active">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      ${headerHtml}
+      <section class="modal-card-body"${bodyStyle}>
+        <div class="rez-evented">${cardHtml}</div>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" data-rez-dismiss-modal>OK</button>
+      </footer>
+    </div>
+  </div>`;
 }
 
 %% This component can be used to embed one card in another. You use it as:

@@ -809,6 +809,36 @@ class RezGame extends RezBasicObject {
   clearFlashMessages() {
     this.$flash_messages = [];
   }
+
+  /**
+   * @function setModal
+   * @memberof RezGame#
+   * @param {object} config - modal config with `message` and optional `title`
+   * @description Sets the current modal message to be displayed on the next render
+   */
+  setModal(config) {
+    this.$modal_message = config;
+  }
+
+  /**
+   * @function clearModal
+   * @memberof RezGame#
+   * @description Clears any active modal (message or card)
+   */
+  clearModal() {
+    this.$modal_message = null;
+    this.$modal_card = null;
+  }
+
+  /**
+   * @function setModalCard
+   * @memberof RezGame#
+   * @param {object} config - modal card config with `cardId` and `params`
+   * @description Sets the current modal card to be displayed on the next render
+   */
+  setModalCard(config) {
+    this.$modal_card = config;
+  }
 }
 
 window.Rez.RezGame = RezGame;

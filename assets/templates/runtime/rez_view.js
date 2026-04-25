@@ -953,6 +953,37 @@ class RezBlockTransformer extends RezTransformer {
 window.Rez.RezBlockTransformer = RezBlockTransformer;
 
 //-----------------------------------------------------------------------------
+// Modal Transformer
+//-----------------------------------------------------------------------------
+
+/**
+ * @class RezModalTransformer
+ * @extends RezTransformer
+ * @category Internal
+ * @description Transformer that wires up modal dismiss buttons.
+ *
+ * Adds click handlers to any element with a `data-rez-dismiss-modal` attribute.
+ * On click, clears the game's modal state and triggers a view update.
+ * The selector is intentionally unrestricted — modal HTML lives in the game
+ * layout wrapper, outside the `div.rez-evented` card content area.
+ */
+class RezModalTransformer extends RezTransformer {
+  constructor() {
+    super("[data-rez-dismiss-modal]");
+  }
+
+  transformElement(elem, _view) {
+    elem.addEventListener("click", (evt) => {
+      evt.preventDefault();
+      $game.clearModal();
+      $game.updateView();
+    });
+  }
+}
+
+window.Rez.RezModalTransformer = RezModalTransformer;
+
+//-----------------------------------------------------------------------------
 // Click Transformer
 //-----------------------------------------------------------------------------
 
@@ -1568,6 +1599,7 @@ class RezView {
     return [
       new RezClickTransformer(this.receiver),
       new RezBlockTransformer(),
+      new RezModalTransformer(),
       new RezFormTransformer(this.receiver),
       new RezBindingTransformer(this.receiver),
       new RezInputTransformer(this.receiver),
