@@ -4,14 +4,14 @@ defmodule Rez.Cookbook.Commands.Get do
   def run(game_root, []) do
     case Manifest.read(game_root) do
       {:ok, []} ->
-        IO.puts("cookbook.deps is empty. Add modules with 'rez cookbook get <category/module>'.")
+        IO.puts("cookbook.toml is empty. Add modules with 'rez cookbook get <category/module>'.")
         :ok
 
       {:ok, entries} ->
         missing =
-          Enum.reject(entries, fn {module_path, _ref, type} ->
-            rez_present = type in ["pragma"] or File.exists?(Config.module_file_path(game_root, module_path))
-            lua_present = type in ["lib"] or File.exists?(Config.module_lua_file_path(game_root, module_path))
+          Enum.reject(entries, fn {module_path, _ref, types} ->
+            rez_present = not ("lib" in types) or File.exists?(Config.module_file_path(game_root, module_path))
+            lua_present = not ("pragma" in types) or File.exists?(Config.module_lua_file_path(game_root, module_path))
             rez_present and lua_present
           end)
 
@@ -36,7 +36,7 @@ defmodule Rez.Cookbook.Commands.Get do
 
       entries =
         Enum.map(module_paths, fn module_path ->
-          type = Map.get(index_modules, module_path, "lib")
+          types = Manifest.index_type_to_list(Map.get(index_modules, module_path, "lib"))
 
           ref =
             case List.keyfind(existing_entries, module_path, 0) do
@@ -44,13 +44,13 @@ defmodule Rez.Cookbook.Commands.Get do
               _ -> tag
             end
 
-          {module_path, ref, type}
+          {module_path, ref, types}
         end)
 
       result = fetch_and_report(game_root, entries)
 
-      Enum.each(entries, fn {module_path, version_ref, type} ->
-        Manifest.put_entry(game_root, module_path, version_ref, type)
+      Enum.each(entries, fn {module_path, version_ref, types} ->
+        Manifest.put_entry(game_root, module_path, version_ref, types)
       end)
 
       CookbookFile.regenerate(game_root)
@@ -86,9 +86,9 @@ defmodule Rez.Cookbook.Commands.Get do
 
   defp fetch_and_report(game_root, entries) do
     results =
-      Enum.map(entries, fn {module_path, version_ref, type} ->
+      Enum.map(entries, fn {module_path, version_ref, types} ->
         rez_result =
-          if type in ["lib", "both"] do
+          if "lib" in types do
             case Fetcher.fetch_module(module_path, version_ref) do
               {:ok, content} ->
                 dest = Config.module_file_path(game_root, module_path)
@@ -104,7 +104,7 @@ defmodule Rez.Cookbook.Commands.Get do
           end
 
         lua_result =
-          if type in ["pragma", "both"] do
+          if "pragma" in types do
             case Fetcher.fetch_pragma(module_path, version_ref) do
               {:ok, content} ->
                 dest = Config.module_lua_file_path(game_root, module_path)

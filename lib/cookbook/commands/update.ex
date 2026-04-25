@@ -6,11 +6,11 @@ defmodule Rez.Cookbook.Commands.Update do
          {:ok, entries} <- Manifest.read(game_root),
          {:ok, index_type_map} <- fetch_index_type_map() do
       case entries do
-        [] -> IO.puts("cookbook.deps is empty."); :ok
+        [] -> IO.puts("cookbook.toml is empty."); :ok
         _ ->
-          updated_entries = Enum.map(entries, fn {module_path, _ref, _old_type} ->
-            type = Map.get(index_type_map, module_path, "lib")
-            {module_path, tag, type}
+          updated_entries = Enum.map(entries, fn {module_path, _ref, _old_types} ->
+            types = Manifest.index_type_to_list(Map.get(index_type_map, module_path, "lib"))
+            {module_path, tag, types}
           end)
           fetch_and_report(game_root, updated_entries)
       end
@@ -25,13 +25,18 @@ defmodule Rez.Cookbook.Commands.Update do
          {:ok, index_type_map} <- fetch_index_type_map() do
       targets =
         Enum.map(module_paths, fn module_path ->
-          type =
-            case List.keyfind(entries, module_path, 0) do
-              {^module_path, _ref, existing_type} -> Map.get(index_type_map, module_path, existing_type)
-              nil -> Map.get(index_type_map, module_path, "lib")
+          types =
+            case Map.get(index_type_map, module_path) do
+              nil ->
+                case List.keyfind(entries, module_path, 0) do
+                  {^module_path, _ref, existing_types} -> existing_types
+                  nil -> ["lib"]
+                end
+              index_type ->
+                Manifest.index_type_to_list(index_type)
             end
 
-          {module_path, tag, type}
+          {module_path, tag, types}
         end)
 
       fetch_and_report(game_root, targets)
@@ -71,9 +76,9 @@ defmodule Rez.Cookbook.Commands.Update do
 
   defp fetch_and_report(game_root, entries) do
     results =
-      Enum.map(entries, fn {module_path, version_ref, type} ->
+      Enum.map(entries, fn {module_path, version_ref, types} ->
         rez_result =
-          if type in ["lib", "both"] do
+          if "lib" in types do
             case Fetcher.fetch_module(module_path, version_ref) do
               {:ok, content} ->
                 dest = Config.module_file_path(game_root, module_path)
@@ -89,7 +94,7 @@ defmodule Rez.Cookbook.Commands.Update do
           end
 
         lua_result =
-          if type in ["pragma", "both"] do
+          if "pragma" in types do
             case Fetcher.fetch_pragma(module_path, version_ref) do
               {:ok, content} ->
                 dest = Config.module_lua_file_path(game_root, module_path)
@@ -109,7 +114,7 @@ defmodule Rez.Cookbook.Commands.Update do
 
         case {rez_result, lua_result} do
           {:ok, :ok} ->
-            Manifest.put_entry(game_root, module_path, version_ref, type)
+            Manifest.put_entry(game_root, module_path, version_ref, types)
             {:ok, module_path, version_ref}
 
           {{:error, reason}, _} ->

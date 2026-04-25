@@ -6,7 +6,7 @@ defmodule Rez.Cookbook.Config do
   @cookbook_repo_owner "mmower"
   @cookbook_repo_name "rez-cookbook"
   @cookbook_default_ref "main"
-  @cookbook_manifest_file "cookbook.deps"
+  @cookbook_manifest_file "cookbook.toml"
   @cookbook_dir_name "cookbook"
 
   def repo_owner, do: @cookbook_repo_owner

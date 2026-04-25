@@ -1,44 +1,43 @@
 defmodule Rez.Cookbook.Manifest do
   @moduledoc """
-  `Rez.Cookbook.Manifest` handles reading and writing the `cookbook.deps` manifest file.
+  `Rez.Cookbook.Manifest` handles reading and writing the `cookbook.toml` manifest file.
 
-  Each non-comment line is: `<category/module> [<version_ref>] [<type>]`
-  where type is one of: lib, pragma, both (defaults to lib if absent).
+  Each dependency is a `[[dependency]]` TOML array-of-tables entry with a `module` field,
+  optional `version` (defaults to "main"), and `types` list (e.g. ["lib"], ["pragma"],
+  or ["lib", "pragma"]).
   """
 
   alias Rez.Cookbook.Config
 
+  @header """
+  # Rez Cookbook Dependencies
+  # Run 'rez cookbook list' to see available modules.
+  # Run 'rez cookbook get <category/module>' to add a module.
+  """
+
   @doc """
-  Reads the manifest and returns `{:ok, [{module_path, version_ref, type}]}` or `{:error, reason}`.
+  Reads the manifest and returns `{:ok, [{module_path, version_ref, types}]}` or `{:error, reason}`.
+  `types` is a list such as `["lib"]`, `["pragma"]`, or `["lib", "pragma"]`.
   """
   def read(game_root) do
     path = Config.manifest_path(game_root)
 
     case File.read(path) do
-      {:ok, content} -> {:ok, parse(content)}
-      {:error, :enoent} -> {:error, "No cookbook.deps found. Run 'rez cookbook init' first."}
-      {:error, reason} -> {:error, "Could not read cookbook.deps: #{reason}"}
+      {:ok, content} -> parse(content)
+      {:error, :enoent} -> {:error, "No cookbook.toml found. Run 'rez cookbook init' first."}
+      {:error, reason} -> {:error, "Could not read cookbook.toml: #{reason}"}
     end
   end
 
   @doc """
   Adds or replaces an entry for `module_path` in the manifest.
+  `types` is a list such as `["lib"]`, `["pragma"]`, or `["lib", "pragma"]`.
   """
-  def put_entry(game_root, module_path, version_ref, type \\ "lib") do
+  def put_entry(game_root, module_path, version_ref, types \\ ["lib"]) do
     path = Config.manifest_path(game_root)
-    content = if File.exists?(path), do: File.read!(path), else: ""
-    lines = String.split(content, "\n")
-
-    updated =
-      if Enum.any?(lines, &entry_matches?(&1, module_path)) do
-        Enum.map(lines, fn line ->
-          if entry_matches?(line, module_path), do: format_entry(module_path, version_ref, type), else: line
-        end)
-      else
-        lines ++ [format_entry(module_path, version_ref, type)]
-      end
-
-    File.write!(path, Enum.join(updated, "\n"))
+    entries = read_entries(path)
+    updated = List.keystore(entries, module_path, 0, {module_path, version_ref, types})
+    File.write!(path, encode(updated))
   end
 
   @doc """
@@ -46,55 +45,61 @@ defmodule Rez.Cookbook.Manifest do
   """
   def remove_entry(game_root, module_path) do
     path = Config.manifest_path(game_root)
-
-    case File.read(path) do
-      {:ok, content} ->
-        updated =
-          content
-          |> String.split("\n")
-          |> Enum.reject(&entry_matches?(&1, module_path))
-          |> Enum.join("\n")
-
-        File.write!(path, updated)
-
-      {:error, reason} ->
-        {:error, "Could not update cookbook.deps: #{reason}"}
-    end
+    entries = read_entries(path)
+    updated = List.keydelete(entries, module_path, 0)
+    File.write!(path, encode(updated))
   end
+
+  @doc """
+  Converts an index.json type string to a types list.
+  Handles the legacy "both" value from the remote index.
+  """
+  def index_type_to_list("both"),   do: ["lib", "pragma"]
+  def index_type_to_list("pragma"), do: ["pragma"]
+  def index_type_to_list(_),        do: ["lib"]
 
   defp parse(content) do
-    content
-    |> String.split("\n")
-    |> Enum.reject(&comment_or_blank?/1)
-    |> Enum.map(&parse_line/1)
-    |> Enum.reject(&is_nil/1)
-  end
+    case Toml.decode(content) do
+      {:ok, %{"dependency" => deps}} when is_list(deps) ->
+        entries =
+          Enum.map(deps, fn attrs ->
+            module_path = Map.fetch!(attrs, "module")
+            version_ref = Map.get(attrs, "version", Config.default_ref())
+            types = Map.get(attrs, "types", ["lib"])
+            {module_path, version_ref, types}
+          end)
+        {:ok, entries}
 
-  defp parse_line(line) do
-    case String.split(String.trim(line), ~r/\s+/, parts: 3) do
-      [name, version_ref, type] -> {name, version_ref, type}
-      [name, version_ref] -> {name, version_ref, "lib"}
-      [name] when name != "" -> {name, Rez.Cookbook.Config.default_ref(), "lib"}
-      _ -> nil
+      {:ok, _} ->
+        {:ok, []}
+
+      {:error, reason} ->
+        {:error, "Could not parse cookbook.toml: #{inspect(reason)}"}
     end
   end
 
-  defp comment_or_blank?(line) do
-    trimmed = String.trim(line)
-    trimmed == "" or String.starts_with?(trimmed, "#")
+  defp read_entries(path) do
+    case File.read(path) do
+      {:ok, content} ->
+        case parse(content) do
+          {:ok, entries} -> entries
+          _ -> []
+        end
+      {:error, _} -> []
+    end
   end
 
-  defp entry_matches?(line, module_path) do
-    trimmed = String.trim(line)
-    not comment_or_blank?(line) and
-      case String.split(trimmed, ~r/\s+/, parts: 2) do
-        [^module_path | _] -> true
-        _ -> false
-      end
-  end
+  defp encode(entries) do
+    blocks =
+      entries
+      |> Enum.map(fn {module_path, version_ref, types} ->
+        version_line =
+          if version_ref == Config.default_ref(), do: "", else: ~s|version = "#{version_ref}"\n|
 
-  defp format_entry(module_path, version_ref, type) do
-    base = if version_ref == Config.default_ref(), do: module_path, else: "#{module_path} #{version_ref}"
-    if type == "lib", do: base, else: "#{base} #{type}"
+        types_str = Enum.map_join(types, ", ", &~s|"#{&1}"|)
+        "[[dependency]]\nmodule = \"#{module_path}\"\n#{version_line}types = [#{types_str}]"
+      end)
+
+    @header <> "\n" <> Enum.join(blocks, "\n\n") <> if(entries == [], do: "", else: "\n")
   end
 end

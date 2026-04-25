@@ -86,10 +86,10 @@ defmodule Rez.Generator do
     cookbook_lib_path = Path.join(lib_path, "cookbook")
     File.mkdir_p!(cookbook_lib_path)
 
-    cookbook_deps_path = Path.join(name, "cookbook.deps")
+    cookbook_toml_path = Path.join(name, "cookbook.toml")
 
-    if !File.exists?(cookbook_deps_path) || overwrite do
-      File.write!(cookbook_deps_path, """
+    if !File.exists?(cookbook_toml_path) || overwrite do
+      File.write!(cookbook_toml_path, """
       # Rez Cookbook Dependencies
       # Run 'rez cookbook list' to see available modules.
       # Run 'rez cookbook get <category/module>' to add a module.
