@@ -4,7 +4,7 @@ defmodule Rez.Cookbook do
   opt-in cookbook library modules from https://github.com/mmower/rez-cookbook.
   """
 
-  alias Rez.Cookbook.Commands.{Init, List, Get, Update, Remove, Status}
+  alias Rez.Cookbook.Commands.{Init, List, Get, Update, Remove, Status, Docs}
 
   def run(args, game_root) do
     case args do
@@ -14,6 +14,7 @@ defmodule Rez.Cookbook do
       ["update" | modules] -> Update.run(game_root, modules)
       ["remove" | modules] -> Remove.run(game_root, modules)
       ["status" | _] -> Status.run(game_root)
+      ["docs" | modules] -> Docs.run(game_root, modules)
       [] -> usage()
       [unknown | _] -> IO.puts("Error: unknown cookbook command '#{unknown}'")
     end
@@ -30,6 +31,7 @@ defmodule Rez.Cookbook do
       update [module...] Re-fetch modules, overwriting local copies
       remove <module...> Remove modules from the project and manifest
       status             Show which manifest modules are present or missing
+      docs <module>      Open documentation for a cookbook module
     """)
   end
 end

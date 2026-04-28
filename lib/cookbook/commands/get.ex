@@ -63,11 +63,13 @@ defmodule Rez.Cookbook.Commands.Get do
   end
 
   defp fetch_and_report(game_root, entries) do
+    fetch_ref = Config.default_ref()
+
     results =
       Enum.map(entries, fn {module_path, version_ref, types} ->
         rez_result =
           if "lib" in types do
-            case Fetcher.fetch_module(module_path, version_ref) do
+            case Fetcher.fetch_module(module_path, fetch_ref) do
               {:ok, content} ->
                 dest = Config.module_file_path(game_root, module_path)
                 File.mkdir_p!(Path.dirname(dest))
@@ -83,7 +85,7 @@ defmodule Rez.Cookbook.Commands.Get do
 
         lua_result =
           if "pragma" in types do
-            case Fetcher.fetch_pragma(module_path, version_ref) do
+            case Fetcher.fetch_pragma(module_path, fetch_ref) do
               {:ok, content} ->
                 dest = Config.module_lua_file_path(game_root, module_path)
                 File.mkdir_p!(Path.dirname(dest))
@@ -99,6 +101,14 @@ defmodule Rez.Cookbook.Commands.Get do
           else
             :ok
           end
+
+        case Fetcher.fetch_docs(module_path, fetch_ref) do
+          {:ok, content} ->
+            dest = Config.module_md_file_path(game_root, module_path)
+            File.mkdir_p!(Path.dirname(dest))
+            File.write!(dest, content)
+          _ -> :ok
+        end
 
         case {rez_result, lua_result} do
           {:ok, :ok} -> {:ok, module_path, version_ref}

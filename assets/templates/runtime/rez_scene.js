@@ -183,9 +183,9 @@ class RezScene extends RezBasicObject {
     card.scene = this;
     this.current_card = card;
 
+    card.runEvent("will_start", params);
     this.game.runEvent("card_will_start", {card_id: card.id, params: params});
     this.runEvent("card_will_start", {card_id: card.id, params: params});
-    card.runEvent("will_start", params);
 
     this.addContentToViewLayout(params);
     this.game.updateView();

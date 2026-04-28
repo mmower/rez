@@ -2350,6 +2350,153 @@ that you should only assign references to elements to such properties.
 Assigning an object that happens to have an `id` property will work but later
 cause undefined errors.
 
+== Miscellaneous Topics
+
+=== Including custom Javascript
+
+To include a custom Javascript file into your game add the .js file to your assets folder and a corresponding `@asset` element to your game. Use the `$js_runtime` attribute to tell Rez that it should be included in the runtime.js file.
+
+....
+@asset custom_js {
+  file: "custom.js"
+
+  $js_runtime: true
+}
+....
+
+To have a Javascript file included as a separate file, included before runtime.js, use `$pre_runtime: true`.
+
+To apply the `defer` attribute to the corresponding `<script>` tag use `$js_defer: true`.
+
+=== Using `@object`
+
+Rez defines a number of generally useful elements like `@actor`, `@item`, `@inventory`, `@scene` and so forth. These elements have built-in behaviours designed to be useful but flexible.
+
+However, there may be concepts in your game which don't map to those predefined categories,
+for example "classes" in an RPG. There are so many possible ways to have a class work in a game that Rez cannot really offer a useful starting point. For this type of situation there is `@object`.
+
+The `@object` element allows you to create a fully-custom object that has no built-in behaviours (beyond what you get from the `__basic_object__` runtime prototype that all in-game objects share).
+
+Let's look at an example:
+
+....
+@object soldier {
+  specialisation: :combat
+  perk_ids: #{#two_weapon_style #pounce #shield_bash #second_wind}
+}
+
+@object two_weapon_style {
+  level: 3
+  label: "Fight with two weapons almost as well as one"
+}
+
+@object pounce {
+  level: 5
+  label: "Close distance to an enemy and engage them quicker"
+}
+
+@object shield_bash {
+  level: 7
+  label: "Shields can be a weapon in the right hands"
+}
+
+@object second_wind {
+  level: 9
+  label: "When the chips are down, you come out fighting"
+}
+
+@object wizard {
+  specialisation: :magic
+  perk_ids: #{#fast_cast #mana_surge #concentration #max_damage}
+}
+
+@object fast_cast {
+  level: 3
+  label: "Faster than a speeding magic missile"
+}
+
+@object mana_surge {
+  level: 5
+  label: "You can always reach down for just one more spell"
+}
+
+@object concentration {
+  level: 7
+  label: "Nothing can distract you"
+}
+
+@object max_damage {
+  level: 9
+  label: "Your fireballs are the crispiest"
+}
+
+@actor thaugrim_the_wise {
+  %% Code dealing with this actor can lookup available perks from
+  %% the Wizards class object
+  class_id: #wizard
+}
+....
+
+How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviours that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
+
+=== Using Decisions
+
+`RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
+
+You can use a decision like this:
+
+....
+const decision = new RezDecision("Include Adult themes", {info: "Toggle this on to include themes of sex & violence that might not be suitable for all. Leave it off for a family friendly experience."});
+decision.default_no();
+some_function_making_the_decision(decision);
+if(decision.result) {
+  // do something
+} else {
+  // do something else
+}
+....
+
+In this case the `some_function_making_the_decision(decision)` is expected to call either `decision.yes()` or `decision.no("reason")` before returning. In most cases you will be passing a decision to a script. In this case if neither function gets called the decision will default to 'no' (`false`). If we had used `decision.default_yes()` it would work the other way around.
+
+RezDecision also supports `decision.hide()` which is "no, and don't even mention it". For example
+we may have a door which could be locked but also hidden. A RezDecision supports hide (player doesn't know about it yet), no (door is locked), yes (door has been unlocked).
+
+You can pass data into a decision either through the second argument to `new RezDecision()` or using the `setData(key, value)` API. After receiving a decision you can use the `data()` API to retrieve data. This way the callee can pass other information back with the decision.
+
+=== Using your own prototypes
+
+The bult in Rez prototype objects are pretty flexible but you may want to replace one of them with your own object. You can do this using the `$js_ctor` attribute on any object.
+
+....
+@actor kaspar_gutman {
+  $js_ctor: "Gutman"
+  name: "Kaspar Gutman"
+  villain: true
+end
+....
+
+Now, instead of using the `RezActor()` constructor function the initialization code will look for a `Gutman()` constructor function. Constructor functions are passed the id (in this case `kaspar_gutman`) and a map of attributes.
+
+It is advisable to base your object on the object you are replacing.
+
+=== Procedural Generation
+
+Procedural generation is about content that is created at run-time and Rez has good support for this through it's `addCopy()`, `copyAssigningId()` and `copyWithAutoId()` methods in `basic_object`.
+
+Rez supports the idea that you will create 'template' elements that are designed to be copied and modified to create something new. You do this by applying the `$template` attribute to it and then calling the appropriate copy method.
+
+Although most objects support copying, by specifying `$template: true` you will suppress some of Rez's automatic initialization. This means that the copy will get its own initialization.
+
+....
+@actor T_npc {
+  $template: true
+
+  ...
+end
+
+$("T_npc").addCopy();
+....
+
 === Best Practices and Patterns
 
 ==== Project Organization

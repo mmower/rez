@@ -450,19 +450,21 @@ defmodule Rez.Compiler.SchemaBuilder do
             if Enum.count(params) == expected_count do
               {node, validation}
             else
-              Validation.add_error(
-                validation,
-                node,
-                "#{attr_name} was expected to be a function of #{expected_count} params but found #{Enum.count(params)}"
-              )
+              {node,
+               Validation.add_error(
+                 validation,
+                 node,
+                 "#{attr_name} was expected to be a function of #{expected_count} params but found #{Enum.count(params)}"
+               )}
             end
 
           %{type: t} ->
-            Validation.add_error(
-              validation,
-              node,
-              "#{attr_name} is expected to be a function but was #{inspect(t)}"
-            )
+            {node,
+             Validation.add_error(
+               validation,
+               node,
+               "#{attr_name} is expected to be a function but was #{inspect(t)}"
+             )}
         end
       end
     )

@@ -137,13 +137,20 @@ class RezDecision {
   /**
    * @function yes
    * @memberof RezDecision
+   * @param {Object} params params to be set
    * @returns {RezDecision} this decision instance for method chaining
    * @description Makes a positive decision explicitly
    */
-  yes() {
+  yes(params = {}) {
     this.#made = true;
     this.#result = true;
     this.#used_default = false;
+    if(params && typeof(params) !== "object") {
+      throw new Error(`Attempt to set decision params with object of type ${typeof(params)}, should be an object!`);
+    }
+    for(const [key, value] of Object.entries(params)) {
+      this.setData(key, value);
+    }
     return this;
   }
 
@@ -225,8 +232,8 @@ class RezDecision {
    * @returns {object} the value for the key
    * @description Returns the object stored in the decision under the specified key
    */
-  getData(key) {
-    return this.#data[key];
+  getData(key, defaultValue) {
+    return key in this.#data ? this.#data[key] : defaultValue;
   }
 
   /**

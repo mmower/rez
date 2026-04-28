@@ -519,6 +519,17 @@ class RezGame extends RezBasicObject {
   }
 
   /**
+   * @function playCardWithId
+   * @memberof RezGame#
+   * @param {string} cardId id of a @card object
+   * @param {object} params data to the pass to the new
+   * @description tells the current scene to start a new card
+   */
+  playCardWithId(cardId, params = {}) {
+    this.current_scene.playCardWithId(cardId, params);
+  }
+
+  /**
    * @function startSceneWithId
    * @memberof RezGame#
    * @param {string} scene_id id of scene game-object

@@ -324,11 +324,6 @@
   tags: #{}
 }
 
-%% In Rez v1.8 we removed @item as a basic element and made it an alias of @card
-%% so that it can be set as the current card and rendered.
-%% In Rez v1.9 we made it an alias of @object since template properties can now
-%% be rendered directly
-
 @elem item = object
 
 @schema item {
@@ -339,7 +334,7 @@
   container_id: {kind: :elem_ref, ref_elem: @inventory}
   size: {kind: :number, min: 0}
   uses: {kind: :number, min: 0}
-  effects: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}
+  effect_ids: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}
   asset_id: {kind: :elem_ref, ref_elem: @asset}
 }
 
@@ -575,7 +570,7 @@
   enabled: {kind: :boolean, required: true}
   priority: {kind: :number, min: 0, required: true}
 
-  before_event: {kind: :function, param_count: 3, or: after_event}
+  before_event: {kind: :function, param_count: 2, or: after_event}
   after_event: {kind: :function, param_count: 3, or: before_event}
 }
 
@@ -1056,6 +1051,15 @@
     }
 
     return result;
+  }
+}
+
+@patch {
+  $built_in: true
+  patch: "Array"
+  method: "uniq"
+  impl: function() {
+    return [...new Set(this)];
   }
 }
 

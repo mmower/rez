@@ -35,6 +35,21 @@ defmodule Rez.Cookbook.Fetcher do
   end
 
   @doc """
+  Fetches a module's `.md` documentation file from the cookbook repo.
+  Returns `{:ok, binary}`, `:not_found` (no docs for this module), or `{:error, reason}`.
+  """
+  def fetch_docs(module_path, version_ref) do
+    url = Config.raw_md_url(module_path, version_ref)
+
+    case Req.get(url) do
+      {:ok, %{status: 200, body: body}} -> {:ok, body}
+      {:ok, %{status: 404}} -> :not_found
+      {:ok, %{status: status}} -> {:error, "HTTP #{status}"}
+      {:error, reason} -> {:error, inspect(reason)}
+    end
+  end
+
+  @doc """
   Fetches the index.json from the cookbook repo's main branch.
   Returns `{:ok, map}` (Req auto-decodes JSON) or `{:error, reason}`.
   """

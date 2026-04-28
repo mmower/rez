@@ -338,21 +338,22 @@ class RezBlock {
     const sourceBindings = this.source.getAttributeValue("bindings", []);
 
     if(this.source.getAttributeValue("$debug_bindings", false)) {
-      console.log(`Binding source: ${this.source.id}`);
-      console.log("Initial Bindings");
-      console.dir(initialBindings);
-
-      console.log("Bindings");
-      console.dir(sourceBindings);
+      debugger;
     }
 
-    return sourceBindings.reduce((bindings, bindingObject) => {
+    const resolvedBindings = sourceBindings.reduce((bindings, bindingObject) => {
       const prefix = bindingObject.prefix;
       const value = this.resolveBindingValue(bindings, bindingObject);
 
       bindings[prefix] = value;
       return bindings;
     }, initialBindings);
+
+    if(this.source.getAttributeValue("$debug_bindings", false)) {
+      debugger;
+    }
+
+    return resolvedBindings;
   }
 
   /**
