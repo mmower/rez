@@ -319,6 +319,7 @@
   $global: false
   $template: false
   $auto_id_idx: 0
+  $init_after: [@item @effect]
 
   apply_effects: true
   tags: #{}

@@ -337,21 +337,17 @@ class RezBlock {
   getBindings(initialBindings) {
     const sourceBindings = this.source.getAttributeValue("bindings", []);
 
-    if(this.source.getAttributeValue("$debug_bindings", false)) {
-      debugger;
-    }
-
     const resolvedBindings = sourceBindings.reduce((bindings, bindingObject) => {
+      if(this.source.getAttributeValue("$debug_bindings", false)) {
+        debugger;
+      }
+
       const prefix = bindingObject.prefix;
       const value = this.resolveBindingValue(bindings, bindingObject);
 
       bindings[prefix] = value;
       return bindings;
     }, initialBindings);
-
-    if(this.source.getAttributeValue("$debug_bindings", false)) {
-      debugger;
-    }
 
     return resolvedBindings;
   }

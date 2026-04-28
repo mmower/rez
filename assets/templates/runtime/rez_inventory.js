@@ -492,11 +492,11 @@ class RezInventory extends RezBasicObject {
     }
 
     const item = $(itemId);
-    if(!item.hasAttribute("effects")) {
+    if(!item.hasAttribute("effect_ids")) {
       return false;
     }
 
-    for(const effectId of item.effects) {
+    for(const effectId of item.getAttributeValue("effect_ids")) {
       const effect = $t(effectId, "effect");
       effect.apply(this.owner_id, slotBinding, itemId);
     }
@@ -550,11 +550,11 @@ class RezInventory extends RezBasicObject {
     }
 
     const item = $(itemId);
-    if(!item.hasAttribute("effects")) {
+    if(!item.hasAttribute("effect_ids")) {
       return false;
     }
 
-    for(const effectId of item.effects) {
+    for(const effectId of item.getAttributeValue("effect_ids")) {
       const effect = $t(effectId, "effect");
       effect.remove(this.owner_id, slotBinding, itemId);
     }

@@ -94,6 +94,9 @@
    * @description extracts ID from either plain string or {$ref: "id"} format
    */
   Rez.extractId = (idOrRef) => {
+    if(typeof idOrRef === 'undefined') {
+      throw new Error(`Attempt to dereference an undefined id/ref!`);
+    }
     if (typeof idOrRef === 'string') return idOrRef;
     if (idOrRef?.$ref) return idOrRef.$ref;
     throw new Error(`Invalid reference format: ${String(idOrRef)}`);

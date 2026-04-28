@@ -737,11 +737,7 @@ class RezGame extends RezBasicObject {
     const game_objects = this.getAttribute("$init_order");
     game_objects.forEach(function (obj_id) {
       const obj = this.getGameObject(obj_id);
-      try {
         obj.init();
-      } catch(e) {
-        throw new Error(`Failed to initialize object '${obj_id}'`, {cause: e});
-      }
     }, this);
 
     try {
