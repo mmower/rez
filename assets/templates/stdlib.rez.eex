@@ -434,6 +434,8 @@
   $init_after: {kind: :list, coll_kind: :elem_ref}
   $js_ctor: {kind: :string}
 
+  description: {kind: :string, required: true}
+
   tags: {kind: :set, coll_kind: :keyword}
 
   status: {kind: :keyword, in: [:unknown, :mentioned, :accepted, :achieved, :completed, :botched]}
@@ -443,7 +445,7 @@
   on_accepted: {kind: :function}
   on_achieved: {kind: :function}
   on_completed: {kind: :function}
-  on_bothced: {kind: :function}
+  on_botched: {kind: :function}
 }
 
 @defaults quest {
@@ -452,6 +454,7 @@
   $auto_id_idx: 0
   $mixins: #{#$has_subscribers}
 
+  old_status: :unknown
   status: :unknown
   priority: 1
 
@@ -992,7 +995,7 @@
   method: "take"
   impl: function(n) {
     if(this.length < n) {
-      throw `Cannot take ${n} items from an array containing ${this.length} items!`;
+      throw new Error(`Cannot take ${n} items from an array containing ${this.length} items!`);
     }
 
     return Math.range(1, n).map((_) => {return this.shift()});
@@ -1118,6 +1121,15 @@
   method: "beginsWithVowel"
   impl: function() {
     return /^[aeiouAEIOU]/.test(this);
+  }
+}
+
+@patch {
+  $built_in: true
+  patch: "String"
+  method: "capitalize"
+  impl: function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
   }
 }
 
@@ -1771,6 +1783,14 @@
   impl: (s, t) => {return s + t;}
 }
 
+@filter STRING_CAPITALIZE_FILTER {
+  $built_in: true
+
+  %% String -> String
+  name: "capitalize"
+  impl: (s) => {return s.capitalize();}
+}
+
 @filter STRING_TO_CAMEL_CASE_FILTER {
   $built_in: true
 
@@ -1944,7 +1964,7 @@
   impl: (card, action) => {
     const link_handler = card.getAttribute(action);
     if(typeof(link_handler) !== "function") {
-      throw `Attribute |${action}| of card |${card.id}| is not a handler function!`;
+      throw new Error(`Attribute |${action}| of card |${card.id}| is not a handler function!`);
     } else {
       const link = new RezDynamicLink(card);
       link_handler(link);

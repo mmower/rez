@@ -171,7 +171,7 @@ defmodule Rez.Compiler.TemplateCompiler do
     const user_component = window.Rez.user_components.#{name};
 
     if(typeof user_component === "undefined") {
-      throw `No user @component #{name} defined!`;
+      throw new Error(`No user @component #{name} defined!`);
     } else {
       return user_component(bindings, {#{assigns}}, null);
     }
@@ -195,7 +195,7 @@ defmodule Rez.Compiler.TemplateCompiler do
         const sub_content = sub_template(bindings);
 
         if(typeof user_component === "undefined") {
-          throw `No user @component #{name} defined!`;
+          throw new Error(`No user @component #{name} defined!`);
         } else {
           return user_component(bindings, {#{assigns}}, sub_content);
         }
@@ -220,15 +220,15 @@ defmodule Rez.Compiler.TemplateCompiler do
         ~s|
       const binding = bindings.#{bound_obj};
       if(typeof(binding) === "undefined") {
-        throw `#{bound_obj} must be defined in bindings!`;
+        throw new Error(`#{bound_obj} must be defined in bindings!`);
       }
 
       const iterable = #{binding_spec};
       if(typeof(iterable) === "undefined") {
-        throw `#{bound_path_str} must be bound`;
+        throw new Error(`#{bound_path_str} must be bound`);
       }
       if(!Array.isArray(iterable)) {
-        throw `#{bound_path_str} must bind to a list`;
+        throw new Error(`#{bound_path_str} must bind to a list`);
       }
       const content_template = #{content_template};
       const divider_template = #{divider_template};

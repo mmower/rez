@@ -1188,7 +1188,7 @@ class RezBindingTransformer extends RezTransformer {
       typeof binding_id === "undefined" ||
       typeof binding_attr === "undefined"
     ) {
-      throw `Unable to parse binding: ${binding_expr}`;
+      throw new Error(`Unable to parse binding: ${binding_expr}`);
     }
 
     return [binding_id, binding_attr];
@@ -1476,7 +1476,7 @@ class RezView {
   constructor(container_id, receiver, layout, transformers) {
     const container = document.getElementById(container_id);
     if(!container) {
-      throw Error(`Cannot get container |${container_id}|`);
+      throw new Error(`Cannot get container |${container_id}|`);
     }
 
     this.#container = container;

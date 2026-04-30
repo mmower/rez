@@ -1074,13 +1074,19 @@ bindings: [
 ....
 
 **Function Bindings** - Calculate values dynamically:
+
+Function bindings receive three arguments: `(block, source, bindings)` where:
+
+* `block` - the `RezBlock` view block being rendered
+* `source` - the game element (e.g. `RezCard`) that owns the template
+* `bindings` - the bindings resolved so far (earlier entries in the list are already present)
+
 ....
 bindings: [
-  total_score: () => {return player.experience + player.gold},
-  random_event: () => {return Math.random() < 0.3},
-  available_exits: () => {return current_location.getExits()}
-]
-....
+  total_score: (block, source, bindings) => {return bindings.player.experience + bindings.player.gold},
+  random_event: (_block, _source, _bindings) => {return Math.random() < 0.3},
+  available_exits: (_block, source, _bindings) => {return source.getExits()}
+]....
 
 **Dependent Bindings** - Bind to attributes of another binding:
 ....

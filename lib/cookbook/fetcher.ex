@@ -54,7 +54,7 @@ defmodule Rez.Cookbook.Fetcher do
   Returns `{:ok, map}` (Req auto-decodes JSON) or `{:error, reason}`.
   """
   def fetch_index do
-    case Req.get(Config.index_url()) do
+    case Req.get(Config.index_url(), headers: [{"cache-control", "no-cache"}]) do
       {:ok, %{status: 200, body: body}} ->
         body_str = if is_binary(body), do: body, else: Jason.encode!(body)
         Jason.decode(body_str)

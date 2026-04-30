@@ -1104,6 +1104,10 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 |Boolean
 |if the item can be used, defaults to `false`
 
+|`effect_ids`
+|List
+|a list of id of `@effect`s that are active when this item is in an effects enabled slot
+
 |`uses`
 |Number
 |if `usable` is true, number of uses, assumed >= 0

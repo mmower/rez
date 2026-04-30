@@ -108,32 +108,58 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
     generators = Map.get(type_map, "generator", [])
     filters = Map.get(type_map, "filter", [])
 
-    runtime_code =
-      render_runtime(
-        js_stdlib: @js_stdlib,
-        js_userlib: js_userlib_content(assets),
-        constants: generate_constants(constants),
-        type_hierarchy: TypeHierarchy.to_json(compilation.type_hierarchy),
-        patch_js_objects: patch_js_objects(patches: patches),
-        bind_keys: bind_keys(keybindings: keybindings),
-        user_components: user_components(user_components: user_components),
-        mixins: mixins(mixins: mixins),
-        init_game_objects:
-          init_game_objects(game: game, game_elements: game_elements, generators: generators),
-        register_expression_filters: register_expression_filters(filters: filters)
-      )
+    compilation = validate_js_runtime_assets(compilation, assets)
 
-    output_path = Path.join(dist_path, "assets/js/runtime.js")
-    File.mkdir_p(Path.dirname(output_path))
+    if compilation.status != :ok do
+      compilation
+    else
+      runtime_code =
+        render_runtime(
+          js_stdlib: @js_stdlib,
+          js_userlib: js_userlib_content(assets),
+          constants: generate_constants(constants),
+          type_hierarchy: TypeHierarchy.to_json(compilation.type_hierarchy),
+          patch_js_objects: patch_js_objects(patches: patches),
+          bind_keys: bind_keys(keybindings: keybindings),
+          user_components: user_components(user_components: user_components),
+          mixins: mixins(mixins: mixins),
+          init_game_objects:
+            init_game_objects(game: game, game_elements: game_elements, generators: generators),
+          register_expression_filters: register_expression_filters(filters: filters)
+        )
 
-    case File.write(output_path, runtime_code) do
-      :ok -> %{compilation | progress: ["Written runtime to #{output_path}" | progress]}
-      {:error, code} -> IOError.file_write_error(compilation, code, "runtime.js", output_path)
+      output_path = Path.join(dist_path, "assets/js/runtime.js")
+      File.mkdir_p(Path.dirname(output_path))
+
+      case File.write(output_path, runtime_code) do
+        :ok -> %{compilation | progress: ["Written runtime to #{output_path}" | progress]}
+        {:error, code} -> IOError.file_write_error(compilation, code, "runtime.js", output_path)
+      end
     end
   end
 
   def run_phase(compilation) do
     compilation
+  end
+
+  defp validate_js_runtime_assets(compilation, assets) do
+    assets
+    |> Enum.filter(fn node ->
+      NodeHelper.instance_node?(node) && NodeHelper.get_attr_value(node, "$js_runtime", false)
+    end)
+    |> Enum.reduce(compilation, fn asset, acc ->
+      case Asset.source_path(asset) do
+        nil ->
+          Compilation.add_error(acc, "Runtime asset #{asset.id} has no source path")
+
+        path ->
+          if File.exists?(path) do
+            acc
+          else
+            Compilation.add_error(acc, "Runtime asset #{asset.id} source file not found: #{path}")
+          end
+      end
+    end)
   end
 
   def js_userlib_content(assets) do

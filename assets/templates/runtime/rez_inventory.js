@@ -103,14 +103,14 @@ class RezInventory extends RezBasicObject {
   /**
    * @function getSlot
    * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix identifying the slot position
+   * @param {string} name - the binding prefix identifying the slot position
    * @returns {object} reference to the slot element for this binding, or throws
    * if the binding does not exist in this inventory.
    */
-  getSlot(slotBinding) {
-    const binding = this.getAttributeValue("slots").find(b => b.prefix === slotBinding);
+  getSlot(name) {
+    const binding = this.getAttributeValue("slots").find(b => b.prefix === name);
     if(!binding) {
-      throw new Error(`Inventory |${this.id}| does not have slot binding |${slotBinding}|!`);
+      throw new Error(`Inventory |${this.id}| does not have slot binding |${name}|!`);
     }
     return $t(binding.source, "slot", true);
   }
