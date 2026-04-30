@@ -53,7 +53,7 @@ class RezInventory extends RezBasicObject {
   }
 
   addInitialContents() {
-    for(const {prefix} of this.getAttributeValue("slots")) {
+    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
       const initialContents = this.getAttributeValue(`initial_${prefix}`, []);
       for(const contentId of initialContents) {
         this.addItemToSlot(prefix, contentId);
@@ -62,7 +62,7 @@ class RezInventory extends RezBasicObject {
   }
 
   addInitialEnabledStates() {
-    for(const {prefix} of this.getAttributeValue("slots")) {
+    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
       const enabled = this.getAttributeValue(`initial_${prefix}_enabled`, true);
       this.setAttribute(`${prefix}_enabled`, enabled);
     }
@@ -84,19 +84,19 @@ class RezInventory extends RezBasicObject {
   }
 
   /**
-   * @function getSlotBindings
+   * @function getSlots
    * @memberof RezInventory
    * @returns {array} array of {prefix, slot} objects for every slot position in this inventory
    * @example
-   * for(const {prefix, slot} of inv.getSlotBindings()) {
+   * for(const {prefix, slot} of inv.getSlots()) {
    *   const available = inv.isSlotAvailable(prefix);
    *   // render slot UI using prefix (binding name) and slot (RezSlot object with name, accepts, etc.)
    * }
    */
-  getSlotBindings() {
-    return this.getAttributeValue("slots").map(({prefix, source}) => ({
+  getSlots() {
+    return Object.entries(this.getAttributeValue("slots")).map(([prefix, slotId]) => ({
       prefix,
-      slot: $t(source, "slot", true)
+      slot: $t(slotId, "slot", true)
     }));
   }
 
@@ -108,11 +108,11 @@ class RezInventory extends RezBasicObject {
    * if the binding does not exist in this inventory.
    */
   getSlot(name) {
-    const binding = this.getAttributeValue("slots").find(b => b.prefix === name);
-    if(!binding) {
+    const slotId = this.getAttributeValue("slots")[name];
+    if(!slotId) {
       throw new Error(`Inventory |${this.id}| does not have slot binding |${name}|!`);
     }
-    return $t(binding.source, "slot", true);
+    return $t(slotId, "slot", true);
   }
 
   /**
@@ -175,7 +175,7 @@ class RezInventory extends RezBasicObject {
    *   $("player_equip").enableSlot("ring2");
    * }
    * @example <caption>Check in UI</caption>
-   * for(const {prefix, slot} of inv.getSlotBindings()) {
+   * for(const {prefix, slot} of inv.getSlots()) {
    *   const enabled = inv.isSlotEnabled(prefix);
    *   const available = inv.isSlotAvailable(prefix);
    *   // enabled=false → locked; available=false → excluded by another equipped item
@@ -241,13 +241,9 @@ class RezInventory extends RezBasicObject {
    * @description add either a single item_id or an array of item_ids to the slot
    */
   appendToSlot(slotBinding, itemOrItems) {
-    if(Array.isArray(itemOrItems)) {
-      itemOrItems.forEach((itemId) => {
+    ensureArray(itemOrItems).forEach((itemId) => {
         this.appendItemToSlot(slotBinding, itemId);
       });
-    } else {
-      this.appendItemToSlot(slotBinding, itemOrItems);
-    }
   }
 
   /**
@@ -300,7 +296,7 @@ class RezInventory extends RezBasicObject {
    * @returns {string|undefined} binding prefix of the slot containing the item, or undefined
    */
   containsItem(itemId) {
-    for(const {prefix} of this.getAttributeValue("slots")) {
+    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
       if(this.slotContainsItem(prefix, itemId)) return prefix;
     }
     return undefined;
@@ -337,21 +333,21 @@ class RezInventory extends RezBasicObject {
    * @returns {boolean} true if an occupied slot excludes this slot, or this slot excludes an occupied slot
    */
   isBlockedByExclusion(slotBinding) {
-    const allSlots = this.getAttributeValue("slots");
-    const targetSlotId = allSlots.find(b => b.prefix === slotBinding).source;
+    const slots = this.getAttributeValue("slots");
+    const targetSlotId = slots[slotBinding];
     const targetExcludes = this.getSlot(slotBinding).getAttributeValue("excludes", new Set());
 
-    for(const {prefix, source} of allSlots) {
+    for(const [prefix, slotId] of Object.entries(slots)) {
       if(prefix === slotBinding) continue;
       if(!this.slotIsOccupied(prefix)) continue;
 
       // Direction 1: target slot excludes this occupied position's slot type
-      if([...targetExcludes].some(ref => ref.$ref === source)) {
+      if([...targetExcludes].some(ref => ref.$ref === slotId)) {
         return true;
       }
 
       // Direction 2: this occupied position's slot type excludes the target slot
-      const otherExcludes = $t(source, "slot", true).getAttributeValue("excludes", new Set());
+      const otherExcludes = $t(slotId, "slot", true).getAttributeValue("excludes", new Set());
       if([...otherExcludes].some(ref => ref.$ref === targetSlotId)) {
         return true;
       }

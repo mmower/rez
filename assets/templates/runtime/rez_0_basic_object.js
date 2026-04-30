@@ -45,6 +45,10 @@ function normalizeRefs(value) {
   return value;
 }
 
+function ensureArray(o) {
+  return Array.isArray(o) ? o : [o];
+}
+
 /**
  * @class RezBasicObject
  * @category Internal
