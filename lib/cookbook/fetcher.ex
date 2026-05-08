@@ -6,11 +6,38 @@ defmodule Rez.Cookbook.Fetcher do
   alias Rez.Cookbook.Config
 
   @doc """
-  Fetches a module's `.rez` source from the cookbook repo.
+  Fetches a module's `manifest.json` from the cookbook repo.
+  Returns `{:ok, map}`, `:not_found`, or `{:error, reason}`.
+  """
+  def fetch_manifest(module_path, version_ref) do
+    url = Config.raw_manifest_url(module_path, version_ref)
+
+    case Req.get(url) do
+      {:ok, %{status: 200, body: body}} ->
+        result = if is_binary(body), do: Jason.decode(body), else: {:ok, body}
+
+        case result do
+          {:ok, map} when is_map(map) -> {:ok, map}
+          _ -> {:error, "manifest.json is not a valid JSON object"}
+        end
+
+      {:ok, %{status: 404}} ->
+        :not_found
+
+      {:ok, %{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, inspect(reason)}
+    end
+  end
+
+  @doc """
+  Fetches a named file from a module's root folder in the cookbook repo.
   Returns `{:ok, binary}` or `{:error, reason}`.
   """
-  def fetch_module(module_path, version_ref) do
-    url = Config.raw_file_url(module_path, version_ref)
+  def fetch_module_file(module_path, filename, version_ref) do
+    url = Config.raw_module_file_url(module_path, filename, version_ref)
 
     case Req.get(url) do
       {:ok, %{status: 200, body: body}} -> {:ok, body}
@@ -20,26 +47,11 @@ defmodule Rez.Cookbook.Fetcher do
   end
 
   @doc """
-  Fetches a module's `.lua` pragma script from the cookbook repo.
-  Returns `{:ok, binary}`, `:not_found` (no pragma for this module), or `{:error, reason}`.
+  Fetches a named file from a module's docs/ folder in the cookbook repo.
+  Returns `{:ok, binary}`, `:not_found`, or `{:error, reason}`.
   """
-  def fetch_pragma(module_path, version_ref) do
-    url = Config.raw_lua_url(module_path, version_ref)
-
-    case Req.get(url) do
-      {:ok, %{status: 200, body: body}} -> {:ok, body}
-      {:ok, %{status: 404}} -> :not_found
-      {:ok, %{status: status}} -> {:error, "HTTP #{status}"}
-      {:error, reason} -> {:error, inspect(reason)}
-    end
-  end
-
-  @doc """
-  Fetches a module's `.md` documentation file from the cookbook repo.
-  Returns `{:ok, binary}`, `:not_found` (no docs for this module), or `{:error, reason}`.
-  """
-  def fetch_docs(module_path, version_ref) do
-    url = Config.raw_md_url(module_path, version_ref)
+  def fetch_docs_file(module_path, filename, version_ref) do
+    url = Config.raw_docs_file_url(module_path, filename, version_ref)
 
     case Req.get(url) do
       {:ok, %{status: 200, body: body}} -> {:ok, body}

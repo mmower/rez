@@ -89,6 +89,12 @@ defmodule Rez do
             :error -> quit.(1)
           end
 
+        "export" ->
+          case Rez.Exporter.export(args, options) do
+            :ok -> quit.(0)
+            :error -> quit.(1)
+          end
+
         "cookbook" ->
           game_root = Map.get(options, :wdir) || File.cwd!()
           Rez.Cookbook.run(args, game_root)

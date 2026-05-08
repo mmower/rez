@@ -163,7 +163,7 @@ class RezScene extends RezBasicObject {
       this.current_card.runEvent("finish", {});
       this.runEvent("card_did_finish", {card_id: this.current_card.id});
       this.game.runEvent("card_did_finish", {card_id: this.current_card.id});
-      if(this.isStackLayout) {
+      if(this.isStackLayout && this.current_card.hasTemplateForFace("back")) {
         this.current_card.current_block.currentFace = "back";
       }
       this.last_card_id = this.current_card_id;

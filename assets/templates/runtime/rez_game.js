@@ -500,7 +500,8 @@ class RezGame extends RezBasicObject {
    * @description filters all game-objects returning those for which the pred filter returns true
    */
   filterObjects(pred) {
-    return Array.from(this.#gameObjects.values()).filter(pred);
+    return Array.from(this.#gameObjects.values())
+      .filter((obj) => !obj.isTemplateObject() && pred(obj));
   }
 
   /**

@@ -29,6 +29,7 @@ Elements describe in-game concepts.
 * <<List (Element), List>>
 * <<Object (Element), Object>>
 * <<Plot (Element), Plot>>
+* <<Quest (Element), Quest>>
 * <<Relationship (Element), Relationship>>
 * <<Scene (Element), Scene>>
 * <<Slot (Element), Slot>>
@@ -1392,11 +1393,28 @@ Called when the plot is started.
 
 Called whenever the plot has advanced by 1 or more stages.
 
-==== on_plot_did_component
+==== on_plot_did_complete
 
 : `(plot, {}) => {...}`
 
 Called when the plot has advanced to the final stage and is considered completed.
+
+== Quest (Element)
+
+The `@quest` element represents a quest that the player character may become aware of,
+accept, and complete. It further supports turning in to a quest-giver as well at becoming
+botched (incompletable) and unbotched.
+
+Where the `@plot` elements represents a plot-clock, the `@quest` represents an overarching
+goal of the players.
+
+=== Example
+
+=== Required Attributes
+
+=== Optional Attributes
+
+=== Event Handlers
 
 == Relationship (Element)
 

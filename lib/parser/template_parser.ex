@@ -34,6 +34,7 @@ defmodule Rez.Parser.TemplateParser do
   import Rez.Parser.UtilityParsers,
     only: [
       dot: 0,
+      dollar: 0,
       iws: 0,
       iows: 0,
       colon: 0,
@@ -447,8 +448,13 @@ defmodule Rez.Parser.TemplateParser do
   end
 
   defp dynamic_attr_value() do
-    DP.text_delimited_by_nested_parsers(open_brace(), close_brace())
-    |> transform(fn expr -> {:attr_expr, expr} end)
+    sequence(
+      [
+        optional(ignore(dollar())),
+        DP.text_delimited_by_nested_parsers(open_brace(), close_brace())
+      ],
+      ast: fn [expr] -> {:attr_expr, expr} end
+    )
   end
 
   defp user_component_attr() do

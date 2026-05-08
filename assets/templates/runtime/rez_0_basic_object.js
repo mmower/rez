@@ -167,6 +167,19 @@ class RezBasicObject {
   }
 
   /**
+   * @function kindOf
+   * @memberof RezBasicObject#
+   * @param {string} name - element type or alias name to test
+   * @returns {boolean} true if this object is of the given kind anywhere in its alias chain
+   * @description Checks whether this object's type hierarchy includes the given name.
+   * For example, given `@elem foo = object` and `@elem bar = foo`, an instance of `@bar`
+   * returns true for `kindOf("bar")`, `kindOf("foo")`, and `kindOf("object")`.
+   */
+  kindOf(name) {
+    return this.getAttributeValue("$kinds", [this.#element]).includes(name);
+  }
+
+  /**
    * @function id
    * @memberof RezBasicObject#
    * @returns {string} the unique identifier for this object
@@ -1086,7 +1099,7 @@ class RezBasicObject {
   }
 }
 
-const _placeHolderValue = new RezBasicObject("placeholder", " ", {});
+const _placeHolderValue = Symbol("placeholder");
 
 window.Rez.RezBasicObject = RezBasicObject;
 window.Rez._placeHolderValue = _placeHolderValue;

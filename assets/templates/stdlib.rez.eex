@@ -241,7 +241,7 @@
   <!-- End -->
   ```
 
-  on_did_render: () => {
+  on_did_render: +() => {
     (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
       const $notification = $delete.parentNode;
       $delete.addEventListener('click', () => {
@@ -609,8 +609,8 @@
   auto_start: true
   repeats: true
 
-  on_game_did_start: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
-  on_did_load: (timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
+  on_game_did_start: +(timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
+  on_did_load: +(timer) => {if(timer.auto_start) {timer.start();}; return RezEvent.noop();}
 }
 
 %% ----------------------------------------------------------------------------
@@ -2117,6 +2117,20 @@
     html = `<div class="rez-embed-error">Error rendering embedded card '${blockSource.id}': ${e}</div>`;
   }
   return html;
+}
+
+%% Rez allows you to create any number of template attributes on
+%% an object but when you use the template value it is not possible
+%% to use bindings. However it also exposes a template function
+%% that accepts bindings. This component allows you to render a
+%% template attribute using bindings.
+%% <.compose_attr attr="attrName" />
+@component compose_attr(bindings, assigns, _content) => {
+  const attr = `$${assigns.attr}_template`;
+  const card = bindings.card;
+  if(typeof(card[attr]) === "function") {
+    return card[attr](bindings);
+  }
 }
 
 @component img (_bindings, assigns, _content) => {

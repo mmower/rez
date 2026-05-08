@@ -6,12 +6,15 @@ defmodule Rez.Cookbook.Commands.Docs do
   end
 
   def run(game_root, [module_path | _]) do
-    path = Config.module_md_file_path(game_root, module_path)
+    html_path = Config.module_docs_html_path(game_root, module_path)
+    docs_dir = Config.module_docs_dir_path(game_root, module_path)
+    module_name = Path.basename(module_path)
+    md_path = Path.join(docs_dir, "#{module_name}.md")
 
-    if File.exists?(path) do
-      open_file(path)
-    else
-      IO.puts("No docs available for #{module_path}")
+    cond do
+      File.exists?(html_path) -> open_file(html_path)
+      File.exists?(md_path) -> open_file(md_path)
+      true -> IO.puts("No docs available for #{module_path}")
     end
   end
 

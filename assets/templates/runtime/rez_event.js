@@ -790,6 +790,10 @@ class RezEventProcessor {
       result = RezEvent.error(`No handler for event of type '${evt.type}'!`);
     }
 
+    if(!(result instanceof RezEvent)) {
+      throw new Error(`For event ${evt.type} handler did not return RezEvent!`);
+    }
+
     return this.afterEventProcessing(evt, result);
   }
 

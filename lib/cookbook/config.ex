@@ -15,20 +15,27 @@ defmodule Rez.Cookbook.Config do
   def manifest_file, do: @cookbook_manifest_file
   def dir_name, do: @cookbook_dir_name
 
-  def raw_file_url(module_path, version_ref) do
-    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/#{version_ref}/#{module_path}.rez"
+  defp base_raw_url do
+    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}"
   end
 
-  def raw_lua_url(module_path, version_ref) do
-    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/#{version_ref}/#{module_path}.lua"
+  @doc "URL for a module's manifest.json in the repo."
+  def raw_manifest_url(module_path, version_ref) do
+    "#{base_raw_url()}/#{version_ref}/#{module_path}/manifest.json"
   end
 
-  def raw_md_url(module_path, version_ref) do
-    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/#{version_ref}/#{module_path}.md"
+  @doc "URL for a named file inside a module's root folder in the repo."
+  def raw_module_file_url(module_path, filename, version_ref) do
+    "#{base_raw_url()}/#{version_ref}/#{module_path}/#{filename}"
+  end
+
+  @doc "URL for a named file inside a module's docs/ folder in the repo."
+  def raw_docs_file_url(module_path, filename, version_ref) do
+    "#{base_raw_url()}/#{version_ref}/#{module_path}/docs/#{filename}"
   end
 
   def index_url do
-    "https://raw.githubusercontent.com/#{@cookbook_repo_owner}/#{@cookbook_repo_name}/main/index.json"
+    "#{base_raw_url()}/main/index.json"
   end
 
   def manifest_path(game_root) do
@@ -43,15 +50,23 @@ defmodule Rez.Cookbook.Config do
     Path.join([game_root, "lib", "#{@cookbook_dir_name}.rez"])
   end
 
-  def module_file_path(game_root, module_path) do
-    Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.rez"])
+  @doc "Local directory for all files belonging to a module."
+  def module_dir_path(game_root, module_path) do
+    Path.join([game_root, "lib", @cookbook_dir_name, module_path])
   end
 
-  def module_lua_file_path(game_root, module_path) do
-    Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.lua"])
+  @doc "Local path for a named file inside a module's directory."
+  def module_file_path(game_root, module_path, filename) do
+    Path.join([game_root, "lib", @cookbook_dir_name, module_path, filename])
   end
 
-  def module_md_file_path(game_root, module_path) do
-    Path.join([game_root, "lib", @cookbook_dir_name, "#{module_path}.md"])
+  @doc "Local docs/ directory for a module."
+  def module_docs_dir_path(game_root, module_path) do
+    Path.join([game_root, "lib", @cookbook_dir_name, module_path, "docs"])
+  end
+
+  @doc "Local path for the rendered HTML docs page."
+  def module_docs_html_path(game_root, module_path) do
+    Path.join([game_root, "lib", @cookbook_dir_name, module_path, "docs", "index.html"])
   end
 end

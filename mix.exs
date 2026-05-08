@@ -1,7 +1,7 @@
 defmodule Rez.MixProject do
   use Mix.Project
 
-  @version "1.9.8-rc5"
+  @version "1.9.8"
 
   def project do
     [
@@ -42,7 +42,9 @@ defmodule Rez.MixProject do
       {:apex, "~>1.2.1"},
       {:scribe, "~> 0.11"},
       {:lua, "~> 0.3.0"},
-      {:toml, "~> 0.7"}
+      {:toml, "~> 0.7"},
+      {:earmark, "~> 1.4"},
+      {:csv, "~> 3.2"}
     ]
   end
 

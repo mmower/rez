@@ -2,10 +2,29 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
   @moduledoc """
   Implements the apply defaults phase of the Rez compiler.
 
-  It iterates the AST nodes looking for nodes with an $alias attribute. Then
-  copies attributes defined by the alias.
+  Iterates AST nodes with a $alias attribute and merges defaults from the alias
+  chain into each node.
 
-  Where the alias also has an alias it copies from the closest matching alias.
+  ## Handler chaining with `+`
+
+  Event handlers (and any function attribute) support a `+()=>{}` append syntax.
+  The rule: `+` at any level means "chain after everything less specific than me."
+  Bare `()=>{}` means "replace everything less specific; nothing from those levels runs."
+
+  The alias chain is processed least-specific first so the natural execution order
+  is always least-specific → most-specific. Given:
+
+      @defaults object { on_start: +()=>{O} }
+      @defaults foo    { on_start: +()=>{F} }   # foo extends object
+      @foo f_instance  { on_start: +()=>{I} }
+
+  the compiled handler runs O → F → I.
+
+  Using bare `()=>{}` at any level suppresses everything below it:
+
+      @defaults foo    { on_start:  ()=>{F} }   # replaces O
+      @foo f_instance  { on_start: +()=>{I} }   # chains after F only
+      # result: F → I
   """
   alias Rez.AST.NodeHelper
 
@@ -21,51 +40,60 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
   def run_phase(compilation), do: compilation
 
   def apply_defaults(%{game_element: true} = node, defaults) do
-    Enum.reduce(NodeHelper.get_meta(node, "alias_chain", []), node, fn elem, node ->
-      merge_defaults(node, elem, defaults)
-    end)
+    alias_chain = NodeHelper.get_meta(node, "alias_chain", [])
+
+    merged_attrs =
+      alias_chain
+      |> Enum.reverse()
+      |> Enum.reduce(%{}, fn target, acc ->
+        case Map.get(defaults, target) do
+          nil ->
+            acc
+
+          level_defaults ->
+            acc
+            |> merge_level(level_defaults)
+            |> consolidate_merge_sets()
+            |> consolidate_append_functions()
+        end
+      end)
+      |> merge_level(node.attributes)
+      |> consolidate_merge_sets()
+      |> consolidate_append_functions()
+
+    %{node | attributes: merged_attrs}
   end
 
-  def apply_defaults(node, _compilation) do
+  def apply_defaults(node, _defaults) do
     node
   end
 
-  def merge_defaults(%{} = node, target, %{} = defaults) when is_binary(target) do
-    case Map.get(defaults, target) do
-      nil ->
-        # No default, return unchanged
-        node
-
-      defaults ->
-        # Reverse merge to ensure defaults don't overwrite existing attrs
-        # Uses smart_merge to handle merge_set unions
-        # Then consolidate_merge_sets converts any remaining merge_sets to regular sets
-        %{node | attributes: defaults |> smart_merge(node.attributes) |> consolidate_merge_sets() |> consolidate_append_functions()}
-    end
-  end
-
-  # Smart merge that handles merge_set by unioning with default set
-  defp smart_merge(defaults, node_attrs) do
-    Map.merge(defaults, node_attrs, fn _key, default_attr, node_attr ->
-      merge_attribute(default_attr, node_attr)
+  # Merges new_attrs (more specific) on top of base_attrs (less specific).
+  # new_attrs generally wins; + in new_attrs chains after base.
+  defp merge_level(base_attrs, new_attrs) do
+    Map.merge(base_attrs, new_attrs, fn _key, base_attr, new_attr ->
+      merge_attribute(base_attr, new_attr)
     end)
   end
 
+  # new extends base — chain base first (less specific), new second (more specific)
   defp merge_attribute(
-         %{type: :set, value: default_set},
-         %{type: :merge_set, value: merge_values} = node_attr
+         %{type: :function, value: base_f},
+         %{type: :append_function, value: new_f} = new_attr
        ) do
-    %{node_attr | type: :set, value: MapSet.union(default_set, merge_values)}
+    %{new_attr | type: :function, value: chain_functions(base_f, new_f)}
   end
 
+  # merge_set unions with an existing set
   defp merge_attribute(
-         %{type: :append_function, value: append_f},
-         %{type: :function, value: base_f} = node_attr
+         %{type: :set, value: base_set},
+         %{type: :merge_set, value: new_values} = new_attr
        ) do
-    %{node_attr | value: chain_functions(base_f, append_f)}
+    %{new_attr | type: :set, value: MapSet.union(base_set, new_values)}
   end
 
-  defp merge_attribute(_default_attr, node_attr), do: node_attr
+  # catch-all: new (more-specific) wins
+  defp merge_attribute(_base_attr, new_attr), do: new_attr
 
   defp chain_functions({kind, base_params, _base_body} = base_f, {_kind2, append_params, append_body}) do
     outer_params = if base_params == [], do: ["_obj", "_evt"], else: base_params
@@ -78,8 +106,6 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
   defp encode_fn({:arrow, params, body}), do: "(#{Enum.join(params, ", ")}) => #{body}"
   defp encode_fn({:std, params, body}), do: "function(#{Enum.join(params, ", ")}) #{body}"
 
-  # Convert any remaining merge_sets to regular sets
-  # This handles the case where a merge_set has no corresponding default to merge with
   defp consolidate_merge_sets(attrs) do
     Map.new(attrs, fn
       {k, %{type: :merge_set} = attr} -> {k, %{attr | type: :set}}
@@ -87,7 +113,6 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
     end)
   end
 
-  # Convert any remaining append_functions (no base to chain with) to regular functions
   defp consolidate_append_functions(attrs) do
     Map.new(attrs, fn
       {k, %{type: :append_function} = attr} -> {k, %{attr | type: :function}}

@@ -132,6 +132,16 @@ class RezCard extends RezBasicObject {
   }
 
   /**
+   * @function hasTemplateForFace
+   * @memberof RezCard#
+   * @param {string} face - the face name to check
+   * @returns {boolean} true if the card has a template for the given face
+   */
+  hasTemplateForFace(face) {
+    return this.hasAttribute(`$${face}_template`);
+  }
+
+  /**
    * @function handleCustomEvent
    * @memberof RezCard#
    * @param {string} event_name - the name of the custom event to handle

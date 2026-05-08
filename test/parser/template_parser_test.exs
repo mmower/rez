@@ -342,6 +342,31 @@ defmodule Rez.Parser.TemplateParserTest do
             ]} = TP.parse(template)
   end
 
+  test "parses self-closing component with dollar-brace dynamic attribute" do
+    template = "<.foo bar=${player.name} />"
+
+    assert {:source_template,
+            [
+              {:user_component, "foo", %{"bar" => {:attr_expr, "player.name"}}, nil}
+            ]} = TP.parse(template)
+  end
+
+  test "dollar-brace and plain-brace dynamic attributes produce same AST" do
+    assert TP.parse("<.foo bar={player.name} />") ==
+             TP.parse("<.foo bar=${player.name} />")
+  end
+
+  test "parses component with mixed attribute styles including dollar-brace" do
+    template = ~s|<.foo count=3 name=${player.name} label="hi" />|
+
+    assert {:source_template,
+            [
+              {:user_component, "foo",
+               %{"count" => {:number, 3}, "name" => {:attr_expr, "player.name"}, "label" => {:string, "hi"}},
+               nil}
+            ]} = TP.parse(template)
+  end
+
   test "parses self-closing component with number attribute" do
     template = "<.foo count=3 />"
 

@@ -33,6 +33,31 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.CopyAssets => :after_copy_assets
   }
 
+  @export_phases [
+    Rez.Compiler.Phases.GetWorkingDirectory,
+    Rez.Compiler.Phases.MakeDistPath,
+    Rez.Compiler.Phases.MakeAssetPath,
+    Rez.Compiler.Phases.MakeCachePath,
+    Rez.Compiler.Phases.UpdateDeps,
+    Rez.Compiler.Phases.CopyStdlib,
+    Rez.Compiler.Phases.ReadSource,
+    Rez.Compiler.Phases.ParseSource,
+    Rez.Compiler.Phases.ConsolidateNodes,
+    Rez.Compiler.Phases.ExpandInlineElements,
+    Rez.Compiler.Phases.CollectConstants,
+    Rez.Compiler.Phases.ValidateMixins,
+    Rez.Compiler.Phases.BuildSchema,
+    Rez.Compiler.Phases.MapAliases,
+    Rez.Compiler.Phases.ApplyDefaults,
+    Rez.Compiler.Phases.ResolveConstants,
+    Rez.Compiler.Phases.ExpandTagRefs,
+    Rez.Compiler.Phases.ApplySchema,
+    Rez.Compiler.Phases.CompileTemplates,
+    Rez.Compiler.Phases.ValidateComponents,
+    Rez.Compiler.Phases.ProcessAST,
+    Rez.Compiler.Phases.ReprocessAST
+  ]
+
   @compiler_phases [
     Rez.Compiler.Phases.GetWorkingDirectory,
     Rez.Compiler.Phases.MakeDistPath,
@@ -113,6 +138,14 @@ defmodule Rez.Compiler do
     {time, result} = :timer.tc(__MODULE__, :run_phase, [phase, compilation])
     d_log("Elapsed time #{:erlang.float_to_binary(time / 1_000_000, decimals: 1)}s")
     result
+  end
+
+  def compile_to_struct(source_path, options) when is_binary(source_path) and is_map(options) do
+    Enum.reduce(
+      @export_phases,
+      %Compilation{source_path: source_path, options: options},
+      &run_phase/2
+    )
   end
 
   def compile(args, options) when is_list(args) and is_map(options) do
