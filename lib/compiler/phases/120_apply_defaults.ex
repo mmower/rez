@@ -42,7 +42,7 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
   def apply_defaults(%{game_element: true} = node, defaults) do
     alias_chain = NodeHelper.get_meta(node, "alias_chain", [])
 
-    merged_attrs =
+    defaults_merged =
       alias_chain
       |> Enum.reverse()
       |> Enum.reduce(%{}, fn target, acc ->
@@ -57,9 +57,13 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
             |> consolidate_append_functions()
         end
       end)
+
+    merged_attrs =
+      defaults_merged
       |> merge_level(node.attributes)
       |> consolidate_merge_sets()
       |> consolidate_append_functions()
+      |> tag_from_defaults(defaults_merged, node.attributes)
 
     %{node | attributes: merged_attrs}
   end
@@ -105,6 +109,16 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
 
   defp encode_fn({:arrow, params, body}), do: "(#{Enum.join(params, ", ")}) => #{body}"
   defp encode_fn({:std, params, body}), do: "function(#{Enum.join(params, ", ")}) #{body}"
+
+  # Marks attrs that came only from @defaults (not overridden by the element itself).
+  defp tag_from_defaults(merged_attrs, defaults_merged, element_attrs) do
+    Map.new(merged_attrs, fn {name, attr} ->
+      is_default_only =
+        Map.has_key?(defaults_merged, name) and not Map.has_key?(element_attrs, name)
+
+      {name, %{attr | from_defaults: is_default_only}}
+    end)
+  end
 
   defp consolidate_merge_sets(attrs) do
     Map.new(attrs, fn

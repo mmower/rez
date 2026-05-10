@@ -113,6 +113,8 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
     if compilation.status != :ok do
       compilation
     else
+      {shared_fn_decls, game_elements} = extract_shared_defaults(game_elements)
+
       runtime_code =
         render_runtime(
           js_stdlib: @js_stdlib,
@@ -124,7 +126,12 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
           user_components: user_components(user_components: user_components),
           mixins: mixins(mixins: mixins),
           init_game_objects:
-            init_game_objects(game: game, game_elements: game_elements, generators: generators),
+            init_game_objects(
+              game: game,
+              game_elements: game_elements,
+              generators: generators,
+              shared_fn_decls: shared_fn_decls
+            ),
           register_expression_filters: register_expression_filters(filters: filters)
         )
 
@@ -168,5 +175,57 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
       NodeHelper.instance_node?(node) && NodeHelper.get_attr_value(node, "$js_runtime", false)
     end)
     |> Enum.map_join("\n\n", &Asset.read_source/1)
+  end
+
+  # Collects function attributes that came purely from @defaults, deduplicates
+  # them by body, and replaces each with a reference to a shared JS constant.
+  # Returns {js_declarations_string, updated_game_elements}.
+  defp extract_shared_defaults(game_elements) do
+    shared_fns =
+      Enum.reduce(game_elements, %{}, fn node, acc ->
+        Enum.reduce(node.attributes, acc, fn {_name, attr}, inner_acc ->
+          case attr do
+            %{type: :function, from_defaults: true} ->
+              encoded = ValueEncoder.encode_function(attr.value)
+              hash = :erlang.phash2(encoded)
+              Map.put_new(inner_acc, hash, {"__rez_fn_#{Integer.to_string(hash, 16)}", encoded})
+
+            _ ->
+              inner_acc
+          end
+        end)
+      end)
+
+    if map_size(shared_fns) == 0 do
+      {"", game_elements}
+    else
+      updated_elements =
+        Enum.map(game_elements, fn node ->
+          updated_attrs =
+            Map.new(node.attributes, fn {name, attr} ->
+              case attr do
+                %{type: :function, from_defaults: true} ->
+                  encoded = ValueEncoder.encode_function(attr.value)
+                  hash = :erlang.phash2(encoded)
+                  {var_name, _} = shared_fns[hash]
+                  {name, %{attr | type: :shared_fn_ref, value: var_name}}
+
+                _ ->
+                  {name, attr}
+              end
+            end)
+
+          %{node | attributes: updated_attrs}
+        end)
+
+      js_decls =
+        shared_fns
+        |> Map.values()
+        |> Enum.map_join("\n", fn {var_name, encoded_fn} ->
+          "const #{var_name} = #{encoded_fn};"
+        end)
+
+      {js_decls, updated_elements}
+    end
   end
 end

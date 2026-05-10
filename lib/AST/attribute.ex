@@ -20,7 +20,8 @@ defmodule Rez.AST.Attribute do
 
   defstruct name: nil,
             type: nil,
-            value: nil
+            value: nil,
+            from_defaults: false
 
   def create(name, {:boolean, value}), do: boolean(name, value)
   def create(name, {:number, value}), do: number(name, value)

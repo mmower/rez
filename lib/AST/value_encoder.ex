@@ -112,6 +112,10 @@ defmodule Rez.AST.ValueEncoder do
     encode_function(f)
   end
 
+  def encode_value({:shared_fn_ref, var_name}) do
+    var_name
+  end
+
   def encode_value({:code_block, code}) do
     "function(obj) {return (#{code});}"
   end
