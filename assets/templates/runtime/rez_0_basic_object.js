@@ -537,7 +537,7 @@ class RezBasicObject {
     for(const attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
       if(typeof value === "object") {
-        if(Object.hasOwn(value, "initializer")) {
+        if(Object.hasOwn(value, "initializer") || Object.hasOwn(value, "dieroll")) {
           const prio = parseInt(value.priority, 10);
           dyn_initializers[prio-1].push([attrName, value]);
         } else if(Object.hasOwn(value, "$copy")) {
@@ -637,6 +637,8 @@ class RezBasicObject {
   createDynamicallyInitializedAttribute(attrName, value) {
     if(value.constructor === RezDie) {
       this.setAttribute(attrName, value.roll(), false);
+    } else if(Object.hasOwn(value, "dieroll")) {
+      this.setAttribute(attrName, value.dieroll.roll(), false);
     } else {
       const initializerFn = new Function(value.initializer);
       this.setAttribute(attrName, initializerFn.call(this), false);

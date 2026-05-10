@@ -93,7 +93,7 @@ defmodule Rez.Exporter do
     end
   end
 
-  @exportable_types @scalar_types ++ [:elem_ref, :roll]
+  @exportable_types @scalar_types ++ [:elem_ref, :roll, :initializer_roll]
 
   defp scalar_attr?({name, %{type: t}}) do
     !String.starts_with?(name, "$") && t in @exportable_types
@@ -117,6 +117,18 @@ defmodule Rez.Exporter do
   defp attr_to_string(%{type: :roll, value: {count, sides, mod, rounds}}) when mod > 0,
     do: "#{count}d#{sides}+#{mod}:#{rounds}"
   defp attr_to_string(%{type: :roll, value: {count, sides, mod, rounds}}),
+    do: "#{count}d#{sides}#{mod}:#{rounds}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, 0, 1, _prio}}),
+    do: "#{count}d#{sides}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, mod, 1, _prio}}) when mod > 0,
+    do: "#{count}d#{sides}+#{mod}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, mod, 1, _prio}}),
+    do: "#{count}d#{sides}#{mod}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, 0, rounds, _prio}}),
+    do: "#{count}d#{sides}:#{rounds}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, mod, rounds, _prio}}) when mod > 0,
+    do: "#{count}d#{sides}+#{mod}:#{rounds}"
+  defp attr_to_string(%{type: :initializer_roll, value: {count, sides, mod, rounds, _prio}}),
     do: "#{count}d#{sides}#{mod}:#{rounds}"
 
   defp write_csv([]) do

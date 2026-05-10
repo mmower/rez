@@ -6,8 +6,11 @@ date = 2026-04-24
 +++
 = Cookbook
 
-The Rez Cookbook is an optional library of functionality that you can include into your
-games. It is hosted via a Github https://github.com/mmower/rez-cookbook[repository].
+The Rez Cookbook is an library of optional functionality that you can incorporate into
+your own Rez games. For example a way of representing dynamic actions or maps & locations.
+
+It is hosted via a Github https://github.com/mmower/rez-cookbook[repository] and available
+using a simple `rez cookbook` commands from the command-line.
 
 == Getting Started
 

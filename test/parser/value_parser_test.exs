@@ -4,6 +4,23 @@ defmodule Rez.Parser.ValueParserTest do
   alias Ergo.Context
   alias Rez.Parser.ValueParsers
 
+  test "parses initializer roll values" do
+    assert %Context{status: :ok, ast: {:initializer_roll, {3, 6, 0, 1, 10}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^ir:3d6")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {1, 4, 0, 1, 10}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^ir:d4")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {2, 6, 3, 1, 10}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^ir:2d6+3")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {1, 10, 0, 1, 5}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^ir:5:1d10")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {3, 6, 0, 1, 10}}} =
+             Ergo.parse(ValueParsers.value(), "^ir:3d6")
+  end
+
   test "parses die values" do
     input = "^r:1d6+1"
 

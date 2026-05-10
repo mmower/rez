@@ -72,6 +72,10 @@ defmodule Rez.AST.ValueEncoder do
     "{initializer: #{Poison.encode!(initializer)}, priority: #{prio}}"
   end
 
+  def encode_value({:initializer_roll, {count, sides, mod, rounds, prio}}) do
+    "{dieroll: new RezDieRoll(#{count}, #{sides}, #{mod}, #{rounds}), priority: #{prio}}"
+  end
+
   def encode_value({:copy_initializer, {elem_id, prio}}) do
     "{$copy: #{encode_value({:elem_ref, elem_id})}, priority: #{prio}}"
   end

@@ -342,6 +342,66 @@ defmodule Rez.Parser.ValueParsers do
     )
   end
 
+  # Initializer Roll
+  # ^ir:NdX or ^ir:P:NdX (with priority P)
+  def initializer_roll_value() do
+    cached_parser(
+      sequence(
+        [
+          ignore(caret()),
+          ignore(char(?i)),
+          ignore(char(?r)),
+          commit(),
+          ignore(colon()),
+          optional(
+            sequence(
+              [number(), ignore(colon())],
+              ast: fn [prio] -> prio end
+            )
+          )
+          |> default(10),
+          optional(number_value()) |> default({:number, 1}),
+          ignore(char(?d)),
+          number_value(),
+          optional(
+            sequence(
+              [
+                choice([
+                  plus(),
+                  minus()
+                ]),
+                number_value()
+              ],
+              ast: fn [op, {:number, mod}] ->
+                case op do
+                  ?+ -> {:number, mod}
+                  ?- -> {:number, -mod}
+                end
+              end
+            )
+          )
+          |> default({:number, 0}),
+          optional(
+            sequence(
+              [
+                ignore(colon()),
+                number_value()
+              ],
+              ast: fn [rounds] ->
+                {:number, rounds}
+              end
+            )
+          )
+          |> default({:number, 1})
+        ],
+        label: "initializer-roll (^ir:NdX)",
+        ast: fn [prio, {:number, count}, {:number, sides}, {:number, mod}, {:number, rounds}] ->
+          {:initializer_roll, {count, sides, mod, rounds, bounded(prio, 1, 10)}}
+        end
+      )
+    )
+  end
+
   # Dice
   # ndX+-m
   # 2d+6, 3d8-2, 1d10+1
@@ -529,6 +589,7 @@ defmodule Rez.Parser.ValueParsers do
           elem_ref_value(),
           elem_name_value(),
           const_ref_value(),
+          initializer_roll_value(),
           dynamic_initializer_value(),
           copy_initializer_value(),
           delegate_value(),
