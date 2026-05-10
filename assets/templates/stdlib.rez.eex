@@ -2095,9 +2095,11 @@
   if(!$game.$banner_message) {
     return "";
   }
-  const {message, cssClass} = $game.$banner_message;
+  const {message, cssClass, dark} = $game.$banner_message;
   const classes = cssClass ? `rez-banner ${cssClass}` : "rez-banner";
-  return `<div class="${classes}" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;text-align:center;padding:0.75em 2em;background:rgba(0,0,0,0.8);color:white;border-radius:0.5em;pointer-events:none;font-size:2em;">${message}</div>`;
+  const bg = dark !== false ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)";
+  const color = dark !== false ? "white" : "black";
+  return `<div class="${classes}" style="position:fixed;top:50%;left:0;width:100vw;z-index:9999;text-align:center;padding:0.75em 2em;background:${bg};color:${color};pointer-events:none;font-size:2em;transform:translateY(-50%);">${message}</div>`;
 }
 
 %% This component can be used to embed one card in another. You use it as:

@@ -199,15 +199,16 @@ class RezEvent {
    * @function banner
    * @memberof RezEvent#
    * @param {string} message - message to display in the banner
-   * @param {object} [options={}] - optional config; supports `class` (string) and `onscreen` (ms, default 2000)
+   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), and `dark` (boolean, default true)
    * @returns {RezEvent} this event for method chaining
-   * @description Sets an auto-dismissing banner message to be displayed centred in the viewport
+   * @description Sets an auto-dismissing banner message displayed full-width across the viewport
    */
   banner(message, options = {}) {
     this.#bannerMessage = {
       message,
       cssClass: options.class || "",
-      onscreen: options.onscreen ?? 2000
+      onscreen: options.onscreen ?? 2000,
+      dark: options.dark !== false
     };
     return this;
   }
@@ -472,9 +473,9 @@ class RezEvent {
    * @memberof RezEvent
    * @static
    * @param {string} message - message to display in the banner
-   * @param {object} [options={}] - optional config; supports `class` (string) and `onscreen` (ms, default 2000)
+   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), and `dark` (boolean, default true)
    * @returns {RezEvent} a new event with the banner message set
-   * @description Creates a new event that displays an auto-dismissing centred banner
+   * @description Creates a new event that displays an auto-dismissing full-width banner
    */
   static banner(message, options = {}) {
     return new RezEvent().banner(message, options);

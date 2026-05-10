@@ -7,6 +7,13 @@
 <% alias Rez.AST.NodeHelper %>
 <% alias Rez.AST.Asset %>
 
+<%= if @shared_fn_decls != "" do %>
+//-----------------------------------------------------------------------------
+// Shared Default Functions
+//-----------------------------------------------------------------------------
+<%= @shared_fn_decls %>
+<% end %>
+
 const game = <%= Node.js_initializer(@game) %>;
 
 RezBasicObject.game = game;
