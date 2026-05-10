@@ -183,6 +183,7 @@
   $js_ctor: {kind: :string}
   $scene_stack: {kind: :list}
   $flash_messages: {kind: :list}
+  $banner_message: {kind: [:map :boolean]}
   $modal_message: {kind: [:map :boolean]}
   $modal_card: {kind: [:map :boolean]}
 
@@ -223,6 +224,7 @@
   $global: true
   $scene_stack: []
   $flash_messages: []
+  $banner_message: false
   $modal_message: false
   $modal_card: false
   start_events: []
@@ -234,6 +236,7 @@
   <!-- Main Content -->
   <section class="main-content is-fullheight">
     <.$flash_messages />
+    <.$banner_message />
     <.$modal_message />
     <.$modal_card />
     <div class="container">${content}</div>
@@ -2086,6 +2089,15 @@
       </footer>
     </div>
   </div>`;
+}
+
+@component $banner_message (_bindings, _assigns, _content) => {
+  if(!$game.$banner_message) {
+    return "";
+  }
+  const {message, cssClass} = $game.$banner_message;
+  const classes = cssClass ? `rez-banner ${cssClass}` : "rez-banner";
+  return `<div class="${classes}" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;text-align:center;padding:0.75em 2em;background:rgba(0,0,0,0.8);color:white;border-radius:0.5em;pointer-events:none;font-size:2em;">${message}</div>`;
 }
 
 %% This component can be used to embed one card in another. You use it as:

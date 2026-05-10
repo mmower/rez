@@ -819,6 +819,29 @@ class RezGame extends RezBasicObject {
   }
 
   /**
+   * @function setBanner
+   * @memberof RezGame#
+   * @param {object} config - banner config with `message`, `cssClass`, and `onscreen` (ms)
+   * @description Sets the current banner message and schedules its auto-dismissal
+   */
+  setBanner(config) {
+    this.$banner_message = config;
+    setTimeout(() => {
+      this.$banner_message = null;
+      this.updateView();
+    }, config.onscreen ?? 2000);
+  }
+
+  /**
+   * @function clearBanner
+   * @memberof RezGame#
+   * @description Clears any active banner
+   */
+  clearBanner() {
+    this.$banner_message = null;
+  }
+
+  /**
    * @function setModal
    * @memberof RezGame#
    * @param {object} config - modal config with `message` and optional `title`

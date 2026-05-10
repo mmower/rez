@@ -1086,7 +1086,8 @@ bindings: [
   total_score: (block, source, bindings) => {return bindings.player.experience + bindings.player.gold},
   random_event: (_block, _source, _bindings) => {return Math.random() < 0.3},
   available_exits: (_block, source, _bindings) => {return source.getExits()}
-]....
+]
+....
 
 **Dependent Bindings** - Bind to attributes of another binding:
 ....
@@ -1514,9 +1515,37 @@ Use `@defaults` to give custom elements standard attributes:
 }
 ....
 
+==== Testing "types"
+
+Rez doesn't have types in a programming language sense, `@elem` aliases always
+resolve, possibly through other aliases, to one of Rez's built-in element types
+such as `@actor`, `@card` or `@object`. What varies is the attributes and defaults
+that are applied to that object.
+
+Nevertheless, from time to time, you want to test the "type" of a given object,
+for example to return a list of all `@monster` elements. Rez provides the https://rez-lang.com/docs/api/RezBasicObject.html#kindOf[kindOf()] method for this purpose.
+
+....
+@elem npc = actor
+
+@elem monster = npc
+
+@monster troll {...}
+
+@npc guard {...}
+
+@game {
+  monsters: function() {
+    return $game.filterObjects((obj) => obj.kindOf("monster"));
+  }
+}
+....
+
 ==== Mixins for Shared Behavior
 
-Mixins let you share common attributes across different element types:
+Mixins are another way to share common attributes across different element types which
+work by injecting functions at runtime. This is more space-efficient than including them
+directly, e.g. via defaults which gives each object its own copy of the functions.
 
 ....
 @mixin combat_capable {
@@ -1535,8 +1564,10 @@ Mixins let you share common attributes across different element types:
   }
 }
 
-@elem warrior = actor<#combat_capable>
-@elem guardian = actor<#combat_capable>
+@elem warrior = actor
+@defaults warrior {
+  $mixins: [#combat_capable]
+}
 
 @warrior player_character {
   name: "Hero"

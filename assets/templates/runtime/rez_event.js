@@ -16,6 +16,7 @@
 class RezEvent {
   #params;
   #flashMessages;
+  #bannerMessage;
   #modalMessage;
   #modalCard;
   #cardId;
@@ -35,6 +36,7 @@ class RezEvent {
   constructor() {
     this.#params = {};
     this.#flashMessages = [];
+    this.#bannerMessage = null;
     this.#modalMessage = null;
     this.#modalCard = null;
     this.#cardId = null;
@@ -172,6 +174,41 @@ class RezEvent {
    */
   flash(message, kind = "") {
     this.#flashMessages.push({message: message, kind: kind});
+    return this;
+  }
+
+  /**
+   * @function hasBanner
+   * @memberof RezEvent#
+   * @returns {boolean} true if this event has a banner message to display
+   */
+  get hasBanner() {
+    return this.#bannerMessage != null;
+  }
+
+  /**
+   * @function bannerConfig
+   * @memberof RezEvent#
+   * @returns {object|null} the banner config ({message, cssClass, onscreen}), or null
+   */
+  get bannerConfig() {
+    return this.#bannerMessage;
+  }
+
+  /**
+   * @function banner
+   * @memberof RezEvent#
+   * @param {string} message - message to display in the banner
+   * @param {object} [options={}] - optional config; supports `class` (string) and `onscreen` (ms, default 2000)
+   * @returns {RezEvent} this event for method chaining
+   * @description Sets an auto-dismissing banner message to be displayed centred in the viewport
+   */
+  banner(message, options = {}) {
+    this.#bannerMessage = {
+      message,
+      cssClass: options.class || "",
+      onscreen: options.onscreen ?? 2000
+    };
     return this;
   }
 
@@ -431,6 +468,19 @@ class RezEvent {
   }
 
   /**
+   * @function banner
+   * @memberof RezEvent
+   * @static
+   * @param {string} message - message to display in the banner
+   * @param {object} [options={}] - optional config; supports `class` (string) and `onscreen` (ms, default 2000)
+   * @returns {RezEvent} a new event with the banner message set
+   * @description Creates a new event that displays an auto-dismissing centred banner
+   */
+  static banner(message, options = {}) {
+    return new RezEvent().banner(message, options);
+  }
+
+  /**
    * @function modal
    * @memberof RezEvent
    * @static
@@ -626,6 +676,10 @@ class RezEventProcessor {
         for(const message of response.flashMessages) {
           this.game.addFlashMessage(message);
         }
+      }
+
+      if(response.hasBanner) {
+        this.game.setBanner(response.bannerConfig);
       }
 
       if(response.hasModal) {
