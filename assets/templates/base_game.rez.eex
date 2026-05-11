@@ -46,7 +46,7 @@
   <!-- End -->
   ```
 
-  on_did_render: () => {
+  on_did_render: +() => {
     (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
       const $notification = $delete.parentNode;
       $delete.addEventListener('click', () => {

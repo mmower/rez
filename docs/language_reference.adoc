@@ -471,10 +471,11 @@ executed.
 * `RezEvent.flash("message")` - Show a flash message to the player
 * `RezEvent.modalMessage("message", {title: "Modal Title"})` - Show a modal to the player with an optional title
 * `RezEvent.modalCard("card_id", params)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title.
+* `RezEvent.banner("message", {dark: true, class: "css class", onscreen: 2000})`
 * `RezEvent.render()` - Re-render the current view
 * `RezEvent.noop()` - do nothing
 
-Methods can be chained: `RezEvent.playCard("victory").flash("You won!")`
+Methods can be chained: `RezEvent.playCard("victory").modal("You won!")`
 ====
 
 === Dynamic Properties
@@ -1544,8 +1545,7 @@ for example to return a list of all `@monster` elements. Rez provides the https:
 ==== Mixins for Shared Behavior
 
 Mixins are another way to share common attributes across different element types which
-work by injecting functions at runtime. This is more space-efficient than including them
-directly, e.g. via defaults which gives each object its own copy of the functions.
+work by injecting functions at runtime.
 
 ....
 @mixin combat_capable {
@@ -1583,7 +1583,9 @@ Multiple mixins can be combined:
   spell_power: 12
 }
 
-@elem battle_mage = actor<#combat_capable, #magic_user>
+@warrior battle_mage {
+  $mixins: [#combat_capable #magic_user]
+}
 ....
 
 === Behavior Trees
@@ -2113,27 +2115,30 @@ bindings: [
 ]
 ....
 
-==== Dynamic Types
+==== Special Value Types
 
-** Dynamic Initializer** (calculated during intialization, static thereafter)
-When you want to initialize an attribute value with a dynamic value but have it
-remain the same thereafter you can use a dynamic initializer `^i{}`.
+===== Dynamic Initializer
 
-An initializer should contain Javascript to return the value that becomes the
-attributes initial value at runtime.
+When you want to initialize an attribute with a dynamic value, but have it respond
+with the same value thereafter you use the dynamic initializer `^init` (`^i` for short).
+
+This is followed by a Javascript expression wrapped in `{}` that returns the value
+used to initialize the attribute.
 
 Thereafter the attribute is equivalent to a statically declared value and can
 be changed or replaced as normal.
 
 You may optionally specify a priority 1-10 for the initializer, `:n`, that determines
-when it runs relative to other initializers. If left unspecified initializers
-get priority `10`, the lowest priority.
+when it runs relative to other initializers. If left unspecified initializers get a
+default priority of `10`, the lowest, meaning that they run after all other initializers.
+
+Within a priority level no ordering of initializers is guaranteed.
 
 ....
 @object treasure_horde {
-  gold: ^i:1{return Math.rand_int_between(20, 50);}
+  gold: ^init:1{return Math.rand_int_between(20, 50);}
   silver: ^i:2{return Math.rand_int_between(this.gold, 200);}
-  copper: ^i{return Math.rand_int_between(this.silver, 1000);}
+  copper: ^init{return Math.rand_int_between(this.silver, 1000);}
 }
 ....
 
@@ -2141,34 +2146,39 @@ In the example the `gold` initializer has priority `1` and runs first. This mean
 that when the `silver` initializer runs at priority `2` the object has its
 `gold` property set and it can depend upon that value. The `copper` initializer
 runs at the default priority of `10` which guarantees that the `silver` value
-is avialable.
+is alos avialable.
 
 Note that initializers must `return` a value. The runtime turns initializers into
 functions run during game initialization. During an initializer the value of
 `this` is the element whose attribute value is being initialized.
 
-**Dynamic Property** (calculated on each access)
+==== Dynamic Property
 
-When you want to create an attribute who value is computed dynamically each
-time it is referenced use a `^p{}` property.
+When you want an attribute whose value is computed whenever it is accessed you use
+a dynamic property `^prop` (`^p` for short).
 
-A property should contain Javascript code to return the value that the caller
-will receive when they reference the named attribute.
+This is followed by a Javascript expression wrapped in `{}` that returns the value
+of the property at that time.
 
 ....
 @actor player {
   movement_speed: ^p{
     let speed = this.base_speed || 30;
-    if (this.is_encumbered) speed = Math.floor(speed / 2);
-    if (this.hasCondition?.("haste")) speed *= 2;
-    if (this.hasCondition?.("slow")) speed = Math.floor(speed / 2);
+    if(this.is_encumbered) {
+      speed = Math.floor(speed / 2);
+    }
+    if(this.hasCondition?.("haste")) {
+      speed *= 2;
+    } else if (this.hasCondition?.("slow")) {
+      speed = Math.floor(speed / 2);
+    }
     return Math.max(0, speed);
   }
 }
 ....
 
-In this example whenever player.speed is requested it will be recalculated and
-that value returned.
+In this example whenever `speed` is requested it will be recalculated and that value
+ returned.
 
 ....
 @card c_player_run {
@@ -2182,6 +2192,13 @@ that value returned.
 }
 ....
 
+===== Delegation
+
+When you want an attribute value that is a short-cut for an attribute value of a
+composed object you use the delegation operator `^del` (`^d` for short).
+
+This is followed by `:` and the name of another property to look it up in
+whose value
 **Delegate Lookup** (referenced in a component element)
 
 When you want to simplify how you refer to an attribute in a composed element,

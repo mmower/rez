@@ -259,8 +259,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?c)),
+          ignore(choice([literal("^copy"), literal("^c")])),
           commit(),
           priority(),
           ignore(colon()),
@@ -282,8 +281,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?d)),
+          ignore(choice([literal("^del"), literal("^d")])),
           commit(),
           ignore(colon()),
           js_identifier("delegate_attr")
@@ -302,8 +300,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?i)),
+          ignore(choice([literal("^init"), literal("^i")])),
           priority(),
           text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
@@ -333,8 +330,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?p)),
+          ignore(choice([literal("^prop"), literal("^p")])),
           text_delimited_by_nested_parsers(open_brace(), close_brace())
         ],
         ast: fn [f] -> {:property, f} end
@@ -348,9 +344,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?i)),
-          ignore(char(?r)),
+          ignore(choice([literal("^init_roll"), literal("^ir")])),
           commit(),
           ignore(colon()),
           optional(
@@ -409,9 +403,7 @@ defmodule Rez.Parser.ValueParsers do
     cached_parser(
       sequence(
         [
-          ignore(caret()),
-          ignore(char(?r)),
-          ignore(colon()),
+          ignore(choice([literal("^roll:"), literal("^r:")])),
           optional(number_value()) |> default({:number, 1}),
           ignore(char(?d)),
           number_value(),
