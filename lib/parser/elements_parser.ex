@@ -6,7 +6,8 @@ defmodule Rez.Parser.ElementsParser do
   import Ergo.Combinators, only: [choice: 2]
 
   import Rez.Utils, only: [file_name_to_js_identifier: 1]
-  import Rez.Parser.StructureParsers, only: [block: 3, block_with_id: 2]
+  import Rez.Parser.StructureParsers,
+    only: [block: 3, block_with_id: 2, block_with_local_id: 2, block_with_id_and_children: 3]
   import Rez.Parser.RelationshipParsers, only: [relationship_elem: 0]
   import Rez.Parser.ParserCache, only: [cached_parser: 1]
 
@@ -59,8 +60,14 @@ defmodule Rez.Parser.ElementsParser do
     cached_parser(block_with_id("group", Rez.AST.Group))
   end
 
+  def contains_element() do
+    cached_parser(block_with_local_id("contains", Rez.AST.Contains))
+  end
+
   def inventory_element() do
-    cached_parser(block_with_id("inventory", Rez.AST.Inventory))
+    cached_parser(
+      block_with_id_and_children("inventory", Rez.AST.Inventory, contains_element())
+    )
   end
 
   def list_element() do

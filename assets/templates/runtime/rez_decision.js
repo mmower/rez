@@ -254,3 +254,5 @@ class RezDecision {
     }
   }
 }
+
+window.Rez.RezDecision = RezDecision;

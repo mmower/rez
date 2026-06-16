@@ -650,6 +650,7 @@ Some bindings are always available:
 * `card` - The current card being displayed
 * `scene` - The current scene
 * `game` - The game object
+* `param` - The parameters passed to the current context
 
 ....
 @card example {
@@ -659,6 +660,11 @@ Some bindings are always available:
   ```
 }
 ....
+
+=== Debugging Bindings
+
+If you set the attribute `$debug_bindings: true` on any card, Rez will drop you
+into the debugger to allow you to inspect the available bindings.
 
 === Navigation Between Cards
 
@@ -737,6 +743,31 @@ Trigger custom behavior with `<a event="event_name">`:
   }
 }
 ....
+
+[TIP]
+====
+Custom event handlers also receive the native click `MouseEvent` as
+`params.evt`, so you can check for modifier keys such as shift-click:
+
+....
+on_try_key: (card, params) => {
+  if(params.evt.shiftKey) {
+    return RezEvent.flash("You yank hard on the locked door!");
+  }
+
+  if(player.has_item("magic_key")) {
+    card.locked = false;
+    return RezEvent.flash("The key works! The door swings open.");
+  } else {
+    return RezEvent.flash("You don't have the right key.");
+  }
+}
+....
+
+`params.evt.shiftKey`, `ctrlKey`, `altKey` and `metaKey` are all available,
+along with the rest of the native `MouseEvent`. Note that `evt` is a reserved
+param name for click-triggered custom events.
+====
 
 [TIP]
 ====
@@ -1655,7 +1686,7 @@ Create your own condition and action behaviors:
 
 ....
 @behaviour player_nearby {
-  options: ["range"]
+  options_spec: ["range"]
   execute: function(owner, behaviour, wmem) {
     const range = behaviour.option("range");
     const distance = owner.distanceTo($("player"));
@@ -1668,7 +1699,7 @@ Create your own condition and action behaviors:
 }
 
 @behaviour set_alert_level {
-  options: ["level"]
+  options_spec: ["level"]
   execute: function(owner, behaviour, wmem) {
     const level = behaviour.option("level");
     owner.alert_level = level;

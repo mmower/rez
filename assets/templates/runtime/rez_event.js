@@ -27,6 +27,7 @@ class RezEvent {
   #renderEvent;
   #errorMessage;
   #afterHandlers;
+  #queuedEvents;
 
   /**
    * @function constructor
@@ -47,6 +48,7 @@ class RezEvent {
     this.#renderEvent = false;
     this.#errorMessage = null;
     this.#afterHandlers = [];
+    this.#queuedEvents = [];
   }
 
   /**
@@ -436,6 +438,51 @@ class RezEvent {
   }
 
   /**
+   * @function queueEvent
+   * @memberof RezEvent#
+   * @param {string} eventName - the name of the event to raise after this response
+   * @param {object} [params={}] - parameters passed to the queued event's handler
+   * @param {object} [opts={}] - options: `delay` (ms before the event fires, default 0),
+   *   `target` (id of an element to resolve the handler against first, default null),
+   *   `lock` (gate player input while the queued sequence is in flight, default true)
+   * @return {RezEvent} this event for method chaining
+   * @description Queues a follow-up event to be raised after this response has been
+   * dispatched (and rendered). The event fires asynchronously after `delay` ms, allowing
+   * the browser to paint the current render before the next event runs. This drives paced
+   * sequences such as a monster taking several actions in a row. While a locking queued
+   * sequence is in flight the event processor is "busy" and player-initiated events are
+   * ignored, preventing the player from interfering mid-sequence.
+   */
+  queueEvent(eventName, params = {}, opts = {}) {
+    this.#queuedEvents.push({
+      eventName,
+      params,
+      target: opts.target ?? null,
+      delay: opts.delay ?? 0,
+      lock: opts.lock ?? true,
+    });
+    return this;
+  }
+
+  /**
+   * @function hasQueuedEvents
+   * @memberof RezEvent#
+   * @returns {boolean} true if this event has follow-up events to raise
+   */
+  get hasQueuedEvents() {
+    return this.#queuedEvents.length > 0;
+  }
+
+  /**
+   * @function queuedEvents
+   * @memberof RezEvent#
+   * @returns {object[]} array of queued event descriptors {eventName, params, target, delay, lock}
+   */
+  get queuedEvents() {
+    return this.#queuedEvents;
+  }
+
+  /**
    * @function noop
    * @memberof RezEvent#
    * @returns {RezEvent} this event for method chaining
@@ -528,6 +575,20 @@ class RezEvent {
    */
   static render() {
     return new RezEvent().render();
+  }
+
+  /**
+   * @function queueEvent
+   * @memberof RezEvent
+   * @static
+   * @param {string} eventName - the name of the event to raise after this response
+   * @param {object} [params={}] - parameters passed to the queued event's handler
+   * @param {object} [opts={}] - options: `delay`, `target`, `lock` (see instance method)
+   * @returns {RezEvent} a new event that queues the specified follow-up event
+   * @description Creates a new event that queues a follow-up event
+   */
+  static queueEvent(eventName, params = {}, opts = {}) {
+    return new RezEvent().queueEvent(eventName, params, opts);
   }
 
   /**
@@ -625,6 +686,7 @@ window.Rez.RezEvent = RezEvent;
  */
 class RezEventProcessor {
   #game;
+  #pending;
 
   /**
    * @function constructor
@@ -634,6 +696,7 @@ class RezEventProcessor {
    */
   constructor(game) {
     this.#game = game;
+    this.#pending = 0;
   }
 
   /**
@@ -712,8 +775,82 @@ class RezEventProcessor {
       }
 
       response.runAfterHandlers();
+
+      if(response.hasQueuedEvents) {
+        for(const queued of response.queuedEvents) {
+          this.scheduleQueuedEvent(queued);
+        }
+      }
     } else {
       throw new Error("Event handlers must return a RezEvent object!");
+    }
+  }
+
+  /**
+   * @function busy
+   * @memberof RezEventProcessor#
+   * @returns {boolean} true while one or more locking queued sequences are in flight
+   * @description When busy, player-initiated events are ignored to stop the player from
+   * interfering with a queued sequence (e.g. a monster taking several actions).
+   */
+  get busy() {
+    return this.#pending > 0;
+  }
+
+  /**
+   * @function scheduleQueuedEvent
+   * @memberof RezEventProcessor#
+   * @param {object} queued - descriptor {eventName, params, target, delay, lock}
+   * @description Schedules a queued event to fire after its delay. The handler is invoked
+   * directly via handleCustomEvent (not handleBrowserEvent), so queued events deliberately
+   * bypass system before_event/after_event processing and undo recording — they are treated
+   * as internal, not player-initiated. Its response is fully dispatched (so it may itself
+   * queue further events, forming a chain). A locking queued event increments the busy
+   * counter immediately (holding the input gate across the delay) and releases it only
+   * after its response has been dispatched. Because a chained next-step is scheduled inside
+   * dispatchResponse (re-incrementing) before the release runs, the counter never reaches 0
+   * mid-chain, so the gate stays continuous for the whole sequence.
+   */
+  scheduleQueuedEvent({eventName, params, target, delay, lock}) {
+    if(lock) {
+      this.#incrementPending();
+    }
+
+    setTimeout(() => {
+      try {
+        const result = this.handleCustomEvent(eventName, params, target);
+        const response = (result instanceof RezEvent) ? result : RezEvent.noop();
+        this.dispatchResponse(response);
+      } finally {
+        if(lock) {
+          this.#decrementPending();
+        }
+      }
+    }, delay);
+  }
+
+  /**
+   * @function incrementPending
+   * @memberof RezEventProcessor#
+   * @description Increments the busy counter; on the 0->1 transition raises the busy cue.
+   */
+  #incrementPending() {
+    this.#pending += 1;
+    if(this.#pending === 1) {
+      this.game.setProcessing(true);
+    }
+  }
+
+  /**
+   * @function decrementPending
+   * @memberof RezEventProcessor#
+   * @description Decrements the busy counter; on returning to 0 clears the busy cue.
+   */
+  #decrementPending() {
+    this.#pending -= 1;
+    if(this.#pending <= 0) {
+      this.#pending = 0;
+      this.game.setProcessing(false);
     }
   }
 
@@ -807,6 +944,19 @@ class RezEventProcessor {
    * @description Determines if an event should automatically record undo state
    */
   isAutoUndoEvent(evt) {
+    return this.isPlayerInitiatedEvent(evt);
+  }
+
+  /**
+   * @function isPlayerInitiatedEvent
+   * @memberof RezEventProcessor#
+   * @param {Event} evt - the event to check
+   * @returns {boolean} true if this event was directly initiated by the player
+   * @description Player-initiated events (clicks, input, form submits, key bindings) are
+   * gated while the processor is busy running a queued sequence. Timer, window, and
+   * internally-raised queued events are not player-initiated and are never gated.
+   */
+  isPlayerInitiatedEvent(evt) {
     const evtTypes = ["click", "input", "submit", "key_binding"];
     return evtTypes.includes(evt.type);
   }
@@ -820,6 +970,13 @@ class RezEventProcessor {
    * system pre/post processing, and routes events to specific handlers based on type.
    */
   handleBrowserEvent(evt) {
+    if(this.busy && this.isPlayerInitiatedEvent(evt)) {
+      if(RezBasicObject.game.$debug_events) {
+        console.log(`Ignoring '${evt.type}' event — processor busy running a queued sequence`);
+      }
+      return RezEvent.noop();
+    }
+
     if(this.isAutoUndoEvent(evt)) {
       this.game.undoManager.startChange();
       this.game.undoManager.recordViewChange(this.game.view.copy());
@@ -930,6 +1087,11 @@ class RezEventProcessor {
    * @returns {*} the result of handling the click event
    * @description Handles browser click events by decoding the event data and routing to appropriate handlers.
    * Supports built-in event types (card, switch, interlude, resume) and custom events.
+   *
+   * Custom events receive the native click `MouseEvent` as `params.evt`, giving
+   * `on_<event>` handlers access to `shiftKey`, `ctrlKey`, `altKey`, `metaKey` and other
+   * native event properties for modifier-aware behaviour (e.g. shift-click). `evt` is
+   * therefore a reserved param name and will shadow any `data-evt` attribute.
    */
   handleBrowserClickEvent(evt) {
     const [eventName, target, params] = this.decodeEvent(evt);
@@ -950,7 +1112,7 @@ class RezEventProcessor {
     } else if(eventName === "resume") {
       return this.handleResumeEvent(params);
     } else {
-      return this.handleCustomEvent(eventName, params, target);
+      return this.handleCustomEvent(eventName, {...params, evt}, target);
     }
   }
 

@@ -316,7 +316,7 @@ Let's look at an example. We want a condition that tests whether a given actor i
 
 ....
 @behaviour actor_in {
-  options: [:actor :location]
+  options_spec: [:actor :location]
 
   execute: (behaviour, wmem) => {
     const actor_id = behaviour.option("actor");
@@ -347,7 +347,7 @@ The rest of the behaviours in this sequence will only be run if Sam is in his of
 === Required Attributes
 [cols="2,1,4"]
 |===
-|`options`
+|`options_spec`
 |List
 |keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
 
@@ -982,7 +982,28 @@ started.
 
 == Inventory (Element)
 
-The `@inventory` element creates a container that can hold `@item`s through the use of `@slot`s. Rez inventories are deliberately flexible to handle a range of use cases for example working memory (where items are thoughts) or spell books (where items are spells).
+The `@inventory` element is used to describe containers.
+
+An inventory is used to describe a container that can hold heterogenous items in slots.
+
+For example, in an RPG it is common to have different slots to hold different types of
+items like armour, a shield, melee weapon, range weapon, rings, and amulets. In other games you might have
+slots describing wardrobe items. We can also think of memory (things we know about)
+as an inventory (where the items are topics we know about) or spell books (where items
+are individual spells). The `@inventory` element is designed to handle such cases.
+
+When defining an `@inventory` you use the `slots:` attribute to define which slots the
+inventory contains. This attribute is specified using a binding list (list of prefix `:` value pairs) where the prefix is a 'slot specification' and the value is the `#id` of an existing
+`@slot` element. This allows us to re-use a slot.
+
+The `@inventory` knows about specifiers describing slots.
+
+....
+....
+
+ using a binding list
+where the prefix is an inventory
+
 
 Rez has a fairly flexible inventory system that is based around 'slots' that define how items can be held. This allows an inventory to hold different kinds of items: you could have an inventory for items as well as an inventory for spells (spell book).
 

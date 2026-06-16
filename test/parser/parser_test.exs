@@ -213,8 +213,18 @@ defmodule Rez.Parser.ParserTest do
     input = """
     @inventory inv_1 {
       tags: #\{:shopping}
-      owner: #player
-      slots: [main_hand: #main_hand_slot, off_hand: #off_hand_slot, two_handed: #two_handed_slot]
+      owner_id: #player
+      @contains main_hand {
+        slot_id: #main_hand_slot
+      }
+      @contains off_hand {
+        slot_id: #off_hand_slot
+        initial_contents: [#starter_dagger]
+      }
+      @contains two_handed {
+        slot_id: #two_handed_slot
+        initial_enabled: false
+      }
     }
     """
 
@@ -240,12 +250,6 @@ defmodule Rez.Parser.ParserTest do
 
     tags = MapSet.new([{:keyword, "shopping"}])
 
-    slots = [
-      {:list_binding, {"main_hand", {:source, false, {:elem_ref, "main_hand_slot"}}}},
-      {:list_binding, {"off_hand", {:source, false, {:elem_ref, "off_hand_slot"}}}},
-      {:list_binding, {"two_handed", {:source, false, {:elem_ref, "two_handed_slot"}}}}
-    ]
-
     assert %Rez.AST.Inventory{
              id: "inv_1",
              attributes: %{
@@ -254,18 +258,59 @@ defmodule Rez.Parser.ParserTest do
                  type: :set,
                  value: ^tags
                },
-               "slots" => %Rez.AST.Attribute{
-                 name: "slots",
-                 type: :list,
-                 value: ^slots
-               },
-               "owner" => %Rez.AST.Attribute{
-                 name: "owner",
+               "owner_id" => %Rez.AST.Attribute{
+                 name: "owner_id",
                  type: :elem_ref,
                  value: "player"
                }
+             },
+             metadata: %{
+               "nested_contains" => [
+                 %Rez.AST.Contains{
+                   id: "main_hand",
+                   attributes: %{
+                     "slot_id" => %Rez.AST.Attribute{
+                       name: "slot_id",
+                       type: :elem_ref,
+                       value: "main_hand_slot"
+                     }
+                   }
+                 },
+                 %Rez.AST.Contains{
+                   id: "off_hand",
+                   attributes: %{
+                     "slot_id" => %Rez.AST.Attribute{
+                       name: "slot_id",
+                       type: :elem_ref,
+                       value: "off_hand_slot"
+                     },
+                     "initial_contents" => %Rez.AST.Attribute{
+                       name: "initial_contents",
+                       type: :list,
+                       value: [{:elem_ref, "starter_dagger"}]
+                     }
+                   }
+                 },
+                 %Rez.AST.Contains{
+                   id: "two_handed",
+                   attributes: %{
+                     "slot_id" => %Rez.AST.Attribute{
+                       name: "slot_id",
+                       type: :elem_ref,
+                       value: "two_handed_slot"
+                     },
+                     "initial_enabled" => %Rez.AST.Attribute{
+                       name: "initial_enabled",
+                       type: :boolean,
+                       value: false
+                     }
+                   }
+                 }
+               ]
              }
            } = context.ast
+
+    refute Map.has_key?(context.ast.attributes, "slots")
   end
 
   test "parses item element" do

@@ -316,12 +316,12 @@ class RezBlock {
   dereferenceBoundValue(value) {
     if(Array.isArray(value)) {
       return value.map(ref => {
-        if(ref === window.Rez._placeHolderValue) return undefined;
+        if(window.Rez.isPlaceholder(ref)) return undefined;
         return $(ref);
       });
     }
 
-    if(value === window.Rez._placeHolderValue) return undefined;
+    if(window.Rez.isPlaceholder(value)) return undefined;
     return $(value);
   }
 
@@ -1577,6 +1577,18 @@ class RezView {
   render() {
     const html = this.layout.html();
     this.container.innerHTML = html;
+  }
+
+  /**
+   * Toggles the `rez-busy` CSS class on the container element.
+   *
+   * The container persists across renders (render only swaps innerHTML), so the
+   * class is not clobbered by re-renders that happen while the flag is set.
+   *
+   * @param {boolean} busy - Whether the view should reflect a busy state
+   */
+  setBusy(busy) {
+    this.container.classList.toggle("rez-busy", busy);
   }
 
   /**

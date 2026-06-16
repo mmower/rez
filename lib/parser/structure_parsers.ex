@@ -193,4 +193,102 @@ defmodule Rez.Parser.StructureParsers do
       end
     )
   end
+
+  # Like `block_with_id/2`, but the parsed id is *not* registered in the
+  # shared `id_map` — it is purely local to whatever parent block embeds
+  # this one (e.g. a `@contains` block nested inside an `@inventory`).
+  def block_with_local_id(label, block_struct) do
+    sequence(
+      [
+        iliteral("@#{label}"),
+        not_lookahead(elem_body_char()),
+        iws(),
+        commit(),
+        js_identifier("#{label}_id"),
+        iws(),
+        block_begin(),
+        attribute_list(),
+        iws(),
+        block_end()
+      ],
+      label: "#{label}-block",
+      debug: true,
+      ctx: fn %Context{
+                entry_points: [{line, col} | _],
+                ast: [id, attr_list | []],
+                data: %{source: source}
+              } = ctx ->
+        attributes = attr_list_to_map(attr_list)
+        {source_file, source_line} = LogicalFile.resolve_line(source, line)
+        block = create_block(block_struct, id, attributes, source_file, source_line, col)
+        %{ctx | ast: block}
+      end,
+      err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
+        Context.add_error(
+          ctx,
+          :block_not_matched,
+          "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
+        )
+      end
+    )
+  end
+
+  # Parses a block body as a mixture of attributes and nested child blocks
+  # (parsed with `child_parser`), splitting the result into
+  # `{attributes, children}`.
+  def attribute_and_child_list(child_parser) do
+    many(
+      sequence(
+        [
+          iws(),
+          choice([child_parser, attribute()], label: "attr_or_child")
+        ],
+        ast: &List.first/1
+      ),
+      ast: fn items -> Enum.split_with(items, &is_struct(&1, Rez.AST.Attribute)) end
+    )
+  end
+
+  # Like `block_with_id/2`, but the block body is `attribute_and_child_list/1`
+  # rather than `attribute_list/0`. The parsed children are stashed under
+  # `metadata["nested_contains"]` on the resulting block.
+  def block_with_id_and_children(label, block_struct, child_parser) do
+    sequence(
+      [
+        iliteral("@#{label}"),
+        not_lookahead(elem_body_char()),
+        iws(),
+        commit(),
+        js_identifier("#{label}_id"),
+        iws(),
+        block_begin(),
+        attribute_and_child_list(child_parser),
+        iws(),
+        block_end()
+      ],
+      label: "#{label}-block",
+      debug: true,
+      ctx: fn %Context{
+                entry_points: [{line, col} | _],
+                ast: [id, {attr_list, children} | []],
+                data: %{source: source}
+              } = ctx ->
+        attributes = attr_list_to_map(attr_list)
+        {source_file, source_line} = LogicalFile.resolve_line(source, line)
+
+        block =
+          create_block(block_struct, id, attributes, source_file, source_line, col)
+          |> Map.put(:metadata, %{"nested_contains" => children})
+
+        ctx_with_block_and_id_mapped(ctx, block, id, label, source_file, source_line)
+      end,
+      err: fn %Context{entry_points: [{line, col} | _]} = ctx ->
+        Context.add_error(
+          ctx,
+          :block_not_matched,
+          "#{to_string(block_struct)}/#{label} @ #{line}:#{col}"
+        )
+      end
+    )
+  end
 end

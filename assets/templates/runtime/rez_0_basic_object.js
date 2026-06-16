@@ -34,6 +34,7 @@ function normalizeRefs(value) {
 
   // Handle plain objects - recurse into properties
   if(value.constructor === Object) {
+    if(isPlaceholder(value)) return value;
     const result = {};
     for (const [k, v] of Object.entries(value)) {
       result[k] = normalizeRefs(v);
@@ -409,7 +410,7 @@ class RezBasicObject {
       Object.defineProperty(this, directAttrName, {
         get: function () {
           const ref_id = this.getAttribute(attrName);
-          if(ref_id === _placeHolderValue) return undefined;
+          if(isPlaceholder(ref_id)) return undefined;
           return $(ref_id);
         },
         set: function (ref) {
@@ -425,7 +426,7 @@ class RezBasicObject {
       Object.defineProperty(this, syntheticAttrName, {
         get: function() {
           const attr = this.getAttribute(attrName);
-          if(attr === _placeHolderValue) return undefined;
+          if(isPlaceholder(attr)) return undefined;
           return attr.roll();
         }
       })
@@ -657,7 +658,7 @@ class RezBasicObject {
   createAttributeByCopying(attrName, value) {
     const elem_ref = value.$copy;
     const source = $(elem_ref);
-    this.setAttribute(attrName, source.addCopy().id);
+    this.setAttribute(attrName, source.addCopy(undefined, value.overrides).id);
   }
 
   /**
@@ -905,7 +906,7 @@ class RezBasicObject {
    */
   hasValue(attrName) {
     const value = this.getAttribute(attrName);
-    return typeof value !== "undefined" && value !== _placeHolderValue;
+    return typeof value !== "undefined" && !isPlaceholder(value);
   }
 
   /**
@@ -973,6 +974,7 @@ class RezBasicObject {
 
     const oldValue = this.attributes[attrName];
     this.attributes[attrName] = newValue;
+    this.runEvent(`${attrName}_changed`, {oldValue: oldValue, newValue: newValue});
     this.changedAttributes.add(attrName);
 
     if(notifyObservers) {
@@ -1101,7 +1103,15 @@ class RezBasicObject {
   }
 }
 
-const _placeHolderValue = Symbol("placeholder");
+const _isPlaceholderSym = Symbol("isPlaceholder");
+const _placeHolder = (name) => Object.freeze({
+  [_isPlaceholderSym]: true,
+  toString()             { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); },
+  valueOf()              { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); },
+  [Symbol.toPrimitive]() { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); }
+});
+const isPlaceholder = (v) => v != null && v[_isPlaceholderSym] === true;
 
 window.Rez.RezBasicObject = RezBasicObject;
-window.Rez._placeHolderValue = _placeHolderValue;
+window.Rez._placeHolder = _placeHolder;
+window.Rez.isPlaceholder = isPlaceholder;

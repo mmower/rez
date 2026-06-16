@@ -31,6 +31,11 @@ defmodule Rez.Parser.ValueParserTest do
              Ergo.parse(ValueParsers.value(), input)
   end
 
+  test "parses die values with explicit rounds" do
+    assert %Context{status: :ok, ast: {:roll, {1, 6, 1, 2}}} =
+             Ergo.parse(ValueParsers.dice_value(), "^r:1d6+1:2")
+  end
+
   test "parses die values with no prefix" do
     input = "^r:d4"
 
@@ -65,18 +70,39 @@ defmodule Rez.Parser.ValueParserTest do
   test "parses copy initializer values" do
     input = "^c:#some_element"
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), input)
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
              Ergo.parse(ValueParsers.value(), input)
   end
 
   test "parses copy initializer values with priority" do
     input = "^c:5:#some_element"
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, %{}}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), input)
+  end
+
+  test "parses copy initializer with an override block" do
+    input = ~s|^c:#some_element { name: "STR" value: ^ir:3d6 }|
+
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, overrides}}} =
+             Ergo.parse(ValueParsers.copy_initializer_value(), input)
+
+    assert %Rez.AST.Attribute{name: "name", type: :string, value: "STR"} = overrides["name"]
+
+    assert %Rez.AST.Attribute{name: "value", type: :initializer_roll, value: {3, 6, 0, 1, 10}} =
+             overrides["value"]
+  end
+
+  test "parses copy initializer with priority and an override block" do
+    input = ~s|^c:5:#some_element { name: "STR" }|
+
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, overrides}}} =
+             Ergo.parse(ValueParsers.copy_initializer_value(), input)
+
+    assert %Rez.AST.Attribute{name: "name", type: :string, value: "STR"} = overrides["name"]
   end
 
   test "copy initializer without # produces helpful error" do
@@ -128,5 +154,59 @@ defmodule Rez.Parser.ValueParserTest do
 
     assert %Context{status: :ok, ast: {:elem_name, "my_location"}} =
              Ergo.parse(ValueParsers.elem_name_value(), input)
+  end
+
+  test "parses ^init long-form dynamic initializer" do
+    assert %Context{status: :ok, ast: {:dynamic_initializer, {"return 1;", 10}}} =
+             Ergo.parse(ValueParsers.dynamic_initializer_value(), "^init{return 1;}")
+
+    assert %Context{status: :ok, ast: {:dynamic_initializer, {"return 1;", 5}}} =
+             Ergo.parse(ValueParsers.dynamic_initializer_value(), "^init:5{return 1;}")
+
+    assert %Context{status: :ok, ast: {:dynamic_initializer, {"return 1;", 10}}} =
+             Ergo.parse(ValueParsers.value(), "^init{return 1;}")
+  end
+
+  test "parses ^prop long-form property" do
+    assert %Context{status: :ok, ast: {:property, "return this.bar;"}} =
+             Ergo.parse(ValueParsers.property_value(), "^prop{return this.bar;}")
+
+    assert %Context{status: :ok, ast: {:property, "return this.bar;"}} =
+             Ergo.parse(ValueParsers.value(), "^prop{return this.bar;}")
+  end
+
+  test "parses ^copy long-form copy initializer" do
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+             Ergo.parse(ValueParsers.copy_initializer_value(), "^copy:#some_element")
+
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, %{}}}} =
+             Ergo.parse(ValueParsers.copy_initializer_value(), "^copy:5:#some_element")
+
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+             Ergo.parse(ValueParsers.value(), "^copy:#some_element")
+  end
+
+  test "parses ^roll long-form dice value" do
+    assert %Context{status: :ok, ast: {:roll, {1, 6, 1, 1}}} =
+             Ergo.parse(ValueParsers.dice_value(), "^roll:1d6+1")
+
+    assert %Context{status: :ok, ast: {:roll, {1, 6, 1, 1}}} =
+             Ergo.parse(ValueParsers.value(), "^roll:1d6+1")
+  end
+
+  test "parses initializer roll with explicit rounds" do
+    assert %Context{status: :ok, ast: {:initializer_roll, {3, 6, 0, 2, 10}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^ir:3d6:2")
+  end
+
+  test "parses ^init_roll long-form initializer roll" do
+    assert %Context{status: :ok, ast: {:initializer_roll, {3, 6, 0, 1, 10}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^init_roll:3d6")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {1, 10, 0, 1, 5}}} =
+             Ergo.parse(ValueParsers.initializer_roll_value(), "^init_roll:5:1d10")
+
+    assert %Context{status: :ok, ast: {:initializer_roll, {3, 6, 0, 1, 10}}} =
+             Ergo.parse(ValueParsers.value(), "^init_roll:3d6")
   end
 end

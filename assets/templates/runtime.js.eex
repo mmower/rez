@@ -64,11 +64,11 @@
     });
   };
 
-  <%= @constants %>
   <%= @patch_js_objects %>
   <%= @js_stdlib %>
   <%= @js_userlib %>
 
+  <%= @constants %>
   <%= @mixins %>
   <%= @register_expression_filters %>
   <%= @init_game_objects %>

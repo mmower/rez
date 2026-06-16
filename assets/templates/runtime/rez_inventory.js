@@ -15,6 +15,8 @@
  * Key features:
  * - **Typed Slots**: Each slot accepts only items of a matching type
  * - **Capacity**: Slots can have size limits based on item sizes
+ * - **Weight**: Inventories can have an overall `max_weight`, checked against
+ *   the total `weight` of all items they contain
  * - **Effects**: Items can apply effects to the inventory's owner when inserted
  * - **Events**: Triggers events on insert/remove for items, slots, and inventory
  *
@@ -308,22 +310,72 @@ class RezInventory extends RezBasicObject {
    * @param {string} slotBinding
    * @param {string} itemId
    * @returns {boolean} true if the item will fit with any other contents of the slot
+   * @description If the slot has `has_capacity: true`, items count towards
+   * `slot.capacity` using their `size` attribute, defaulting to `1` if unset.
+   * This means `capacity: 1` naturally limits a slot to a single item unless
+   * an item explicitly opts out with `size: 0` (e.g. a weightless item) or
+   * takes up more room with `size: 2+`. Slots without `has_capacity: true`
+   * accept any number of items.
    */
   itemFitsInSlot(slotBinding, itemId) {
-    const item = $(itemId);
-    const itemSize = item.getAttributeValue("size", 0);
-    if(itemSize === 0) return true;
-
     const slot = this.getSlot(slotBinding);
-    if(slot.has_capacity) {
-      const minSize = slot.getAttributeValue("min_size", 1);
-      if(itemSize < minSize) return false;
-      const usedCapacity = this.getItemsForSlot(slotBinding).reduce((amount, id) => {
-        return amount + $(id).getAttributeValue("size", 0);
+    if(!slot.has_capacity) return true;
+
+    const itemSize = $(itemId).getAttributeValue("size", 1);
+    const usedCapacity = this.getItemsForSlot(slotBinding).reduce((amount, id) => {
+      return amount + $(id).getAttributeValue("size", 1);
+    }, 0);
+    return usedCapacity + itemSize <= slot.capacity;
+  }
+
+  /**
+   * @function totalWeight
+   * @memberof RezInventory
+   * @returns {number} sum of the `weight` attribute of every item in every slot
+   */
+  totalWeight() {
+    return Object.keys(this.getAttributeValue("slots")).reduce((total, prefix) => {
+      return total + this.getItemsForSlot(prefix).reduce((amount, itemId) => {
+        return amount + $(itemId).getAttributeValue("weight", 0);
       }, 0);
-      return usedCapacity + itemSize <= slot.capacity;
-    }
-    return true;
+    }, 0);
+  }
+
+  /**
+   * @function maxWeight
+   * @memberof RezInventory
+   * @returns {number} the `max_weight` attribute, or `Infinity` if not set
+   */
+  maxWeight() {
+    return this.getAttributeValue("max_weight", Infinity);
+  }
+
+  /**
+   * @function remainingWeight
+   * @memberof RezInventory
+   * @returns {number} how much more weight this inventory can carry before reaching `max_weight`
+   */
+  remainingWeight() {
+    return this.maxWeight() - this.totalWeight();
+  }
+
+  /**
+   * @function isOverweight
+   * @memberof RezInventory
+   * @returns {boolean} true if the inventory's total weight exceeds `max_weight`
+   */
+  isOverweight() {
+    return this.totalWeight() > this.maxWeight();
+  }
+
+  /**
+   * @function itemFitsWeight
+   * @memberof RezInventory
+   * @param {string} itemId
+   * @returns {boolean} true if adding this item would not exceed `max_weight`
+   */
+  itemFitsWeight(itemId) {
+    return this.totalWeight() + $(itemId).getAttributeValue("weight", 0) <= this.maxWeight();
   }
 
   /**
@@ -391,12 +443,14 @@ class RezInventory extends RezBasicObject {
       decision.no("slot is blocked by exclusion").setData("failed_on", "excludes");
     } else if(!this.itemFitsInSlot(slotBinding, itemId)) {
       decision.no("does not fit").setData("failed_on", "capacity");
+    } else if(!this.itemFitsWeight(itemId)) {
+      decision.no("too heavy").setData("failed_on", "weight");
     } else if(this.owner != null) {
       const actorDecision = this.owner.checkItem(this.id, slotBinding, itemId);
       if(actorDecision.result) {
         decision.yes();
       } else {
-        decision.no(actorDecision.reason()).setData("failed_on", "actor");
+        decision.no(actorDecision.reason).setData("failed_on", "actor");
       }
     } else {
       decision.yes();
@@ -410,25 +464,14 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string} itemId
-   * @returns {RezDecision} decision object with result
+   * @returns {RezDecision} decision object with result, defaulting to yes
    */
   canRemoveItemFromSlot(slotBinding, itemId) {
     const decision = new RezDecision("canRemoveItemFromSlot");
     decision.defaultYes();
-
-    const item = $(itemId);
     decision.setData("inventory_id", this.id);
     decision.setData("slot_id", slotBinding);
-    item.canBeRemoved(decision);
-    if(!decision.result) {
-      return decision;
-    }
-
-    if(this.owner == null) {
-      return decision;
-    }
-
-    this.owner.canRemoveItem(decision);
+    decision.setData("item_id", itemId);
     return decision;
   }
 

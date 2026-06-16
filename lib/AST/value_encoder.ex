@@ -20,12 +20,12 @@ defmodule Rez.AST.ValueEncoder do
   @doc """
   Convert an Attribute struct into a tuple of the form {type, encoded-value}
   """
-  def encode_attribute(%{type: type, name: name, value: value}) do
-    {name, encode_value({type, value})}
+  def encode_attribute(%{type: :placeholder, name: name}) do
+    {name, ~s|Rez._placeHolder("#{name}")|}
   end
 
-  def encode_value({:placeholder, _}) do
-    "Rez._placeHolderValue"
+  def encode_attribute(%{type: type, name: name, value: value}) do
+    {name, encode_value({type, value})}
   end
 
   def encode_value({:number, n}) do
@@ -151,6 +151,11 @@ defmodule Rez.AST.ValueEncoder do
   """
   def encode_value({:compiled_template, template_fn}) do
     ~s|{template: #{template_fn}}|
+  end
+
+  def encode_value(unexpected) do
+    raise "Rez compiler: unhandled value type in encoder: #{inspect(unexpected)}. " <>
+            "This is likely a compiler bug — please report it."
   end
 
   # Encode a ptable entry as a JSON-safe structure (list of [ref_map, probability])

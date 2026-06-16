@@ -134,7 +134,9 @@ defmodule Rez.AST.Pragma do
 
   defp load_lua_script(name) do
     if String.contains?(name, "/") do
-      File.read(Path.join(["lib", "cookbook", "#{name}.lua"]))
+      [prefix, pragma] = String.split(name, "/")
+      script_path = Path.join(["lib", "cookbook", prefix, pragma, "#{pragma}.lua"])
+      File.read(script_path)
     else
       File.read("pragmas/#{name}.lua")
     end

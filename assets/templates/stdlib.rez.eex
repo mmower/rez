@@ -71,8 +71,7 @@
 
   execute: {kind: :function, min_arity: 1, max_arity: 1, required: true}
 
-  options: {kind: :list, coll_kind: :keyword}
-  expected_keys: {kind: :list, coll_kind: :keyword}
+  options_spec: {kind: :list, coll_kind: :keyword}
   min_children: {kind: :number}
   max_children: {kind: :number}
   owner_id: {kind: :elem_ref}
@@ -83,7 +82,7 @@
   $template: false
   $auto_id_idx: 0
 
-  options: []
+  options_spec: []
   min_children: 0
   max_children: 0
   owner_id: _
@@ -186,6 +185,7 @@
   $banner_message: {kind: [:map :boolean]}
   $modal_message: {kind: [:map :boolean]}
   $modal_card: {kind: [:map :boolean]}
+  $processing: {kind: :boolean}
 
   start_events: {kind: :list, coll_kind: :list_binding}
 
@@ -227,6 +227,7 @@
   $banner_message: false
   $modal_message: false
   $modal_card: false
+  $processing: false
   start_events: []
 
   current_scene_id: _
@@ -308,9 +309,10 @@
 
   tags: {kind: :set, coll_kind: :keyword}
 
-  owner: {kind: :elem_ref}
+  owner_id: {kind: :elem_ref, ref_elem: @actor}
   slots: {kind: :list, coll_kind: :list_binding, ref_elem: @slot, required: true, min_length: 1}
   apply_effects: {kind: :boolean}
+  max_weight: {kind: :number, min: 0}
 
   on_insert: {kind: :function}
   on_remove: {kind: :function}
@@ -337,6 +339,7 @@
 
   container_id: {kind: :elem_ref, ref_elem: @inventory}
   size: {kind: :number, min: 0}
+  weight: {kind: :number, min: 0}
   uses: {kind: :number, min: 0}
   effect_ids: {kind: :list, coll_kind: :elem_ref, ref_elem: @effect}
   asset_id: {kind: :elem_ref, ref_elem: @asset}
@@ -657,6 +660,10 @@
 
     const deepCopy = (value) => {
       if(value === null || value === undefined || typeof(value) !== 'object') {
+        return value;
+      }
+
+      if(Rez.isPlaceholder(value)) {
         return value;
       }
 
@@ -997,6 +1004,10 @@
   patch: "Array"
   method: "take"
   impl: function(n) {
+    if(n <= 0) {
+      return [];
+    }
+
     if(this.length < n) {
       throw new Error(`Cannot take ${n} items from an array containing ${this.length} items!`);
     }
@@ -1182,8 +1193,7 @@
   patch: "String"
   method: "toKebabCase"
   impl: function() {
-    return this
-      .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
+    return (this.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g) || [])
       .map(x => x.toLowerCase())
       .join('-');
   }
@@ -1194,8 +1204,7 @@
   patch: "String"
   method: "toSnakeCase"
   impl: function() {
-      return this
-      .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
+      return (this.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g) || [])
       .map(x => x.toLowerCase())
       .join('_');
   }
@@ -1513,7 +1522,7 @@
   impl: function(lim) {
     const v1 = Math.rand_int(lim);
     const v2 = Math.rand_int(lim);
-    return (v1+v2)/2;
+    return Math.dist_round((v1+v2)/2);
   }
 }
 
@@ -2247,7 +2256,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 2
 
   execute: (behaviour) => {
@@ -2266,7 +2275,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 2
 
   execute: (behaviour) => {
@@ -2289,7 +2298,7 @@
 
   $built_in: true
   $template: true
-  options: [:p]
+  options_spec: [:p]
   min_children: 2
 
   configure: (behaviour) => {
@@ -2301,9 +2310,9 @@
 
   execute: (behaviour) => {
     const p = behaviour.intOption("p");
-    const die = new RezDie(1, 100, 0);
+    const die = new RezDieRoll(1, 100, 0);
     for(const child of behaviour.children) {
-      if(die.roll() < p) {
+      if(die.roll() <= p) {
         if(child.executeBehaviour()) {
           return true;
         }
@@ -2320,7 +2329,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 2
 
   execute: (behaviour) => {
@@ -2340,7 +2349,7 @@
 
   $built_in: true
   $template: true
-  options: [:count]
+  options_spec: [:count]
   min_children: 1
   max_children: 1
 
@@ -2363,7 +2372,7 @@
 
   $built_in: true
   $template: true
-  options: [:attempts]
+  options_spec: [:attempts]
   min_children: 1
   max_children: 1
 
@@ -2386,13 +2395,13 @@
 
   $built_in: true
   $template: true
-  options: [:p]
+  options_spec: [:p]
   min_children: 1
   max_children: 1
 
   execute: (behaviour) => {
     const p = behaviour.intOption("p");
-    const die = new RezDie(1, 100, 0);
+    const die = new RezDieRoll(1, 100, 0);
 
     if(die.roll() <= p) {
       return behaviour.firstChild.executeBehaviour();
@@ -2410,16 +2419,16 @@
 
   $built_in: true
   $template: true
-  options: [:p]
+  options_spec: [:p]
   min_children: 2
   max_children: 2
 
   execute: (behaviour) => {
     const p = behaviour.intOption("p");
-    const die = new RezDie(1, 100, 0);
+    const die = new RezDieRoll(1, 100, 0);
     const roll = die.roll();
 
-    if(roll < p) {
+    if(roll <= p) {
       return behaviour.firstChild.executeBehaviour();
     } else {
       return behaviour.secondChild.executeBehaviour();
@@ -2434,11 +2443,11 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 2
 
   execute: (behaviour) => {
-    const die = new RezDie(1, behaviour.childCount, -1);
+    const die = new RezDieRoll(1, behaviour.childCount, -1);
     const child = behaviour.getChildAt(die.roll());
     return child.executeBehaviour();
   }
@@ -2453,7 +2462,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 2
 
   execute: (behaviour) => {
@@ -2478,7 +2487,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 1
   max_children: 1
 
@@ -2494,7 +2503,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 1
   max_children: 1
 
@@ -2510,7 +2519,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   min_children: 1
   max_children: 1
 
@@ -2524,7 +2533,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   max_children: 0
 
   execute: (_behaviour) => {
@@ -2537,7 +2546,7 @@
 
   $built_in: true
   $template: true
-  options: []
+  options_spec: []
   max_children: 0
 
   execute: (_behaviour) => {

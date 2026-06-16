@@ -606,4 +606,87 @@ defmodule Rez.Compiler.ExecSchemaTest do
     result = ApplySchema.apply_schema_to_node(card_empty, rules, %{})
     assert [] = result.validation.errors
   end
+
+  test "@item weight accepts non-negative numbers and rejects negative ones" do
+    {:ok, rules} = SchemaBuilder.build("weight", [{:kind, [:number]}, {:min_value, 0}])
+
+    item = %Rez.AST.Item{
+      id: "item_1",
+      attributes: %{"weight" => Attribute.number("weight", 2.5)},
+      metadata: %{"alias_chain" => ["item"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(item, rules, %{})
+    assert [] = result.validation.errors
+
+    invalid_item = %Rez.AST.Item{
+      id: "item_2",
+      attributes: %{"weight" => Attribute.number("weight", -1)},
+      metadata: %{"alias_chain" => ["item"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(invalid_item, rules, %{})
+
+    assert Enum.any?(result.validation.errors, fn {_, _, msg} ->
+             String.contains?(msg, "weight") and String.contains?(msg, ">= 0")
+           end)
+  end
+
+  test "@inventory max_weight accepts non-negative numbers and rejects negative ones" do
+    {:ok, rules} = SchemaBuilder.build("max_weight", [{:kind, [:number]}, {:min_value, 0}])
+
+    inventory = %Rez.AST.Inventory{
+      id: "inv_1",
+      attributes: %{"max_weight" => Attribute.number("max_weight", 50)},
+      metadata: %{"alias_chain" => ["inventory"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(inventory, rules, %{})
+    assert [] = result.validation.errors
+
+    invalid_inventory = %Rez.AST.Inventory{
+      id: "inv_2",
+      attributes: %{"max_weight" => Attribute.number("max_weight", -10)},
+      metadata: %{"alias_chain" => ["inventory"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(invalid_inventory, rules, %{})
+
+    assert Enum.any?(result.validation.errors, fn {_, _, msg} ->
+             String.contains?(msg, "max_weight") and String.contains?(msg, ">= 0")
+           end)
+  end
+
+  test "@inventory owner_id validates as a ref to an @actor" do
+    {:ok, rules} =
+      SchemaBuilder.build("owner_id", [{:kind, [:elem_ref]}, {:ref_elem, ["actor"]}])
+
+    player = %Rez.AST.Actor{id: "player"}
+
+    inventory = %Rez.AST.Inventory{
+      id: "inv_1",
+      attributes: %{"owner_id" => Attribute.elem_ref("owner_id", "player")},
+      metadata: %{"alias_chain" => ["inventory"]}
+    }
+
+    result = ApplySchema.apply_schema_to_node(inventory, rules, %{id_map: %{"player" => player}})
+    assert [] = result.validation.errors
+
+    invalid_inventory = %Rez.AST.Inventory{
+      id: "inv_2",
+      attributes: %{"owner_id" => Attribute.elem_ref("owner_id", "not_an_actor")},
+      metadata: %{"alias_chain" => ["inventory"]}
+    }
+
+    invalid_target = %Rez.AST.Item{id: "not_an_actor", metadata: %{"alias_chain" => ["item"]}}
+
+    result =
+      ApplySchema.apply_schema_to_node(invalid_inventory, rules, %{
+        id_map: %{"not_an_actor" => invalid_target}
+      })
+
+    assert Enum.any?(result.validation.errors, fn {_, _, msg} ->
+             String.contains?(msg, "owner_id")
+           end)
+  end
 end

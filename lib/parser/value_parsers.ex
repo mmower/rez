@@ -382,7 +382,7 @@ defmodule Rez.Parser.ValueParsers do
                 number_value()
               ],
               ast: fn [rounds] ->
-                {:number, rounds}
+                rounds
               end
             )
           )
@@ -432,7 +432,7 @@ defmodule Rez.Parser.ValueParsers do
                 number_value()
               ],
               ast: fn [rounds] ->
-                {:number, rounds}
+                rounds
               end
             )
           )

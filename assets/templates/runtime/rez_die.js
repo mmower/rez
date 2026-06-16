@@ -310,6 +310,16 @@ class RezDieRoll {
   }
 
   /**
+   * Parses a dice notation string and returns a rolled result.
+   *
+   * @param {string} spec - Dice notation (e.g., "3d6+2", "d20a", "2d6!")
+   * @returns {number} The rolled result
+   */
+  static roll(spec) {
+    return Rez.makeDie(spec).roll();
+  }
+
+  /**
    * Returns a string description of this dice roll (e.g., "2d6+3").
    *
    * @returns {string} The dice notation string

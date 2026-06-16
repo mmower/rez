@@ -870,6 +870,21 @@ class RezGame extends RezBasicObject {
   setModalCard(config) {
     this.$modal_card = config;
   }
+
+  /**
+   * @function setProcessing
+   * @memberof RezGame#
+   * @param {boolean} processing - whether a queued event sequence is in flight
+   * @description Reflects the event processor's busy state. Stores a plain `$processing`
+   * flag (not a tracked attribute — it does not trigger re-render or bound-control updates,
+   * so it is only meaningful to templates that re-render for other reasons) and asks the
+   * view to toggle its `rez-busy` CSS hook, which CSS can use to disable or dim controls
+   * while the player's input is gated.
+   */
+  setProcessing(processing) {
+    this.$processing = processing;
+    this.view?.setBusy(processing);
+  }
 }
 
 window.Rez.RezGame = RezGame;
