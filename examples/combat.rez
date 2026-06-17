@@ -1,0 +1,242 @@
+%% Combat — a worked example of RezEvent#queueEvent()
+%%
+%% This game demonstrates how one event can drive another using `queueEvent`.
+%%
+%% The player and a goblin trade blows. When the player attacks, the goblin
+%% retaliates — but the goblin may strike *several* times in a single turn. We
+%% want the player to SEE each blow land (HP ticking down, the combat log
+%% growing) rather than having the whole exchange resolve into one final frame.
+%%
+%% `queueEvent` makes this possible:
+%%
+%%   1. `on_player_attack` renders the result of the player's strike, then queues
+%%      the goblin's first `monster_attack` to fire after a short delay. Because
+%%      the queued event runs in a later browser tick, the player's strike is
+%%      painted to the screen *before* the goblin responds.
+%%
+%%   2. Each `monster_attack` renders its blow and, if the goblin has more blows
+%%      to give, queues the *next* `monster_attack`. The blows therefore land one
+%%      at a time, paced by the delay, like an animation.
+%%
+%%   3. While a queued sequence is in flight the engine is "busy": player input
+%%      (clicking Attack) is ignored, and the view container gains a `rez-busy`
+%%      class. The CSS below uses that class to dim the Attack button and show a
+%%      "the goblin is acting…" indicator, so the player understands it is not
+%%      their turn. When the goblin's last blow resolves nothing more is queued,
+%%      the engine drains, and control returns to the player.
+
+@game {
+  name: "combat"
+  title: "Trading Blows"
+  author: "Rez"
+  IFID: "B5F2A1C0-7E44-11EE-9C31-1F8B2D4A6E90"
+  archive_format: 1
+  initial_scene_id: #s_fight
+
+  links: [
+    "https://jenil.github.io/bulmaswatch/journal/bulmaswatch.min.css"
+  ]
+
+  layout: ```
+  <section class="section">
+    <div class="container">
+      <h1 class="title">Trading Blows</h1>
+      <h2 class="subtitle">A <code>queueEvent</code> demo written with Rez</h2>
+      ${content}
+    </div>
+  </section>
+  ```
+}
+
+@scene s_fight {
+  initial_card_id: #c_battle
+  layout_mode: :single
+}
+
+%% Both combatants are global actors so handlers can resolve them with `$(id)`.
+
+@actor player {
+  $global: true
+  name: "You"
+  hp: 30
+  max_hp: 30
+  attack: 7
+}
+
+@actor goblin {
+  $global: true
+  name: "Goblin"
+  hp: 22
+  max_hp: 22
+  attack: 5
+  %% the goblin makes between 1 and `max_blows` strikes per turn
+  max_blows: 3
+}
+
+@card c_battle {
+  bindings: [player: #player, goblin: #goblin]
+
+  %% (Re)start the fight whenever this card is played, so "Fight again" works.
+  on_start: (card) => {
+    const player = card.$("player");
+    const goblin = card.$("goblin");
+    player.hp = player.max_hp;
+    goblin.hp = goblin.max_hp;
+    card.log = [`A wild ${goblin.name} appears!`];
+  }
+
+  content: ```
+  <div class="columns">
+    <div class="column">
+      <p class="title is-4">${player.name}</p>
+      <progress class="progress is-success" value="${player.hp}" max="${player.max_hp}">${player.hp}</progress>
+      <p>${player.hp} / ${player.max_hp} HP</p>
+    </div>
+    <div class="column">
+      <p class="title is-4">${goblin.name}</p>
+      <progress class="progress is-danger" value="${goblin.hp}" max="${goblin.max_hp}">${goblin.hp}</progress>
+      <p>${goblin.hp} / ${goblin.max_hp} HP</p>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="button is-primary" event="player_attack">Attack</button>
+    <span class="turn-indicator">⚔️ The ${goblin.name} is acting…</span>
+  </div>
+
+  <hr/>
+
+  <ul class="combat-log">
+  $foreach(line: card.log) {%
+    <li>${line}</li>
+  %}
+  </ul>
+  ```
+
+  %% The player strikes the goblin, then HANDS THE TURN to the goblin by queueing
+  %% its first attack. `.render()` paints this strike; the queued event fires a
+  %% beat later so the player sees it before the goblin responds.
+  on_player_attack: (card) => {
+    const player = card.$("player");
+    const goblin = card.$("goblin");
+
+    const dmg = roll_damage(player);
+    goblin.hp = Math.max(0, goblin.hp - dmg);
+    combat_log(card, `🗡️ You strike the ${goblin.name} for ${dmg}.`);
+
+    if(goblin.hp <= 0) {
+      combat_log(card, `💀 The ${goblin.name} collapses!`);
+      return RezEvent.render().queueEvent("combat_end", {won: true}, {delay: 900});
+    }
+
+    // The goblin's turn: 1..max_blows strikes, the first queued here.
+    const blows = 1 + Math.floor(Math.random() * goblin.max_blows);
+    return RezEvent.render().queueEvent("monster_attack", {blow: 1, blows: blows}, {delay: 650});
+  }
+
+  %% One goblin blow. It renders, then — if more blows remain — queues the NEXT
+  %% blow. Chaining this way keeps the input lock held continuously across the
+  %% whole flurry; when the last blow queues nothing, the engine drains and the
+  %% player can act again.
+  on_monster_attack: (card, params) => {
+    const player = card.$("player");
+    const goblin = card.$("goblin");
+
+    const dmg = roll_damage(goblin);
+    player.hp = Math.max(0, player.hp - dmg);
+    combat_log(card, `👹 The ${goblin.name} hits you for ${dmg}. (blow ${params.blow}/${params.blows})`);
+
+    if(player.hp <= 0) {
+      combat_log(card, `☠️ You fall to the ground…`);
+      return RezEvent.render().queueEvent("combat_end", {won: false}, {delay: 900});
+    }
+
+    const response = RezEvent.render();
+    if(params.blow < params.blows) {
+      response.queueEvent("monster_attack", {blow: params.blow + 1, blows: params.blows}, {delay: 650});
+    } else {
+      combat_log(card, `⏳ The ${goblin.name} catches its breath. Your move.`);
+    }
+    return response;
+  }
+
+  %% Fired (after a final pause) once someone has dropped to 0 HP.
+  on_combat_end: (card, params) => {
+    return RezEvent.playCard(params.won ? "c_victory" : "c_defeat");
+  }
+}
+
+@card c_victory {
+  bindings: [goblin: #goblin]
+  content: ```
+  <article class="message is-success">
+    <div class="message-body">
+      <p class="title is-4">Victory!</p>
+      <p>You defeated the ${goblin.name}.</p>
+    </div>
+  </article>
+  <p><a class="button" card="c_battle">Fight again</a></p>
+  ```
+}
+
+@card c_defeat {
+  bindings: [goblin: #goblin]
+  content: ```
+  <article class="message is-danger">
+    <div class="message-body">
+      <p class="title is-4">Defeat…</p>
+      <p>The ${goblin.name} got the better of you this time.</p>
+    </div>
+  </article>
+  <p><a class="button" card="c_battle">Try again</a></p>
+  ```
+}
+
+@script {
+  // Damage is the actor's attack rating ± a little randomness.
+  function roll_damage(actor) {
+    return Math.max(1, actor.attack - 2 + Math.floor(Math.random() * 5));
+  }
+
+  // Append a line to the card's combat log, keeping the last few entries.
+  function combat_log(card, line) {
+    const log = card.log.slice();
+    log.push(line);
+    card.log = log.slice(-8);
+  }
+}
+
+@styles {
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* The turn indicator and the busy styling are driven entirely by the
+     `rez-busy` class the engine adds to the view container while a queued
+     sequence is in flight. */
+  .turn-indicator {
+    display: none;
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  .rez-busy .turn-indicator {
+    display: inline;
+  }
+
+  .rez-busy button[data-event] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .combat-log {
+    list-style: none;
+    margin: 0;
+  }
+
+  .combat-log li {
+    padding: 0.15rem 0;
+  }
+}

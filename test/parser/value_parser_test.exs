@@ -70,39 +70,18 @@ defmodule Rez.Parser.ValueParserTest do
   test "parses copy initializer values" do
     input = "^c:#some_element"
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), input)
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
              Ergo.parse(ValueParsers.value(), input)
   end
 
   test "parses copy initializer values with priority" do
     input = "^c:5:#some_element"
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), input)
-  end
-
-  test "parses copy initializer with an override block" do
-    input = ~s|^c:#some_element { name: "STR" value: ^ir:3d6 }|
-
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, overrides}}} =
-             Ergo.parse(ValueParsers.copy_initializer_value(), input)
-
-    assert %Rez.AST.Attribute{name: "name", type: :string, value: "STR"} = overrides["name"]
-
-    assert %Rez.AST.Attribute{name: "value", type: :initializer_roll, value: {3, 6, 0, 1, 10}} =
-             overrides["value"]
-  end
-
-  test "parses copy initializer with priority and an override block" do
-    input = ~s|^c:5:#some_element { name: "STR" }|
-
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, overrides}}} =
-             Ergo.parse(ValueParsers.copy_initializer_value(), input)
-
-    assert %Rez.AST.Attribute{name: "name", type: :string, value: "STR"} = overrides["name"]
   end
 
   test "copy initializer without # produces helpful error" do
@@ -176,13 +155,13 @@ defmodule Rez.Parser.ValueParserTest do
   end
 
   test "parses ^copy long-form copy initializer" do
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), "^copy:#some_element")
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 5}}} =
              Ergo.parse(ValueParsers.copy_initializer_value(), "^copy:5:#some_element")
 
-    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10, %{}}}} =
+    assert %Context{status: :ok, ast: {:copy_initializer, {"some_element", 10}}} =
              Ergo.parse(ValueParsers.value(), "^copy:#some_element")
   end
 

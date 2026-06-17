@@ -53,6 +53,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ResolveConstants,
     Rez.Compiler.Phases.ExpandTagRefs,
     Rez.Compiler.Phases.ApplySchema,
+    Rez.Compiler.Phases.ExpandBehaviourTemplates,
     Rez.Compiler.Phases.CompileTemplates,
     Rez.Compiler.Phases.ValidateComponents,
     Rez.Compiler.Phases.ProcessAST,
@@ -81,6 +82,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ExpandTagRefs,
     Rez.Compiler.Phases.ApplySchema,
     # Pragmas with :after_schema_apply timing run here
+    Rez.Compiler.Phases.ExpandBehaviourTemplates,
     Rez.Compiler.Phases.CompileTemplates,
     Rez.Compiler.Phases.ValidateComponents,
     Rez.Compiler.Phases.ProcessAST,
