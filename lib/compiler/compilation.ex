@@ -99,6 +99,7 @@ defmodule Rez.Compiler.Compilation do
             defaults: %{},
             aliases: %{},
             constants: %{},
+            keywords: MapSet.new(),
             schema: nil,
             pragmas: [],
             progress: [],

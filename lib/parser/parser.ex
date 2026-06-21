@@ -84,15 +84,16 @@ defmodule Rez.Parser.Parser do
     if telemetry, do: Telemetry.start()
 
     case Ergo.parse(top_level(), to_string(source),
-           data: %{source: source, aliases: %{}, id_map: %{}}
+           data: %{source: source, aliases: %{}, id_map: %{}, keywords: MapSet.new()}
          ) do
-      %Context{status: :ok, ast: ast, data: %{id_map: id_map}} ->
+      %Context{status: :ok, ast: ast, data: %{id_map: id_map} = data} ->
         if Debug.dbg_do?(:debug) do
           File.write!("idmap.exs", "id_map = " <> inspect(id_map, pretty: true, limit: :infinity))
           File.write!("ast.exs", "ast = " <> inspect(ast, pretty: true, limit: :infinity))
         end
 
-        {:ok, ast, id_map}
+        keywords = Map.get(data, :keywords, MapSet.new())
+        {:ok, ast, id_map, keywords}
 
       %Context{status: {code, reasons}, id: id, line: line, col: col, input: input}
       when code in [:error, :fatal] ->

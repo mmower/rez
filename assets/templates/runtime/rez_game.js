@@ -180,7 +180,17 @@ class RezGame extends RezBasicObject {
       console.log("Found data");
     }
 
-    // Load the game's attributes and properties
+    // Pass 1: reconstruct procedurally-created objects that don't exist after a fresh
+    // boot. They are not defined in the source (only base elements are created at boot)
+    // and self-identify via `$original_id` (the template they were copied from). All
+    // objects are created before any data is applied so cross-references resolve.
+    for(const [id, obj_data] of Object.entries(data)) {
+      if(obj_data && obj_data["$original_id"] !== undefined && this.getGameObject(id, false) === undefined) {
+        this.reconstructObject(id, data);
+      }
+    }
+
+    // Pass 2: apply the archived attributes to every object (base + reconstructed).
     for(const [id, obj_data] of Object.entries(data)) {
       console.log(`Loading data for ${id}`);
       const obj = this.getGameObject(id);
@@ -194,6 +204,47 @@ class RezGame extends RezBasicObject {
     this.current_scene.resumeFromLoad();
     this.updateViewContent();
     this.updateView();
+  }
+
+  /**
+   * @function reconstructObject
+   * @memberof RezGame#
+   * @param {string} id id of the procedural object to rebuild
+   * @param {object} data the full data archive (id -> archived attributes)
+   * @param {Set} [inProgress] guards against cyclic template references
+   * @returns {RezBasicObject} the reconstructed (and registered) object
+   * @description Rebuilds a procedurally-created object from a save archive. The object's
+   * `$original_id` identifies the template to copy from; if that template is itself a
+   * not-yet-rebuilt procedural object (e.g. `someCopy.addCopy()`), it is reconstructed
+   * first. Uses `copyForLoad` (structural-only `re_init`, no generative initializers) and
+   * the exact saved id. The archived attributes are applied separately by `load()`.
+   */
+  reconstructObject(id, data, inProgress = new Set()) {
+    const existing = this.getGameObject(id, false);
+    if(existing !== undefined) {
+      return existing;
+    }
+
+    const obj_data = data[id];
+    const originalRef = obj_data ? obj_data["$original_id"] : undefined;
+    if(originalRef === undefined) {
+      throw new Error(`Cannot reconstruct object |${id}| from save: no template ($original_id) recorded and no such object exists.`);
+    }
+
+    if(inProgress.has(id)) {
+      throw new Error(`Cyclic template reference while reconstructing |${id}| from save.`);
+    }
+    inProgress.add(id);
+
+    const templateId = Rez.extractId(originalRef);
+    let template = this.getGameObject(templateId, false);
+    if(template === undefined) {
+      template = this.reconstructObject(templateId, data, inProgress);
+    }
+
+    inProgress.delete(id);
+
+    return template.copyForLoad(id).addToGame();
   }
 
   /**

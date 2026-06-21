@@ -187,7 +187,15 @@ defmodule Rez.Parser.ValueParsers do
         ],
         label: "keyword-value",
         debug: true,
-        ast: fn [keyword_chars] -> {:keyword, List.to_string(keyword_chars)} end
+        ctx: fn %Context{ast: [keyword_chars], data: data} = ctx ->
+          kw = List.to_string(keyword_chars)
+
+          %{
+            ctx
+            | ast: {:keyword, kw},
+              data: Map.update(data, :keywords, MapSet.new([kw]), &MapSet.put(&1, kw))
+          }
+        end
       )
     )
   end

@@ -22,9 +22,14 @@ defmodule Rez.Compiler.Phases.ParseSource do
       ) do
     try do
       case Parser.parse(source) do
-        {:ok, content, _id_map} ->
+        {:ok, content, _id_map, keywords} ->
           if NodeHelper.first_elem(content, Rez.AST.Game) do
-            %{compilation | content: content, progress: ["Compiled source" | progress]}
+            %{
+              compilation
+              | content: content,
+                keywords: keywords,
+                progress: ["Compiled source" | progress]
+            }
           else
             Compilation.add_error(compilation, "The @game element is missing.")
           end

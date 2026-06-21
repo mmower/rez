@@ -66,12 +66,12 @@ function ensureArray(o) {
  * - **Template/Copying**: Runtime object instantiation from templates
  *
  * ## Initialization Lifecycle
- * Objects initialize in three phases via the `init()` method:
- * - **init_0**: Creates static properties (from declared attributes) and dynamic properties
- *   (ptable, property, bht, template types), then runs dynamic attribute initializers
- * - **init_1**: Applies mixins defined in the `$mixins` attribute
- * - **init_2**: Calls `elementInitializer()` for subclass-specific setup, then fires the
- *   'init' event (skipped for template objects)
+ * Objects initialize via the `init()` method, which runs these steps in order:
+ * 1. Creates static properties (from declared attributes) and dynamic properties
+ *    (ptable, property, bht, template types), then runs dynamic attribute initializers
+ * 2. Applies mixins defined in the `$mixins` attribute
+ * 3. Calls `elementInitializer()` for subclass-specific setup, then fires the
+ *    'init' event (skipped for template objects)
  *
  * ## Property Generation
  * Attributes become JS properties automatically:
@@ -85,7 +85,7 @@ function ensureArray(o) {
  *
  * ## Template Objects
  * Objects with `$template: true` are templates meant to be copied via `addCopy()` or
- * `copyWithAutoId()`, not used directly. Templates skip init_2 phase initialization.
+ * `copyWithAutoId()`, not used directly. Templates skip element-specific initialization.
  *
  * ## Persistence
  * The `changedAttributes` Set tracks every modified attribute. On save, `archiveInto()`
@@ -312,48 +312,73 @@ class RezBasicObject {
   /**
    * @function init
    * @memberof RezBasicObject#
-   * @description Runs the complete three-phase initialization lifecycle for this object.
-   * After init completes, `isInitialized` returns true. The phases are:
-   * - init_0: Property creation and dynamic attribute initialization
-   * - init_1: Mixin application
-   * - init_2: Element-specific initialization and 'init' event
+   * @description Runs the complete initialization lifecycle for this object. After init
+   * completes, `isInitialized` returns true. The steps run in order because each depends
+   * on the previous:
+   * 1. Create properties: static properties (getter/setters for each attribute) and
+   *    dynamic properties (ptable, property, bht, template types), then run dynamic
+   *    attribute initializers in priority order.
+   * 2. Apply mixins declared in the `$mixins` attribute — these attach to the properties
+   *    created in step 1.
+   * 3. Element-specific setup: call `elementInitializer()` for subclass-specific
+   *    initialization, then fire the 'init' event. Skipped for template objects (those
+   *    with `$template: true`), since templates are not used directly.
    */
   init() {
-    this.init_0();
-    this.init_1();
-    this.init_2();
+    // Create properties: static + dynamic, then run dynamic initializers
+    this.createStaticProperties();
+    this.createDynamicProperties();
+    this.initDynamicAttributes();
+
+    // Apply mixins declared in $mixins
+    this.applyMixins();
+
+    // Element-specific setup + 'init' event (templates don't initialise like
+    // regular objects)
+    if(!this.isTemplateObject()) {
+      this.elementInitializer();
+      this.runEvent("init", {});
+    }
+
     this.#initialized = true;
   }
 
   /**
-   * @function init_0
+   * @function re_init
    * @memberof RezBasicObject#
-   * @description Phase 0 of initialization: Creates all JavaScript properties from attributes.
-   * First creates static properties (simple getter/setters for each attribute), then
-   * creates dynamic properties for special attribute types (ptable, property, bht, template),
-   * and finally runs dynamic attribute initializers in priority order.
+   * @description Structural-only initialization for objects reconstructed from a save
+   * archive (see RezGame#load). Builds the JavaScript property machinery — static
+   * getter/setters, dynamic-property accessors (ptable/property/bht/template), `$delegate`
+   * getters — and applies `$mixins`. None of these mutate game state; they reproduce
+   * identically on every run.
+   *
+   * It deliberately omits everything generative: the `$copy`/`initializer`/`dieroll`
+   * attribute initializers, `elementInitializer()` (which establishes *initial* state such
+   * as an actor's `moveTo` or an inventory's initial contents), and the `init` event. The
+   * results of those steps were captured in the archive during play and are restored by
+   * `loadData()`; re-running them would reset or duplicate state. The loader fires the
+   * `did_load` event afterwards.
    */
-  init_0() {
+  re_init() {
     this.createStaticProperties();
     this.createDynamicProperties();
-    this.initDynamicAttributes();
+    this.initDynamicAttributes({generative: false});
+    this.applyMixins();
+    this.#initialized = true;
   }
 
   /**
-   * @function init_1
+   * @function applyMixins
    * @memberof RezBasicObject#
-   * @description Phase 1 of initialization: Applies mixins. Iterates through the `$mixins`
-   * attribute (an array of mixin IDs) and applies each mixin's properties and methods
-   * to this object. Mixin properties use `createCustomProperty`, while mixin methods
-   * are bound directly to this object.
+   * @description Applies the mixins declared in the `$mixins` attribute, attaching each
+   * mixin's custom properties and methods to this object. Shared by `init()` and
+   * `re_init()`.
    */
-  init_1() {
-    // Initialize Mixins
+  applyMixins() {
     for(const mixin_ref of this.getAttributeValue("$mixins", [])) {
       const mixin_id = (typeof mixin_ref === "object" && mixin_ref.$ref) ? mixin_ref.$ref : mixin_ref;
       const mixin = window.Rez.mixins[mixin_id];
 
-      // Apply properties
       for(const [propName, propDef] of Object.entries(mixin)) {
         if(propDef.property) {
           this.createCustomProperty(propName, propDef);
@@ -362,22 +387,6 @@ class RezBasicObject {
           this[propName] = propDef.bind(this);
         }
       }
-    }
-  }
-
-  /**
-   * @function init_2
-   * @memberof RezBasicObject#
-   * @description Phase 2 of initialization: Element-specific setup and 'init' event.
-   * Calls `elementInitializer()` for subclass-specific initialization, then fires
-   * the 'init' event. This phase is skipped for template objects (those with
-   * `$template: true`), since templates are not meant to be used directly.
-   */
-  init_2() {
-    // Templates don't initialise like regular objects
-    if(!this.isTemplateObject()) {
-      this.elementInitializer();
-      this.runEvent("init", {});
     }
   }
 
@@ -490,7 +499,12 @@ class RezBasicObject {
    */
   createTemplateProperty(attrName, value) {
     const template_fn = value.template;
-    this[attrName] = template_fn;
+    // Write directly to the backing store rather than via `this[attrName] = …`,
+    // which would route through the change-tracking setter created by
+    // createStaticProperties() and mark this deterministic base-state function as
+    // "changed" — causing it to leak into save archives. A genuine runtime
+    // reassignment of `$<attr>_template` still goes through the setter and is saved.
+    this.attributes[attrName] = template_fn;
 
     // Regular templates get compiled to an attribute
     // $<attr_name>_template
@@ -525,7 +539,7 @@ class RezBasicObject {
    * Attributes are processed in priority order (1-10, as set by the compiler) to ensure
    * dependencies are satisfied. Skipped for template objects.
    */
-  initDynamicAttributes() {
+  initDynamicAttributes({generative = true} = {}) {
     if(this.getAttributeValue("$template", false)) {
       return;
     }
@@ -550,11 +564,19 @@ class RezBasicObject {
       }
     }
 
-    copy_initializers.flat().forEach(
-      ([attrName, elem_ref]) => {
-        this.createAttributeByCopying(attrName, elem_ref);
-      }
-    );
+    // The `$copy` and `initializer`/`dieroll` passes are generative — they create child
+    // copies and compute/roll values — so they are skipped when re-initializing an object
+    // reconstructed from a save (its values come from the archive instead). Delegate
+    // properties are structural (read-only getters that defer to another object) and are
+    // always created. The original copy → delegates → dyn ordering is preserved for the
+    // generative path.
+    if(generative) {
+      copy_initializers.flat().forEach(
+        ([attrName, elem_ref]) => {
+          this.createAttributeByCopying(attrName, elem_ref);
+        }
+      );
+    }
 
     delegates.forEach(
       ([attrName, targetAttr]) => {
@@ -562,11 +584,13 @@ class RezBasicObject {
       }
     );
 
-    dyn_initializers.flat().forEach(
-      ([attrName, value]) => {
-        this.createDynamicallyInitializedAttribute(attrName, value);
-      }
-    );
+    if(generative) {
+      dyn_initializers.flat().forEach(
+        ([attrName, value]) => {
+          this.createDynamicallyInitializedAttribute(attrName, value);
+        }
+      );
+    }
   }
 
   /**
@@ -726,8 +750,8 @@ class RezBasicObject {
   /**
    * @function elementInitializer
    * @memberof RezBasicObject#
-   * @description Hook method for subclass-specific initialization. Called during init_2
-   * phase before the 'init' event fires. Subclasses (RezActor, RezScene, etc.) override
+   * @description Hook method for subclass-specific initialization. Called during `init()`
+   * before the 'init' event fires. Subclasses (RezActor, RezScene, etc.) override
    * this method to perform element-type-specific setup. The base implementation is empty.
    */
   elementInitializer() {}
@@ -760,6 +784,28 @@ class RezBasicObject {
     copy.setAttribute("$original_id", this.id, false);
     copy.init();
     copy.runEvent("copy", { original: this });
+    return copy;
+  }
+
+  /**
+   * @function copyForLoad
+   * @memberof RezBasicObject#
+   * @param {string} id the id to assign to the reconstructed copy
+   * @returns {object} a structurally-initialized copy of this object
+   * @description Rebuilds a procedurally-created copy while loading a save. Parallels
+   * `copyAssigningId` but runs `re_init()` (structural-only) instead of `init()`, so no
+   * generative initializers, `elementInitializer()`, `init` event, or `copy` event fire.
+   * The `$auto_id_idx`/`$template`/`$original_id` metadata set here is overwritten by the
+   * archived values when the loader subsequently calls `loadData()` on the copy.
+   */
+  copyForLoad(id) {
+    const attributes = this.attributes.copy();
+    // Subclasses override the RezBasicElement constructor
+    const copy = new this.constructor(id, attributes);
+    copy.setAttribute("$auto_id_idx", 0, false);
+    copy.setAttribute("$template", false, false);
+    copy.setAttribute("$original_id", this.id, false);
+    copy.re_init();
     return copy;
   }
 

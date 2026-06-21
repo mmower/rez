@@ -31,7 +31,7 @@ defmodule Rez.Parser.ParserTest do
     source = dummy_source(input)
 
     assert {:ok, [%Rez.AST.Const{name: "MAX_HEALTH", value: {:number, 100}, value_type: :number}],
-            %{}} =
+            %{}, _keywords} =
              parse(source)
   end
 
@@ -41,7 +41,7 @@ defmodule Rez.Parser.ParserTest do
 
     assert {:ok,
             [%Rez.AST.Const{name: "PLAYER_NAME", value: {:string, "Hero"}, value_type: :string}],
-            %{}} =
+            %{}, _keywords} =
              parse(source)
   end
 
@@ -51,7 +51,7 @@ defmodule Rez.Parser.ParserTest do
 
     assert {:ok,
             [%Rez.AST.Const{name: "DEBUG_MODE", value: {:boolean, true}, value_type: :boolean}],
-            %{}} =
+            %{}, _keywords} =
              parse(source)
   end
 
@@ -59,7 +59,7 @@ defmodule Rez.Parser.ParserTest do
     input = "@const MAX_HEALTH = 100\n@game {\n  max_hp: $MAX_HEALTH\n}"
     source = dummy_source(input)
 
-    assert {:ok, [const, game], %{}} = parse(source)
+    assert {:ok, [const, game], %{}, _keywords} = parse(source)
     assert %Rez.AST.Const{name: "MAX_HEALTH"} = const
 
     assert %Rez.AST.Game{attributes: %{"max_hp" => %{type: :const_ref, value: "MAX_HEALTH"}}} =
@@ -70,7 +70,7 @@ defmodule Rez.Parser.ParserTest do
     input = read_source(@test_script_path)
     full_path = Path.expand(@test_script_path)
 
-    assert {:ok, [%Rez.AST.Game{} = game | rest], %{} = _id_map} = parse(input)
+    assert {:ok, [%Rez.AST.Game{} = game | rest], %{} = _id_map, _keywords} = parse(input)
     assert %Rez.AST.Game{position: position} = game
     assert {^full_path, 1, 1} = position
     {_file, line, _col} = position
@@ -85,6 +85,21 @@ defmodule Rez.Parser.ParserTest do
 
     assert %Rez.AST.Attribute{name: "$alias", type: :string, value: "sword"} =
              Map.get(attributes, "$alias")
+  end
+
+  test "collects keywords used in the source (including nested in list and table)" do
+    input = """
+    @game {
+      enemy: :goblin
+      foes: [:orc :troll]
+      boss: {name: :dragon}
+    }
+    """
+
+    source = dummy_source(input)
+
+    assert {:ok, _content, %{}, keywords} = parse(source)
+    assert MapSet.new(["goblin", "orc", "troll", "dragon"]) == keywords
   end
 
   test "parses script element" do

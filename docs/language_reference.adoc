@@ -396,6 +396,12 @@ rarity: :legendary
 type: :weapon
 ....
 
+[IMPORTANT]
+====
+**All keywords are converted into strings in the Javascript code. However every keyword is
+also turned into a constant, for example `:legendary` becomes `$kLegendary` the constant has the
+string value (e.g. `"legendary"`) allowing you to compare `rarity === $kLegendary`.
+
 **Element References** - Point to another elements by referencing it's id #
 ....
 owner_id: #player
