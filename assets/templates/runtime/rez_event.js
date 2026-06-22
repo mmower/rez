@@ -259,7 +259,7 @@ class RezEvent {
   /**
    * @function modalCardConfig
    * @memberof RezEvent#
-   * @returns {object|null} the modal card config ({cardId, params}), or null
+   * @returns {object|null} the modal card config ({cardId, params, showDismiss}), or null
    */
   get modalCardConfig() {
     return this.#modalCard;
@@ -270,11 +270,14 @@ class RezEvent {
    * @memberof RezEvent#
    * @param {string} cardId - ID of the card to render in the modal
    * @param {object} [params={}] - optional params passed to the card on will_embed
+   * @param {object} [options={}] - display options for the modal
+   * @param {boolean} [options.showDismiss=true] - when false, suppresses the
+   *   default OK dismiss button so the card can supply its own dismiss control
    * @returns {RezEvent} this event for method chaining
    * @description Sets a card to be displayed as a modal dialog
    */
-  modalCard(cardId, params = {}) {
-    this.#modalCard = {cardId, params};
+  modalCard(cardId, params = {}, options = {}) {
+    this.#modalCard = {cardId, params, showDismiss: options.showDismiss !== false};
     this.#renderEvent = true;
     return this;
   }
@@ -547,11 +550,14 @@ class RezEvent {
    * @static
    * @param {string} cardId - ID of the card to render in the modal
    * @param {object} [params={}] - optional params passed to the card on will_embed
+   * @param {object} [options={}] - display options for the modal
+   * @param {boolean} [options.showDismiss=true] - when false, suppresses the
+   *   default OK dismiss button so the card can supply its own dismiss control
    * @returns {RezEvent} a new event with the modal card set
    * @description Creates a new event that displays a card as a modal dialog
    */
-  static modalCard(cardId, params = {}) {
-    return new RezEvent().modalCard(cardId, params);
+  static modalCard(cardId, params = {}, options = {}) {
+    return new RezEvent().modalCard(cardId, params, options);
   }
 
   /**

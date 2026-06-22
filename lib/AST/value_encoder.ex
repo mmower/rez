@@ -195,7 +195,12 @@ defmodule Rez.AST.ValueEncoder do
         end) <> "]"
 
     ~s|{binding: (root) => {
-      return #{js_path}.reduce((obj, key) => obj[key], root);
+      return #{js_path}.reduce((obj, key) => {
+        if(typeof(obj[key]) === undefined) {
+          throw new Error(`Attempt to lookup binding ${key} has failed`);
+        }
+        return obj[key];
+      }, root);
     }}|
   end
 

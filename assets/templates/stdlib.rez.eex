@@ -2070,7 +2070,7 @@
   if(!$game.$modal_card) {
     return "";
   }
-  const {cardId, params} = $game.$modal_card;
+  const {cardId, params, showDismiss} = $game.$modal_card;
   const card = $t(cardId, "card");
   card.runEvent("will_embed", params);
   const block = new RezBlock("block", card, params);
@@ -2086,6 +2086,9 @@
     ? `<header class="modal-card-head"><p class="modal-card-title">${title}</p></header>`
     : ``;
   const bodyStyle = title ? `` : ` style="border-radius: 6px 6px 0 0"`;
+  const footerHtml = showDismiss !== false
+    ? `<footer class="modal-card-foot"><button class="button is-primary" data-rez-dismiss-modal>OK</button></footer>`
+    : ``;
   return `<div class="modal is-active">
     <div class="modal-background"></div>
     <div class="modal-card">
@@ -2093,9 +2096,7 @@
       <section class="modal-card-body"${bodyStyle}>
         <div class="rez-evented">${cardHtml}</div>
       </section>
-      <footer class="modal-card-foot">
-        <button class="button is-primary" data-rez-dismiss-modal>OK</button>
-      </footer>
+      ${footerHtml}
     </div>
   </div>`;
 }

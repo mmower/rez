@@ -291,6 +291,9 @@ class RezBlock {
       value = this.instantiateFunctionBinding(bindings, source);
     } else if(source && typeof source.binding === "function") {
       value = this.instantiatePathBinding(source.binding, bindings);
+      if(value === undefined) {
+        throw new Error(`Unable to decode path binding ${source.binding}`);
+      }
 
       // Apply dereferencing only for path bindings when deref is true
       if(deref) {

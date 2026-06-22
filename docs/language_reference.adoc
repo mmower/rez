@@ -476,7 +476,7 @@ executed.
 * `RezEvent.switchScene("scene_id")` - Start a new scene
 * `RezEvent.flash("message")` - Show a flash message to the player
 * `RezEvent.modalMessage("message", {title: "Modal Title"})` - Show a modal to the player with an optional title
-* `RezEvent.modalCard("card_id", params)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title.
+* `RezEvent.modalCard("card_id", params, options)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title. Pass `{showDismiss: false}` as the third `options` argument to suppress the default OK button so the card can implement its own dismiss control (e.g. a button carrying `data-rez-dismiss-modal`, or a `data-event` handler that calls `$game.clearModal()`).
 * `RezEvent.banner("message", {dark: true, class: "css class", onscreen: 2000})`
 * `RezEvent.render()` - Re-render the current view
 * `RezEvent.noop()` - do nothing
