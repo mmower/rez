@@ -216,11 +216,11 @@ class RezEvent {
   }
 
   /**
-   * @function hasModal
+   * @function hasModalMessage
    * @memberof RezEvent#
    * @returns {boolean} true if this event has a modal message to display
    */
-  get hasModal() {
+  get hasModalMessage() {
     return this.#modalMessage != null;
   }
 
@@ -229,19 +229,19 @@ class RezEvent {
    * @memberof RezEvent#
    * @returns {object|null} the modal message config, or null
    */
-  get modalMessage() {
+  get modalMessageConfig() {
     return this.#modalMessage;
   }
 
   /**
-   * @function modal
+   * @function modalMessage
    * @memberof RezEvent#
    * @param {string} message - message to display in the modal body
    * @param {object} [options={}] - optional config; supports `title` (string)
    * @returns {RezEvent} this event for method chaining
    * @description Sets a modal message to be displayed to the user
    */
-  modal(message, options = {}) {
+  modalMessage(message, options = {}) {
     this.#modalMessage = {message, title: options.title || null};
     this.#renderEvent = true;
     return this;
@@ -532,7 +532,7 @@ class RezEvent {
   }
 
   /**
-   * @function modal
+   * @function modalMessage
    * @memberof RezEvent
    * @static
    * @param {string} message - modal body message
@@ -540,8 +540,8 @@ class RezEvent {
    * @returns {RezEvent} a new event with the modal message set
    * @description Creates a new event that displays a modal dialog
    */
-  static modal(message, options = {}) {
-    return new RezEvent().modal(message, options);
+  static modalMessage(message, options = {}) {
+    return new RezEvent().modalMessage(message, options);
   }
 
   /**
@@ -752,8 +752,8 @@ class RezEventProcessor {
         this.game.setBanner(response.bannerConfig);
       }
 
-      if(response.hasModal) {
-        this.game.setModal(response.modalMessage);
+      if(response.hasModalMessage) {
+        this.game.setModalMessage(response.modalMessageConfig);
       }
 
       if(response.hasModalCard) {

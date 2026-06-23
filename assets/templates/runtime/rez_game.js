@@ -898,7 +898,7 @@ class RezGame extends RezBasicObject {
    * @param {object} config - modal config with `message` and optional `title`
    * @description Sets the current modal message to be displayed on the next render
    */
-  setModal(config) {
+  setModalMessage(config) {
     this.$modal_message = config;
   }
 
