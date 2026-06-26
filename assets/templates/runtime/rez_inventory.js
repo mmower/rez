@@ -676,9 +676,9 @@ class RezInventory extends RezBasicObject {
     slot.runEvent("remove", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
 
     const item = $(itemId);
-    item.runEvent("remove", { inventory_id: this.id, slot_id: slotBinding, owner_id: ownerId, owner });
+    item.runEvent("remove", { inventory_id: this.id, slot_id: slot.id, slot_binding: slotBinding, owner_id: ownerId, owner });
 
-    this.runEvent("remove", { slot_id: slotBinding, item_id: itemId, owner_id: ownerId, owner });
+    this.runEvent("remove", { slot_id: slot.id, slot_binding: slotBinding, item_id: itemId, owner_id: ownerId, owner });
 
     this.removeEffects(slotBinding, itemId);
   }

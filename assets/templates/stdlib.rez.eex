@@ -2048,12 +2048,18 @@
   if(!$game.$modal_message) {
     return "";
   }
-  const {message, title} = $game.$modal_message;
+  const cfg = $game.$modal_message;
+  const {message, title} = cfg;
+  const firstShow = !cfg._shown;
+  cfg._shown = true;
+  const effect = cfg.animation || "scale";
+  const animClass = (firstShow && effect !== "none") ? ` rez-anim-${effect}` : "";
+  const durStyle = (firstShow && effect !== "none") ? ` style="--rez-modal-dur:${cfg.animationDuration || 180}ms"` : "";
   const headerHtml = title
     ? `<header class="modal-card-head"><p class="modal-card-title">${title}</p></header>`
     : ``;
   const bodyStyle = title ? `` : ` style="border-radius: 6px 6px 0 0"`;
-  return `<div class="modal is-active">
+  return `<div class="modal is-active${animClass}"${durStyle}>
     <div class="modal-background"></div>
     <div class="modal-card">
       ${headerHtml}
@@ -2071,7 +2077,13 @@
   if(!$game.$modal_card) {
     return "";
   }
-  const {cardId, params, showDismiss} = $game.$modal_card;
+  const cfg = $game.$modal_card;
+  const {cardId, params, showDismiss} = cfg;
+  const firstShow = !cfg._shown;
+  cfg._shown = true;
+  const effect = cfg.animation || "scale";
+  const animClass = (firstShow && effect !== "none") ? ` rez-anim-${effect}` : "";
+  const durStyle = (firstShow && effect !== "none") ? ` style="--rez-modal-dur:${cfg.animationDuration || 180}ms"` : "";
   const card = $t(cardId, "card");
   card.runEvent("will_embed", params);
   const block = new RezBlock("block", card, params);
@@ -2090,7 +2102,7 @@
   const footerHtml = showDismiss !== false
     ? `<footer class="modal-card-foot"><button class="button is-primary" data-rez-dismiss-modal>OK</button></footer>`
     : ``;
-  return `<div class="modal is-active">
+  return `<div class="modal is-active${animClass}"${durStyle}>
     <div class="modal-background"></div>
     <div class="modal-card">
       ${headerHtml}

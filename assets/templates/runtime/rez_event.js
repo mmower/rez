@@ -237,12 +237,22 @@ class RezEvent {
    * @function modalMessage
    * @memberof RezEvent#
    * @param {string} message - message to display in the modal body
-   * @param {object} [options={}] - optional config; supports `title` (string)
+   * @param {object} [options={}] - optional config
+   * @param {string} [options.title] - optional modal title
+   * @param {string} [options.animation="scale"] - entrance animation, one of
+   *   `"scale"` (fade + scale up), `"fade"`, `"slide"` (slide up + fade), or
+   *   `"none"`
+   * @param {number} [options.animationDuration=180] - animation duration in ms
    * @returns {RezEvent} this event for method chaining
    * @description Sets a modal message to be displayed to the user
    */
   modalMessage(message, options = {}) {
-    this.#modalMessage = {message, title: options.title || null};
+    this.#modalMessage = {
+      message,
+      title: options.title || null,
+      animation: options.animation || "scale",
+      animationDuration: options.animationDuration || 180,
+    };
     this.#renderEvent = true;
     return this;
   }
@@ -273,11 +283,21 @@ class RezEvent {
    * @param {object} [options={}] - display options for the modal
    * @param {boolean} [options.showDismiss=true] - when false, suppresses the
    *   default OK dismiss button so the card can supply its own dismiss control
+   * @param {string} [options.animation="scale"] - entrance animation, one of
+   *   `"scale"` (fade + scale up), `"fade"`, `"slide"` (slide up + fade), or
+   *   `"none"`
+   * @param {number} [options.animationDuration=180] - animation duration in ms
    * @returns {RezEvent} this event for method chaining
    * @description Sets a card to be displayed as a modal dialog
    */
   modalCard(cardId, params = {}, options = {}) {
-    this.#modalCard = {cardId, params, showDismiss: options.showDismiss !== false};
+    this.#modalCard = {
+      cardId,
+      params,
+      showDismiss: options.showDismiss !== false,
+      animation: options.animation || "scale",
+      animationDuration: options.animationDuration || 180,
+    };
     this.#renderEvent = true;
     return this;
   }
@@ -537,6 +557,9 @@ class RezEvent {
    * @static
    * @param {string} message - modal body message
    * @param {object} [options={}] - optional config; supports `title` (string)
+   * @param {object} [options={}] - optional config; supports `title`,
+   *   `animation` (`"scale"|"fade"|"slide"|"none"`, default `"scale"`) and
+   *   `animationDuration` (ms, default `180`)
    * @returns {RezEvent} a new event with the modal message set
    * @description Creates a new event that displays a modal dialog
    */
@@ -553,6 +576,9 @@ class RezEvent {
    * @param {object} [options={}] - display options for the modal
    * @param {boolean} [options.showDismiss=true] - when false, suppresses the
    *   default OK dismiss button so the card can supply its own dismiss control
+   * @param {string} [options.animation="scale"] - entrance animation
+   *   (`"scale"|"fade"|"slide"|"none"`)
+   * @param {number} [options.animationDuration=180] - animation duration in ms
    * @returns {RezEvent} a new event with the modal card set
    * @description Creates a new event that displays a card as a modal dialog
    */

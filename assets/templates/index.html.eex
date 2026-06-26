@@ -23,6 +23,21 @@
       <%= Asset.asset_tag(style_asset) %>
     <% end %>
     <style type="text/css">
+      /* Rez default styles */
+      @keyframes rez-modal-bg-in    { from {opacity:0}                              to {opacity:1} }
+      @keyframes rez-modal-scale-in { from {opacity:0; transform:scale(.95)}        to {opacity:1; transform:scale(1)} }
+      @keyframes rez-modal-fade-in  { from {opacity:0}                              to {opacity:1} }
+      @keyframes rez-modal-slide-in { from {opacity:0; transform:translateY(20px)}  to {opacity:1; transform:translateY(0)} }
+
+      .modal[class*="rez-anim-"] .modal-background { animation: rez-modal-bg-in    var(--rez-modal-dur,180ms) ease-out; }
+      .rez-anim-scale .modal-card                  { animation: rez-modal-scale-in var(--rez-modal-dur,180ms) ease-out; }
+      .rez-anim-fade  .modal-card                  { animation: rez-modal-fade-in  var(--rez-modal-dur,180ms) ease-out; }
+      .rez-anim-slide .modal-card                  { animation: rez-modal-slide-in var(--rez-modal-dur,180ms) ease-out; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .modal .modal-card, .modal .modal-background { animation: none !important; }
+      }
+
       /* Custom game styles */
       <%= for style <- @styles do %>
         <%= style.styles %>
