@@ -16,6 +16,7 @@ defmodule Rez.Compiler.Phases.CopyStdlib do
   def run_phase(%Compilation{status: :ok, content: content, progress: progress} = compilation) do
     source = render_stdlib(content: content)
     output_path = Path.join(Config.lib_path_name(), @stdlib_file_name)
+    File.mkdir_p(Path.dirname(output_path))
 
     case File.write(output_path, source) do
       :ok ->

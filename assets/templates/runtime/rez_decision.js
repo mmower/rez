@@ -20,6 +20,7 @@
  */
 class RezDecision {
   #purpose;
+  #owner;
   #made;
   #result;
   #hidden;
@@ -36,6 +37,7 @@ class RezDecision {
    */
   constructor(purpose, data = {}) {
     this.#purpose = purpose;
+    this.#owner = null;
     this.#made = false;
     this.#result = false;
     this.#hidden = false;
@@ -52,6 +54,26 @@ class RezDecision {
    */
   get purpose() {
     return this.#purpose;
+  }
+
+  /**
+   * @function owner
+   * @memberof RezDecision
+   * @returns {object} the object that owns this decision
+   * @description Returns the owner of the decision
+   */
+  get owner() {
+    return this.#owner;
+  }
+
+  /**
+   * @function owner
+   * @memberof RezDecision
+   * @param {object} owner the object that owns this decision
+   * @description Sets the owner of the decision
+   */
+  set owner(owner) {
+    this.#owner = owner;
   }
 
   /**

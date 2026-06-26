@@ -50,15 +50,42 @@ class RezInventory extends RezBasicObject {
    * @description called as part of the init process this creates the initial inventory slots
    */
   elementInitializer() {
+    this.resolveOwner();
     this.addInitialContents();
     this.addInitialEnabledStates();
+  }
+
+  /**
+   * @function resolveOwner
+   * @memberof RezInventory
+   * @description If `owner_id` was not authored directly, find the actor that
+   * declares this inventory as its `container_id` and record it as `owner_id`,
+   * so that `inventory.owner` is reliably available (for the actor veto, effect
+   * application, and insert/remove event handlers). Author ownership in a single
+   * place (`actor.container_id`); an explicitly authored `owner_id` still wins.
+   * Safe at init time because all game objects are registered before any object
+   * is initialised.
+   */
+  resolveOwner() {
+    if(this.hasValue("owner_id")) return;
+
+    const owner = this.game.filterObjects(
+      (o) => o.element === "actor" && o.getAttributeValue("container_id", null) === this.id
+    )[0];
+
+    if(owner) {
+      this.setAttribute("owner_id", owner.id);
+    }
   }
 
   addInitialContents() {
     for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
       const initialContents = this.getAttributeValue(`initial_${prefix}`, []);
       for(const contentId of initialContents) {
-        this.addItemToSlot(prefix, contentId);
+        const decision = this.addItemToSlot(prefix, contentId);
+        if(!decision.result) {
+          throw new Error(`Inventory |${this.id}|: cannot place initial item |${contentId}| in slot |${prefix}|: ${decision.reason}`);
+        }
       }
     }
   }
@@ -214,14 +241,32 @@ class RezInventory extends RezBasicObject {
   }
 
   /**
+   * @function _writeSlotContents
+   * @memberof RezInventory
+   * @private
+   * @param {string} slotBinding
+   * @param {array} itemIds array of item id's
+   * @description Low-level, unguarded write of a slot's contents array. Does NOT
+   * validate items, fire events, or reconcile effects. Internal use only; author
+   * code should use setSlot/setItemsForSlot/addItemToSlot which go through validation.
+   */
+  _writeSlotContents(slotBinding, itemIds) {
+    this.getSlot(slotBinding); // validates binding exists
+    this.setAttribute(`${slotBinding}_contents`, itemIds);
+  }
+
+  /**
    * @function setSlot
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {array} itemIds array of item id's
+   * @returns {RezDecision[]} a decision for each item added (see setItemsForSlot)
+   * @description Replaces the slot's contents with the given items. Existing
+   * occupants are removed (firing remove events and releasing their effects) and
+   * each new item is added through the validated path. Alias for setItemsForSlot.
    */
   setSlot(slotBinding, itemIds) {
-    this.getSlot(slotBinding); // validates binding exists
-    this.setAttribute(`${slotBinding}_contents`, itemIds);
+    return this.setItemsForSlot(slotBinding, itemIds);
   }
 
   /**
@@ -229,10 +274,13 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string} itemId
-   * @description appends the given item to the given slot
+   * @returns {RezDecision} the decision from addItemToSlot
+   * @description Appends the given item to the given slot through the validated
+   * add path (fires events, applies effects, and may refuse). Retained for API
+   * compatibility; previously this was an unconditional raw push.
    */
   appendItemToSlot(slotBinding, itemId) {
-    this.getItemsForSlot(slotBinding).push(itemId);
+    return this.addItemToSlot(slotBinding, itemId);
   }
 
   /**
@@ -240,12 +288,14 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string|array} itemOrItems either an item_id or array of item_id's to append to the slot
-   * @description add either a single item_id or an array of item_ids to the slot
+   * @returns {RezDecision[]} a decision for each item, in order
+   * @description add either a single item_id or an array of item_ids to the slot,
+   * each through the validated add path.
    */
   appendToSlot(slotBinding, itemOrItems) {
-    ensureArray(itemOrItems).forEach((itemId) => {
-        this.appendItemToSlot(slotBinding, itemId);
-      });
+    return ensureArray(itemOrItems).map((itemId) => {
+      return this.addItemToSlot(slotBinding, itemId);
+    });
   }
 
   /**
@@ -253,10 +303,11 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string} itemId
+   * @returns {RezDecision[]} a decision for the added item (see setItemsForSlot)
    * @description replaces any existing item content for the slot with this item
    */
   setItemForSlot(slotBinding, itemId) {
-    this.setSlot(slotBinding, [itemId]);
+    return this.setItemsForSlot(slotBinding, [itemId]);
   }
 
   /**
@@ -264,10 +315,17 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {array} items array of item ids
-   * @description replaces any existing item content for the slot with these items
+   * @returns {RezDecision[]} a decision for each item added, in order
+   * @description Replaces any existing item content for the slot with these items.
+   * Existing occupants are removed first (firing remove events and releasing their
+   * effects), then each new item is added through the validated path, so an item
+   * the slot can't accept is refused (and reflected in its decision) rather than
+   * silently set.
    */
   setItemsForSlot(slotBinding, items) {
-    this.setSlot(slotBinding, items);
+    const current = [...this.getItemsForSlot(slotBinding)];
+    current.forEach((itemId) => this._removeItem(slotBinding, itemId));
+    return ensureArray(items).map((itemId) => this.addItemToSlot(slotBinding, itemId));
   }
 
   /**
@@ -480,23 +538,52 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string} itemId
-   * @description adds the given item to the given slot, notifying inventory, slot & item and applying effects
+   * @returns {RezDecision} the decision from canAddItemForSlot; when it is yes the
+   * item has been inserted, otherwise the slot is unchanged and the decision carries
+   * the reason and `failed_on` data.
+   * @description Adds the given item to the given slot if `canAddItemForSlot` allows
+   * it, notifying inventory, slot & item and applying effects. Callers may inspect
+   * the returned decision; callers that ignore it simply get a no-op on refusal.
+   * @example
+   * const d = inv.addItemToSlot("weapon", "item_axe");
+   * if(d.wasNo) showMessage(d.reason);
    */
   addItemToSlot(slotBinding, itemId) {
+    const decision = this.canAddItemForSlot(slotBinding, itemId);
+    if(decision.result) {
+      this._insertItem(slotBinding, itemId);
+    }
+    return decision;
+  }
+
+  /**
+   * @function _insertItem
+   * @memberof RezInventory
+   * @private
+   * @param {string} slotBinding
+   * @param {string} itemId
+   * @description Low-level, unguarded insert. Appends the item, fires the insert
+   * events on inventory, slot & item, and applies effects. Performs no acceptance
+   * checks beyond requiring the item to define a `type`. Internal use only.
+   */
+  _insertItem(slotBinding, itemId) {
     const item = $(itemId);
 
     if(!item.hasAttribute("type")) {
       throw new Error(`Attempt to add ${itemId} to inventory, which does not define a 'type'!`);
     }
 
-    this.appendItemToSlot(slotBinding, itemId);
+    this.getItemsForSlot(slotBinding).push(itemId);
 
-    this.runEvent("insert", { slot_id: slotBinding, item_id: itemId });
+    const ownerId = this.getAttributeValue("owner_id", null);
+    const owner = ownerId ? this.owner : null;
+
+    this.runEvent("insert", { slot_id: slotBinding, item_id: itemId, owner_id: ownerId, owner });
 
     const slot = this.getSlot(slotBinding);
-    slot.runEvent("insert", { inventory_id: this.id, item_id: itemId });
+    slot.runEvent("insert", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
 
-    item.runEvent("insert", { inventory_id: this.id, slot_id: slotBinding });
+    item.runEvent("insert", { inventory_id: this.id, slot_id: slotBinding, owner_id: ownerId, owner });
 
     this.applyEffects(slotBinding, itemId);
   }
@@ -548,31 +635,52 @@ class RezInventory extends RezBasicObject {
    * @memberof RezInventory
    * @param {string} slotBinding
    * @param {string} itemId
+   * @returns {RezDecision} the decision from canRemoveItemFromSlot; when it is yes
+   * the item has been removed (firing remove events and releasing effects), otherwise
+   * the slot is unchanged and the decision carries the reason. An item that isn't in
+   * the slot yields a `no` decision (`failed_on: "missing"`) rather than throwing.
    * @description removes the specified item from the specified inventory slot
    */
   removeItemFromSlot(slotBinding, itemId) {
-    const contents = this.getItemsForSlot(slotBinding);
-    if(!contents.includes(itemId)) {
-      throw new Error(
-        "Attempt to remove item |" +
-        itemId +
-        "| from slot binding |" +
-        slotBinding +
-        "| on inventory |" +
-        this.id +
-        "|. No such item found!"
-      );
+    const decision = this.canRemoveItemFromSlot(slotBinding, itemId);
+
+    if(!this.getItemsForSlot(slotBinding).includes(itemId)) {
+      return decision
+        .no(`No item |${itemId}| in slot binding |${slotBinding}| on inventory |${this.id}|!`)
+        .setData("failed_on", "missing");
     }
 
-    this.setItemsForSlot(slotBinding, contents.filter((id) => id !== itemId));
+    if(decision.result) {
+      this._removeItem(slotBinding, itemId);
+    }
+
+    return decision;
+  }
+
+  /**
+   * @function _removeItem
+   * @memberof RezInventory
+   * @private
+   * @param {string} slotBinding
+   * @param {string} itemId
+   * @description Low-level, unguarded removal. Rewrites the slot contents without the
+   * item, fires the remove events on slot, item & inventory, and removes effects.
+   * Assumes the item is present. Internal use only.
+   */
+  _removeItem(slotBinding, itemId) {
+    const contents = this.getItemsForSlot(slotBinding);
+    this._writeSlotContents(slotBinding, contents.filter((id) => id !== itemId));
+
+    const ownerId = this.getAttributeValue("owner_id", null);
+    const owner = ownerId ? this.owner : null;
 
     const slot = this.getSlot(slotBinding);
-    slot.runEvent("remove", { inventory_id: this.id, item_id: itemId });
+    slot.runEvent("remove", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
 
     const item = $(itemId);
-    item.runEvent("remove", { inventory_id: this.id, slot_id: slotBinding });
+    item.runEvent("remove", { inventory_id: this.id, slot_id: slotBinding, owner_id: ownerId, owner });
 
-    this.runEvent("remove", { slot_id: slotBinding, item_id: itemId });
+    this.runEvent("remove", { slot_id: slotBinding, item_id: itemId, owner_id: ownerId, owner });
 
     this.removeEffects(slotBinding, itemId);
   }

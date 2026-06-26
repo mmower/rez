@@ -327,6 +327,7 @@
   $init_after: [@item @effect]
 
   apply_effects: true
+  owner_id: _
   tags: #{}
 }
 
