@@ -577,13 +577,11 @@ class RezInventory extends RezBasicObject {
 
     const ownerId = this.getAttributeValue("owner_id", null);
     const owner = ownerId ? this.owner : null;
-
-    this.runEvent("insert", { slot_id: slotBinding, item_id: itemId, owner_id: ownerId, owner });
-
     const slot = this.getSlot(slotBinding);
-    slot.runEvent("insert", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
 
-    item.runEvent("insert", { inventory_id: this.id, slot_id: slotBinding, owner_id: ownerId, owner });
+    this.runEvent("insert", { slot_id: slot.id, slot_binding: slotBinding, item_id: itemId, owner_id: ownerId, owner });
+    slot.runEvent("insert", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
+    item.runEvent("insert", { inventory_id: this.id, slot_id: slot.id, slot_binding: slotBinding, owner_id: ownerId, owner });
 
     this.applyEffects(slotBinding, itemId);
   }

@@ -137,6 +137,14 @@ class RezDieRoll {
   }
 
   /**
+   * Returns the maximum roll value ignoring exploding dice.
+   * @type {number}
+   */
+  get max() {
+    return (this.count * this.sides)+this.modifier;
+  }
+
+  /**
    * Number of dice to roll.
    * @type {number}
    */
@@ -407,32 +415,3 @@ window.Rez.makeDie = (diceStr) => {
 
   return die;
 }
-
-/** Pre-configured d4 */
-window.Rez.D4 = Rez.makeDie("d4");
-/** Rolls a d4 @returns {number} */
-window.Rez.rollD4 = () => window.Rez.D4.roll();
-/** Pre-configured d6 */
-window.Rez.D6 = Rez.makeDie("d6");
-/** Rolls a d6 @returns {number} */
-window.Rez.rollD6 = () => window.Rez.D6.roll();
-/** Pre-configured d8 */
-window.Rez.D8 = Rez.makeDie("d8");
-/** Rolls a d8 @returns {number} */
-window.Rez.rollD8 = () => window.Rez.D8.roll();
-/** Pre-configured d10 */
-window.Rez.D10 = Rez.makeDie("d10");
-/** Rolls a d10 @returns {number} */
-window.Rez.rollD10 = () => window.Rez.D10.roll();
-/** Pre-configured d12 */
-window.Rez.D12 = Rez.makeDie("d12");
-/** Rolls a d12 @returns {number} */
-window.Rez.rollD12 = () => window.Rez.D12.roll();
-/** Pre-configured d20 */
-window.Rez.D20 = Rez.makeDie("d20");
-/** Rolls a d20 @returns {number} */
-window.Rez.rollD20 = () => window.Rez.D20.roll();
-/** Pre-configured d100 */
-window.Rez.D100 = Rez.makeDie("d100");
-/** Rolls a d100 @returns {number} */
-window.Rez.rollD100 = () => window.Rez.D100.roll();

@@ -271,11 +271,16 @@ defmodule Rez.Parser.ValueParsers do
           commit(),
           priority(),
           ignore(colon()),
-          elem_ref_value()
+          elem_ref_value(),
+          optional(text_delimited_by_nested_parsers(open_brace(), close_brace()))
         ],
         label: "copy-initializer (^c:#id)",
-        ast: fn [prio, {:elem_ref, elem_id}] ->
-          {:copy_initializer, {elem_id, bounded(prio, 1, 10)}}
+        ast: fn
+          [prio, {:elem_ref, elem_id}] ->
+            {:copy_initializer, {elem_id, bounded(prio, 1, 10), nil}}
+
+          [prio, {:elem_ref, elem_id}, init_f] ->
+            {:copy_initializer, {elem_id, bounded(prio, 1, 10), init_f}}
         end
       )
     )
