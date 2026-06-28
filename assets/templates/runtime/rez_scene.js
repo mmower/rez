@@ -162,7 +162,7 @@ class RezScene extends RezBasicObject {
     if(this.current_card) {
       this.current_card.runEvent("finish", {});
       this.runEvent("card_did_finish", {card_id: this.current_card.id});
-      this.game.runEvent("card_did_finish", {card_id: this.current_card.id});
+      this.game.broadcastLifecycle("card_did_finish", {card_id: this.current_card.id});
       if(this.isStackLayout && this.current_card.hasTemplateForFace("back")) {
         this.current_card.current_block.currentFace = "back";
       }
@@ -184,7 +184,7 @@ class RezScene extends RezBasicObject {
     this.current_card = card;
 
     card.runEvent("will_start", params);
-    this.game.runEvent("card_will_start", {card_id: card.id, params: params});
+    this.game.broadcastLifecycle("card_will_start", {card_id: card.id, params: params});
     this.runEvent("card_will_start", {card_id: card.id, params: params});
 
     this.addContentToViewLayout(params);
@@ -192,7 +192,7 @@ class RezScene extends RezBasicObject {
 
     this.current_card.runEvent("did_start", params);
     this.runEvent("card_did_start", {card_id: card.id, params: params});
-    this.game.runEvent("card_did_start", {card_id: card.id, params: params});
+    this.game.broadcastLifecycle("card_did_start", {card_id: card.id, params: params});
   }
 
   /**

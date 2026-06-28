@@ -581,8 +581,10 @@
   enabled: {kind: :boolean, required: true}
   priority: {kind: :number, min: 0, required: true}
 
-  before_event: {kind: :function, param_count: 2, or: after_event}
-  after_event: {kind: :function, param_count: 3, or: before_event}
+  before_event: {kind: :function, param_count: 2, or: [after_event before_lifecycle_event after_lifecycle_event]}
+  after_event: {kind: :function, param_count: 3, or: [before_event before_lifecycle_event after_lifecycle_event]}
+  before_lifecycle_event: {kind: :function, param_count: 3, or: [before_event after_event after_lifecycle_event]}
+  after_lifecycle_event: {kind: :function, param_count: 4, or: [before_event after_event before_lifecycle_event]}
 }
 
 @defaults system {

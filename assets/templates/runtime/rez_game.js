@@ -592,7 +592,7 @@ class RezGame extends RezBasicObject {
     // current_scene is a Rez attribute defined by @scene
 
     if(this.current_scene) {
-      this.runEvent("scene_did_end", {});
+      this.broadcastLifecycle("scene_did_end", {});
       this.current_scene.finish();
     }
 
@@ -603,7 +603,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_will_start", params);
+    this.broadcastLifecycle("scene_will_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -618,7 +618,7 @@ class RezGame extends RezBasicObject {
   interludeSceneWithId(sceneId, params = {}) {
     // current_scene is a Rez attribute defined by @scene
 
-    this.runEvent("scene_will_pause", {});
+    this.broadcastLifecycle("scene_will_pause", {});
     this.pushScene();
 
     const scene = this.getTypedGameObject(sceneId, "scene", true);
@@ -628,7 +628,7 @@ class RezGame extends RezBasicObject {
     this.updateViewContent();
 
     this.clearFlashMessages();
-    this.runEvent("scene_will_start", params);
+    this.broadcastLifecycle("scene_will_start", params);
     scene.start(params);
     scene.ready();
   }
@@ -644,10 +644,10 @@ class RezGame extends RezBasicObject {
       throw new Error("Cannot resume without a scene on the stack!");
     } else {
       // Let the interlude know we're done
-      this.runEvent("scene_did_end", {});
+      this.broadcastLifecycle("scene_did_end", {});
       this.current_scene.finish();
       this.popScene(params);
-      this.runEvent("scene_did_resume", {});
+      this.broadcastLifecycle("scene_did_resume", {});
 
       const layout = this.current_scene.getViewLayout();
       // Merge any new params into the existing params
@@ -690,7 +690,7 @@ class RezGame extends RezBasicObject {
    * event handlers on both game and current scene
    */
   updateView() {
-    this.runEvent("will_render", {});
+    this.broadcastLifecycle("will_render", {});
     this.current_scene?.runEvent("will_render", {});
     this.current_scene?.current_card?.runEvent("will_render", {});
 
@@ -698,7 +698,7 @@ class RezGame extends RezBasicObject {
 
     this.current_scene?.current_card?.runEvent("did_render", {});
     this.current_scene?.runEvent("did_render", {});
-    this.runEvent("did_render", {});
+    this.broadcastLifecycle("did_render", {});
     this.clearFlashMessages();
   }
 
@@ -813,7 +813,7 @@ class RezGame extends RezBasicObject {
     this.installWindowEvents();
     this.startSceneWithId(this.initial_scene_id);
 
-    this.runEvent("game_did_start", {});
+    this.broadcastLifecycle("game_did_start", {});
   }
 
   initMods() {
@@ -848,6 +848,47 @@ class RezGame extends RezBasicObject {
     const filter = (o) => o.element === "system" && o.getAttributeValue("enabled");
     const order = (sys_a, sys_b) => sys_b.getAttributeValue("priority") - sys_a.getAttributeValue("priority");
     return this.filterObjects(filter).sort(order);
+  }
+
+  /**
+   * @function broadcastLifecycle
+   * @memberof RezGame#
+   * @param {string} eventName - the name of the lifecycle event (e.g. "card_will_start")
+   * @param {object} [params={}] - parameters associated with the lifecycle event
+   * @returns {*} the result of the game's own on_<eventName> handler (or false if none)
+   * @description Dispatches a game-level lifecycle event, notifying every enabled
+   * system before and after the event is handled. Each enabled system's
+   * `before_lifecycle_event(system, eventName, params)` is called (in priority order)
+   * before the game's own `on_<eventName>` handler runs, and its
+   * `after_lifecycle_event(system, eventName, params, result)` is called afterwards.
+   *
+   * This is the second system path, parallel to before_event/after_event: where those
+   * wrap the six originating browser events, this wraps the game's lifecycle broadcasts
+   * (scene/card transitions and renders) so systems can observe transitions they would
+   * otherwise be blind to. The contract is observe-only — return values from system
+   * handlers are not threaded back into dispatch, though handlers may mutate the shared
+   * `params` object.
+   */
+  broadcastLifecycle(eventName, params = {}) {
+    const systems = this.getEnabledSystems();
+
+    for(const system of systems) {
+      const handler = system.before_lifecycle_event;
+      if(handler) {
+        handler(system, eventName, params);
+      }
+    }
+
+    const result = this.runEvent(eventName, params);
+
+    for(const system of systems) {
+      const handler = system.after_lifecycle_event;
+      if(handler) {
+        handler(system, eventName, params, result);
+      }
+    }
+
+    return result;
   }
 
   /**

@@ -147,6 +147,22 @@
   }
 }
 
+@system lifecycle_logger {
+  enabled: true
+  priority: 1
+
+  // Observe game-level lifecycle broadcasts (scene/card transitions, renders).
+  // before_lifecycle_event fires before the matching on_<event> handler, and
+  // after_lifecycle_event fires after it with that handler's return value.
+  before_lifecycle_event: (system, event_name, params) => {
+    console.log(`[lifecycle] before ${event_name}`, params);
+  }
+
+  after_lifecycle_event: (system, event_name, params, result) => {
+    console.log(`[lifecycle] after ${event_name}`, result);
+  }
+}
+
 @actor player {
   name: "The adventurer"
   description: "A bold adventurer"
