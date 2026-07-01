@@ -1125,6 +1125,47 @@
 
 @patch {
   $built_in: true
+  patch: "Map"
+  method: "bucket"
+  impl: function(bucketCount) {
+    if(bucketCount <= 0) {
+      throw new Error("bucketCount must be positive");
+    }
+
+    if(this.size === 0) {
+      return new Map();
+    }
+
+    const keys = [...this.keys()];
+    const min = Math.min(...keys);
+    const max = Math.max(...keys);
+
+    const buckets = new Map(
+      Array.from({ length: bucketCount }, (_, i) => [i, 0])
+    );
+
+    // All keys are identical.
+    if(min === max) {
+      const total = [...this.values()].reduce((sum, freq) => sum + freq, 0);
+      buckets.set(0, total);
+      return buckets;
+    }
+
+    // Inclusive integer range size.
+    const range = max - min + 1;
+
+    for(const [key, freq] of this) {
+      // Guaranteed to produce 0 <= index < bucketCount.
+      const index = Math.floor((key - min) * bucketCount / range);
+      buckets.set(index, buckets.get(index) + freq);
+    }
+
+    return buckets;
+  }
+}
+
+@patch {
+  $built_in: true
   patch: "String"
   method: "beginsWithConsonant"
   impl: function() {
