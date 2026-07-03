@@ -2583,10 +2583,43 @@ Although most objects support copying, by specifying `$template: true` you will 
   $template: true
 
   ...
-end
+}
 
 $("T_npc").addCopy();
 ....
+
+`addCopy()` takes an optional options object: `{id, post_init_fn}`. `id` assigns a specific id to the copy (one is auto-generated if omitted). `post_init_fn(copy)` is called with the new copy after `init()` has completed — so `on_init` has already fired and every attribute has its normal accessor property, meaning plain `copy.attrName = value` assignment works as expected — but *before* the `copy` event fires. This makes `post_init_fn` the place to set instance-specific values that depend on information only the caller has, which an `on_copy` handler can then use to finish setting the object up.
+
+For example, a monster template whose level should be driven by the current dungeon depth rather than a fixed range:
+
+....
+@actor T_monster {
+  $template: true
+
+  min_level: 1
+  max_level: 5
+  level: 1
+
+  on_copy: (npc, evt) => {
+    npc.assign_base_scores();
+    for(let i = 0; i < npc.level; i += 1) {
+      npc.level_up();
+    }
+  }
+}
+
+function generate_monster_for_level(dungeon_level) {
+  return $("T_monster").addCopy({
+    post_init_fn: (copy) => {
+      copy.min_level = Math.max(1, dungeon_level - 1);
+      copy.max_level = dungeon_level + 2;
+      copy.level = Math.rand_int_between(copy.min_level, copy.max_level);
+    }
+  });
+}
+....
+
+Here `post_init_fn` overrides `level` (and, for consistency, `min_level`/`max_level`) with a value derived from `dungeon_level` before `on_copy` runs `assign_base_scores()` and the level-up loop, so the monster's stats reflect the dungeon-level-driven range rather than the template's static defaults. Monsters created directly (`$("T_monster").addCopy()`, no `post_init_fn`) still get sensible behaviour from `on_copy` using the template's static `level`.
 
 === Best Practices and Patterns
 
