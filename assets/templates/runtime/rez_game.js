@@ -652,7 +652,16 @@ class RezGame extends RezBasicObject {
       const layout = this.current_scene.getViewLayout();
       // Merge any new params into the existing params
       layout.params = {...layout.params, ...params};
-      this.updateView();
+
+      // What event should be processed after we resume?
+      // The default is render which reproduces the old behaviour of
+      // calling updateView
+      const event = this.current_scene.resume_event(params);
+      if(event instanceof RezEvent) {
+        this.eventProcessor.dispatchResponse(event);
+      } else {
+        throw new Error(`Invalid response from scene ${this.current_scene.id} resume_event!`);
+      }
     }
   }
 
@@ -913,7 +922,7 @@ class RezGame extends RezBasicObject {
   /**
    * @function setBanner
    * @memberof RezGame#
-   * @param {object} config - banner config with `message`, `cssClass`, and `onscreen` (ms)
+   * @param {object} config - banner config with `message`, `cssClass`, `onscreen` (ms), `dark`, and `vpos` (percent of viewport height)
    * @description Sets the current banner message and schedules its auto-dismissal
    */
   setBanner(config) {

@@ -508,6 +508,8 @@
   bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
   blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
 
+  resume_event: {kind: :function}
+
   on_init: {kind: :function}
   on_start: {kind: :function}
   on_ready: {kind: :function}
@@ -535,6 +537,11 @@
   layout_separator: ""
   layout_reverse: false
   tags: #{}
+
+  %% What event should be processed when an interlude ends and this scene has been resumed.
+  resume_event: function(params) {
+    return RezEvent.render();
+  }
 }
 
 @schema slot {
@@ -2161,11 +2168,12 @@
   if(!$game.$banner_message) {
     return "";
   }
-  const {message, cssClass, dark} = $game.$banner_message;
+  const {message, cssClass, dark, vpos} = $game.$banner_message;
   const classes = cssClass ? `rez-banner ${cssClass}` : "rez-banner";
   const bg = dark !== false ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)";
   const color = dark !== false ? "white" : "black";
-  return `<div class="${classes}" style="position:fixed;top:50%;left:0;width:100vw;z-index:9999;text-align:center;padding:0.75em 2em;background:${bg};color:${color};pointer-events:none;font-size:2em;transform:translateY(-50%);">${message}</div>`;
+  const top = vpos ?? 50;
+  return `<div class="${classes}" style="position:fixed;top:${top}%;left:0;width:100vw;z-index:9999;text-align:center;padding:0.75em 2em;background:${bg};color:${color};pointer-events:none;font-size:2em;transform:translateY(-50%);">${message}</div>`;
 }
 
 %% This component can be used to embed one card in another. You use it as:

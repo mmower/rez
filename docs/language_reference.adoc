@@ -477,7 +477,7 @@ executed.
 * `RezEvent.flash("message")` - Show a flash message to the player
 * `RezEvent.modalMessage("message", {title: "Modal Title"})` - Show a modal to the player with an optional title
 * `RezEvent.modalCard("card_id", params, options)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title. Pass `{showDismiss: false}` as the third `options` argument to suppress the default OK button so the card can implement its own dismiss control (e.g. a button carrying `data-rez-dismiss-modal`, or a `data-event` handler that calls `$game.clearModal()`).
-* `RezEvent.banner("message", {dark: true, class: "css class", onscreen: 2000})`
+* `RezEvent.banner("message", {dark: true, class: "css class", onscreen: 2000, vpos: 50})` - `vpos` (0-100) sets the vertical position as a percentage of viewport height (default 50, i.e. vertically centered)
 * `RezEvent.render()` - Re-render the current view
 * `RezEvent.noop()` - do nothing
 
@@ -724,6 +724,26 @@ These are syntax sugar for the full forms:
 
 <a data-event="resume">...</a>
 ....
+
+**Controlling what happens on resume** - When the original scene is resumed, Rez calls that scene's `resume_event(params)` function to decide what should happen next. This function must return a `RezEvent` (see the event response methods listed above). By default every `@scene` has:
+
+....
+resume_event: function(params) {
+  return RezEvent.render();
+}
+....
+
+which simply re-renders the current view, matching the historical resume behaviour. You can override `resume_event` on your own `@scene` to do something more elaborate, such as playing a specific card once the interlude finishes:
+
+....
+@scene dungeon {
+  resume_event: function(params) {
+    return RezEvent.playCard("dungeon_status");
+  }
+}
+....
+
+`params` is whatever was passed back through the resume (e.g. via `RezEvent.sceneResume()`), so `resume_event` can vary its response based on what the interlude returned.
 
 ==== Event Links
 

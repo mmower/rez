@@ -191,7 +191,7 @@ class RezEvent {
   /**
    * @function bannerConfig
    * @memberof RezEvent#
-   * @returns {object|null} the banner config ({message, cssClass, onscreen}), or null
+   * @returns {object|null} the banner config ({message, cssClass, onscreen, dark, vpos}), or null
    */
   get bannerConfig() {
     return this.#bannerMessage;
@@ -201,7 +201,7 @@ class RezEvent {
    * @function banner
    * @memberof RezEvent#
    * @param {string} message - message to display in the banner
-   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), and `dark` (boolean, default true)
+   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), `dark` (boolean, default true), and `vpos` (number 0-100, default 50; percent of viewport height where the banner is vertically centered)
    * @returns {RezEvent} this event for method chaining
    * @description Sets an auto-dismissing banner message displayed full-width across the viewport
    */
@@ -210,7 +210,8 @@ class RezEvent {
       message,
       cssClass: options.class || "",
       onscreen: options.onscreen ?? 2000,
-      dark: options.dark !== false
+      dark: options.dark !== false,
+      vpos: Math.min(100, Math.max(0, options.vpos ?? 50))
     };
     return this;
   }
@@ -543,7 +544,7 @@ class RezEvent {
    * @memberof RezEvent
    * @static
    * @param {string} message - message to display in the banner
-   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), and `dark` (boolean, default true)
+   * @param {object} [options={}] - optional config; supports `class` (string), `onscreen` (ms, default 2000), `dark` (boolean, default true), and `vpos` (number 0-100, default 50; percent of viewport height where the banner is vertically centered)
    * @returns {RezEvent} a new event with the banner message set
    * @description Creates a new event that displays an auto-dismissing full-width banner
    */
