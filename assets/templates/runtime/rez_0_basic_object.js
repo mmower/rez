@@ -33,7 +33,7 @@ function normalizeRefs(value) {
   }
 
   // Handle plain objects - recurse into properties
-  if(value.constructor === Object) {
+  if(Object.getPrototypeOf(value) === Object.prototype) {
     if(isPlaceholder(value)) return value;
     const result = {};
     for (const [k, v] of Object.entries(value)) {
@@ -258,9 +258,9 @@ class RezBasicObject {
   archiveInto(archive) {
     if(this.needsArchiving) {
       const noArchive = this.getAttributeValue("$no_archive", new Set());
-      archive[this.id] = [... this.#changedAttributes].reduce((archive, attrName) => {
+      archive[this.id] = [... this.#changedAttributes].reduce((acc, attrName) => {
         if(noArchive.has(attrName)) {
-          return archive;
+          return acc;
         }
         let value = this.getAttribute(attrName);
         if(typeof(value) === "function") {
@@ -270,8 +270,8 @@ class RezBasicObject {
             value: value.toString()
           }
         }
-        archive[attrName] = value;
-        return archive;
+        acc[attrName] = value;
+        return acc;
       }, {});
     }
   }
@@ -290,7 +290,7 @@ class RezBasicObject {
       throw new Error("Attempting to load attributes from improper object!");
     }
     for (const [attrName, attrValue] of Object.entries(attrs)) {
-      if(typeof(attrValue) === "object" && Object.hasOwn(attrValue, "json$safe")) {
+      if(attrValue != null && typeof(attrValue) === "object" && Object.hasOwn(attrValue, "json$safe")) {
         if(attrValue.type === "function") {
           const functionBody = attrValue.value;
           try {
@@ -298,10 +298,10 @@ class RezBasicObject {
             const restoredFunction = new Function(`return (${functionBody})`)();
             this.setAttribute(attrName, restoredFunction);
           } catch (error) {
-            console.error(`Failed to restore function for attribute '${attrName}':`, error);
+            console.error(`Failed to restore: function for attribute '${attrName}':`, error);
           }
         } else {
-          console.error(`Failed to restore unknwon type for attribute '${attrName}' (${attrValue.type})`);
+          console.error(`Failed to restore: unknown type for attribute '${attrName}' (${attrValue.type})`);
         }
       } else {
         this.setAttribute(attrName, attrValue);
@@ -344,7 +344,7 @@ class RezBasicObject {
   }
 
   /**
-   * @function re_init
+   * @function reInit
    * @memberof RezBasicObject#
    * @description Structural-only initialization for objects reconstructed from a save
    * archive (see RezGame#load). Builds the JavaScript property machinery — static
@@ -359,7 +359,7 @@ class RezBasicObject {
    * `loadData()`; re-running them would reset or duplicate state. The loader fires the
    * `did_load` event afterwards.
    */
-  re_init() {
+  reInit() {
     this.createStaticProperties();
     this.createDynamicProperties();
     this.initDynamicAttributes({generative: false});
@@ -372,7 +372,7 @@ class RezBasicObject {
    * @memberof RezBasicObject#
    * @description Applies the mixins declared in the `$mixins` attribute, attaching each
    * mixin's custom properties and methods to this object. Shared by `init()` and
-   * `re_init()`.
+   * `reInit()`.
    */
   applyMixins() {
     for(const mixin_ref of this.getAttributeValue("$mixins", [])) {
@@ -615,27 +615,25 @@ class RezBasicObject {
 
     const pTable = JSON.parse(value.ptable);
 
+    const roll = (p) => {
+      const idx = pTable.findIndex((pair) => p <= pair[1]);
+      if(idx === -1) {
+        throw new Error("Invalid p_table. Must contain range 0<n<1");
+      }
+      return normalizeRefs(pTable[idx][0]);
+    }
+
     Object.defineProperty(this, attrName, {
       get: () => {
         const p = Math.random();
-        const idx = pTable.findIndex((pair) => p <= pair[1]);
-        if(idx === -1) {
-          throw new Error("Invalid p_table. Must contain range 0<n<1");
-        }
-
-        return normalizeRefs(pTable[idx][0]);
+        return roll(p);
       },
     });
 
     Object.defineProperty(this, `${attrName}_roll`, {
       get: () => {
         const p = Math.random();
-        const idx = pTable.findIndex((pair) => p <= pair[1]);
-        if(idx === -1) {
-          throw new Error("Invalid p_table. Must contain range 0<n<1");
-        }
-
-        return { p: p, obj: normalizeRefs(pTable[idx][0]) };
+        return {p: p, obj: roll(p)};
       },
     });
   }
@@ -769,7 +767,7 @@ class RezBasicObject {
    * This makes the object accessible via the `$()` lookup function and indexes it by tags.
    */
   addToGame() {
-    $game.addGameObject(this);
+    this.game.addGameObject(this);
     return this;
   }
 
@@ -783,6 +781,18 @@ class RezBasicObject {
     const nextId = lastId + 1;
     this.setAttribute("$auto_id_idx", nextId);
     return `${this.id}_${nextId}`;
+  }
+
+  #makeCopy(id) {
+    const attributes = this.attributes.copy();
+
+    // Subclasses may have overridden the element constructor
+    const copy = new this.constructor(id, attributes);
+    copy.setAttribute("$auto_id_idx", 0, false);
+    copy.setAttribute("$template", false, false);
+    copy.setAttribute("$original_id", this.id, false);
+
+    return copy;
   }
 
   /**
@@ -810,12 +820,7 @@ class RezBasicObject {
    * @returns {object} copy of the current object
    */
   copyAssigningId(id, {post_init_fn} = {}) {
-    const attributes = this.attributes.copy();
-    // Subclasses override the RezBasicElement constructor
-    const copy = new this.constructor(id, attributes);
-    copy.setAttribute("$auto_id_idx", 0, false);
-    copy.setAttribute("$template", false, false);
-    copy.setAttribute("$original_id", this.id, false);
+    const copy = this.#makeCopy(id);
 
     copy.init();
 
@@ -824,6 +829,7 @@ class RezBasicObject {
     }
 
     copy.runEvent("copy", { original: this });
+
     return copy;
   }
 
@@ -833,19 +839,16 @@ class RezBasicObject {
    * @param {string} id the id to assign to the reconstructed copy
    * @returns {object} a structurally-initialized copy of this object
    * @description Rebuilds a procedurally-created copy while loading a save. Parallels
-   * `copyAssigningId` but runs `re_init()` (structural-only) instead of `init()`, so no
+   * `copyAssigningId` but runs `reInit()` (structural-only) instead of `init()`, so no
    * generative initializers, `elementInitializer()`, `init` event, or `copy` event fire.
    * The `$auto_id_idx`/`$template`/`$original_id` metadata set here is overwritten by the
    * archived values when the loader subsequently calls `loadData()` on the copy.
    */
   copyForLoad(id) {
-    const attributes = this.attributes.copy();
-    // Subclasses override the RezBasicElement constructor
-    const copy = new this.constructor(id, attributes);
-    copy.setAttribute("$auto_id_idx", 0, false);
-    copy.setAttribute("$template", false, false);
-    copy.setAttribute("$original_id", this.id, false);
-    copy.re_init();
+    const copy = this.#makeCopy(id);
+
+    copy.reInit();
+
     return copy;
   }
 
@@ -876,12 +879,12 @@ class RezBasicObject {
    * and is removed from tag indexes. Use this for cleanup when an object is no longer needed.
    */
   unmap() {
-    $game.unmapObject(this);
+    this.game.unmapObject(this);
     return this;
   }
 
   /**
-   * @function unmap_attr
+   * @function unmapAttr
    * @memberof RezBasicObject#
    * @param {string} attr_name - name of an `_id` attribute referencing another object
    * @throws {Error} if attr_name doesn't end with "_id"
@@ -890,18 +893,18 @@ class RezBasicObject {
    * the attribute on this object, then unmaps the referenced object from the game.
    * Use this to clean up owned/related objects when they should be removed.
    */
-  unmap_attr(attr_name) {
-    if(!attr_name.endsWith("_id")) {
+  unmapAttr(attrName) {
+    if(!attrName.endsWith("_id")) {
       throw new Error("Cannot unmap attributes that do not relate to an element id!");
     }
 
-    if(!Object.hasOwn(this, attr_name)) {
+    if(!Object.hasOwn(this, attrName)) {
       throw new Error("Cannot unmap attribute not defined on this object!");
     }
 
-    const related_obj = $(this[attr_name], true);
+    const related_obj = $(this[attrName], true);
 
-    this[attr_name] = null;
+    this[attrName] = null;
     related_obj.unmap();
   }
 
@@ -935,8 +938,7 @@ class RezBasicObject {
    */
   willHandleEvent(eventName) {
     const handler = this.eventHandler(eventName);
-    const doesHandleEvent = handler != null && typeof handler === "function";
-    return doesHandleEvent;
+    return typeof(handler) === "function";
   }
 
   /**
@@ -948,11 +950,11 @@ class RezBasicObject {
    * @description attempts to run the event handler function for the event name, passing the specified params to the handler
    */
   runEvent(eventName, params = {}) {
-    if(RezBasicObject.game.$debug_events) {
+    if(this.game.$debug_events) {
       console.log(`Run on_${eventName} handler on '${this.id}'`);
     }
     const handler = this.eventHandler(eventName);
-    if(handler != null && typeof handler === "function") {
+    if(typeof(handler) === "function") {
       return handler(this, params);
     } else {
       return false;
@@ -988,8 +990,7 @@ class RezBasicObject {
    * @description returns the value of the attribute with the given name. If no such attribute is present returns `undefined`
    */
   getAttribute(name) {
-    const attr = this.attributes[name];
-    return attr;
+    return this.attributes[name];
   }
 
   /**
@@ -999,6 +1000,8 @@ class RezBasicObject {
    * @param {*} default_value value to return if no such attribute is present
    * @returns {*} attribute value
    * @description returns the value of the attribute with the given name. If no such value is present it returns the default value. If no default value is given it throws an exception.
+   * Note that for certain value types (function, dice roll) you obtain the result (value) not the attribute value. For these cases
+   * use getAttribute() instead.
    */
   getAttributeValue(name, defaultValue) {
     const attr = this.getAttribute(name);
@@ -1010,7 +1013,7 @@ class RezBasicObject {
       }
     } else if(typeof attr === "function") {
       return attr(this);
-    } else if(attr.constructor === RezDie) {
+    } else if(attr?.constructor === RezDie) {
       return attr.roll();
     } else {
       return attr;
@@ -1044,7 +1047,10 @@ class RezBasicObject {
     }
 
     const oldValue = this.attributes[attrName];
+
     this.attributes[attrName] = newValue;
+    // We do not consider `this` to be an "observer" hence this event gets fired
+    // even when notifyObservers is false
     this.runEvent(`${attrName}_changed`, {oldValue: oldValue, newValue: newValue});
     this.changedAttributes.add(attrName);
 
@@ -1067,7 +1073,11 @@ class RezBasicObject {
    * @description Checks whether this object has the specified tag in its `tags` attribute.
    */
   hasTag(tag) {
-    return this.getAttribute("tags").has(tag);
+    const tags = this.getAttribute("tags");
+    if(tags instanceof Set) {
+      return tags.has(tag);
+    }
+    return false;
   }
 
   /**
@@ -1098,14 +1108,11 @@ class RezBasicObject {
    */
   removeTag(tag) {
     let tags = this.getAttribute("tags");
-    if(!tags) {
-      tags = new Set();
-    } else {
+    if(tags instanceof Set) {
       tags.delete(tag);
+      this.setAttribute("tags", tags);
+      this.game.unindexObjectForTag(this, tag);
     }
-
-    this.setAttribute("tags", tags);
-    this.game.unindexObjectForTag(this, tag);
   }
 
   /**
@@ -1174,13 +1181,32 @@ class RezBasicObject {
   }
 }
 
+/*
+ * The placeholder is `_` in Rez source which indicates a value that is not known at
+ * author time but which should be initialized before the game starts. The `_` gets
+ * translated into a `_placeHolder` which will fail at runtime indicating what value
+ * name was trying to be obtained.
+ */
+
 const _isPlaceholderSym = Symbol("isPlaceholder");
-const _placeHolder = (name) => Object.freeze({
-  [_isPlaceholderSym]: true,
-  toString()             { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); },
-  valueOf()              { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); },
-  [Symbol.toPrimitive]() { throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`); }
-});
+
+const _placeHolder = (name) => {
+  const fail = () => {
+    throw new Error(`Unbound placeholder '${name}': attribute used in template before being initialized`);
+  }
+  return Object.freeze({
+    [_isPlaceholderSym]: true,
+    toString() {
+      fail();
+    },
+    valueOf() {
+      fail();
+    },
+    [Symbol.toPrimitive]() {
+      fail();
+    }
+  });
+}
 const isPlaceholder = (v) => v != null && v[_isPlaceholderSym] === true;
 
 window.Rez.RezBasicObject = RezBasicObject;

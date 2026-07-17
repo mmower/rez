@@ -1585,6 +1585,10 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
 |`layout_separator`
 |String
 |Markup content to be inserted between cards when in stack mode (defaults: "")
+
+|`resume_event`
+|Function
+|A function called after resume that returns a RezEvent determining what happens next. The default is to return `RezEvent.render()`
 |===
 
 === Event Handlers

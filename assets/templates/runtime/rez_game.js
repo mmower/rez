@@ -66,6 +66,14 @@ class RezGame extends RezBasicObject {
     return this.#view;
   }
 
+  get canSave() {
+    return this.#view && this.#view.layoutStack.length === 0;
+  }
+
+  get canUndo() {
+    return this.#undoManager.canUndo;
+  }
+
   bindAs() {
     return "game";
   }
@@ -112,10 +120,6 @@ class RezGame extends RezBasicObject {
 
   saveData() {
     return JSON.stringify(this.gameArchive());
-  }
-
-  get canSave() {
-    return this.#view && this.#view.layoutStack.length === 0;
   }
 
    /**
@@ -169,15 +173,11 @@ class RezGame extends RezBasicObject {
       throw new Error("JSON does not represent a Rez game archive!");
     } else if(archiveFormat !== currentFormat) {
       throw new Error(`JSON version v${archiveFormat} different to current v${currentFormat})!`);
-    } else {
-      console.log(`Matching archive format: ${archiveFormat}`);
     }
 
     const data = wrapper.data;
     if(typeof data === "undefined") {
       throw new Error("JSON does not contain data archive!");
-    } else {
-      console.log("Found data");
     }
 
     // Pass 1: reconstruct procedurally-created objects that don't exist after a fresh
@@ -192,7 +192,6 @@ class RezGame extends RezBasicObject {
 
     // Pass 2: apply the archived attributes to every object (base + reconstructed).
     for(const [id, obj_data] of Object.entries(data)) {
-      console.log(`Loading data for ${id}`);
       const obj = this.getGameObject(id);
       obj.loadData(obj_data);
       obj.runEvent("did_load");
@@ -306,8 +305,6 @@ class RezGame extends RezBasicObject {
 
       if(index.size === 0) {
         delete this.#attrIndex[attrName];
-      } else {
-        this.#attrIndex[attrName] = index;
       }
     }
   }
@@ -329,7 +326,7 @@ class RezGame extends RezBasicObject {
    * @memberof RezGame#
    * @param {object} obj reference to a game-object
    * @param {string} tag
-   * @description applies the specified tag to the spectified game-object
+   * @description applies the specified tag to the specified game-object
    */
   indexObjectForTag(obj, tag) {
     let objects = this.#tagIndex[tag];
@@ -363,7 +360,7 @@ class RezGame extends RezBasicObject {
    * @function addToTagIndex
    * @memberof RezGame#
    * @param {object} obj game-object
-   * @description indexes the specified game-object for all tags in it's tags attribute
+   * @description indexes the specified game-object for all tags in its tags attribute
    */
   addToTagIndex(obj) {
     const tags = obj.getAttributeValue("tags", new Set());
@@ -447,7 +444,7 @@ class RezGame extends RezBasicObject {
    *
    * Accepts both plain string IDs and {$ref: "id"} objects for backward compatibility.
    * If should_throw is true an exception will be thrown if the element id
-   * is not valid. Otherwise null is returned.
+   * is not valid. Otherwise undefined is returned.
    */
   getGameObject(idOrRef, shouldThrow = true) {
     const id = Rez.extractId(idOrRef);
@@ -468,7 +465,7 @@ class RezGame extends RezBasicObject {
    * @param {string} id id of game-object
    * @param {string} type game object type (e.g. 'actor' or 'item')
    * @param {boolean} should_throw (default: true)
-   * @returns {basic_object|null} game-object or null
+   * @returns {basic_object|undefined} game-object or undefined
    */
   getTypedGameObject(id, element, shouldThrow = true) {
     const obj = this.getGameObject(id, shouldThrow);
@@ -514,20 +511,20 @@ class RezGame extends RezBasicObject {
    * and getRelationship("b", "a") are different RezRelationship objects.
    */
   getRelationship(sourceId, targetId) {
-    if(typeof(sourceId) === "object") {
-      sourceId = sourceId.id;
-    }
-    if(typeof(sourceId) !== "string") {
-      throw new Error(`Invalid sourceId parameter!`);
-    }
-    if(typeof(targetId) === "object") {
-      targetId = targetId.id;
-    }
-    if(typeof(targetId) !== "string") {
-      throw new Error(`Invalid sourceId parameter!`);
+    const extractId = (o, name) => {
+      let id;
+      if(typeof(o) === "object") {
+        id = o.id;
+      }
+      if(typeof(id) !== "string") {
+        throw new Error(`Invalid ${name} id parameter!`)
+      }
     }
 
+    sourceId = extractId(sourceId, "sourceId");
+    targetId = extractId(targetId, "targetId");
     const relId = `rel_${sourceId}_${targetId}`;
+
     return this.getTypedGameObject(relId, "relationship", false);
   }
 
@@ -550,24 +547,27 @@ class RezGame extends RezBasicObject {
    * @returns {array} game-objects passing the filter
    * @description filters all game-objects returning those for which the pred filter returns true
    */
-  filterObjects(pred) {
-    return Array.from(this.#gameObjects.values())
-      .filter((obj) => !obj.isTemplateObject() && pred(obj));
+  filterObjects(pred, {includeTemplates = false} = {}) {
+    if(includeTemplates) {
+      return Array.from(this.#gameObjects.values()).filter(pred);
+    } else {
+      return Array.from(this.#gameObjects.values())
+        .filter((obj) => !obj.isTemplateObject() && pred(obj));
+    }
   }
 
   /**
    * @function getAll
    * @memberof RezGame#
-   * @param {string} target_type (optional) a specific game object type (e.g. 'actor', 'item')
+   * @param {string} element (optional) a specific game element type (e.g. 'actor', 'item')
    * @returns {array} game-objects with the specified type
    * @description filters all game-objects returning those with the specified type
    */
-  getAll(element) {
-    if(typeof element === "undefined") {
-      return Array.from(this.#gameObjects.values());
-    } else {
-      return this.filterObjects((obj) => obj.element === element);
-    }
+  getAll(element, params = {}) {
+    const allFilter = (obj) => true;
+    const elemFilter = (obj) => obj.element === element;
+    const filter = (typeof element === "undefined" || element === "*") ? allFilter : elemFilter;
+    return this.filterObjects(filter, params);
   }
 
   /**
@@ -579,6 +579,19 @@ class RezGame extends RezBasicObject {
    */
   playCardWithId(cardId, params = {}) {
     this.current_scene.playCardWithId(cardId, params);
+  }
+
+  #enterScene(sceneId, params) {
+    const scene = this.getTypedGameObject(sceneId, "scene", true);
+
+    this.current_scene = scene;
+
+    this.updateViewContent();
+
+    this.clearFlashMessages();
+    this.broadcastLifecycle("scene_will_start", params);
+    scene.start(params);
+    scene.ready();
   }
 
   /**
@@ -596,16 +609,7 @@ class RezGame extends RezBasicObject {
       this.current_scene.finish();
     }
 
-    const scene = this.getTypedGameObject(sceneId, "scene", true);
-
-    this.current_scene = scene;
-
-    this.updateViewContent();
-
-    this.clearFlashMessages();
-    this.broadcastLifecycle("scene_will_start", params);
-    scene.start(params);
-    scene.ready();
+    this.#enterScene(sceneId, params);
   }
 
   /**
@@ -621,16 +625,7 @@ class RezGame extends RezBasicObject {
     this.broadcastLifecycle("scene_will_pause", {});
     this.pushScene();
 
-    const scene = this.getTypedGameObject(sceneId, "scene", true);
-
-    this.current_scene = scene;
-
-    this.updateViewContent();
-
-    this.clearFlashMessages();
-    this.broadcastLifecycle("scene_will_start", params);
-    scene.start(params);
-    scene.ready();
+    this.#enterScene(sceneId, params);
   }
 
   /**
@@ -663,10 +658,6 @@ class RezGame extends RezBasicObject {
         throw new Error(`Invalid response from scene ${this.current_scene.id} resume_event!`);
       }
     }
-  }
-
-  get canUndo() {
-    return this.#undoManager.canUndo;
   }
 
   undo() {
@@ -753,12 +744,12 @@ class RezGame extends RezBasicObject {
   /**
    * @function setViewLayout
    * @memberof RezGame#
-   * @param {*} layout ???
-   * @description ???
+   * @param {RezLayout} layout
+   * @description set the view layout that will be rendered by updateView
    */
-  setViewLayout(layout) {
-    this.#view.setLayout(layout);
-  }
+  // setViewLayout(layout) {
+  //   this.#view.setLayout(layout);
+  // }
 
   /**
    * @function installWindowEvents
@@ -795,11 +786,13 @@ class RezGame extends RezBasicObject {
 
     // Initialize the game objects starting with #game
     this.init();
-    const game_objects = this.getAttribute("$init_order");
-    game_objects.forEach(function (obj_id) {
+
+    const game_object_ids = this.getAttribute("$init_order");
+
+    game_object_ids.forEach((obj_id) => {
       const obj = this.getGameObject(obj_id);
-        obj.init();
-    }, this);
+      obj.init();
+    });
 
     try {
       this.initMods();
