@@ -77,9 +77,9 @@
   bindings: [player: #player, goblin: #goblin]
 
   %% (Re)start the fight whenever this card is played, so "Fight again" works.
-  on_start: (card) => {
-    const player = card.$("player");
-    const goblin = card.$("goblin");
+  on_will_start: (card) => {
+    const player = $("player");
+    const goblin = $("goblin");
     player.hp = player.max_hp;
     goblin.hp = goblin.max_hp;
     card.log = [`A wild ${goblin.name} appears!`];
@@ -117,8 +117,8 @@
   %% its first attack. `.render()` paints this strike; the queued event fires a
   %% beat later so the player sees it before the goblin responds.
   on_player_attack: (card) => {
-    const player = card.$("player");
-    const goblin = card.$("goblin");
+    const player = $("player");
+    const goblin = $("goblin");
 
     const dmg = roll_damage(player);
     goblin.hp = Math.max(0, goblin.hp - dmg);
@@ -139,8 +139,8 @@
   %% whole flurry; when the last blow queues nothing, the engine drains and the
   %% player can act again.
   on_monster_attack: (card, params) => {
-    const player = card.$("player");
-    const goblin = card.$("goblin");
+    const player = $("player");
+    const goblin = $("goblin");
 
     const dmg = roll_damage(goblin);
     player.hp = Math.max(0, player.hp - dmg);

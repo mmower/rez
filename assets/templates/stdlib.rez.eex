@@ -110,12 +110,11 @@
   css_class: {kind: :string}
   title: {kind: :string}
 
-  on_start: {kind: :function}
-  on_ready: {kind: :function}
-  on_interrupt: {kind: :function}
+  on_will_start: {kind: :function}
+  on_did_start: {kind: :function}
+  on_will_render: {kind: :function}
+  on_did_render: {kind: :function}
   on_finish: {kind: :function}
-  on_will_embed: {kind: :function}
-  on_did_embed: {kind: :function}
 }
 
 @defaults card {
@@ -216,6 +215,9 @@
   on_scene_did_end: {kind: :function}
   on_scene_will_pause: {kind: :function}
   on_scene_did_resume: {kind: :function}
+  on_card_will_start: {kind: :function}
+  on_card_did_start: {kind: :function}
+  on_card_did_finish: {kind: :function}
   on_will_render: {kind: :function}
   on_did_render: {kind: :function}
 }
@@ -517,6 +519,7 @@
   on_interrupt: {kind: :function}
   on_resume: {kind: :function}
   on_card_will_start: {kind: :function}
+  on_card_did_start: {kind: :function}
   on_card_did_finish: {kind: :function}
   on_will_render: {kind: :function}
   on_did_render: {kind: :function}

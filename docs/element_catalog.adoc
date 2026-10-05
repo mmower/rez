@@ -2,7 +2,7 @@
 title = "Rez Elements & Directives Catalog"
 author = "Matt Mower"
 draft = false
-date = 2024-03-16
+date = 2026-09-30
 +++
 :relfileprefix: ../
 :relfilesuffix: /
@@ -43,19 +43,18 @@ Directives modify in-game concepts.
 * <<Behaviour Template (Directive), Behaviour Template>>
 * <<Component (Directive), Component>>
 * <<Const (Directive), Const>>
-* <<Declare (Directive), Declare>>
 * <<Defaults (Directive), Defaults>>
 * <<Derive (Directive), Derive>>
 * <<Elem (Directive), Elem>>
-* <<Enum (Directive), Enum>>
 * <<Filter (Directive), Filter>>
 * <<Generator (Directive), Generator>>
 * <<Mixin (Directive), Mixin>>
+* <<Patch (Directive), Patch>>
 * <<Pragma (Directive), Pragma>>
 * <<Keybinding (Directive), Keybinding>>
 * <<Schema (Directive), Schema>>
 * <<Script (Directive), Script>>
-* <<Style (Directive), Style>>
+* <<Styles (Directive), Styles>>
 
 == Actor (Element)
 
@@ -70,15 +69,13 @@ In this example of our game the player can decide which of the antagonists they 
 ....
 @actor sam_spade {
   name: "Sam Spade"
-  stats: {
-    gunplay: 6
-    fisticuffs: 7
-    drinking: 8
-    flirting: 6
-    sluething: 9
-    chat: 6
-  }
-  container: #sams_stuff
+  gunplay: 6
+  fisticuffs: 7
+  drinking: 8
+  flirting: 6
+  sleuthing: 9
+  chat: 6
+  container_id: #sams_stuff
 }
 
 @rel #sam_spade -> #miss_wonderly {affinity: +2}
@@ -95,7 +92,7 @@ In this example of our game the player can decide which of the antagonists they 
   flirting: 9
   sleuthing: 6
   chat: 8
-  container: #joels_stuff
+  container_id: #joels_stuff
 }
 
 @rel #joel_cairo -> #sam_spade {affinity: 1}
@@ -110,7 +107,7 @@ In this example of our game the player can decide which of the antagonists they 
   flirting: 10
   sleuthing: 4
   chat: 9
-  container: #ruths_stuff
+  container_id: #ruths_stuff
 }
 
 @rel #miss_wonderly -> #sam_spade {affinity: 4}
@@ -119,13 +116,13 @@ In this example of our game the player can decide which of the antagonists they 
 
 @actor kaspar_gutman {
   name: "Kaspar Gutman"
-  gunplay: 1,
-  fisticuffs: 3,
-  drinking: 9,
-  flirting: 2,
-  sleuthing: 7,
+  gunplay: 1
+  fisticuffs: 3
+  drinking: 9
+  flirting: 2
+  sleuthing: 7
   chat: 9
-  container: #kaspar_stuff
+  container_id: #kaspar_stuff
 }
 
 @rel #kaspar_gutman -> #sam_spade {affinity: 2}
@@ -133,9 +130,8 @@ In this example of our game the player can decide which of the antagonists they 
 @rel #kaspar_gutman -> #joel_cairo {affinity: 1}
 ....
 
-By using a set of `@actor`s we can keep things separate and easier to understand and use the built-in `@rel` directive to create relationships between the actors.
+By using a set of ``@actor``s we can keep things separate and easier to understand and use the built-in `@rel` directive to create relationships between the actors.
 
-=== Required Attributes
 === Optional Attributes
 [cols="2,1,4"]
 |===
@@ -143,9 +139,17 @@ By using a set of `@actor`s we can keep things separate and easier to understand
 |Set
 |a set of keyword tags
 
-|`container`
+|`container_id`
 |Element Ref
-|id of the inventory that represents items carried by this actor
+|id of the `@inventory` that represents items carried by this actor
+
+|`initial_location`
+|Element Ref
+|when set, the actor is moved to this location during initialization (see `moveTo()`)
+
+|`behaviours`
+|Behaviour Tree
+|a behaviour tree, e.g. `behaviours: ^[$select ...]`, instantiated with this actor as its owner
 |===
 
 === Event Handlers
@@ -199,7 +203,7 @@ The `event` argument is a map
 }
 ....
 
-This callback will be received when the actor is moved to a new location and is
+This callback will be received when the actor is moved to a new location with `moveTo()` and is
 passed the id of the location to which the actor has moved.
 
 ==== on_leave
@@ -217,14 +221,6 @@ The `event` argument is a map
 ....
 
 This callback will be received when the actor has left a location and is passed the id of the location which has been vacated.
-
-==== on_turn
-
-....
-on_turn: (actor, event = {}) => {...}
-....
-
-If the game turn mechanism is being used this callback will be received on each game turn. This is intended for simple cases and if you need to coordinate behaviours across multiple elements it may be better to use a system instead.
 
 == Asset (Element)
 
@@ -273,6 +269,17 @@ Assets must specify their source file using either `file_name` or `file_path` (b
 |===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`tags`
+|Set
+|a set of keyword tags
+
+|`width`, `height`
+|String or Number
+|display dimensions of the asset. If one is specified the other must be too
+|===
+
 === Event Handlers
 
 ==== on_init
@@ -308,7 +315,7 @@ The core of a behaviour element is its `execute:` script attribute. This is inte
 
 Each behaviour can, optionally, receive options and, again optionally, a list of child behaviours. Conditions and actions are not expected to have children while composites and decorators don't make sense without at least one child.
 
-When a behaviour tree is run it gets passed an empty object `{}` as "working memory" to allow different behaviours to communicate state required to run the tree. As a new working memory is used each time the tree is run, any persistent state changes should be in the world model.
+A behaviour instance can access the object that owns the tree via `behaviour.owner`. Any state that needs to persist between runs of the tree should be stored in the world model (e.g. attributes of the owner).
 
 Let's look at an example. We want a condition that tests whether a given actor is in a certain location. Here's how we could implement it.
 
@@ -318,15 +325,10 @@ Let's look at an example. We want a condition that tests whether a given actor i
 @behaviour actor_in {
   options_spec: [:actor :location]
 
-  execute: (behaviour, wmem) => {
-    const actor_id = behaviour.option("actor");
-    const actor = $(actor_id);
+  execute: (behaviour) => {
+    const actor = $(behaviour.option("actor"));
     const location_id = behaviour.option("location");
-    if(actor.location == location_id) {
-      return {success: true, wmem: wmem};
-    } else {
-      return {success: false, error: "Actor is not in location", wmem: wmem};
-    }
+    return actor.location_id === location_id;
   }
 }
 ....
@@ -337,8 +339,8 @@ In this example we have defined a condition behaviour to test whether a specifie
 
 ....
 ^[$sequence
-  [actor_in actor=sam_spade location=sams_office]
-  ...
+  [actor_in actor="sam_spade" location="sams_office"]
+  [...]
 ]
 ....
 
@@ -347,16 +349,34 @@ The rest of the behaviours in this sequence will only be run if Sam is in his of
 === Required Attributes
 [cols="2,1,4"]
 |===
-|`options_spec`
-|List
-|keywords describing the options that this behaviour uses. If there are no options use the empty list `[]`
-
 |`execute`
 |Script
-|script that takes two parameters `behaviour` (a reference to the `RezBehaviour` itself) and `wmem` which is a reference to a map of "working memory" that can be used to record behaviour state or pass state between behaviours. The return value must either be a map that is either `{success: true, wmem: wmem}` or `{success: false, error: "Message", wmem: wmem}`.
+|script that takes one parameter `behaviour` (a reference to the `RezBehaviour` instance, from which the options, children, and `owner` can be reached). It must return a boolean: `true` if the behaviour succeeds, `false` if it fails. Any other return value raises an error.
 |===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`options_spec`
+|List
+|keywords describing the options that this behaviour uses (default: `[]`)
+
+|`min_children`
+|Number
+|minimum number of child behaviours (default: 0)
+
+|`max_children`
+|Number
+|maximum number of child behaviours (default: 0)
+
+|`configure`
+|Script
+|`(behaviour) => {...}` called after the behaviour is instantiated, for setup that depends on the options or owner
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
 
 == Behaviour Template (Directive)
 
@@ -389,12 +409,12 @@ Maybe it's not just Sam that you want to be able to order liquor at the bar. But
 @behaviour_template order_whisky ^[$sequence [actor_in location_type=:bar] [actor_is state=:thirsty] [actor_says msg="Give me a whisky."]]
 
 @actor sam_spade {
-  behaviours: ^[$select &order_whisky
+  behaviours: ^[$select [&order_whisky]
                         [..behaviours unique to Sam..]]
 }
 
 @actor joel_cairo {
-  behaviours: ^[$select &order_whisky
+  behaviours: ^[$select [&order_whisky]
                         [..behaviours unique to Joel..]]
 }
 ....
@@ -405,28 +425,28 @@ Templates can also include other templates allowing for clean composition of man
 
 == Card (Element)
 
-Cards are the basic unit of content & interaction in a Rez game. Cards are "played" into a scene to present what is happening to the user and offer them choices about what to do next. In this they serve a similar role to Twine passages.
+Cards are the basic unit of content & interaction in a Rez game. Cards are "played" into a scene to present what is happening to the user and offer them choices about what to do next.
 
-The `content` attribute is key as it defines the template that is rendered each time the card is played. Optionally a card may also define `flipped_content` which is what is displayed in a scene using a stack layout after the card has been used (i.e. the player has followed a link from that card).
+A card has one or more _faces_. The `content` attribute defines the template that is rendered each time the card is played. Optionally a card may also define a `back` face which is what is displayed in a scene using a stack layout after the card has been used (i.e. the player has moved on from that card).
 
 Cards can be part of the main interface but can also be used as blocks in other cards. For example a card could be defined to represent a sidebar and included into scene layout.
 
-Internally the `content` and `flipped_content` attributes of the card are converted into template expressions (a kind of Javascript function) so that they render quickly.
+Internally the `content` and `back` attributes of the card are converted into template functions (stored as `$content_template` and `$back_template`) so that they render quickly.
 
 === Example
 
 ....
 @card intro_part_1 {
   content: ```
-  You are in a mazy of twisty passages all alike.
-  [[Go forward|intro_part_2]]
+  You are in a maze of twisty passages all alike.
+  <a card="intro_part_2">Go forward</a>
   ```
 }
 
 @card intro_part_2 {
   content: ```
   You get the idea!
-  [[Go backward|intro_part_1]]
+  <a card="intro_part_1">Go backward</a>
   ```
 }
 ....
@@ -442,21 +462,45 @@ Internally the `content` and `flipped_content` attributes of the card are conver
 === Optional Attributes
 [cols="2,1,4"]
 |===
-|`flipped_content`
+|`back`
 |Template
-|content that is presented after the card is used in a stack layout
+|content that is presented after the card is finished, when the card's scene uses a stack layout
+
+|`faces`
+|Set
+|names of the faces that receive the card wrapper `<div>`. Defaults to `#{:content, :back}`
 
 |`blocks`
-|List
-|List of element-ids of the cards that can be referenced in the `content` or `flipped_content` templates, e.g. `[#sidebar]` is available as `${sidebar}`
+|List of bindings
+|bindings from a name to the card whose content can be referenced in the `content` or `back` templates, e.g. `[sidebar: #sidebar_card]` makes the card available as `${sidebar}`
+
+|`current_face`
+|Keyword
+|the face currently displayed. Defaults to `:content`
+
+|`title`
+|String
+|optional title for the card
+
+|`tags`
+|Set
+|set of keywords used to categorise the card
 
 |`bindings`
-|Table
-|keys to bindings which can either be game object ids or functions returning a value. E.g. `bindings: {player: #player}` allows `${player.name}`
+|List
+|list of bindings which can either be game object ids or functions returning a value. E.g. `bindings: [player: #player]` allows `${player.name}`
 
 |`css_class`
 |String
-|custom CSS classes to apply, "information is-primary"
+|custom CSS classes to apply to the card wrapper, "information is-primary"
+
+|`$suppress_wrapper`
+|Boolean
+|when true the card's content is rendered without the wrapping `<div>`
+
+|`$js_ctor`
+|String
+|name of a custom Javascript class (extending `RezCard`) used to construct the card
 |===
 
 === Event Handlers
@@ -469,64 +513,82 @@ on_init: (card, event = {}) => {...}
 
 This script will be called during game initialization and before the game has started.
 
-==== on_enter
+==== on_will_start
 
 ....
-on_enter: (card, event = {}) => {...}
+on_will_start: (card, event = {}) => {...}
 ....
 
-==== on_render
+Called when the scene makes this card the current card, before it is rendered. `event` holds the params passed when the card was played.
+
+==== on_did_start
 
 ....
-on_render: (card, event = {}) => {...}
+on_did_start: (card, event = {}) => {...}
 ....
 
-==== on_ready
+Called after the card has been rendered into the view, just before control passes back to the player/browser. This replaces the older `on_ready` card event.
+
+==== on_finish
 
 ....
-on_ready: (card, event = {}) => {...}
+on_finish: (card, event = {}) => {...}
 ....
 
-==== on_leave
+Called when the card is being replaced by another card (or the scene is ending).
+
+==== on_will_render / on_did_render
 
 ....
-on_leave: (card, event = {}) => {...}
+on_will_render: (card, event = {}) => {...}
+on_did_render: (card, event = {}) => {...}
 ....
+
+Called before and after the view is re-rendered while this card is the scene's current card.
+
+Custom events triggered from the card's content are handled by defining an `on_<event_name>` handler on the card.
 
 === Notes
 
-Card content is written in Markdown and converted to HTML. It's somewhat similar to a Twine passage and some of the basic syntax, e.g. `[[Go forward|intro_part_2]]` translate across to Rez.
+Card content is written as HTML (with template expressions). Unlike Twine we do not use Markdown and `[[links]]` style links are not supported.
 
-However there are a number of additional syntaxes. For example it's possible to hijack this mechanism using a script:
+Links are written as `<a>` (or `<button>`) tags. Rez transforms the following attributes into `data-event` / `data-target` attributes when the template is compiled:
+
+[cols="2,4"]
+|===
+|`card="card_id"`
+|play the card into the current scene
+
+|`scene="scene_id"`
+|switch to the scene
+
+|`interlude="scene_id"`
+|run the scene as an interlude
+
+|`resume`
+|resume from an interlude
+
+|`event="handler"`
+|trigger the named event (`data-event="handler"`)
+|===
+
+An `<a>` with no `href` gets `href="javascript:void(0)"`.
+
+Custom events are handled by an `on_<event>` attribute on the card:
 
 ....
 @card intro_part_1 {
   content: ```
-  You are in a mazy of twisty passages all alike.
-  [[Go forward]]
+  You are in a maze of twisty passages all alike.
+  <a event="go_forward">Go forward</a>
   ```
-  on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2");}
+  on_go_forward: (card, evt) => {...}
 }
 ....
 
-Here we define an event handler which will respond to the link being clicked. By default Rez will automatically convert a link such as "Go forward" into the equivalent "go_forward" by downcasing and replacing whitespace with a single `_` character.
+Note: in components you cannot use the `card=` style links, as these are only converted in template attributes. Use `data-event` and `data-target` directly (see `@component`).
 
-Rez also has support for more dynamic types of links:
-
-....
-@card intro_part_1 {
-  content: ```
-  You are in a mazy of twist passages all alike.
-  [[Go forward|go_forward]]
-  ```
-  go_forward: (game, evt) => {evt.choice.show("Go forward);}
-  on_go_forward: (game, evt) => {return Scene.load_card(game, "intro_part_2")}
-}
-....
-
-When a card link is written in this format, Rez will look inside the card for an attribute with the same name and a function value. It will call the function which can determine whether the link should be shown or hidden and, if it is shown whether it should be enabled or disabled. whether it is enabled or disabled.
-
-However there is support for other kinds of actions and dynamic links. See the xref:cookbook.adoc[COOKBOOK] for more information.
+See the xref:cookbook.adoc[COOKBOOK] for more information.
 
 == Component (Directive)
 
@@ -581,26 +643,6 @@ Also in action and event handlers:
   bad_circumference: (r) => {
     return r * $BAD_PI * $BAD_PI;
   }
-}
-....
-
-== Declare (Directive)
-
-A `@declare` directive is a shorthand for defining an `@object` element without
-attributes. Typically you use this for declaring an object to be the target of
-relationships but which does not, itself, need to be defined in terms of a set
-of attributes.
-
-=== Example
-
-In this example we are specifying that the player hates the dark (affinity -5)
-but we don't need "the dark" to be more than a placeholder to be the target of
-the relationship
-
-....
-@declare the_dark
-@rel #player -> #the_dark {
-  affinity: -5
 }
 ....
 
@@ -675,7 +717,7 @@ Effects are modifiers to aspects of the game that can be applied and removed dyn
 
 For example an item, when worn, might convey a bonus to the actor wearing it. In this case the effect, attached to the item, is applied when the item is worn and removed when the item is removed.
 
-Effect support is limited in v0.8. Effect scripts will be called and its up to the caller to ensure these work. In particular there is no support yet for effects that, for example, wear off over time.
+Effects are applied and removed by `@inventory` when an item carrying the effect is placed into or removed from a slot. There is no support for effects that, for example, wear off over time.
 
 === Example
 
@@ -683,19 +725,17 @@ Effect support is limited in v0.8. Effect scripts will be called and its up to t
 @effect drunk {
   name: "Drunk"
   description: "you're drunk, it's so much harder to concentrate"
-  on_apply: (evt) => {
-    const actor = $(evt.actor_id);
+  on_apply: (effect, event) => {
+    const actor = $(event.owner_id);
     // Add drunkness effects
   }
-  on_remove: (evt) => {
-    const actor = $(evt.actor_id);
+  on_remove: (effect, event) => {
+    const actor = $(event.owner_id);
     // Remove drunkness effects
   }
 }
 ....
 
-=== Required Attributes
-=== Optional Attributes
 === Event Handlers
 ==== on_init
 
@@ -706,18 +746,27 @@ started.
 
 ==== on_apply
 
-: `(effect, event = {}) => {...}`
+: `(effect, event) => {...}`
+
+    event = {
+      owner_id: <id>,
+      slot_id: <id>,
+      item_id: <id>
+    }
+
+Called when the effect is applied, i.e. when an item with this effect is placed into an inventory slot.
 
 ==== on_remove
 
-: `(effect, event = {}) => {...}`
+: `(effect, event) => {...}`
 
-==== on_turn
+    event = {
+      owner_id: <id>,
+      slot_id: <id>,
+      item_id: <id>
+    }
 
-: `(effect, event = {}) => {...}`
-
-If the game turn mechanism is being used this callback will be received on each
-game turn. This allows an effect to, for example, grow or decline over time.
+Called when the effect is removed, i.e. when the item is removed from the inventory slot.
 
 == Elem (Directive)
 
@@ -798,8 +847,18 @@ of others. Define a faction using a `@faction` element.
 }
 ....
 
-=== Required Attributes
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`member_ids`
+|Set of Element Refs
+|ids of the elements that are members of the faction. The `members` property returns the corresponding objects
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
+
 === Event Handlers
 ==== on_init
 
@@ -807,35 +866,6 @@ of others. Define a faction using a `@faction` element.
 
 This script will be called during game initialization and before the game has
 started.
-
-== Enum (Directive)
-
-An `@enum` directive defines a set of legal values for an attribute. The syntax is:
-
-....
-@enum <attr-name> [:value1 :value2 :value3]
-....
-
-Here's an example:
-
-....
-@enum color [:red :green :blue]
-
-@object {
-  color: :orange
-}
-....
-
-This would cause a compilation error because the `color` attribute does not use one of the legally defined values.
-
-....
-'color' attribute value 'orange' is not legal enum value ('red', 'green', 'blue')
-....
-
-Notes:
-
-* an enum applies over **all** uses of that named attribute, you can't use `color: [255, 0, 255]` in another element.
-* an enum only applies to attributes using keyword values, `@enum size [1.0 2.0 3.0]` is not a legal enum.
 
 == Filter (Directive)
 
@@ -879,10 +909,10 @@ The `@game` element has an implicit ID of `game`.
 ....
 @game {
   name: "The Maltese Parrot"
-  author_name: "Dachshund Hamlet"
+  title: "The Maltese Parrot"
+  author: "Dachshund Hamlet"
   IFID: "D2050DE2-97A2-1ED1-4CCA-AF9D3B0DD883"
-  created: "2022-08-31 22:13:43.830755Z"
-  version: 10
+  archive_format: 1
   layout: ```${content}```
   initial_scene_id: #sam_and_wonderly_meet
 }
@@ -895,63 +925,198 @@ The `@game` element has an implicit ID of `game`.
 |String
 |name of the game
 
-|`initial_scene_id`
-|Element Ref
-|id of the scene the game begins with
+|`title`
+|String
+|title of the game as presented to the player
+
+|`author`
+|String
+|the author of the game
 
 |`IFID`
 |String
 |ID of the game in the IFID database (an ID will automatically be generated when the game is created, it's up to you whether you register it or not)
+
+|`archive_format`
+|Number
+|version of the save-game archive format
+
+|`initial_scene_id`
+|Element Ref
+|id of the scene the game begins with
 |===
+
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`layout`
+|Template
+|template that surrounds the game content. It must contain `${content}`. The default layout includes the flash message, banner, and modal components around `${content}`
+
+|`author_email`
+|String
+|contact email for the author
+
+|`links`
+|List of Strings
+|URLs of stylesheets to link into the game page
+
+|`scripts`
+|List of Strings
+|URLs of scripts to include in the game page
+
+|`bindings`
+|List
+|See <<Card>>
+
+|`blocks`
+|List
+|See <<Card>>
+
+|`start_events`
+|List
+|list of events to run when the game starts
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
+
 === Event Handlers
+
 ==== on_init
 
 ....
-on_init: `(game, event = {}) => {...}`
+on_init: (game, event = {}) => {...}
 ....
 
 This script will be called during game initialization and before the game has
 started.
 
-==== on_start
+==== on_game_will_start
 
 : `(game, event = {}) => {...}`
 
-The `on_start` event is triggered right after the Rez framework has initialized
-itself and before the first scene or card gets rendered. It's an opportunity
-to customise game setup.
+Every element (not just the game) receives an `on_game_will_start` event once all elements have been initialized and just before the view is built and the first scene starts. It's an opportunity to customise game setup.
 
-==== on_scene_change
+==== on_game_did_start
+
+: `(game, event = {}) => {...}`
+
+Triggered after the initial scene has been started.
+
+==== on_scene_will_start
+
+: `(game, event) => {...}`
+
+The `on_scene_will_start` script is called whenever a new scene is about to be started.
+
+==== on_scene_did_end
+
+: `(game, event = {}) => {...}`
+
+Called when a scene has ended, either because a new scene replaced it or because an interlude finished.
+
+==== on_scene_will_pause
+
+: `(game, event = {}) => {...}`
+
+Called when a scene is about to be interrupted by an interlude.
+
+==== on_scene_did_resume
+
+: `(game, event = {}) => {...}`
+
+Called when a scene has been resumed after an interlude.
+
+==== on_card_will_start, on_card_did_start, on_card_did_finish
 
 : `(game, event) => {...}`
 
     event = {
-      scene_id: <id>
+      card_id: <id>,
+      params: {...}
     }
 
-The `on_scene_change` script is called whenever a new scene gets started.
+Called as cards are played into the current scene (`params` is not included for `on_card_did_finish`). These are the game-level equivalents of the scene events of the same names.
 
-The callback happens between the `on_finish` and `on_start` scripts of the
-scenes that are ending and beginning respectively.
-
-==== on_card_change
+==== on_will_render, on_did_render
 
 : `(game, event = {}) => {...}`
 
-The `on_card_change` script is called whenever a new card is played into the
-current scene.
+Called before and after the view is rendered.
 
-The callback happens between the `on_leave` and `on_enter` scripts of the card
-that is being played.
+==== on_will_save, on_did_load
+
+: `(game, event = {}) => {...}`
+
+Called before the game is saved and after a saved game has been loaded.
+
+== Generator (Directive)
+
+A `@generator` creates a list of copies of an existing element, for example a group of similar monsters. At runtime a generator becomes a `RezList` with the same id whose values are the ids of the newly created copies.
+
+=== Example
+
+....
+@generator goblin_pack {
+  source_id: #goblin
+  copies: 5
+  shuffle: true
+  customize: (goblin, idx) => {
+    goblin.name = `Goblin ${idx + 1}`;
+    return goblin;
+  }
+}
+....
+
+=== Required Attributes
+[cols="2,1,4"]
+|===
+|`source_id`
+|Element Ref
+|id of the element to copy
+|===
+
+=== Optional Attributes
+[cols="2,1,4"]
+|===
+|`priority`
+|Number
+|a number between 1 and 100 (default: 1)
+
+|`shuffle`
+|Boolean
+|whether to shuffle the generated list (default: false)
+
+|`copies`
+|Number, Die Roll, or Function
+|how many copies to make. A die roll is rolled and a function is called to get the number
+
+|`customize`
+|Function
+|`(copy, idx) => {...}` called for each copy, which must return the (possibly modified) copy. The default returns the copy unchanged
+|===
 
 == Group (Element)
 
-A group specifies a collection of assets that can be selected from. Groups can be static by defining the id of member assets, or dynamic by specifying a set of tags. In the latter case the group will collect together all assets with any of the specified tags.
+A group specifies a collection of assets that can be selected from. Groups are dynamic: they are defined by a set of tags and collect together all assets carrying any of the `include_tags` (or, alternatively, all assets that do not carry any of the `exclude_tags`).
 
 A group can be used to select an image at random, or cycle through the collection one-by-one.
 
 === Example
+
+....
+@asset hat_01 {
+  file_name: "hat_01.png"
+  tags: #{:hat}
+}
+
+@group hats {
+  type: :image
+  include_tags: #{:hat}
+}
+....
 
 === Required Attributes
 [cols="2,1,4"]
@@ -959,15 +1124,23 @@ A group can be used to select an image at random, or cycle through the collectio
 |`type`
 |Keyword
 |One of `:image`, `:audio`, `:video` which specifies the type of assets the group should contain
+
 |`include_tags`
 |Set
-|Set of tags that appear on assets that should be included in the group
+|Set of tags that appear on assets that should be included in the group. Exactly one of `include_tags` and `exclude_tags` must be specified
+
 |`exclude_tags`
 |Set
-|Set of tags that appear on assets that should be excluded from the group
+|Set of tags that appear on assets that should be excluded from the group. Exactly one of `include_tags` and `exclude_tags` must be specified
 |===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`tags`
+|Set
+|a set of keyword tags
+|===
 
 === Event Handlers
 
@@ -982,111 +1155,152 @@ started.
 
 == Inventory (Element)
 
-The `@inventory` element is used to describe containers.
+The `@inventory` element describes a container that can hold heterogenous items in slots.
 
-An inventory is used to describe a container that can hold heterogenous items in slots.
+For example, in an RPG it is common to have different slots to hold different types of items like armour, a shield, melee weapon, range weapon, rings, and amulets. In other games you might have slots describing wardrobe items. We can also think of memory (things we know about) as an inventory (where the items are topics we know about) or spell books (where items are individual spells). The `@inventory` element is designed to handle such cases.
 
-For example, in an RPG it is common to have different slots to hold different types of
-items like armour, a shield, melee weapon, range weapon, rings, and amulets. In other games you might have
-slots describing wardrobe items. We can also think of memory (things we know about)
-as an inventory (where the items are topics we know about) or spell books (where items
-are individual spells). The `@inventory` element is designed to handle such cases.
+An inventory is made up of positions, each declared by a nested `@contains` block. The `@contains` block has its own id, which becomes the name of that position in the inventory, and a `slot_id` naming the `@slot` that defines what the position accepts. This allows the same `@slot` to be re-used for several positions.
 
-When defining an `@inventory` you use the `slots:` attribute to define which slots the
-inventory contains. This attribute is specified using a binding list (list of prefix `:` value pairs) where the prefix is a 'slot specification' and the value is the `#id` of an existing
-`@slot` element. This allows us to re-use a slot.
+Slots are matched against items to determine whether it's possible to put an item in a position: an item can be placed in a position if its `type` (including any ``@derive``d types) is what the slot `accepts`.
 
-The `@inventory` knows about specifiers describing slots.
-
-....
-....
-
- using a binding list
-where the prefix is an inventory
-
-
-Rez has a fairly flexible inventory system that is based around 'slots' that define how items can be held. This allows an inventory to hold different kinds of items: you could have an inventory for items as well as an inventory for spells (spell book).
-
-Inventory slots are matched against items to determine whether it's possible to put an item in a slot.
-
-Inventories are defined using the `@inventory` tag.
-
-Inventories have a category which determines the kind of items that can be added to their slots. For example "spell" could represent a spell book, while "equipment" could represent the players inventory.
+An actor owns an inventory by naming it as its `container_id`.
 
 === Example
 
 ....
+@slot hat_slot {
+  accepts: :hat
+}
+
+@slot ring_slot {
+  accepts: :ring
+}
+
 @inventory player_inventory {
-  slots: #{#hat_slot #jacket_slot #trousers_slot #shoes_slot #holster_slot}
+  @contains hat {
+    slot_id: #hat_slot
+    initial_contents: [#black_fedora]
+  }
+
+  @contains left_ring {
+    slot_id: #ring_slot
+  }
+
+  @contains right_ring {
+    slot_id: #ring_slot
+    initial_enabled: false
+  }
+}
+
+@actor player {
+  container_id: #player_inventory
 }
 ....
 
-=== Required Attributes
+=== `@contains` Attributes
 [cols="2,1,4"]
 |===
-|`slots`
-|Set
-|Set of element ids of `@slot`s that are included in this inventory
+|`slot_id`
+|Element Ref
+|id of the `@slot` that defines this position
+
+|`initial_contents`
+|List of Element Refs
+|ids of the ``@item``s that are in this position when the game begins
+
+|`initial_enabled`
+|Boolean
+|whether this position is enabled when the game begins (default: true)
 |===
+
+Inventories may not also specify a `slots:` attribute directly, it is derived from the `@contains` blocks.
+
+=== Required Attributes
+
+An inventory must have at least one `@contains` block.
+
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`owner_id`
+|Element Ref
+|id of the actor that owns the inventory. If not specified this is the actor that names the inventory as its `container_id`
+
+|`apply_effects`
+|Boolean
+|whether the effects of items are applied when they are placed in the inventory (default: true)
+
+|`max_weight`
+|Number
+|maximum total `weight` of the items the inventory can hold
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
+
 === Event Handlers
 
 ==== on_init
 
+....
 on_init: (inventory, event = {}) => {...}
+....
 
 This script will be called during game initialization and before the game has started.
 
 ==== on_insert
 
+....
 on_insert: (inventory, event) => {...}
+....
 
-event = {
-  slot_id: <id>,
-  item_id: <id>
-}
+    event = {
+      slot_id: <id>,
+      slot_binding: <name of the position>,
+      item_id: <id>,
+      owner_id: <id>,
+      owner: <object>
+    }
 
-This script will be called when an item has been added to the specified slot of this inventory.
+This script will be called when an item has been added to a position of this inventory.
 
 ==== on_remove
 
+....
 on_remove: (inventory, event) => {...}
+....
 
-  event = {
-    slot_id: <id>,
-    item_id: <id>
-  }
+    event = {
+      slot_id: <id>,
+      slot_binding: <name of the position>,
+      item_id: <id>,
+      owner_id: <id>,
+      owner: <object>
+    }
 
-This script will be called after an item has been removed from the specified slot of this inventory.
+This script will be called after an item has been removed from a position of this inventory.
 
 == Item (Alias)
 
-Prior to v1.8 `@item` was a built-in element however as of v1.8 it is an alias defined using `@elem` to the `@card` element. This means all items are cards and can be rendered as part of a scene (consequently they also require the `content:` attribute).
+`@item` is an alias, defined using `@elem`, of the `@object` element. Items are ordinary objects with some extra attributes and defaults, and they do not have `content` so they aren't rendered directly. They can, of course, be referred to by cards.
 
-The `@item` element defines a conceptual item the player the player (or potentially an NPC) can acquire and add to an inventory. Items don't have to represent physical objects but anything a player has for example a spell could be an item or even a memory.
+The `@item` element defines a conceptual item the player (or potentially an NPC) can acquire and add to an inventory. Items don't have to represent physical objects but anything a player has for example a spell could be an item or even a memory.
 
-Items are required to have a `type` keyword-attribute that connects them to compatible slots in inventories. That might include a shop, a wardobe, and a players backpack inventories.
+Items have a `type` keyword-attribute (defaulting to `:item`) that connects them to compatible slots in inventories. That might include a shop, a wardobe, and a players backpack inventories.
 
-However the Item/Inventory system is quite flexible so we can also think about spells as Items with the Inventory being a spell-book, or knowledge as Items with an Inventory being memory.
+The Item/Inventory system is quite flexible so we can also think about spells as Items with the Inventory being a spell-book, or knowledge as Items with an Inventory being memory.
 
-Items may be usable in which case they may have a limit to the number of times they can be used.
-
-Some items can grant effects, either when the item is acquired, put into a specific slot (e.g. equipped), or when it is used.
-
-The can_equip/on_equip scripts are used to decide whether the player can put an item in a given inventory & slot, and to process what happens when doing so.
-
-For example equipping a magic ring might confer an effect on the player. But first it may be necessary to check that the player doesn't already have a magic ring equipped.
-
-A potion on the other hand confers no effect until it is used and might have only one use after which is presumed to be consumed.
+Some items can grant effects, which are applied when the item is put into a slot that has effects enabled (e.g. equipped) and removed when it is taken out.
 
 === Example
 
 ....
 @item black_fedora {
   type: :hat
-  description: "black fedora"
-  wearable: true
+  name: "black fedora"
   description: "A Messer wool fedora hat. Classy."
+  weight: 1
 }
 ....
 
@@ -1099,61 +1313,43 @@ Note that this example throws up a design issue to be aware of: tags and boolean
 
 In this case an `Item` with `type: :hat` will automatically be tagged as `:wearable` and `:item`.
 
-=== Required attributes
+=== Optional attributes
 [cols="2,1,4"]
 |===
 |`type`
 |Keyword
-|a keyword representing the type of the item, e.g. `:hat` that has optionally been `@derived`'d
+|a keyword representing the type of the item, e.g. `:hat`, which may be part of a type hierarchy set up with ``@derive``. Defaults to `:item`. It must match what a slot `accepts` for the item to be placed in it, so in practice you will set it for any item that is to go in a specialised slot
 
-|`name`
-|String
-|the name of the item
-|===
-
-=== Optional attributes
-[cols="2,1,4"]
-|===
-|`description`
-|String\|Heredoc\|Template
-|player description of the item
+|`container_id`
+|Element Ref
+|`@inventory` this item begins the game inside
 
 |`size`
 |Number
-|where inventories should manage size, defaults to `1`
+|where slots have a `capacity`, the amount of it this item uses (default: 1)
 
-|`usable`
-|Boolean
-|if the item can be used, defaults to `false`
-
-|`effect_ids`
-|List
-|a list of id of `@effect`s that are active when this item is in an effects enabled slot
+|`weight`
+|Number
+|where inventories have a `max_weight`, the weight of this item
 
 |`uses`
 |Number
-|if `usable` is true, number of uses, assumed >= 0
+|number of uses the item has, assumed >= 0
 
-|`container`
+|`effect_ids`
+|List of Element Refs
+|``@effect``s that are active when this item is in an effects enabled slot
+
+|`asset_id`
 |Element Ref
-|Container this item begins the game inside
+|`@asset` that represents this item
 
-|`on_equip`
-|Script
-|
-
-|`can_equip`
-|Script
-|
-
-|`on_use`
-|Script
-|
-
-|`can_use`
-|Script
-|
+|`tags`
+|Set
+|a set of keyword tags
 |===
+
+Items may carry any other attributes you need (such as `name` or `description`).
 
 === Event Handlers
 
@@ -1163,6 +1359,26 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 
 This script will be called during game initialization and before the game has
 started.
+
+==== on_insert
+
+: `(item, event) => {...}`
+
+    event = {
+      inventory_id: <id>,
+      slot_id: <id>,
+      slot_binding: <name of the position>,
+      owner_id: <id>,
+      owner: <object>
+    }
+
+Called when the item is placed into an inventory position.
+
+==== on_remove
+
+: `(item, event) => {...}`
+
+Called, with the same event as `on_insert`, when the item is removed from an inventory position.
 
 == Keybinding (Directive)
 
@@ -1203,11 +1419,11 @@ The run-time API supports selecting randomly from lists including with & without
 
 ....
 @list antagnoists {
-  content: [#sam_spade #miss_wonderly #kaspar_gutman #joel_cairo]
+  values: [#sam_spade #miss_wonderly #kaspar_gutman #joel_cairo]
 }
 
 @list lines {
-  content: [
+  values: [
     "I distrust a man that says when. If he's got to be careful not to drink to much it's because he's not to be trusted when he does."
     "The cheaper the crook, the gaudier the patter."
     "I couldn't be fonder of you if you were my own son. But, well, if you lose a son, its possible to get another. There's only one Maltese Falcon."
@@ -1216,9 +1432,21 @@ The run-time API supports selecting randomly from lists including with & without
 }
 ....
 
-=== Required Attributes
-
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`values`
+|List
+|the values in the list
+
+|`includes`
+|List of Element Refs
+|ids of other `@list` elements whose values are included in this list
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
 
 === Event Handlers
 
@@ -1235,6 +1463,16 @@ A `@mixin` defines attributes that can be included into an object at runtime. Th
 ....
 @mixin named {
   name: ^p{return `${this.given_name} ${this.family_name}`}
+}
+....
+
+An element uses a mixin by listing it in its `$mixins` attribute:
+
+....
+@actor sam_spade {
+  $mixins: #{#named}
+  given_name: "Sam"
+  family_name: "Spade"
 }
 ....
 
@@ -1256,7 +1494,7 @@ A pragma is specified using a timing instruction:
 * `before_create_runtime`
 * `after_copy_assets`
 
-a name e.g. `source_explorer` which corresponds either to one of the built-in pragmas (at the moment that is only `write_hierarchy`) or to a Lua source file in the `pragmas` project folder, followed optionally by values that get passed to the pragma script.
+a name e.g. `source_explorer` which corresponds either to one of the built-in pragmas (`write_content`, `write_id_map`, `write_hierarchy`, and `write_obj_map`) or to a Lua source file in the `pragmas` project folder, followed optionally by values that get passed to the pragma script.
 
 A pragma receives the Rez internal `%Compilation{}` struct as a value `compilation` and any parameters as `values` and can use the plugin API to query & modify the compilation (for example adding new assets). It is expected to return either the original or a modified compilation.
 
@@ -1264,29 +1502,27 @@ Use with care.
 
 == Object (Element)
 
-An `@object` element describes an author-driven concept. Isn't everything in Rez an object of some kind? Yes, but elements like `@author`, `@item`, and `@plot` have built-in meaning and functionality. By contrast `@object` is a blank canvas that an author can use for anything they think of.
+An `@object` element describes an author-driven concept. Isn't everything in Rez an object of some kind? Yes, but elements like `@actor`, `@plot`, and `@inventory` have built-in meaning and functionality (`@item` is a specialised alias of `@object`). By contrast `@object` is a blank canvas that an author can use for anything they think of.
 
 === Example
 
 Imagine we are building a role-playing game and we want to introduce the notion skills and perks. Rez does not provide either of these concepts out of the box but we can use the `@object` element to make them ourselves.
 
 ....
-@object skill {
-  $template: true
+@elem skill = object
+
+@defaults skill {
   description: "Something an actor has acquired the ability to do"
   min: 0
   max: 5
   cur: 0
 }
 
-@elem skill = object<#skill>
+@elem perk = object
 
-@object perk {
-  $template: true
+@defaults perk {
   cost: 1
 }
-
-@elem perk = object<#perk>
 
 @perk gun_license {
   description: "Without this cops might pick you up for flashing your lead pumper."
@@ -1342,9 +1578,43 @@ Imagine we are building a role-playing game and we want to introduce the notion 
 }
 ....
 
-In a real-game we'd expect to see more definition of what skills & perks do but at least we can talk about them meaningfully even though Rez knows nothing about them. As a consequence Rez cannot validate them or their attributes.
+In a real-game we'd expect to see more definition of what skills & perks do but at least we can talk about them meaningfully even though Rez knows nothing about them. As a consequence Rez cannot validate their attributes (unless you provide a `@schema`).
 
 Extra care should be taken here that they are well-formed.
+
+== Patch (Directive)
+
+A `@patch` adds a new function or method to a built-in Javascript class when the runtime is created. The Rez stdlib uses patches to extend classes such as `Boolean` and `Object`.
+
+Patches have no id. Specify the class to patch with `patch:` and either `function:` (a static function added to the class) or `method:` (a method added to instances) but not both.
+
+=== Example
+
+....
+@patch {
+  patch: "Number"
+  method: "double"
+  impl: function() {
+    return this * 2;
+  }
+}
+....
+
+=== Required Attributes
+[cols="2,1,4"]
+|===
+|`patch`
+|String
+|name of the Javascript class to patch
+
+|`impl`
+|Function
+|the implementation of the function or method
+
+|`function` or `method`
+|String
+|name of the function or method to add (exactly one is required)
+|===
 
 == Plot (Element)
 
@@ -1367,15 +1637,17 @@ the game or an actor. However where plot requirements are more complex the `@plo
 }
 
 @plot build_fortress {
-  %% The build_fortress quest is automatically triggered when the main
-  %% quest reaches stage 3
+  stages: 3
+
+  %% The build_fortress plot is automatically triggered when the main
+  %% plot reaches stage 3
   on_init: (plot) => {
     $("main_quest").subscribe(plot.id);
   }
 
-  on_did_advance_plot: (plot, params) => {
-    const {plot_id, stage} = params;
-    if(plot_id === "main_quest" && stage == 3) {
+  on_plot_did_advance: (plot, params) => {
+    const source = params.source;
+    if(source.id === "main_quest" && source.stage === 3) {
       plot.start();
     }
   }
@@ -1386,12 +1658,35 @@ the game or an actor. However where plot requirements are more complex the `@plo
 
 [cols="2,1,4"]
 |===
-|`priority`
+|`stages`
 |Number
-|from 1 to 100, higher priorities break plot deadlocks
+|the number of stages in the plot (minimum 1)
 |===
 
 === Optional Attributes
+
+[cols="2,1,4"]
+|===
+|`priority`
+|Number
+|from 1 to 100, higher priorities break plot deadlocks (default: 1)
+
+|`stage`
+|Number
+|the current stage of the plot (default: 0)
+
+|`active`
+|Boolean
+|whether the plot has been started (default: false)
+
+|`subscriber_ids`
+|List of Element Refs
+|elements to be notified of changes to the plot. Usually maintained with `subscribe()` and `unsubscribe()`
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
 
 === Event Handlers
 
@@ -1402,40 +1697,78 @@ the game or an actor. However where plot requirements are more complex the `@plo
 This script will be called during game initialization and before the game has
 started.
 
-==== on_plot_did_start
+==== on_start
 
-: `(plot, {}) => {...}`
+: `(plot, event = {}) => {...}`
 
-Called when the plot is started.
+Called when the plot is started with `start()`.
 
-==== on_plot_did_advance
+==== on_advance
 
-: `(plot, {stage: stage}) => {...}`
+: `(plot, event = {}) => {...}`
 
-Called whenever the plot has advanced by 1 or more stages.
+Called whenever the plot has advanced by 1 or more stages with `advance()`.
 
-==== on_plot_did_complete
+==== on_complete
 
-: `(plot, {}) => {...}`
+: `(plot, event = {}) => {...}`
 
 Called when the plot has advanced to the final stage and is considered completed.
+
+=== Subscriber Events
+
+When a plot starts, advances, or completes it also notifies each of its subscribers (any element, including other plots) by running an event on them. The event params include `source`, the plot that raised the event.
+
+* `on_plot_did_start`
+* `on_plot_did_advance`
+* `on_plot_did_complete`
+* `on_plot_did_revert`
 
 == Quest (Element)
 
 The `@quest` element represents a quest that the player character may become aware of,
-accept, and complete. It further supports turning in to a quest-giver as well at becoming
-botched (incompletable) and unbotched.
+accept, and complete. It further supports becoming botched (incompletable) and unbotched.
 
 Where the `@plot` elements represents a plot-clock, the `@quest` represents an overarching
 goal of the players.
 
+A quest has a `status` which moves through the states `:unknown`, `:mentioned`, `:accepted`, `:achieved`, and `:completed`, or is `:botched`. The runtime provides methods to move between them: `mention()`, `accept()`, `achieve()`, `complete()`, `botch()`, and `unbotch()`. Each is ignored unless the quest is in a state from which the change is legal.
+
 === Example
 
+....
+@quest find_the_falcon {
+  description: "Find the Maltese Falcon before Gutman does."
+}
+....
+
 === Required Attributes
+[cols="2,1,4"]
+|===
+|`description`
+|String
+|description of the quest as presented to the player
+|===
 
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`status`
+|Keyword
+|one of `:unknown`, `:mentioned`, `:accepted`, `:achieved`, `:completed`, `:botched` (default: `:unknown`)
 
-=== Event Handlers
+|`subscriber_ids`
+|List of Element Refs
+|elements to be notified when the quest changes. Usually maintained with `subscribe()` and `unsubscribe()`
+
+|`tags`
+|Set
+|a set of keyword tags
+|===
+
+=== Subscriber Events
+
+Whenever the status of a quest changes each of its subscribers is sent an `on_quest_did_update` event whose params include `source`, the quest that changed.
 
 == Relationship (Element)
 
@@ -1464,19 +1797,19 @@ A relationship element isn't assigned an id but automatically derives its id fro
 The syntax uses the `->` symbol to help understand the unidirectionality of a relationship as being from a source element upon a target element.
 
 The `getRelationship(source, target)` API on the `RezGame` object is a short-
-hand for doing this lookup manually.
+hand for doing this lookup manually. The `inverse` property of a relationship returns the relationship in the opposite direction.
 
 We can use `@rel` to define all kinds of relationships:
 
 ....
 %% the Gutman faction loves the Falcon
-@declare falcon
+@object falcon {}
 @rel #gutman_faction -> #falcon {
   affinity: 1.0
 }
 
 %% the player hates brocolli
-@declare brocolli
+@object brocolli {}
 @rel #player -> #brocolli {
   affinity: -1.0
 }
@@ -1499,8 +1832,16 @@ An alternative approach is to use tags:
 }
 ....
 
-=== Required Attributes
 === Optional Attributes
+[cols="2,1,4"]
+|===
+|`tags`
+|Set
+|a set of keyword tags
+|===
+
+The `source_id` and `target_id` attributes are set automatically from the `@rel` syntax. Any other attributes may be used to describe the relationship.
+
 === Event Handlers
 
 ==== on_init
@@ -1509,69 +1850,59 @@ An alternative approach is to use tags:
 
     event = {}
 
-==== on_change_affinity
-
 == Scene (Element)
 
-A Game in Rez is authored in terms of `@scene`s and `@card`s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which `@card`s to represent and how to respond to player input.
-
-If you are familiar with Twine then a `@card` is roughly equivalent to a Twine passage. A Twine game is one long stream of passages woven together. Rez differs from Twine in that it uses the `@scene` to organise how the player interacts with the game and which/how the content is presented.
+A Game in Rez is authored in terms of ``@scene``s and ``@card``s. Each `@card` represents some content that is presented to the player. By contrast the `@scene` represent the structure and intelligence about which ``@card``s to represent and how to respond to player input.
 
 For example you might use different scenes for moving around the map, examining items, interacting with NPCs, buying from shops, and so on. You don't have to, you could implement the game in a single scene, but the different layout and event handling possibilities make it easier.
 
-A `@scene` requires an `initial_card: #card_ref` attribute that identifies the card that will be rendered when the scene begins. Additionally it requires a `layout:` attribute that specifies the surrounding markup.
+A `@scene` requires an `initial_card_id: #card_ref` attribute that identifies the card that will be played when the scene begins. Optionally it has a `layout:` attribute that specifies the surrounding markup. The layout must contain a `${content}` template expression which specifies where the scene's cards are inserted. The default layout is just `${content}`.
 
-Within the layout using the `${content}` template expression to specify where scene content is inserted.
+A `@scene` may have a `layout_mode:` attribute which must be either `:single` or `:stack` (default `:single`). In the `:single` layout mode only a single `@card` is ever displayed. While in `:stack` mode each new `@card` is laid out after the previous one, and finished cards that have a `back` face are flipped to display it.
 
-A `@scene` requires a `layout_mode:` attribute which must be either `:single` or `:stack`. In the `:single` layout mode only a single `@card` is ever displayed. While in `:stack` mode each new `@card` is layed out after the previous one.
-
-Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` attribute. Each referenced `@card` will be rendered and it's content can be inserted into the layout using `${card_id_1}`, `${card_id_2}`, etc.
+Lastly a `@scene` may optionally have a `blocks: [name_1: #card_id_1 name_2: #card_id_2 ...]` attribute, a list of bindings from a name to a card. Each referenced `@card` will be rendered and its content can be inserted into the layout using `${name_1}`, `${name_2}`, etc.
 
 === Example
 ....
 @scene introduction {
-  title: "Introduction"
-  initial_card: #intro_part_1
-  blocks: [#sidebar_1 #sidebar_2]
+  initial_card_id: #intro_part_1
+  blocks: [sidebar_1: #sidebar_1 sidebar_2: #sidebar_2]
   layout_mode: :single
-  layout: """
+  layout: ```
     <div class="sidebar">
-      {{{sidebar_1}}}
-      {{{sidebar_2}}}
+      ${sidebar_1}
+      ${sidebar_2}
     </div>
     <div>
-      {{{content}}}
+      ${content}
     </div>
-  """
-  on_new_card: (game, evt) => {...}
+  ```
+  on_card_will_start: (scene, evt) => {...}
 }
 ....
 
 === Required Attributes
 [cols="2,1,4"]
 |===
-|`title`
-|String
-|what you present to the user to tell them what scene they are in
-
 |`initial_card_id`
 |Element Ref
 |id of the `@card` that is played when the scene begins
 
-|`layout_mode`
-|Keyword
-|One of `:single` for one-card-at-a-time and `:stack` for multi-card scenes
-
-|`layout`
-|Template
-|template containing the scene content in which cards are embedded
 |===
 
 === Optional Attributes
 [cols="2,1,4"]
 |===
+|`layout_mode`
+|Keyword
+|One of `:single` for one-card-at-a-time and `:stack` for multi-card scenes (default: `:single`)
+
+|`layout`
+|Template
+|template containing the scene content in which cards are embedded. Must contain `${content}` (default: `${content}`)
+
 |`bindings`
-|Table
+|List
 |See <<Card>>
 
 |`blocks`
@@ -1585,6 +1916,10 @@ Lastly a `@scene` may optionally have a `blocks: [#card_id_1 #card_id_2 ...]` at
 |`layout_separator`
 |String
 |Markup content to be inserted between cards when in stack mode (defaults: "")
+
+|`tags`
+|Set
+|set of keywords used to categorise the scene
 
 |`resume_event`
 |Function
@@ -1605,17 +1940,19 @@ The `on_init` script is called during game initialization and before the player 
 
 : `(scene, event) => {...}`
 
-    event = {
-      card_id: <id>
-    }
+The `on_start` script is called when a scene is started. It receives the params passed when the scene was started.
 
-The `on_start` script is called when a new scene is started. It will receive a map containing the scene_id.
+==== on_ready
+
+: `(scene, event = {}) => {...}`
+
+The `on_ready` script is called once the scene has been started and is ready for interaction.
 
 ==== on_finish
 
 : `(scene, event = {}) => {...}`
 
-The `on_finish` script is called when a scene has eneded.
+The `on_finish` script is called when a scene has ended.
 
 ==== on_interrupt
 
@@ -1629,13 +1966,35 @@ The `on_interrupt` script is called when a scene is being interrupted by an inte
 
 The `on_resume` script is called when a scene is being resumed after an interlude.
 
-==== on_render
+==== on_will_render / on_did_render
 
 : `(scene, event = {}) => {...}`
 
-The `on_render` script is called every time the scene is being rendered.
+Called before and after the view is rendered.
 
-==== on_start_card
+==== on_card_will_start
+
+: `(scene, event) => {...}`
+
+    event = {
+      card_id: <id>,
+      params: {...}
+    }
+
+Called when a new card is about to be played into the scene, before it is rendered.
+
+==== on_card_did_start
+
+: `(scene, event) => {...}`
+
+    event = {
+      card_id: <id>,
+      params: {...}
+    }
+
+Called after a new card has been played into the scene and rendered.
+
+==== on_card_did_finish
 
 : `(scene, event) => {...}`
 
@@ -1643,17 +2002,7 @@ The `on_render` script is called every time the scene is being rendered.
       card_id: <id>
     }
 
-The `on_start_card` script is called when a new card is played into the scene. It will be passed a map containing the id of the card that has been played.
-
-==== on_finish_card
-
-: `(scene, event) => {...}`
-
-    event = {
-      card_id: <id>
-    }
-
-The `on_finish_card` script is called when when a card has 'finished' as a new card is being played into the scene. It will be passed the id of the card that is finished.
+Called when a card has finished as a new card is played into the scene (or the scene ends).
 
 == Schema (Directive)
 
@@ -1702,9 +2051,9 @@ The `@schema` directive is used to specify validation rules for element attribut
 |Element Reference
 |Validates references to other elements (e.g., `#element_id`)
 
-|`kind: :ref`
-|General Reference
-|Validates general references
+|`kind: :map`
+|Map
+|Validates map/table values
 
 |`kind: :function`
 |Function
@@ -1714,9 +2063,21 @@ The `@schema` directive is used to specify validation rules for element attribut
 |Template
 |Validates template content
 
-|`kind: :btree`
+|`kind: :list_binding`
+|Binding
+|Validates a `name: #value` binding, used with `coll_kind: :list_binding` for `bindings:` and `blocks:` style lists
+
+|`kind: :bht`
 |Behavior Tree
-|Validates behavior tree structures
+|Validates behavior tree structures (`^[...]`)
+
+|`kind: :ptable`
+|Probability Table
+|Validates probability table values
+
+|`kind: :roll`
+|Die Roll
+|Validates die roll values
 |===
 
 === Multiple Type Support
@@ -1736,7 +2097,7 @@ For lists and sets, use `coll_kind` to specify the type of collection elements:
 ....
 @schema example {
   tags: {kind: :set, coll_kind: :keyword}
-  items: {kind: :list, coll_kind: :elem_ref, ref_elem: @item}
+  members: {kind: :list, coll_kind: :elem_ref, ref_elem: @actor}
 }
 ....
 
@@ -1769,6 +2130,16 @@ Mark attributes as required using `required: true`:
 @schema plot {
   priority: {kind: :number, min: 1, max: 100, required: true}
   stages: {kind: :number, min: 1, required: true}
+}
+....
+
+==== Collection & String Length
+
+Use `min_length` and `max_length` to constrain the number of items in a collection or the number of characters in a string:
+
+....
+@schema inventory {
+  slots: {kind: :list, coll_kind: :list_binding, min_length: 1}
 }
 ....
 
@@ -1828,33 +2199,49 @@ Use `or` to specify that at least one of multiple attributes must be present:
 
 ....
 @schema system {
-  before_event: {kind: :function, param_count: 3, or: after_event}
+  before_event: {kind: :function, param_count: 2, or: after_event}
   after_event: {kind: :function, param_count: 3, or: before_event}
 }
 ....
 
 === Function Parameter Validation
 
-For function attributes, specify expected parameters:
-
-....
-@schema actor {
-  on_accept_item: {kind: :function, params: [actor event]}
-  on_enter: {kind: :function, params: [actor event]}
-}
-....
-
-Or specify parameter count:
+For function attributes, specify the number of parameters the function must take with `param_count`, or a range using `min_arity` and `max_arity`:
 
 ....
 @schema system {
-  before_event: {kind: :function, param_count: 3}
+  before_event: {kind: :function, param_count: 2}
+}
+
+@schema actor {
+  on_enter: {kind: :function, min_arity: 2, max_arity: 2}
 }
 ....
 
-=== Template Control
+=== Overlapping Keys
 
-Prevent elements from being used as templates:
+Use `no_key_overlap` to ensure two binding lists do not use the same names:
+
+....
+@schema card {
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
+}
+....
+
+=== Keyword Types
+
+Use `type_exists` to require that a keyword names a type that has been used by another element (for example the `accepts:` of a `@slot` must refer to an item type that exists):
+
+....
+@schema slot {
+  accepts: {kind: :keyword, required: true, type_exists}
+}
+....
+
+=== Disallowing Attributes
+
+Use `allowed: false` to prevent an attribute from being used. This is how elements are prevented from being used as templates:
 
 ....
 @schema game {
@@ -1888,7 +2275,7 @@ Use `is_a` to validate that a value matches acceptable values from another eleme
 }
 ....
 
-This ensures that an item's `type:` value matches at least one `@slot`'s `accepts:` value, considering the type hierarchy. For example, if you have:
+This ensures that an item's `type:` value matches the `accepts:` value of at least one `@slot`, considering the type hierarchy. For example, if you have:
 
 ....
 @derive :sword :weapon
@@ -1917,19 +2304,23 @@ The `magic_sword` item is valid because `:sword` derives from `:weapon`, which m
 
   tags: {kind: :set, coll_kind: :keyword}
 
+  faces: {kind: :set, coll_kind: :keyword}
+  current_face: {kind: :keyword}
   content: {kind: :source_template, required: true}
-  flipped_content: {kind: :source_template}
+  back: {kind: :source_template}
 
-  $flipped: {kind: :boolean}
   $suppress_wrapper: {kind: :boolean}
 
-  bindings: {kind: :list, coll_kind: :list_binding}
-  blocks: {kind: :list, coll_kind: :elem_ref, ref_elem: @card}
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
   css_class: {kind: :string}
+  title: {kind: :string}
 
-  on_start: {kind: :function}
+  on_will_start: {kind: :function}
+  on_did_start: {kind: :function}
+  on_will_render: {kind: :function}
+  on_did_render: {kind: :function}
   on_finish: {kind: :function}
-  on_render: {kind: :function}
 }
 ....
 
@@ -1943,7 +2334,7 @@ The `@script` directive consists of a string containing the code to include betw
 
 The code defined in the game's `@script` directives will be automatically included as &lt;script&gt; tags before the end of the &lt;body&gt; element of the generated HTML template.
 
-== Example
+=== Example
 
 ....
 @script {
@@ -1971,10 +2362,6 @@ See also: <<Type Hierarchy>>
 === Required Attributes
 [cols="2,1,4"]
 |===
-|`name`
-|String
-|name of the slot e.g. "Holster" that could be displayed to the player
-
 |`accepts`
 |Keyword
 |a keyword representing the type of <<Item, Items>> that are permitted to be in the slot
@@ -1983,9 +2370,25 @@ See also: <<Type Hierarchy>>
 === Optional Attributes
 [cols="2,1,4"]
 |===
+|`name`
+|String
+|name of the slot e.g. "Holster" that could be displayed to the player
+
+|`has_capacity`
+|Boolean
+|whether the slot limits how much it can hold using `capacity` (default: false)
+
 |`capacity`
 |Number
-|the sum of the sizes of `@item`s that fit in the slot, see <<Item>> `size` attribute
+|when `has_capacity` is true, the sum of the sizes of ``@item``s that fit in the slot, see <<Item>> `size` attribute
+
+|`apply_effects`
+|Boolean
+|whether the effects of items placed in this slot are applied (default: true)
+
+|`tags`
+|Set
+|a set of keyword tags
 
 |`excludes`
 |Set of Slot Refs
@@ -2006,14 +2409,16 @@ started.
 : `(slot, event) => {...}`
 
     event = {
-      inventory: <id>,
-      item: <id>
+      inventory_id: <id>,
+      item_id: <id>,
+      owner_id: <id>,
+      owner: <object>
     }
 
 When an `@item` is placed into a `@slot` the `on_insert` event handler will be
 called.
 
-    on_insert: (inventory_id, item_id) => {
+    on_insert: (slot, event) => {
       // Do something
     }
 
@@ -2023,13 +2428,15 @@ called.
 
     event = {
       inventory_id: <id>,
-      item_id: <id>
+      item_id: <id>,
+      owner_id: <id>,
+      owner: <object>
     }
 
 When an `@item` is taken out of an inventory `@slot` the `on_remove` event
 handler will be called.
 
-    on_remove: (inventory_id, item_id) => {
+    on_remove: (slot, event) => {
       // Do something
     }
 
@@ -2049,10 +2456,6 @@ The styles defined within a `@styles` directives will be automatically included 
 }
 ....
 
-=== Required Attributes
-=== Optional Attributes
-=== Event Handlers
-=== API
 
 == System (Element)
 
@@ -2062,11 +2465,11 @@ Systems are orthogonal to event handlers that are specific to a given event. For
 
 For example we might want to model weather in our game world and have the weather change, automatically, over time. This change is not necessarily related to any specific player activity (e.g. clicking a link to move between locations) but any event might trigger such a change.
 
-Whenever the player generates an event all `@system`s whose `enabled:` attribute is `true` get the opportunity to process, and potentially modify, the event before normal processing and to change the result afterward.
+Whenever the player generates an event all ``@system``s whose `enabled:` attribute is `true` get the opportunity to process, and potentially modify, the event before normal processing and to change the result afterward.
 
-Every `@system` must have a `priority:` attribute that is a number greater than `0`. `@system`s are run in highest-priority order (so priority `100` runs before priority `99`).
+Every `@system` must have a `priority:` attribute that is a number greater than `0`. ``@system``s are run in highest-priority order (so priority `100` runs before priority `99`).
 
-Every `@system` must define at least one of `before-event:` or `after-event:` but can potentially define both.
+Every `@system` must define at least one of `before_event:`, `after_event:`, `before_lifecycle_event:`, or `after_lifecycle_event:` but can potentially define several.
 
 === Example
 
@@ -2106,7 +2509,6 @@ Every `@system` must define at least one of `before-event:` or `after-event:` bu
 * `enabled` [Boolean]: if false, this system will not be run
 * `priority` [Number]: systems are run in descending priority order
 
-=== Optional Attributes
 === Event Handlers
 
 ==== on_init
@@ -2129,6 +2531,18 @@ This handler will be called after the event has been processed by `handleBrowser
 
 If the handler modifies the result, the modified result will be passed back through successive systems and to the browser itself. Modifying the event does nothing as it has already been processed.
 
+==== before_lifecycle_event
+
+`before_lifecycle_event: (system, eventName, params) => {...}`
+
+Called before the game handles one of its lifecycle events (scene and card transitions, and renders, e.g. `"card_will_start"`). This is observe-only: return values are ignored, though the handler may modify `params`.
+
+==== after_lifecycle_event
+
+`after_lifecycle_event: (system, eventName, params, result) => {...}`
+
+Called after the game has handled a lifecycle event. Like `before_lifecycle_event` this is observe-only.
+
 == Timer (Element)
 
 The `@timer` element describes a game component that generates events after specific
@@ -2140,31 +2554,40 @@ For example a timer could be used to create a proper "wandering monster" scenari
 where every minute the player is at risk of a monster wandering into their location.
 
 === Example
-...
+
+....
 @timer wandering_monsters {
   auto_start: true
-  repeat: true
+  repeats: true
   interval: 60000
   event: :wandering_monster
 }
-...
+....
 
-=== Pre-Defined Attributes
+=== Required Attributes
 [cols="2,1,4"]
 |===
-|`auto_start`
-|Boolean
-|If true, this timer will start when the game starts.
-
-|`repeat`
-|Boolean
-|If true this timer will keep sending events until it stops, otherwise it will only send one event.
-
-|`count` (optional)
-|Integer
-|With a repeated timer this specifies the number of times it should repeat.
+|`interval`
+|Number
+|The time, in milliseconds, before the timer fires.
 
 |`event`
 |Keyword
 |Specifies the name of the event that will be sent when the timer runs down. The event follows the normal rules for custom events.
+|===
+
+=== Optional Attributes
+[cols="2,1,4"]
+|===
+|`auto_start`
+|Boolean
+|If true, this timer will start when the game starts (or a saved game is loaded). Default: true.
+
+|`repeats`
+|Boolean
+|If true this timer will keep sending events until it stops, otherwise it will only send one event. Default: true.
+
+|`count`
+|Number
+|With a repeating timer this specifies the number of times it should fire before stopping (minimum 1).
 |===

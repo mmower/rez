@@ -1,45 +1,64 @@
-@game begin
-  name: "Test Game"
+%% SuperCoinToss — a tiny demo game written with Rez
+%%
+%% The player enters a name and picks a target score. Each round they call
+%% heads or tails: a correct call wins 2 points, a wrong call loses 1. Reach
+%% the target score to win, or the negative of it to lose.
+
+@game {
+  name: "SuperCoinToss"
+  title: "SuperCoinToss"
+  author: "Rez"
   IFID: "D3C31250-53B4-11ED-9A26-3AF9D3B0DD88"
   archive_format: 1
   initial_scene_id: #intro
+
   links: [
     "https://jenil.github.io/bulmaswatch/journal/bulmaswatch.min.css"
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
   ]
-  layout: """
-  {{{scene}}}
-  """
 
-  @scene intro begin
-    initial_card: #get_name
-    layout_mode: :single
-    layout: """
-    <div class="container">
+  layout: ```
+  ${content}
+  ```
+}
+
+@actor player {
+  $global: true
+  name: ""
+  score: 0
+  target_score: 5
+}
+
+@scene intro {
+  initial_card_id: #get_name
+  layout_mode: :single
+  layout: ```
+  <div class="container">
     <h1 class="title">SuperCoinToss</h1>
     <h2 class="subtitle">A game written with Rez</h2>
-    {{{content}}}
-    </div>
-    """
-  end
+    ${content}
+  </div>
+  ```
+}
 
-  @card get_name begin
-    content: """
-    Before you play:
+@card get_name {
+  content: ```
+  <p>Before you play:</p>
 
-    <form class="form" name="name_form" rez-live>
-      <div class="field">
-        <label class="label" for="name">Name</label>
-        <div class="control has-icons-left has-icons-right">
-          <input class="input is-success" type="text" name="name" placeholder="What is your name?"></input>
-          <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
-          <span class="icon is-small is-right"><i class="fas fa-check"></i></span>
-        </div>
+  <form class="form" name="name_form" rez-live>
+    <div class="field">
+      <label class="label" for="name">Name</label>
+      <div class="control has-icons-left has-icons-right">
+        <input class="input is-success" type="text" name="name" placeholder="What is your name?"></input>
+        <span class="icon is-small is-left"><i class="fas fa-user"></i></span>
+        <span class="icon is-small is-right"><i class="fas fa-check"></i></span>
       </div>
-      <div class="field">
-        <label class="field" for="target_score">Target Score</label>
-        <div class="control">
-          <select class="select" name="target_score">
+    </div>
+    <div class="field">
+      <label class="label" for="target_score">Target Score</label>
+      <div class="control">
+        <div class="select">
+          <select name="target_score">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -47,128 +66,150 @@
           </select>
         </div>
       </div>
-    </form>
-    """
-    on_name_form: (card, event) => {
-      const name_field = event.form.elements["name"];
-      const name = name_field.value;
-
-      const score_field = event.form.elements["target_score"];
-      const score = score_field.value;
-
-      if(name !== "") {
-        const player = card.$("player");
-        player.setAttribute("name", name);
-        player.setAttribute("target_score", score);
-        card.game.setCurrentScene("play_game");
-      } else {
-        name_field.className = "important";
-      }
-    }
-  end
-
-  @actor player begin
-    score: 0
-  end
-
-  @scene play_game begin
-    initial_card: #play_round
-    blocks: [sidebar: #sidebar]
-    layout_mode: :single
-
-    layout: """
-    <div class="container">
-      <h1 class="title">SuperCoinToss</h1>
-      <h2 class="subtitle">A game written with Rez</h2>
-      <div class="columns">
-        <div class="column is-one-quarter">{{{sidebar}}}</div>
-        <div class="column">{{{content}}}</div>
+    </div>
+    <div class="field">
+      <div class="control">
+        <button class="button is-primary" type="submit">Play</button>
       </div>
     </div>
-    """
-  end
+  </form>
+  ```
 
-  @card sidebar begin
-    bindings: {player: "player"}
-    content: """
-    <p class="title is-3">{{$ player "name"}}</p>
-    <p class="subtitle is-5">Score: {{$ player "score"}}</p>
-    """
-  end
+  %% Handles submission of the form named "name_form".
+  on_name_form: (card, event) => {
+    const name_field = event.form.elements["name"];
+    const name = name_field.value.trim();
 
-  @card play_round begin
-    on_start: (card, event) => {
-      card.setAttribute("coin", coin_flip());
+    if(name === "") {
+      name_field.classList.add("important");
+      return RezEvent.noop();
     }
-    content: """
-    Do you [[Choose heads]] or [[Choose tails]]?
-    """
-  end
 
-  @alias result_card = card # begin
-    bindings: {player: "player"}
-    content: """
-    {{$ card "response"}}
-    [[Play again|play_round]]
-    """
-  end
+    const player = $("player");
+    player.name = name;
+    player.score = 0;
+    player.target_score = parseInt(event.form.elements["target_score"].value, 10);
 
-  @result_card choose_heads begin
-    on_start: (card, event) => {
-      const flip = card.$("play_round").getAttribute("coin");
-      won_or_lost(card, flip == "heads");
-    }
-  end
+    return RezEvent.sceneChange("play_game");
+  }
+}
 
-  @result_card choose_tails begin
-    on_start: (card, event) => {
-      const flip = card.$("play_round").getAttribute("coin");
-      won_or_lost(card, flip == "tails");
-    }
-  end
+@scene play_game {
+  initial_card_id: #play_round
+  blocks: [sidebar: #sidebar]
+  layout_mode: :single
 
-  @card winner begin
-    content: """
-    You are a winner!
-    """
-  end
+  layout: ```
+  <div class="container">
+    <h1 class="title">SuperCoinToss</h1>
+    <h2 class="subtitle">A game written with Rez</h2>
+    <div class="columns">
+      <div class="column is-one-quarter">${sidebar}</div>
+      <div class="column">${content}</div>
+    </div>
+  </div>
+  ```
+}
 
-  @card loser begin
-    content: """
-    Sorry, you lost!
-    """
-  end
+@card sidebar {
+  bindings: [player: #player]
+  content: ```
+  <p class="title is-3">${player.name}</p>
+  <p class="subtitle is-5">Score: ${player.score} / ${player.target_score}</p>
+  ```
+}
 
-  @script begin
-    function won_or_lost(card, winner) {
-      const player = card.$("player");
-      const game = card.game;
+@card play_round {
+  %% Flip the coin before the card is rendered. The result cards look at it.
+  on_will_start: (card) => {
+    card.coin = coin_flip();
+  }
 
-      if(winner) {
-        card.setAttribute("response", "Congratulations");
-        player.incAttribute("score", 2);
-        if(player.getAttributeValue("score") >= player.getAttributeValue("target_score")) {
-          game.getCurrentScene().playCardWithId("winner");
-        }
-      } else {
-        card.setAttribute("response", "Bad luck");
-        player.decAttribute("score");
-        if(player.getAttributeValue("score") <= -player.getAttributeValue("target_score")) {
-          game.getCurrentScene().playCardWithId("loser");
-        }
+  content: ```
+  Do you call <a card="choose_heads">heads</a> or <a card="choose_tails">tails</a>?
+  ```
+}
+
+%% Both result cards share the same shape: on_will_start scores the call and
+%% works out which card comes next (another round, or the end of the game).
+%% Continuing is handled by on_continue, so we never play a card from inside
+%% another card's start handler.
+
+@card choose_heads {
+  on_will_start: (card) => {
+    won_or_lost(card, $("play_round").coin === "heads");
+  }
+
+  content: ```
+  ${card.response}
+  <a event="continue">Continue</a>
+  ```
+
+  on_continue: (card) => {
+    return RezEvent.playCard(card.next_target);
+  }
+}
+
+@card choose_tails {
+  on_will_start: (card) => {
+    won_or_lost(card, $("play_round").coin === "tails");
+  }
+
+  content: ```
+  ${card.response}
+  <a event="continue">Continue</a>
+  ```
+
+  on_continue: (card) => {
+    return RezEvent.playCard(card.next_target);
+  }
+}
+
+@card winner {
+  content: ```
+  You are a winner!
+  <a scene="intro">Play again</a>
+  ```
+}
+
+@card loser {
+  content: ```
+  Sorry, you lost!
+  <a scene="intro">Play again</a>
+  ```
+}
+
+@script {
+  // Score the last call, record how it went on the result card, and work out
+  // which card should be played next.
+  function won_or_lost(card, won) {
+    const player = $("player");
+
+    card.next_target = "play_round";
+    if(won) {
+      card.response = "Congratulations!";
+      player.score += 2;
+      if(player.score >= player.target_score) {
+        card.next_target = "winner";
+      }
+    } else {
+      card.response = "Bad luck.";
+      player.score -= 1;
+      if(player.score <= -player.target_score) {
+        card.next_target = "loser";
       }
     }
-
-    function coin_flip() {
-      return (Math.random() < 0.5) ? "heads" : "tails";
-    }
-  end
-
-  @style begin
-  .important {
-    border-style:solid;
-    border-width:2px;
-    border-color:red;
   }
-  end
-end
+
+  function coin_flip() {
+    return (Math.random() < 0.5) ? "heads" : "tails";
+  }
+}
+
+@styles {
+  .important {
+    border-style: solid;
+    border-width: 2px;
+    border-color: red;
+  }
+}
