@@ -130,7 +130,8 @@ defmodule Rez.Compiler.Phases.CreateRuntime do
               game: game,
               game_elements: game_elements,
               generators: generators,
-              shared_fn_decls: shared_fn_decls
+              shared_fn_decls: shared_fn_decls,
+              global_ids: NodeHelper.global_element_ids(game_elements)
             ),
           register_expression_filters: register_expression_filters(filters: filters)
         )

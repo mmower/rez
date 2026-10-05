@@ -18,6 +18,9 @@ const game = <%= Node.js_initializer(@game) %>;
 
 RezBasicObject.game = game;
 
+/* Ids of $global elements, auto-bound in every template binding context */
+RezBasicObject.globalBindingIds = <%= "[" <> Enum.map_join(@global_ids, ", ", &inspect/1) <> "]" %>;
+
 /* Encode game objects */
 let el;
 <%= for node <- @game_elements do %>

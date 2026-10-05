@@ -419,15 +419,16 @@ class RezBlock {
   }
 
   /**
-   * Gets bindings from the parent block, if any.
+   * Gets bindings from the parent block, if any. A root block (no parent)
+   * starts from the `$global` element bindings, the lowest-priority layer.
    *
-   * @returns {Object} Parent bindings or empty object
+   * @returns {Object} Parent bindings or the global element bindings
    */
   parentBindings() {
     if(this.parentBlock) {
       return this.parentBlock.bindValues();
     } else {
-      return {};
+      return RezBasicObject.globalBindings();
     }
   }
 

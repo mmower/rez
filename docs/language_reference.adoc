@@ -186,6 +186,8 @@ Let's create a simple but complete game to understand the basics. Open `src/my-f
 [NOTE]
 ====
 Notice the `$global: true` attribute on the player. This makes the player object accessible globally using `$player` in JavaScript code, which is why we can use `$player.has_key = true`.
+
+A `$global: true` element is also automatically available as a binding in every template, under its id, so a template can use `${player.has_key}` without a `bindings:` entry. Globals are the lowest-priority bindings: any explicit `bindings:` entry, block, or built-in binding (`block`, `params`, `source`, `content`, `self`, or the `card`/`scene` name) with the same name overrides the global. The id of a global element must be a valid JavaScript identifier and not a reserved word, otherwise compilation fails.
 ====
 
 === Compiling and Running the Game
@@ -400,9 +402,10 @@ type: :weapon
 ====
 **All keywords are converted into strings in the Javascript code. However every keyword is
 also turned into a constant, for example `:legendary` becomes `$kLegendary` the constant has the
-string value (e.g. `"legendary"`) allowing you to compare `rarity === $kLegendary`.
+string value (e.g. `"legendary"`) allowing you to compare `rarity === $kLegendary`.**
+====
 
-**Element References** - Point to another elements by referencing it's id #
+**Element References** - Point to another element by referencing its id with `#`
 ....
 owner_id: #player
 location_id: #forest
@@ -1272,6 +1275,36 @@ Use `rez-live` to trigger events when form values change:
   }
 }
 ....
+
+==== Form Submission
+
+A form with the `rez-live` attribute and a `name` raises an event when it is submitted, either by clicking a submit button or by pressing Enter in one of its inputs. The event handler is the `on_` attribute matching the form's name, so `<form name="login">` runs `on_login`.
+
+....
+@card login {
+  content: ```
+  <form name="login" rez-live>
+    <input type="text" name="user" placeholder="Your name">
+    <button type="submit">Go</button>
+  </form>
+  ```
+
+  on_login: (card, evt) => {
+    const data = new FormData(evt.form);
+    player.name = data.get("user");
+    return RezEvent.playCard("c_welcome");
+  }
+}
+....
+
+The handler receives the object that handled the event and an event object whose `form` property is the DOM form element. Like any other event script it must return a `RezEvent`; if it returns nothing the event is treated as `RezEvent.noop()`.
+
+Rez looks for the handler on the card containing the form first and then, as with other events, on the current card, the scene, and the game. The form must have a `name`, otherwise Rez raises a "Cannot get form name!" error. If no handler is found nothing happens.
+
+[TIP]
+====
+Fields with `rez-bind` are written to their attributes as the player types, so you often don't need to read the form data in the submit handler at all.
+====
 
 === Assets and Media
 
@@ -2235,7 +2268,7 @@ of the property at that time.
 ....
 
 In this example whenever `speed` is requested it will be recalculated and that value
- returned.
+returned.
 
 ....
 @card c_player_run {
@@ -2254,8 +2287,10 @@ In this example whenever `speed` is requested it will be recalculated and that v
 When you want an attribute value that is a short-cut for an attribute value of a
 composed object you use the delegation operator `^del` (`^d` for short).
 
-This is followed by `:` and the name of another property to look it up in
-whose value
+This is followed by `:` and the name of an element reference attribute (without
+its `_id` suffix). The attribute is looked up on the object that reference points
+to, and its value is returned.
+
 **Delegate Lookup** (referenced in a component element)
 
 When you want to simplify how you refer to an attribute in a composed element,

@@ -8,6 +8,8 @@ defmodule Rez.Compiler.Phases.CollectConstants do
      - Other constants
      - Element IDs with $global: true
      - Reserved runtime names ($game, etc.)
+  3. Validates that `$global: true` element ids are usable as template binding
+     names, i.e. valid JS identifiers that are not reserved words
   """
   alias Rez.Compiler.Compilation
   alias Rez.AST.NodeHelper
@@ -38,12 +40,13 @@ defmodule Rez.Compiler.Phases.CollectConstants do
       end)
 
     # Get all element IDs with $global: true for conflict checking
-    global_element_ids = get_global_element_ids(content)
+    global_element_ids = NodeHelper.global_element_ids(content)
 
     # Reserved runtime names that constants cannot use
     reserved_names = ["game"]
 
-    with {:ok, keyword_constants} <- build_keyword_constants(keywords),
+    with :ok <- validate_global_ids(global_element_ids),
+         {:ok, keyword_constants} <- build_keyword_constants(keywords),
          :ok <- validate_keyword_const_overlap(constants, keyword_constants) do
       all_constants = Map.merge(constants, keyword_constants)
 
@@ -107,12 +110,30 @@ defmodule Rez.Compiler.Phases.CollectConstants do
     end
   end
 
-  defp get_global_element_ids(content) do
-    content
-    |> Enum.filter(& &1.game_element)
-    |> Enum.filter(&(NodeHelper.get_attr_value(&1, "$global") == true))
-    |> Enum.map(&Map.get(&1, :id, nil))
-    |> Enum.reject(&is_nil/1)
+  @js_reserved_words ~w(
+    await break case catch class const continue debugger default delete do else enum
+    export extends false finally for function if implements import in instanceof
+    interface let new null package private protected public return static super
+    switch this throw true try typeof var void while with yield arguments eval
+  )
+
+  # Global elements are auto-bound in templates under their id, so the id has to
+  # be usable as a JS parameter name.
+  defp validate_global_ids(global_element_ids) do
+    invalid =
+      Enum.reject(global_element_ids, fn id ->
+        Regex.match?(~r/^[A-Za-z_$][A-Za-z0-9_$]*$/, id) and id not in @js_reserved_words
+      end)
+
+    case invalid do
+      [] ->
+        :ok
+
+      ids ->
+        {:error,
+         "Global elements must have ids usable as binding names (valid JS identifiers, not reserved words): " <>
+           Enum.join(ids, ", ")}
+    end
   end
 
   defp validate_constants(constants, global_element_ids, reserved_names) do

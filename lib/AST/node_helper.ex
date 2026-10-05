@@ -292,6 +292,17 @@ defmodule Rez.AST.NodeHelper do
   end
 
   @doc """
+  Returns the ids of all game elements with `$global: true`.
+  """
+  def global_element_ids(nodes) do
+    nodes
+    |> Enum.filter(& &1.game_element)
+    |> Enum.filter(&(get_attr_value(&1, "$global") == true))
+    |> Enum.map(&Map.get(&1, :id, nil))
+    |> Enum.reject(&is_nil/1)
+  end
+
+  @doc """
   Returns {game_element, game_elements, auxilliary_elements}
   """
   def partition_elements(nodes) do
