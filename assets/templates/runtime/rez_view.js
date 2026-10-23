@@ -428,7 +428,7 @@ class RezBlock {
     if(this.parentBlock) {
       return this.parentBlock.bindValues();
     } else {
-      return RezBasicObject.globalBindings();
+      return RezBasicObject.game.globalBindings;
     }
   }
 

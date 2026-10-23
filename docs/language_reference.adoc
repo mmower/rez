@@ -188,6 +188,8 @@ Let's create a simple but complete game to understand the basics. Open `src/my-f
 Notice the `$global: true` attribute on the player. This makes the player object accessible globally using `$player` in JavaScript code, which is why we can use `$player.has_key = true`.
 
 A `$global: true` element is also automatically available as a binding in every template, under its id, so a template can use `${player.has_key}` without a `bindings:` entry. Globals are the lowest-priority bindings: any explicit `bindings:` entry, block, or built-in binding (`block`, `params`, `source`, `content`, `self`, or the `card`/`scene` name) with the same name overrides the global. The id of a global element must be a valid JavaScript identifier and not a reserved word, otherwise compilation fails.
+
+Use `$global: true` sparingly, for the handful of elements (such as the player) that you refer to from many templates and scripts. Every global is added to the bindings of every template and expression, so the cost grows with the number of globals. Do not mark every element as global; elements that only a few templates need are better listed in a `bindings:` entry.
 ====
 
 === Compiling and Running the Game
@@ -2802,7 +2804,7 @@ Handle edge cases gracefully:
 
 ==== Performance Tips
 
-1. **Use Global Sparingly**: Only mark frequently-accessed objects as global
+1. **Use Global Sparingly**: Only mark frequently-accessed objects as global. Every global is added to the bindings of every template and expression
 2. **Optimize Templates**: Avoid complex calculations in template expressions
 3. **Choose the Right Dynamic Type**: Match the attribute type to your use case
 4. **Cache Expensive Operations**: Store calculated values rather than recalculating

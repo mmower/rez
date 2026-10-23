@@ -315,7 +315,9 @@ defmodule Rez.Compiler.SchemaBuilder do
           %{type: :placeholder} ->
             {node, validation}
 
-          %{type: type, value: elem_id} when type in [:elem_ref, :copy_initializer] ->
+          %{type: type, value: value} when type in [:elem_ref, :copy_initializer] ->
+            elem_id = if type == :copy_initializer, do: elem(value, 0), else: value
+
             case elem_type_check(lookup, elem_id, elems) do
               :ok ->
                 {node, validation}
@@ -934,7 +936,7 @@ defmodule Rez.Compiler.SchemaBuilder do
                  )}
             end
 
-          %{type: :copy_initializer, value: {elem_id, _prio}} ->
+          %{type: :copy_initializer, value: {elem_id, _prio, _init_f}} ->
             case elem_type_check(lookup, elem_id, elems) do
               :ok ->
                 {node, validation}

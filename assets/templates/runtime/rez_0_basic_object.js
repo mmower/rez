@@ -99,14 +99,6 @@ function ensureArray(o) {
 class RezBasicObject {
   static #game;
 
-  /**
-   * @property {string[]} globalBindingIds
-   * @memberof RezBasicObject
-   * @static
-   * @description Ids of all `$global: true` elements. Set once during game initialization.
-   */
-  static globalBindingIds = [];
-
   #id;
   #element;
   #attributes;
@@ -152,21 +144,6 @@ class RezBasicObject {
    */
   static get game() {
     return RezBasicObject.#game;
-  }
-
-  /**
-   * @function globalBindings
-   * @memberof RezBasicObject
-   * @static
-   * @returns {Object} map of element id to element for every `$global: true` element
-   * @description Builds the lowest-priority layer of template bindings. Elements are
-   * looked up on each call so the bindings never hold stale references.
-   */
-  static globalBindings() {
-    return RezBasicObject.globalBindingIds.reduce((bindings, id) => {
-      bindings[id] = $(id);
-      return bindings;
-    }, {});
   }
 
   /**
@@ -542,7 +519,7 @@ class RezBasicObject {
         get: function() {
           const templateFn = this.getAttribute(attrName);
           const bindings = {
-            ...RezBasicObject.globalBindings(),
+            ...RezBasicObject.game.globalBindings,
             self: this
           };
           return templateFn(bindings);

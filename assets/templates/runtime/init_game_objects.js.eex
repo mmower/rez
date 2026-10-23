@@ -18,15 +18,16 @@ const game = <%= Node.js_initializer(@game) %>;
 
 RezBasicObject.game = game;
 
-/* Ids of $global elements, auto-bound in every template binding context */
-RezBasicObject.globalBindingIds = <%= "[" <> Enum.map_join(@global_ids, ", ", &inspect/1) <> "]" %>;
-
 /* Encode game objects */
 let el;
+const globalBindings = {};
 <%= for node <- @game_elements do %>
   el = <%= Node.js_initializer(node) %>;
   game.addGameObject(el);
   <%= if NodeHelper.get_attr_value(node, "$global", false) do %>
     Object.defineProperty(window, "$<%= node.id %>", {value: el, writable: false, configurable: false, enumerable: true});
+    globalBindings[<%= inspect(node.id) %>] = el;
   <% end %>
 <% end %>
+
+game.setGlobalBindings(globalBindings);

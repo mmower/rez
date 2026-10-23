@@ -32,6 +32,7 @@ class RezGame extends RezBasicObject {
   #tagIndex;
   #attrIndex;
   #gameObjects;
+  #globalBindings = Object.freeze({});
   #view;
 
   constructor(id, attributes) {
@@ -56,6 +57,27 @@ class RezGame extends RezBasicObject {
 
   get gameObjects() {
     return this.#gameObjects;
+  }
+
+  /**
+   * @property {Object} globalBindings
+   * @memberof RezGame
+   * @description Frozen map of element id to element for every `$global: true` element.
+   * Built once during game initialization (global elements cannot be created or replaced
+   * at runtime) and used as the lowest-priority layer of template bindings.
+   */
+  get globalBindings() {
+    return this.#globalBindings;
+  }
+
+  /**
+   * @function setGlobalBindings
+   * @memberof RezGame
+   * @param {Object} bindings map of element id to element
+   * @description Installs the global bindings map. Called once from generated init code.
+   */
+  setGlobalBindings(bindings) {
+    this.#globalBindings = Object.freeze({...bindings});
   }
 
   get objectCount() {
