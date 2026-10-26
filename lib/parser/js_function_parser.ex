@@ -23,6 +23,7 @@ defmodule Rez.Parser.JSFunctionParser do
 
   import Rez.Parser.ParserCache, only: [cached_parser: 1]
   import Rez.Parser.IdentifierParser
+  import Rez.Parser.JSBlockParser, only: [js_block: 2]
   import Rez.Parser.UtilityParsers
 
   # ---------------------------------------------------------------------------
@@ -109,11 +110,11 @@ defmodule Rez.Parser.JSFunctionParser do
   end
 
   def js_array_literal() do
-    cached_parser(delimited_text(?[, ?]))
+    cached_parser(js_block(?[, ?]))
   end
 
   def js_object_literal() do
-    cached_parser(delimited_text(?{, ?}))
+    cached_parser(js_block(?{, ?}))
   end
 
   def js_literal() do
@@ -131,10 +132,16 @@ defmodule Rez.Parser.JSFunctionParser do
   end
 
   # ---------------------------------------------------------------------------
-  # Object pattern elements (inside {})
+  # Shared pieces
+  #
+  # The grammar is left-factored: wherever two alternatives share a prefix
+  # (e.g. `key: target = literal` vs `key: target`) the prefix is parsed once
+  # and the differing suffix is optional. Ergo's choice/2 does not memoise, so
+  # trying the longer alternative first re-parses the prefix on failure, and
+  # with nested patterns that cost doubles at each level of nesting.
   # ---------------------------------------------------------------------------
 
-  def js_obj_rest_elem() do
+  def js_rest_param() do
     cached_parser(
       sequence(
         [
@@ -146,68 +153,76 @@ defmodule Rez.Parser.JSFunctionParser do
     )
   end
 
-  def js_obj_rename_default_elem() do
+  def js_default_value() do
     cached_parser(
-      sequence(
-        [
-          js_identifier(),
-          iows(),
-          ignore(char(?:)),
-          iows(),
-          lazy(js_binding_target()),
-          iows(),
-          ignore(char(?=)),
-          iows(),
-          js_literal()
-        ],
-        ast: fn [key, target, default_val] -> "#{key}: #{target} = #{default_val}" end
+      optional(
+        sequence(
+          [
+            iows(),
+            ignore(char(?=)),
+            iows(),
+            js_literal()
+          ],
+          ast: fn [default_val] -> default_val end
+        )
       )
     )
   end
 
-  def js_obj_rename_elem() do
+  # Not cached: called with different target parsers from cached call sites.
+  defp with_default(target_parser) do
+    sequence(
+      [
+        target_parser,
+        js_default_value()
+      ],
+      ast: fn
+        [target] -> target
+        [target, default_val] -> "#{target} = #{default_val}"
+      end
+    )
+  end
+
+  # ---------------------------------------------------------------------------
+  # Object pattern elements (inside {})
+  # ---------------------------------------------------------------------------
+
+  # `key` or `key: target`
+  def js_obj_key_target() do
     cached_parser(
       sequence(
         [
           js_identifier(),
-          iows(),
-          ignore(char(?:)),
-          iows(),
-          lazy(js_binding_target())
+          optional(
+            sequence(
+              [
+                iows(),
+                ignore(char(?:)),
+                iows(),
+                lazy(js_binding_target())
+              ],
+              ast: fn [target] -> target end
+            )
+          )
         ],
-        ast: fn [key, target] -> "#{key}: #{target}" end
+        ast: fn
+          [key] -> key
+          [key, target] -> "#{key}: #{target}"
+        end
       )
     )
   end
 
-  def js_obj_shorthand_default_elem() do
-    cached_parser(
-      sequence(
-        [
-          js_identifier(),
-          iows(),
-          ignore(char(?=)),
-          iows(),
-          js_literal()
-        ],
-        ast: fn [name, default_val] -> "#{name} = #{default_val}" end
-      )
-    )
-  end
-
-  def js_obj_shorthand_elem() do
-    cached_parser(js_identifier())
-  end
-
+  # `...rest`, `key`, `key = literal`, `key: target`, `key: target = literal`
   def js_obj_elem() do
     cached_parser(
-      choice([
-        js_obj_rest_elem(),
-        js_obj_rename_default_elem(),
-        js_obj_rename_elem(),
-        js_obj_shorthand_default_elem(),
-        js_obj_shorthand_elem()
-      ])
+      choice(
+        [
+          js_rest_param(),
+          with_default(js_obj_key_target())
+        ],
+        label: "js-object-pattern-element"
+      )
     )
   end
 
@@ -215,40 +230,16 @@ defmodule Rez.Parser.JSFunctionParser do
   # Array pattern elements (inside [])
   # ---------------------------------------------------------------------------
 
-  def js_arr_rest_elem() do
-    cached_parser(
-      sequence(
-        [
-          ignore(literal("...")),
-          js_identifier()
-        ],
-        ast: fn [name] -> "...#{name}" end
-      )
-    )
-  end
-
-  def js_arr_default_elem() do
-    cached_parser(
-      sequence(
-        [
-          lazy(js_binding_target()),
-          iows(),
-          ignore(char(?=)),
-          iows(),
-          js_literal()
-        ],
-        ast: fn [target, default_val] -> "#{target} = #{default_val}" end
-      )
-    )
-  end
-
+  # `...rest`, `target`, `target = literal`
   def js_arr_elem() do
     cached_parser(
-      choice([
-        js_arr_rest_elem(),
-        js_arr_default_elem(),
-        lazy(js_binding_target())
-      ])
+      choice(
+        [
+          js_rest_param(),
+          with_default(lazy(js_binding_target()))
+        ],
+        label: "js-array-pattern-element"
+      )
     )
   end
 
@@ -277,6 +268,7 @@ defmodule Rez.Parser.JSFunctionParser do
           iows(),
           ignore(char(?}))
         ],
+        label: "js-object-pattern",
         ast: fn [first | [rest]] ->
           elems = [first | rest]
           "{#{Enum.join(elems, ", ")}}"
@@ -306,6 +298,7 @@ defmodule Rez.Parser.JSFunctionParser do
           iows(),
           ignore(char(?]))
         ],
+        label: "js-array-pattern",
         ast: fn [first | [rest]] ->
           elems = [first | rest]
           "[#{Enum.join(elems, ", ")}]"
@@ -316,11 +309,14 @@ defmodule Rez.Parser.JSFunctionParser do
 
   def js_binding_target() do
     cached_parser(
-      choice([
-        js_object_pattern(),
-        js_array_pattern(),
-        js_identifier()
-      ])
+      choice(
+        [
+          js_object_pattern(),
+          js_array_pattern(),
+          js_identifier()
+        ],
+        label: "js-binding-target"
+      )
     )
   end
 
@@ -328,40 +324,16 @@ defmodule Rez.Parser.JSFunctionParser do
   # Parameter parsers
   # ---------------------------------------------------------------------------
 
-  def js_rest_param() do
-    cached_parser(
-      sequence(
-        [
-          ignore(literal("...")),
-          js_identifier()
-        ],
-        ast: fn [name] -> "...#{name}" end
-      )
-    )
-  end
-
-  def js_default_param() do
-    cached_parser(
-      sequence(
-        [
-          js_binding_target(),
-          iows(),
-          ignore(char(?=)),
-          iows(),
-          js_literal()
-        ],
-        ast: fn [target, default_val] -> "#{target} = #{default_val}" end
-      )
-    )
-  end
-
+  # `...rest`, `target`, `target = literal`
   def js_param() do
     cached_parser(
-      choice([
-        js_rest_param(),
-        js_default_param(),
-        js_binding_target()
-      ])
+      choice(
+        [
+          js_rest_param(),
+          with_default(js_binding_target())
+        ],
+        label: "js-param"
+      )
     )
   end
 
@@ -405,7 +377,7 @@ defmodule Rez.Parser.JSFunctionParser do
           iows(),
           ignore(char(?))),
           iows(),
-          delimited_text(?{, ?})
+          js_block(?{, ?})
         ],
         label: "js-traditional-function",
         ast: fn
@@ -431,7 +403,7 @@ defmodule Rez.Parser.JSFunctionParser do
           iows(),
           ignore(literal("=>")),
           iows(),
-          delimited_text(?{, ?})
+          js_block(?{, ?})
         ],
         label: "js-arrow-function",
         ast: fn

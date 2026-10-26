@@ -8,7 +8,6 @@ defmodule Rez.Parser.Parser do
   alias LogicalFile
 
   alias Ergo.Context
-  alias Ergo.Telemetry
 
   alias Ergo.Terminals
   import Ergo.Combinators
@@ -81,7 +80,7 @@ defmodule Rez.Parser.Parser do
   end
 
   def parse(%LogicalFile{} = source, telemetry \\ false) do
-    if telemetry, do: Telemetry.start()
+    # if telemetry, do: Telemetry.start()
 
     case Ergo.parse(top_level(), to_string(source),
            data: %{source: source, aliases: %{}, id_map: %{}, keywords: MapSet.new()}
@@ -97,12 +96,12 @@ defmodule Rez.Parser.Parser do
 
       %Context{status: {code, reasons}, id: id, line: line, col: col, input: input}
       when code in [:error, :fatal] ->
-        if telemetry,
-          do:
-            File.write(
-              "compiler-output.opml",
-              Ergo.Outline.OPML.generate_opml(id, Telemetry.get_events(id))
-            )
+        # if telemetry,
+        #   do:
+        #     File.write(
+        #       "compiler-output.opml",
+        #       Ergo.Outline.OPML.generate_opml(id, Telemetry.get_events(id))
+        #     )
 
         {:error, reasons, line, col, input}
     end

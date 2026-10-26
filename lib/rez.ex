@@ -59,6 +59,10 @@ defmodule Rez do
 
   @dialyzer {:no_return, run_command: 2}
   def run_command(args, quit_method) do
+    # Parsing runs in this process; a larger young heap (~8MB) roughly halves
+    # time lost to minor GCs from Ergo's per-character Context allocations.
+    Process.flag(:min_heap_size, 1_000_000)
+
     quit = quit_fn(quit_method)
     {options, args} = parse_options(args, @options, @default_options)
 

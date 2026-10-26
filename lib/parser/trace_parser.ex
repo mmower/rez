@@ -50,10 +50,9 @@ defmodule Rez.Parser.Trace do
   end
 
   def trace_last_match() do
-    Parser.combinator(:trace_last_match, "s_trace_last_match", fn %Context{consumed: consumed} =
-                                                                    ctx ->
+    Parser.combinator(:trace_last_match, "s_trace_last_match", fn %Context{} = ctx ->
       if tracing?(ctx) do
-        trace_log(ctx, "Last Match: #{String.last(consumed)}")
+        trace_log(ctx, "Last Match: #{String.last(Context.consumed(ctx))}")
       end
 
       ctx

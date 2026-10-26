@@ -1,5 +1,5 @@
 defmodule Rez.Cookbook.Commands.Update do
-  alias Rez.Cookbook.{Config, CookbookFile, Fetcher, Manifest}
+  alias Rez.Cookbook.{Config, CookbookFile, Fetcher, Manifest, Markdown}
 
   def run(game_root, []) do
     with {:ok, module_index} <- Fetcher.fetch_module_index(),
@@ -128,34 +128,13 @@ defmodule Rez.Cookbook.Commands.Update do
       end)
 
     if md_content do
-      {_status, html, _messages} = Earmark.as_html(md_content, footnotes: true)
-      File.write!(Config.module_docs_html_path(game_root, module_path), wrap_html(html))
+      File.write!(
+        Config.module_docs_html_path(game_root, module_path),
+        Markdown.to_html_page(md_content)
+      )
     end
 
     :ok
-  end
-
-  defp wrap_html(body) do
-    """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #333; }
-        pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        code { background: #f5f5f5; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }
-        pre code { background: none; padding: 0; }
-        img { max-width: 100%; }
-        h1, h2, h3 { color: #222; }
-      </style>
-    </head>
-    <body>
-    #{body}
-    </body>
-    </html>
-    """
   end
 
   defp derive_types(manifest) do
