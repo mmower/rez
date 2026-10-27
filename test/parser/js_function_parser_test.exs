@@ -336,6 +336,19 @@ defmodule Rez.Parser.JSFunctionParserTest do
     end
   end
 
+  describe "function bodies" do
+    test "braces in strings, comments and regexes do not end the body" do
+      body = ~S|{ // }
+  const s = "}" + '}' + `}${ {a: 1}.a }`;
+  /* } */
+  return /}/.test(s);
+}|
+
+      assert %Context{status: :ok, ast: {:function, {:std, ["s"], ^body}}, input: ""} =
+               Ergo.parse(js_function(), "function(s) " <> body)
+    end
+  end
+
   describe "nested patterns" do
     test "deep object nesting" do
       assert ["{a: {b: {c: {d}}}}"] = params_of("function({a: {b: {c: {d}}}}) {}")
