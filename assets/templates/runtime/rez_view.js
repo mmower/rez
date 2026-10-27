@@ -1539,6 +1539,16 @@ class RezView {
   }
 
   /**
+   * Discards all pushed layouts, restoring the root layout.
+   */
+  resetLayoutStack() {
+    if(this.layoutStack.length > 0) {
+      this.layout = this.layoutStack[0];
+      this.layoutStack.length = 0;
+    }
+  }
+
+  /**
    * Adds content to the current layout.
    *
    * @param {RezBlock} content - The content block to add

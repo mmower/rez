@@ -202,6 +202,12 @@ class RezGame extends RezBasicObject {
       throw new Error("JSON does not contain data archive!");
     }
 
+    // Saves are only made with no interlude active, so unwind any interlude that is
+    // open now. Otherwise the view layout stack and $scene_stack keep the interlude's
+    // state and canSave stays false after the load.
+    this.#view.resetLayoutStack();
+    this.$scene_stack = [];
+
     // Pass 1: reconstruct procedurally-created objects that don't exist after a fresh
     // boot. They are not defined in the source (only base elements are created at boot)
     // and self-identify via `$original_id` (the template they were copied from). All
