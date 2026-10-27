@@ -143,6 +143,10 @@ Modifies this array to remove the specified element.
 > ['a', 'b', 'd', 'e']
 ....
 
+NOTE: This changes the array in place. If the array is the value of an attribute, use
+`obj.modifyAttribute("attr", (arr) => arr.remove(elem))` so the change is included in saved
+games. See "Changing Collections in Place" in the Language Guide.
+
 ==== fyShuffle()
 
 Randomizes the elements of this array using the Fisher-Yates Shuffle.
@@ -151,6 +155,10 @@ Randomizes the elements of this array using the Fisher-Yates Shuffle.
 > ["a", "b", "c", "d", "e", "f", "g"].fyShuffle()
 > ['b', 'e', 'a', 'g', 'f', 'c', 'd']
 ....
+
+NOTE: This shuffles the array in place and returns it. If the array is the value of an attribute,
+use `obj.modifyAttribute("attr", (arr) => arr.fyShuffle())` so the change is included in saved
+games. See "Changing Collections in Place" in the Language Guide.
 
 ==== randomElement()
 
@@ -217,6 +225,10 @@ Removes the first `n` elements of this array, returning them in a new array.
 > b
 > [1, 2]
 ....
+
+NOTE: This removes the elements from the array in place. If the array is the value of an attribute,
+use `obj.modifyAttribute("attr", (arr) => arr.take(n))` so the change is included in saved games.
+See "Changing Collections in Place" in the Language Guide.
 
 ==== refs()
 

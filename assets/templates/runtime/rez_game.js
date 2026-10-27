@@ -30,7 +30,6 @@ class RezGame extends RezBasicObject {
   #undoManager;
   #eventProcessor;
   #tagIndex;
-  #attrIndex;
   #gameObjects;
   #globalBindings = Object.freeze({});
   #view;
@@ -41,7 +40,6 @@ class RezGame extends RezBasicObject {
     this.#undoManager = new RezUndoManager();
     this.#eventProcessor = new RezEventProcessor(this);
     this.#tagIndex = {};
-    this.#attrIndex = {};
     this.#gameObjects = new Map();
     this.$ = this.getGameObject;
     this.addGameObject(this);
@@ -141,7 +139,7 @@ class RezGame extends RezBasicObject {
   }
 
   saveData() {
-    return JSON.stringify(this.gameArchive());
+    return JSON.stringify(this.gameArchive(), archiveReplacer);
   }
 
    /**
@@ -184,9 +182,11 @@ class RezGame extends RezBasicObject {
    * @memberof RezGame#
    * @param {string} source JSON format source archive
    * @description given a JSON source archive restore the game state to what was archived.
+   * Sets in the archive are restored as Sets, and an object whose `tags` were archived has
+   * the tag index rebuilt to match.
    */
   load(source) {
-    const wrapper = JSON.parse(source);
+    const wrapper = JSON.parse(source, archiveReviver);
 
     const archiveFormat = wrapper.archive_format;
     const currentFormat = this.getAttribute("archive_format");
@@ -221,7 +221,16 @@ class RezGame extends RezBasicObject {
     // Pass 2: apply the archived attributes to every object (base + reconstructed).
     for(const [id, obj_data] of Object.entries(data)) {
       const obj = this.getGameObject(id);
+      // loadData assigns `tags` directly, bypassing addTag/removeTag, so the tag index
+      // has to be rebuilt by hand for objects whose tags were archived.
+      const retag = Object.hasOwn(obj_data, "tags");
+      if(retag) {
+        this.removeFromTagIndex(obj);
+      }
       obj.loadData(obj_data);
+      if(retag) {
+        this.addToTagIndex(obj);
+      }
       obj.runEvent("did_load");
     }
 
@@ -291,62 +300,26 @@ class RezGame extends RezBasicObject {
   }
 
   /**
-   * For each attribute defined on this game object, add it to the game-wide
-   * index for that attribute.
-   * @TODO: Consider this may not work with mixed in properties as they do
-   * not appear in #attributes
-   *
-   * @param {basic_object} elem element whose attributes are to be indexed
-   */
-  addToAttrIndex(elem) {
-    if(!elem.isTemplateObject()) {
-      Object.entries(elem.attributes).forEach(([k, _v]) => {
-        this.indexAttribute(elem.id, k);
-      });
-    }
-  }
-
-  removeFromAttrIndex(elem) {
-    if(!elem.isTemplateObject()) {
-      Object.entries(elem.attributes).forEach(([k, _v]) => {
-        this.unindexAttribute(elem.id, k);
-      });
-    }
-  }
-
-  /**
-   * Adds the element to the per-attribute index.
-   *
-   * @param {string} elem_id id of element to add to the per-attr index
-   * @param {string} attr_name
-   */
-  indexAttribute(elemId, attrName) {
-    const index = this.#attrIndex[attrName] ?? new Set();
-    index.add(elemId);
-    this.#attrIndex[attrName] = index;
-  }
-
-  unindexAttribute(elemId, attrName) {
-    const index = this.#attrIndex[attrName];
-    if(index !== undefined) {
-      index.delete(elemId);
-
-      if(index.size === 0) {
-        delete this.#attrIndex[attrName];
-      }
-    }
-  }
-
-  /**
-   * Return the ids of all game elements having the specified attribute.
-   *
    * @function getObjectsWithAttr
-   * @param {string} attr_name
-   * @returns {Array} matching element ids
+   * @memberof RezGame#
+   * @param {string} attrName name of the attribute
+   * @returns {array} ids of all game elements having the specified attribute
+   * @description Scans the game objects for those that define the attribute, so the
+   * result always reflects the attributes objects have right now, including attributes
+   * added after the object was created. Template objects are not included.
+   *
+   * Cost is proportional to the number of game objects, so keep the result if you need
+   * it more than once in a handler. Attributes provided by mixins do not appear in an
+   * object's own attributes and so may not be found.
+   * @example
+   * $game.getObjectsWithAttr("behaviours").forEach((id) => {
+   *   $(id).behaviours.executeBehaviour(wmem);
+   * });
    */
   getObjectsWithAttr(attrName) {
-    const index = this.#attrIndex[attrName] ?? new Set();
-    return Array.from(index);
+    return [...this.#gameObjects.values()]
+      .filter((obj) => !obj.isTemplateObject() && obj.hasAttribute(attrName))
+      .map((obj) => obj.id);
   }
 
   /**
@@ -423,7 +396,6 @@ class RezGame extends RezBasicObject {
 
     this.#gameObjects.set(obj.id, obj);
     this.addToTagIndex(obj);
-    this.addToAttrIndex(obj);
 
     this.#undoManager?.recordNewElement(obj.id);
 
@@ -444,7 +416,6 @@ class RezGame extends RezBasicObject {
     obj.runEvent("unmap", {});
 
     if(this.#gameObjects.delete(obj.id)) {
-      this.removeFromAttrIndex(obj);
       this.removeFromTagIndex(obj);
     }
 

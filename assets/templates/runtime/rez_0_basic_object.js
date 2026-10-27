@@ -51,6 +51,39 @@ function ensureArray(o) {
 }
 
 /**
+ * @function archiveReplacer
+ * @param {string} _key - property name being serialized (unused)
+ * @param {*} value - property value being serialized
+ * @returns {*} the value, with any Set replaced by a `json$safe` wrapper
+ * @description The `JSON.stringify` replacer used when saving a game. JSON cannot represent
+ * a Set (it would be written as `{}`) so a Set is replaced by `{json$safe: true, type: "set",
+ * value: [...members]}`, the same marker `archiveInto()` uses for functions. Because it is
+ * applied by `JSON.stringify` it also finds Sets nested inside lists and records. The inverse
+ * is `archiveReviver()`.
+ */
+function archiveReplacer(_key, value) {
+  if(value instanceof Set) {
+    return {json$safe: true, type: "set", value: [...value]};
+  }
+  return value;
+}
+
+/**
+ * @function archiveReviver
+ * @param {string} _key - property name being deserialized (unused)
+ * @param {*} value - property value being deserialized
+ * @returns {*} the value, with any `json$safe` Set wrapper turned back into a Set
+ * @description The `JSON.parse` reviver used when loading a game, the inverse of
+ * `archiveReplacer()`. Other `json$safe` wrappers (functions) are left for `loadData()`.
+ */
+function archiveReviver(_key, value) {
+  if(value !== null && typeof value === "object" && value.json$safe === true && value.type === "set") {
+    return new Set(value.value);
+  }
+  return value;
+}
+
+/**
  * @class RezBasicObject
  * @category Internal
  * @description The foundational base class for all Rez game objects. Bridges Rez language
@@ -88,9 +121,16 @@ function ensureArray(o) {
  * `copyWithAutoId()`, not used directly. Templates skip element-specific initialization.
  *
  * ## Persistence
- * The `changedAttributes` Set tracks every modified attribute. On save, `archiveInto()`
- * serializes only changed attributes (excluding those listed in `$no_archive`).
- * The `loadData()` method restores attributes from a saved archive.
+ * The `changedAttributes` Set tracks every attribute that has been assigned. On save,
+ * `archiveInto()` serializes only those attributes (excluding those listed in
+ * `$no_archive`). The `loadData()` method restores attributes from a saved archive.
+ *
+ * Tracking happens in `setAttribute()`, which property assignment calls. Rez cannot see
+ * inside an attribute's value, so changing a list, set or record in place (`push`,
+ * `splice`, `list[0] = x`, `record.key = x`) does NOT flag the attribute. An attribute
+ * that is only ever changed in place, and never assigned, is missing from the save file.
+ * Change a collection in place with `modifyAttribute(attrName, fn)`, or call
+ * `markChanged(attrName)` afterwards, or assign the attribute a new value.
  *
  * ## Static Game Reference
  * The static `game` property provides access to the singleton RezGame instance from
@@ -217,8 +257,13 @@ class RezBasicObject {
    * @function changedAttributes
    * @memberof RezBasicObject#
    * @returns {Set<string>} set of attribute names that have been modified
-   * @description Returns the set of attribute names that have been changed since object
-   * creation. Used by the persistence system to determine what needs to be saved.
+   * @description Returns the set of attribute names that have been assigned (via
+   * `setAttribute()` or property assignment) or flagged with `markChanged()` or
+   * `modifyAttribute()` since object creation. Used by the persistence system to
+   * determine what needs to be saved.
+   *
+   * Changes made inside a list, set or record without assigning the attribute are not
+   * tracked, see `modifyAttribute()`.
    */
   get changedAttributes() {
     return this.#changedAttributes;
@@ -254,6 +299,11 @@ class RezBasicObject {
    * Only attributes that have been modified (tracked in changedAttributes) are saved.
    * Attributes listed in the `$no_archive` attribute are excluded. Functions are
    * serialized with a special wrapper for later restoration.
+   *
+   * The current value of each changed attribute is saved, so in-place changes to a
+   * collection are saved provided the attribute was assigned or flagged with
+   * `modifyAttribute()` or `markChanged()` at some point. An attribute that has only ever been changed in
+   * place is not saved.
    */
   archiveInto(archive) {
     if(this.needsArchiving) {
@@ -303,6 +353,10 @@ class RezBasicObject {
         } else {
           console.error(`Failed to restore: unknown type for attribute '${attrName}' (${attrValue.type})`);
         }
+      } else if(attrName === "tags" && !(attrValue instanceof Set)) {
+        // Saves made before Sets were serialized recorded `tags` as {}. That loses the
+        // tags, so keep the ones defined in the source instead.
+        console.warn(`Ignoring saved tags for #${this.id}: expected a Set, found ${JSON.stringify(attrValue)}`);
       } else {
         this.setAttribute(attrName, attrValue);
       }
@@ -1041,6 +1095,12 @@ class RezBasicObject {
    * @param {string} attr_name name of attribute to set
    * @param {*} new_value value for attribute
    * @param {boolean} notify_observers whether observers should be notified that the value has changed
+   * @description Sets the attribute, runs the `<attr>_changed` event, flags the attribute
+   * to be included in the save file and (unless `notify_observers` is false) notifies
+   * observers, bound controls and the undo manager.
+   *
+   * This is the only thing that flags an attribute for saving. Changing a list, set or
+   * record in place does not go through here, use `modifyAttribute()` for that.
    */
   setAttribute(attrName, newValue, notifyObservers = true) {
     if(typeof newValue === "undefined") {
@@ -1064,6 +1124,57 @@ class RezBasicObject {
         newValue
       );
     }
+  }
+
+  /**
+   * @function markChanged
+   * @memberof RezBasicObject#
+   * @param {string} attrName name of the attribute to flag for saving
+   * @throws {Error} if the object has no attribute with this name
+   * @description Flags an attribute as changed so that it is included in the save file,
+   * without assigning it a new value. Rez can only detect that an attribute has changed
+   * when it is assigned, so use this after changing a list, set or record in place.
+   * Where the change is made at the call site prefer `modifyAttribute()`, which does
+   * this for you. This is for when the change is made elsewhere, for example by a
+   * helper function that is handed the list.
+   *
+   * This only affects saving. Unlike `setAttribute()` it does not run `<attr>_changed`
+   * or `attr_change` handlers, notify observers, update bound controls or record the
+   * change for undo. If you need those, assign a new value instead, for example
+   * `actor.inventory = [...actor.inventory, item]`.
+   * @example
+   * actor.inventory.push(item);
+   * actor.markChanged("inventory");
+   */
+  markChanged(attrName) {
+    if(!this.hasAttribute(attrName)) {
+      throw new Error(`Cannot mark attribute ${attrName} as changed: #${this.id} has no such attribute!`);
+    }
+    this.changedAttributes.add(attrName);
+  }
+
+  /**
+   * @function modifyAttribute
+   * @memberof RezBasicObject#
+   * @param {string} attrName name of the attribute whose value is going to be modified
+   * @param {function} modifyFn called with the current value of the attribute, which it may change in place
+   * @returns {*} whatever `modifyFn` returns
+   * @throws {Error} if the object has no attribute with this name
+   * @description Changes a list, set or record attribute in place and makes sure the
+   * change is saved. The attribute is flagged with `markChanged()` and then `modifyFn` is
+   * called with the live value, so the change and the flag can't get separated. The
+   * attribute is flagged before `modifyFn` runs, so it is also saved if `modifyFn`
+   * throws part way through.
+   *
+   * This only affects saving, see `markChanged()` for what it does not do.
+   * @example
+   * actor.modifyAttribute("inventory", (inventory) => inventory.push(item));
+   * const [removed] = actor.modifyAttribute("inventory", (inventory) => inventory.splice(index, 1));
+   * actor.modifyAttribute("flags", (flags) => { flags.door_open = true; });
+   */
+  modifyAttribute(attrName, modifyFn) {
+    this.markChanged(attrName);
+    return modifyFn(this.getAttribute(attrName));
   }
 
   /**

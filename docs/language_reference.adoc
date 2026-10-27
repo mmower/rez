@@ -1974,71 +1974,6 @@ Create your own template expression filters:
 // <p>You rolled ${"2d6+3" | roll} damage!</p>
 ....
 
-=== Building Modular Game Systems
-
-For large games, organize your code into modular systems:
-
-....
-// combat_system.rez
-@script {
-  const CombatSystem = {
-    initiateCombat(player, enemy) {
-      $("game").combat_state = {
-        player: player,
-        enemy: enemy,
-        turn: "player",
-        round: 1
-      };
-      return RezEvent.switchScene("combat");
-    },
-
-    processTurn(action, target) {
-      const state = $("game").combat_state;
-      // Process combat logic...
-      return this.checkCombatEnd(state);
-    },
-
-    checkCombatEnd(state) {
-      if (state.player.health <= 0) {
-        return RezEvent.playCard("player_defeated");
-      } else if (state.enemy.health <= 0) {
-        return RezEvent.playCard("enemy_defeated");
-      }
-      return RezEvent.render();
-    }
-  };
-}
-
-// inventory_system.rez
-@script {
-  const InventorySystem = {
-    addItem(character, item) {
-      if (!character.inventory) character.inventory = [];
-      character.inventory.push(item);
-      this.sortInventory(character);
-    },
-
-    removeItem(character, itemId) {
-      if (!character.inventory) return false;
-      const index = character.inventory.findIndex(item => item.id === itemId);
-      if (index >= 0) {
-        character.inventory.splice(index, 1);
-        return true;
-      }
-      return false;
-    },
-
-    sortInventory(character) {
-      character.inventory.sort((a, b) => {
-        // Sort by type, then by name
-        if (a.type !== b.type) return a.type.localeCompare(b.type);
-        return a.name.localeCompare(b.name);
-      });
-    }
-  };
-}
-....
-
 == Part 5: Technical Reference
 
 === How Rez Works Under the Hood
@@ -2128,6 +2063,130 @@ Each level wraps the next in HTML structure:
 **Template Caching**: Template rendering functions are compiled once and cached for performance.
 
 **Event Delegation**: Rez uses event delegation for clicks, so dynamically added content automatically works.
+
+=== Saving and Loading
+
+Rez can save the state of a game to a JSON file and restore it later. Call `$game.save()` to download
+a save file and `$game.load(json)` to restore one. The standard library's `$load_game` scene provides
+a file upload form that does this for the player. A game cannot be saved while an interlude is being
+shown (`$game.canSave` is `false`) and calling `$game.save()` then raises an error.
+
+Rez does not save the whole game. The game is built from your source every time it starts, so a save
+file only has to record what has *changed* since then. When the game is saved, the changed attributes
+of each object are written to the file and objects with no changed attributes are left out. When a
+save is loaded the saved attributes are assigned to the freshly built objects.
+
+An attribute counts as changed when it is *assigned*, for example `player.score = 10` or
+`player.score += 1`. Changing the contents of a list, set or record is different, see
+<<collections-in-place,Changing Collections in Place>> below.
+
+Lists, records, sets and element ids are saved and restored as they are, including when they are
+nested inside one another.
+
+NOTE: Save files written by older versions of Rez recorded every set as an empty record. Loading
+one of those files keeps each object's `tags` as defined in your source, but any other set it contains
+loads as an empty record.
+
+==== Archive Format
+
+The `archive_format` attribute of the `@game` is a version number for the saved state of your game.
+A save file can only be loaded by a game with the same `archive_format`, otherwise loading raises an
+error. Increase it when you change your game in a way that would make existing saves wrong, for example
+by renaming or removing attributes that are saved.
+
+==== Save and Load Events
+
+Objects receive an `on_will_save` event just before the save file is written and an `on_did_load`
+event after their saved attributes have been restored.
+
+==== Leaving Attributes Out
+
+Some attributes are transient, for example data that is regenerated every time a card starts. List
+them in the `$no_archive` attribute, a set of attribute names, and they are left out of save files.
+
+....
+@card combat {
+  $no_archive: #{:enemy_list :turn_order}
+
+  enemy_list: []
+  turn_order: []
+
+  on_start: (card, event) => {
+    card.enemy_list = generateEnemies();
+    card.turn_order = calculateTurnOrder(card.enemy_list);
+    return RezEvent.render();
+  }
+}
+....
+
+[[collections-in-place]]
+==== Changing Collections in Place
+
+[WARNING]
+====
+Rez only knows that an attribute has changed when it is *assigned*. It cannot see what you do _inside_
+a list, set or record, so none of these mark the attribute as changed:
+
+....
+player.visited.push(location);   // or pop, shift, unshift, splice, sort, reverse
+player.traits[0] = trait;
+player.flags.door_open = true;   // setting a key in a record
+player.visited.add("cave");      // adding to a set
+player.favourites.remove(item);  // library methods like remove(), take() and fyShuffle()
+....
+
+If the attribute is not assigned anywhere else, the change is *silently left out of saved games*. The
+game plays correctly until it is saved and loaded, and then the change is gone.
+====
+
+There are three ways to avoid this.
+
+**`modifyAttribute`** (recommended). Pass the name of the attribute and a function that changes it. Rez
+flags the attribute as changed and then calls your function with the attribute's current value. Whatever
+the function returns is returned to you:
+
+....
+player.modifyAttribute("visited", (visited) => visited.push(location));
+player.modifyAttribute("flags", (flags) => { flags.door_open = true; });
+
+const [removed] = player.modifyAttribute("favourites", (favourites) => favourites.splice(index, 1));
+....
+
+`modifyAttribute` raises an error if the object has no attribute with that name, so a misspelling is
+caught instead of silently doing nothing.
+
+**Assign a new value**. Build a new collection instead of changing the old one and assign it:
+
+....
+player.visited = [...player.visited, location];
+player.favourites = player.favourites.filter((i) => i !== favourite);
+player.flags = {...player.flags, door_open: true};
+....
+
+Assignment is the only approach that also runs the `on_<attribute>_changed` handler, notifies
+observers, updates bound form controls and records the change so it can be undone. If you want any of
+those, assign. Assigning the same collection back after changing it (`player.inventory = player.inventory`)
+does get it saved, but the old and new values are then the same object, so undo cannot restore the
+previous contents.
+
+**`markChanged`**. When the change is made somewhere else, for example by a function that is handed
+the list, call `markChanged` with the attribute name afterwards:
+
+....
+player.deck.fyShuffle();
+player.markChanged("deck");
+....
+
+`modifyAttribute` and `markChanged` only affect saving. They do not run `on_<attribute>_changed`,
+notify observers, update bound controls or record the change for undo.
+
+[NOTE]
+====
+A save file holds the *current* value of every attribute that has ever been assigned or flagged, so once an
+attribute has been assigned (or flagged) once, later in-place changes to it are saved too. Don't rely on
+this. It makes the problem intermittent, and an attribute that only ever receives in-place changes, for
+example one defined as `inventory: []` that is only ever pushed to, is never saved at all.
+====
 
 === Complete Attribute Type Reference
 
@@ -2437,6 +2496,7 @@ $global: true          // Create global variable
 $template: true        // Mark as template for copying
 $js_ctor: "CustomClass" // Use different JavaScript constructor
 $built_in: true        // Mark as built-in (documentation only)
+$no_archive: #{:scratch} // Attributes to leave out of saved games
 ....
 
 **ID Suffix Attributes** (automatic element references)
@@ -2761,7 +2821,7 @@ Keep game state organized and predictable:
 
   // Helper methods for state
   setFlag: function(name, value = true) {
-    this.game_flags[name] = value;
+    this.modifyAttribute("game_flags", (flags) => { flags[name] = value; });
   }
 
   getFlag: function(name) {
@@ -2776,6 +2836,10 @@ Keep game state organized and predictable:
   }
 }
 ....
+
+`player_score += points` assigns the attribute, so Rez knows it has changed. `setFlag` sets a key inside
+the `game_flags` record, which Rez cannot see, so it uses `modifyAttribute` to have the change saved.
+See <<collections-in-place,Changing Collections in Place>> for why this matters.
 
 ==== Error Handling
 
