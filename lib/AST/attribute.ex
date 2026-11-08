@@ -9,7 +9,7 @@ defmodule Rez.AST.Attribute do
   Rez supports the following types:
 
   :number -> (+/- integers and floating point values)
-  :string -> double-quoted or Heredoc style
+  :string -> double-quoted (may span multiple lines)
   :boolean -> (true|false or, interchangably, yes|no)
   :function -> arrow-style Javascript function body
   :append_function -> like :function but chains after any existing handler

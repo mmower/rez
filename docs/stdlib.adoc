@@ -950,15 +950,6 @@ ${high_scores | take: 10}      // Top 10 scores
 
 === Rendering Filters
 
-==== render
-
-Render a template attribute.
-
-....
-${card | render: "description": $block}
-// Renders the description attribute of card as a template
-....
-
 ==== event
 
 Create an event link (deprecated - use link syntax instead).

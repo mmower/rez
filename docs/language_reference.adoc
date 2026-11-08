@@ -243,6 +243,35 @@ The compilation process:
 3. Creates an HTML page with embedded JavaScript
 4. Copies any assets to the distribution folder
 
+==== Checking your game without building it
+
+`rez lint` runs every check the compiler makes but doesn't write the game files. It's quicker than a full compile and is useful for checking your work as you go:
+
+....
+rez lint src/my-first-game.rez
+....
+
+It prints any errors and exits with a non-zero status if there are any. Like `rez compile` it updates `lib/stdlib.rez`.
+
+==== Looking up an element's attributes
+
+`rez schema` describes the attributes an element accepts: their types, which are required, their default values, and any other rules. With no arguments it lists the elements that have a schema:
+
+....
+rez schema
+rez schema card
+....
+
+To include the elements, schemas and defaults defined in your own game, give it your game source first:
+
+....
+rez schema src/my-first-game.rez npc
+....
+
+==== A compact language reference
+
+`rez docs` prints a short reference to the Rez language. It is written for AI assistants that are helping you write a game, and for authors who want a quick reminder rather than a tutorial. `rez docs topics` lists the topics and `rez docs <topic>` prints one of them, for example `rez docs templates`.
+
 === Next Steps
 
 Now that you have a working game, you can:
@@ -354,22 +383,35 @@ Attributes are how you describe an element's properties and behavior. They use t
 
 ....
 @card treasure_room {
-  title: "The Treasure Chamber"      // String
-  visited: false                     // Boolean
-  gold_count: 100                    // Number
-  room_type: :treasure               // Keyword (symbol)
-  owner_id: #dragon                  // Element reference
-  content: ```                       // Template (multi-line string)
+  title: "The Treasure Chamber"      %% String
+  visited: false                     %% Boolean
+  gold_count: 100                    %% Number
+  room_type: :treasure               %% Keyword (symbol)
+  owner_id: #dragon                  %% Element reference
+
+  %% Template (multi-line string)
+  content: ```
   <p>A room filled with gold!</p>
   ```
-  on_enter: (card) => {              // Event script function
+
+  %% Event script function
+  on_enter: (card) => {
     card.visited = true;
   }
-  refill_gold: function() {          // Action script function
+
+  %% Action script function
+  refill_gold: function() {
     this.gold_count = 100;
   }
 }
 ....
+
+[NOTE]
+====
+**Comments**: In Rez source a comment starts with `%%` and runs to the end of the line. `//` is not a Rez comment and only works inside JavaScript, such as the body of a function.
+
+The `%%` and everything after it is removed from every line before anything else happens, including inside strings, templates and JavaScript. So you can't use `%%` as text anywhere in your source.
+====
 
 ==== Attribute Types
 
@@ -389,7 +431,7 @@ price: -10
 ....
 magic: true
 cursed: false
-found: yes      // yes/no also work
+found: yes      %% yes/no also work
 hidden: no
 ....
 
@@ -420,15 +462,15 @@ wielded_by_id: #hero
 
 ....
 @scene forest {
-  initial_card_id: #entrance    // You define this
-  // Rez automatically creates:
-  // initial_card -> the actual RezCard object
+  initial_card_id: #entrance    %% You define this
+  %% Rez automatically creates:
+  %% initial_card -> the actual RezCard object
 }
 
 @actor hero {
-  location_id: #forest         // You define this
-  // Rez automatically creates:
-  // location -> reference to the object with ID #forest
+  location_id: #forest         %% You define this
+  %% Rez automatically creates:
+  %% location -> reference to the object with ID #forest
 }
 ....
 
@@ -478,7 +520,9 @@ executed.
 **Event Response Methods**: Event scripts must use RezEvent to specify what happens as a result of the event:
 
 * `RezEvent.playCard("card_id")` - Play a new card in the current scene
-* `RezEvent.switchScene("scene_id")` - Start a new scene
+* `RezEvent.sceneChange("scene_id")` - Start a new scene
+* `RezEvent.sceneInterlude("scene_id")` - Run a scene as an interlude
+* `RezEvent.sceneResume()` - End an interlude and resume the previous scene
 * `RezEvent.flash("message")` - Show a flash message to the player
 * `RezEvent.modalMessage("message", {title: "Modal Title"})` - Show a modal to the player with an optional title
 * `RezEvent.modalCard("card_id", params, options)` - Show a modal to the player by rendering the card into the modal. The card can define a `title:` attribute for the modal title. Pass `{showDismiss: false}` as the third `options` argument to suppress the default OK button so the card can implement its own dismiss control (e.g. a button carrying `data-rez-dismiss-modal`, or a `data-event` handler that calls `$game.clearModal()`).
@@ -486,7 +530,7 @@ executed.
 * `RezEvent.render()` - Re-render the current view
 * `RezEvent.noop()` - do nothing
 
-Methods can be chained: `RezEvent.playCard("victory").modal("You won!")`
+Methods can be chained: `RezEvent.playCard("victory").modalMessage("You won!")`
 ====
 
 === Dynamic Properties
@@ -502,7 +546,7 @@ Use `^p{...}` to define a property that recalculates automatically:
   first_name: "Sir"
   last_name: "Galahad"
 
-  // This calculates every time it's accessed
+  %% This calculates every time it's accessed
   full_name: ^p{
     return `${this.first_name} ${this.last_name}`;
   }
@@ -510,12 +554,12 @@ Use `^p{...}` to define a property that recalculates automatically:
   health: 85
   max_health: 100
 
-  // Perfect for UI elements like health bars
+  %% Perfect for UI elements like health bars
   health_percentage: ^p{
     return this.health * 100 / this.max_health;
   }
 
-  // Boolean states based on other attributes
+  %% Boolean states based on other attributes
   is_healthy: ^p{
     return this.health > this.max_health * 0.5;
   }
@@ -536,7 +580,7 @@ Dynamic properties shine for calculated stats:
   dexterity: 12
   intelligence: 14
 
-  // Calculated modifier (D&D style)
+  %% Calculated modifier (D&D style)
   strength_modifier: ^p{
     return Math.floor((this.strength - 10) / 2);
   }
@@ -545,12 +589,12 @@ Dynamic properties shine for calculated stats:
     return Math.floor((this.dex - 10) / 2);
   }
 
-  // Total of all stats
+  %% Total of all stats
   total_stats: ^p{
     return this.strength + this.dexterity + this.intelligence;
   }
 
-  // Armor class calculation
+  %% Armor class calculation
   base_armor: 10
   armor_bonus: 2
   armor_class: ^p{
@@ -567,7 +611,7 @@ For inventory and resource management:
   silver: 75
   copper: 200
 
-  // Total wealth in copper pieces
+  %% Total wealth in copper pieces
   total_wealth: ^p{
     return this.copper + (this.silver * 10) + (this.gold * 100);
   }
@@ -575,12 +619,12 @@ For inventory and resource management:
   current_weight: 45
   max_carrying_capacity: 100
 
-  // How much more can be carried
+  %% How much more can be carried
   carrying_capacity_remaining: ^p{
     return Math.max(0, this.max_carrying_capacity - this.current_weight);
   }
 
-  // Whether player is overloaded
+  %% Whether player is overloaded
   is_encumbered: ^p{
     return this.current_weight > this.max_carrying_capacity;
   }
@@ -661,7 +705,7 @@ Some bindings are always available:
 * `card` - The current card being displayed
 * `scene` - The current scene
 * `game` - The game object
-* `param` - The parameters passed to the current context
+* `params` - The parameters passed to the current context (for a card, the params it was played with)
 
 ....
 @card example {
@@ -758,9 +802,10 @@ Trigger custom behavior with `<a event="event_name">`:
   locked: true
   content: ```
   <p>A mysterious door blocks your path.</p>
-  $if(card.locked) {%
+  $if(card.locked) -> {%
     <a event="try_key">Try to unlock with the key</a>
-  %}, {%
+  %}
+  () -> {%
     <a card="beyond_door">Go through the door</a>
   %}
   ```
@@ -1096,7 +1141,7 @@ Use `$foreach()` to loop through lists or arrays:
 @card inventory {
   bindings: [
     player: #hero,
-    items: () => $("hero").container.allItems().refs()
+    items: (block, source, bindings) => {return $("hero").container.allItems().refs();}
   ]
   content: ```
   <h3>Your Inventory</h3>
@@ -1588,26 +1633,28 @@ Add images, audio, and other media to your games using the asset system.
 
 ==== Defining Assets
 
-Create asset elements to register your media files:
+Create asset elements to register your media files. Put the files in your game's `assets/` folder and refer to each one with either `file_name` (the compiler searches `assets/` and its subfolders for a file with that name) or `file_path` (a path relative to `assets/`), but not both:
 ....
 @asset hero_portrait {
-  file: "characters/hero.png"
+  file_name: "hero.png"
   width: 150
   height: 200
 }
 
 @asset background_music {
-  file: "audio/tavern_theme.mp3"
+  file_path: "audio/tavern_theme.mp3"
 }
 
 @asset treasure_sound {
-  file: "audio/treasure_found.wav"
+  file_path: "audio/treasure_found.wav"
 }
 ....
 
+`width` and `height` must be given together. The compiler copies each asset into the `dist` folder and fails if a file can't be found.
+
 ==== Using Images
 
-Display images in your content:
+Display images in your content with the `<.img>` component. It uses the asset's `width` and `height` unless you give it others, and passes any other attributes on to the `<img>` tag:
 ....
 @card character_sheet {
   content: ```
@@ -1623,18 +1670,23 @@ Display images in your content:
 }
 ....
 
-Or build your own image tags:
+Or build your own image tags. An asset's `$dist_path` attribute is the path of its file in the built game:
 ....
-<img src='${"hero_portrait" | asset_path}' alt="Hero Portrait" class="portrait">
+@card portrait {
+  bindings: [hero_portrait: #hero_portrait]
+  content: ```
+  <img src="${hero_portrait.$dist_path}" alt="Hero Portrait" class="portrait">
+  ```
+}
 ....
 
 ==== Dynamic Assets
 
-Choose different assets based on game state:
+Choose different assets based on game state. A component attribute written as `{...}` is a JavaScript expression evaluated with the template's bindings:
 ....
 @card location_view {
   bindings: [
-    location_image: () => {
+    location_image: (block, source, bindings) => {
       if (player.location === "forest") return "forest_scene";
       if (player.location === "dungeon") return "dungeon_scene";
       return "default_scene";
@@ -1642,8 +1694,7 @@ Choose different assets based on game state:
   ]
   content: ```
   <div class="location-display">
-    <img src='${location_image | asset_path}' alt="Current Location">
-    <p>${location.description}</p>
+    <.img name={location_image} alt="Current Location" />
   </div>
   ```
 }
@@ -1654,11 +1705,12 @@ Choose different assets based on game state:
 While audio isn't fully integrated yet, you can add it manually:
 ....
 @card victory {
+  bindings: [music: #victory_music]
   content: ```
   <h2>Victory!</h2>
   <p>You have defeated the dragon and claimed the treasure!</p>
   <audio autoplay>
-    <source src='${"victory_music" | asset_path}' type="audio/mpeg">
+    <source src="${music.$dist_path}" type="audio/mpeg">
   </audio>
   ```
 }
@@ -1710,7 +1762,7 @@ Let's create a combat system that demonstrates advanced templating and dynamic c
     <h4>Choose your action:</h4>
     <button event="attack">Attack (${player.attack_power} damage)</button>
     <button event="defend">Defend (+${player.defense_bonus} defense)</button>
-    $if(player.mana >= 10) {%
+    $if(player.mana >= 10) -> {%
       <button event="cast_spell">Cast Fireball (10 mana)</button>
     %}
     <button event="try_flee">Attempt to Flee</button>
@@ -1753,7 +1805,7 @@ Let's create a combat system that demonstrates advanced templating and dynamic c
     const flee_ability = 0.5 * (($player.sneak - 7.5) / 7.5);
     const flee_chance = 0.5 + flee_ability;
     if (Math.random() < flee_chance) {
-      return RezEvent.switchScene("overworld").flash("You successfully escape!");
+      return RezEvent.sceneChange("overworld").flash("You successfully escape!");
     } else {
       $player.temp_defence = -5;
       return RezEvent.playCard("enemy_turn").flash("You couldn't escape!");
@@ -1878,7 +1930,7 @@ Use `@defaults` to give custom elements standard attributes:
   name: "Goblin Warrior"
   health: 25
   attack_power: 8
-  // Inherits: hostile: true, experience_reward: 10, etc.
+  %% Inherits: hostile: true, experience_reward: 10, etc.
 }
 ....
 
@@ -1910,19 +1962,17 @@ for example to return a list of all `@monster` elements. Rez provides the https:
 
 ==== Mixins for Shared Behavior
 
-Mixins are another way to share common attributes across different element types which
-work by injecting functions at runtime.
+Mixins are another way to share behaviour across different element types. They work by injecting functions and dynamic properties (`^p{...}`) into objects at runtime. A mixin only provides functions and `^p{...}` properties: plain values such as `health: 100` in a mixin are ignored. Give elements their data with `@defaults` instead.
 
 ....
 @mixin combat_capable {
-  health: 100
-  max_health: 100
-  attack_power: 10
-  defense: 5
+  is_dead: ^p{
+    return this.health <= 0;
+  }
 
   take_damage: function(amount) {
     this.health = Math.max(0, this.health - amount);
-    return this.health <= 0;
+    return this.is_dead;
   }
 
   heal: function(amount) {
@@ -1932,25 +1982,36 @@ work by injecting functions at runtime.
 
 @elem warrior = actor
 @defaults warrior {
-  $mixins: [#combat_capable]
+  $mixins: #{#combat_capable}
+  health: 100
+  max_health: 100
+  attack_power: 10
+  defense: 5
 }
 
 @warrior player_character {
   name: "Hero"
-  // Automatically gets all combat_capable attributes and methods
+  %% Gets the combat_capable methods and the warrior defaults
 }
 ....
 
 Multiple mixins can be combined:
 ....
 @mixin magic_user {
-  mana: 50
-  max_mana: 50
-  spell_power: 12
+  cast: function(cost) {
+    if(this.mana < cost) {
+      return false;
+    }
+    this.mana -= cost;
+    return true;
+  }
 }
 
 @warrior battle_mage {
-  $mixins: [#combat_capable #magic_user]
+  $mixins: #{#combat_capable #magic_user}
+  mana: 50
+  max_mana: 50
+  spell_power: 12
 }
 ....
 
@@ -1970,7 +2031,7 @@ Behavior trees are composed of nodes that either succeed or fail:
 @actor smart_guard {
   name: "Intelligent Guard"
 
-  behaviors: ^[
+  behaviours: ^[
     $select
       [$sequence
         [player_nearby range=3]
@@ -1984,65 +2045,98 @@ Behavior trees are composed of nodes that either succeed or fail:
 }
 ....
 
+The tree is written in the `behaviours` attribute. At runtime the attribute holds the root behaviour of the tree, with the actor as its owner, and you run the tree by calling `executeBehaviour()` on it:
+
+....
+$("smart_guard").behaviours.executeBehaviour();
+....
+
+The stdlib also includes a `$actor_behaviours` system, disabled by default, that runs the `behaviours` tree of every actor when a `behaviours` event is raised (for example by `<a event="behaviours">`). Set `enabled: true` on it to use it.
+
 ==== Core Behavior Types
 
 **$select** - Try children until one succeeds (OR logic):
 ....
-behaviors: ^[
+behaviours: ^[
   $select
-    [has_weapon]      // Try this first
-    [find_weapon]     // If no weapon, try to find one
-    [flee_combat]     // Last resort: run away
+    [has_weapon]      %% Try this first
+    [find_weapon]     %% If no weapon, try to find one
+    [flee_combat]     %% Last resort: run away
 ]
 ....
 
 **$sequence** - All children must succeed (AND logic):
 ....
-behaviors: ^[
+behaviours: ^[
   $sequence
-    [see_enemy]       // First, spot an enemy
-    [weapon_ready]    // Then, make sure weapon is ready
-    [attack_enemy]    // Finally, attack
+    [see_enemy]       %% First, spot an enemy
+    [weapon_ready]    %% Then, make sure weapon is ready
+    [attack_enemy]    %% Finally, attack
 ]
 ....
 
-**$parallel** - Run multiple behaviors simultaneously:
-....
-behaviors: ^[
-  $parallel
-    [patrol_area]     // Keep patrolling
-    [watch_for_threats] // While watching for danger
-]
-....
+The stdlib defines these core behaviours. Their ids begin with `$`:
+
+[cols="1,3"]
+|===
+|`$select`, `$select_r`
+|run children in order (or in random order for `$select_r`) until one succeeds
+
+|`$select_p`
+|like `$select`, but each child is only tried if a `p` (1-100) percent roll passes
+
+|`$sequence`
+|run children in order; fails as soon as one fails
+
+|`$loop`
+|run its one child `count` times; fails if the child fails
+
+|`$loop_until`
+|run its one child up to `attempts` times until it succeeds
+
+|`$maybe`
+|run its one child if a `p` (1-100) percent roll passes, otherwise fail
+
+|`$either`
+|run its first child if a `p` percent roll passes, otherwise its second
+
+|`$random_choice`, `$random_each`
+|run one child chosen at random (`$random_each` doesn't repeat a child until all have run)
+
+|`$always`, `$never`, `$invert`
+|run its one child and then succeed, fail, or invert the result
+
+|`$succeed`, `$fail`
+|succeed or fail without doing anything
+|===
+
+Options are given in the tree as `name=value`, for example `[$maybe p=25 [shout]]`.
 
 ==== Writing Custom Behaviors
 
-Create your own condition and action behaviors:
+Create your own condition and action behaviors. A behaviour's `execute` function is passed one argument, the behaviour itself, and must return `true` if it succeeds or `false` if it fails. Any other return value raises an error. The behaviour gives access to:
+
+* `behaviour.owner` - the element whose tree this is, e.g. the actor
+* `behaviour.option("name")`, `behaviour.intOption("name")`, `behaviour.numberOption("name")` - the options given in the tree
+* `behaviour.children` and `behaviour.firstChild` - child behaviours, each of which can be run with `executeBehaviour()`
+
+`options_spec` lists the names of the options the behaviour uses, as keywords. Any state that must last between runs of the tree belongs in the world model, for example in attributes of the owner.
 
 ....
 @behaviour player_nearby {
-  options_spec: ["range"]
-  execute: function(owner, behaviour, wmem) {
-    const range = behaviour.option("range");
-    const distance = owner.distanceTo($("player"));
-
-    return {
-      success: distance <= range,
-      wmem: wmem
-    };
+  options_spec: [:range]
+  execute: (behaviour) => {
+    // distanceTo() is a method you would define on your actors
+    const distance = behaviour.owner.distanceTo($("player"));
+    return distance <= behaviour.intOption("range");
   }
 }
 
 @behaviour set_alert_level {
-  options_spec: ["level"]
-  execute: function(owner, behaviour, wmem) {
-    const level = behaviour.option("level");
-    owner.alert_level = level;
-
-    return {
-      success: true,
-      wmem: wmem
-    };
+  options_spec: [:level]
+  execute: (behaviour) => {
+    behaviour.owner.alert_level = behaviour.intOption("level");
+    return true;
   }
 }
 ....
@@ -2058,14 +2152,14 @@ Here's a sophisticated NPC that reacts to the player and environment:
   reputation_with_player: 0
   last_interaction: 0
 
-  behaviors: ^[
+  behaviours: ^[
     $select
-      // Emergency responses
+      %% Emergency responses
       [$sequence
         [tavern_on_fire]
         [evacuate_tavern]]
 
-      // Player interactions
+      %% Player interactions
       [$sequence
         [player_at_bar]
         [$select
@@ -2077,7 +2171,7 @@ Here's a sophisticated NPC that reacts to the player and environment:
             [greet_coldly]]
           [greet_neutrally]]]
 
-      // Idle behaviors
+      %% Idle behaviors
       [$sequence
         [no_customers_present]
         [$select
@@ -2085,33 +2179,29 @@ Here's a sophisticated NPC that reacts to the player and environment:
           [restock_bottles]
           [count_money]]]
 
-      // Default: serve customers
+      %% Default: serve customers
       [serve_random_customer]
   ]
 }
 
 @behaviour player_at_bar {
-  execute: function(owner, behaviour, wmem) {
-    const player_location = $("player").current_location;
-    return {
-      success: player_location === "tavern_bar",
-      wmem: wmem
-    };
+  execute: (behaviour) => {
+    return $("player").location_id === "tavern_bar";
   }
 }
 
 @behaviour greet_warmly {
-  execute: function(owner, behaviour, wmem) {
+  execute: (behaviour) => {
     const greetings = [
       "Welcome back, friend! The usual?",
       "Good to see you again! What can I get you?",
       "My favorite customer! What brings you here today?"
     ];
 
-    owner.current_dialogue = greetings.randomElement();
-    $("game").trigger_event("npc_speaks", {npc: owner, text: owner.current_dialogue});
-
-    return {success: true, wmem: wmem};
+    const keeper = behaviour.owner;
+    keeper.current_dialogue = greetings.randomElement();
+    $game.addFlashMessage(`${keeper.name} says: ${keeper.current_dialogue}`);
+    return true;
   }
 }
 ....
@@ -2150,10 +2240,10 @@ Use `@script` to add utility functions:
 
 ==== Adding Custom CSS
 
-Use `@stylesheet` to style your game:
+Use `@styles` to style your game:
 
 ....
-@stylesheet {
+@styles {
   .character-sheet {
     border: 2px solid #8B4513;
     border-radius: 10px;
@@ -2219,9 +2309,9 @@ Extend built-in JavaScript objects with the `@patch` directive:
   }
 }
 
-// Now you can use:
-// ["red", "green", "blue"].sample()  -> "green"
-// [1,2,3,4,5].sample(3)  -> [3, 1, 5]
+%% Now you can use:
+%% ["red", "green", "blue"].sample()  -> "green"
+%% [1,2,3,4,5].sample(3)  -> [3, 1, 5]
 ....
 
 ==== Custom Template Filters
@@ -2244,8 +2334,8 @@ Create your own template expression filters:
   }
 }
 
-// Use in templates:
-// <p>You rolled ${"2d6+3" | roll} damage!</p>
+%% Use in templates:
+%% <p>You rolled ${"2d6+3" | roll} damage!</p>
 ....
 
 == Part 5: Technical Reference
@@ -2331,7 +2421,7 @@ Each level wraps the next in HTML structure:
   name: "Hero"
 }
 
-// Accessible as: window.$player or just $player
+%% Accessible as: window.$player or just $player
 ....
 
 **Template Caching**: Template rendering functions are compiled once and cached for performance.
@@ -2470,7 +2560,7 @@ example one defined as `inventory: []` that is only ever pushed to, is never sav
 ....
 visible: true
 completed: false
-enabled: yes     // yes/no also work
+enabled: yes     %% yes/no also work
 hidden: no
 ....
 
@@ -2486,7 +2576,7 @@ percentage: 0.85
 ....
 name: "Magic Sword"
 description: "A blade that glows with inner light"
-note: ""  // Empty string
+note: ""  %% Empty string
 ....
 
 **Keyword**
@@ -2525,7 +2615,7 @@ visited_locations: #{#town #forest #cave}
 content: ```
 <h2>${title}</h2>
 <p>Welcome, ${player.name}!</p>
-$if(player.level > 5) {%
+$if(player.level > 5) -> {%
   <p>You are an experienced adventurer.</p>
 %}
 ```
@@ -2535,10 +2625,15 @@ $if(player.level > 5) {%
 ....
 bindings: [
   player: #main_character,
-  location: () => player.current_location,
-  gold: &player.gold
+  location: (block, source, bindings) => {return bindings.player.current_location;},
+  gold: player.gold,
+  items: *player.item_ids
 ]
 ....
+
+A function binding's body must be wrapped in braces with an explicit `return`. `(b, s, bs) => bs.player.gold` is not accepted.
+
+A `*` before a path turns the element id, or list of ids, it refers to into the element object(s). Use it when a template needs the objects themselves, for example to loop over them with `$foreach`.
 
 ==== Special Value Types
 
@@ -2788,9 +2883,9 @@ While the block runs, the owner is only partly initialized:
 
 **Dice Notation**
 ....
-damage: ^r:2d6+3      // Roll 2 six-sided dice, add 3
-treasure: ^r:d100     // Roll 1 hundred-sided die
-healing: ^r:1d4+1     // Roll 1 four-sided die, add 1
+damage: ^r:2d6+3      %% Roll 2 six-sided dice, add 3
+treasure: ^r:d100     %% Roll 1 hundred-sided die
+healing: ^r:1d4+1     %% Roll 1 four-sided die, add 1
 ....
 
 **Probability Table**
@@ -2830,7 +2925,7 @@ canAfford: function(price) {
 
 **Behavior Tree**
 ....
-behaviors: ^[
+behaviours: ^[
   $select
     [$sequence
       [health_low]
@@ -2847,11 +2942,11 @@ behaviors: ^[
 
 **System Attributes** (control Rez behavior)
 ....
-$global: true          // Create global variable
-$template: true        // Mark as template for copying
-$js_ctor: "CustomClass" // Use different JavaScript constructor
-$built_in: true        // Mark as built-in (documentation only)
-$no_archive: #{:scratch} // Attributes to leave out of saved games
+$global: true          %% Create global variable
+$template: true        %% Mark as template for copying
+$js_ctor: "CustomClass" %% Use different JavaScript constructor
+$built_in: true        %% Mark as built-in (documentation only)
+$no_archive: #{:scratch} %% Attributes to leave out of saved games
 ....
 
 **ID Suffix Attributes** (automatic element references)
@@ -2921,7 +3016,7 @@ To include a custom Javascript file into your game add the .js file to your asse
 
 ....
 @asset custom_js {
-  file: "custom.js"
+  file_name: "custom.js"
 
   $js_runtime: true
 }
@@ -3134,10 +3229,10 @@ src/
 
 Use the include macro to combine files:
 ....
-// In game.rez
+%% In game.rez
 @game {
   name: "My Adventure"
-  // ... game definition
+  %% ... game definition
 }
 
 %(characters/player.rez)
@@ -3152,22 +3247,22 @@ Use the include macro to combine files:
 Use consistent naming patterns:
 
 ....
-// Scenes: describe location or context
+%% Scenes: describe location or context
 @scene forest_entrance
 @scene combat_arena
 @scene character_creation
 
-// Cards: describe content or action
+%% Cards: describe content or action
 @card explore_clearing
 @card merchant_dialogue
 @card level_up_screen
 
-// Actors: role or name
+%% Actors: role or name
 @actor village_guard
 @actor evil_wizard
 @actor shop_keeper
 
-// Items: descriptive names
+%% Items: descriptive names
 @item rusty_sword
 @item healing_potion
 @item magic_amulet
@@ -3181,12 +3276,12 @@ Keep game state organized and predictable:
 @game {
   name: "Adventure Game"
 
-  // Global game state
+  %% Global game state
   current_chapter: 1
   player_score: 0
   game_flags: {}
 
-  // Helper methods for state
+  %% Helper methods for state
   setFlag: function(name, value = true) {
     this.modifyAttribute("game_flags", (flags) => { flags[name] = value; });
   }
@@ -3221,11 +3316,12 @@ Handle edge cases gracefully:
     }
   ]
   content: ```
-  $if(target_item) {%
+  $if(target_item) -> {%
     <h3>${target_item.name}</h3>
     <p>${target_item.description}</p>
     <button event="use_item">Use Item</button>
-  %}, {%
+  %}
+  () -> {%
     <p>No item selected to examine.</p>
     <button card="inventory">Back to Inventory</button>
   %}
@@ -3244,20 +3340,20 @@ Handle edge cases gracefully:
 **Choosing Between Dynamic Types**:
 
 ....
-// Use ^p{} for values that change frequently and need to be current
+%% Use ^p{} for values that change frequently and need to be current
 health_percentage: ^p{return this.health * 100 / this.max_health;}
 
-// Use ^i{} for complex setup that rarely changes
+%% Use ^i{} for complex setup that rarely changes
 starting_equipment: ^i{
   return this.character_class === "warrior"
     ? ["sword", "shield", "armor"]
     : ["dagger", "lockpicks", "cloak"];
 }
 
-// Use regular attributes for values that change manually
-experience: 0  // Updated by events, not calculated
+%% Use regular attributes for values that change manually
+experience: 0  %% Updated by events, not calculated
 
-// Use ^i{} with manual updates for expensive calculations
+%% Use ^i{} with manual updates for expensive calculations
 threat_level: ^i{return this.calculateThreatLevel();}
 recalculate_threat: function() {
   this.threat_level = this.calculateThreatLevel();
@@ -3267,7 +3363,7 @@ recalculate_threat: function() {
 **Template Optimization**:
 
 ....
-// Good: use dynamic properties to move calculations out of templates
+%% Good: use dynamic properties to move calculations out of templates
 @actor player {
   base_attack: 10
   strength: 15
@@ -3278,7 +3374,7 @@ content: ```
 Attack Power: ${player.attack_power}
 ```
 
-// Less good: calculate every time template renders
+%% Less good: calculate every time template renders
 content: ```
 Attack Power: ${player.base_attack + Math.floor(player.strength / 2)}
 ```

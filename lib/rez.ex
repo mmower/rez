@@ -93,6 +93,15 @@ defmodule Rez do
             :error -> quit.(1)
           end
 
+        "lint" ->
+          args |> Rez.Compiler.lint(options) |> exit_code() |> quit.()
+
+        "schema" ->
+          args |> Rez.SchemaDescriber.run(options) |> exit_code() |> quit.()
+
+        "docs" ->
+          args |> Rez.Docs.run() |> exit_code() |> quit.()
+
         "export" ->
           case Rez.Exporter.export(args, options) do
             :ok -> quit.(0)
@@ -118,6 +127,9 @@ defmodule Rez do
       end
     end
   end
+
+  defp exit_code(:ok), do: 0
+  defp exit_code(:error), do: 1
 
   @doc """
   When built with Burrito, `start/2` is the program entry point.

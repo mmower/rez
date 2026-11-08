@@ -9,6 +9,7 @@ defmodule Rez.Compiler.SchemaBuilder do
   alias Rez.AST.Node
   alias Rez.AST.NodeHelper
 
+  alias Rez.Compiler.Config
   alias Rez.Compiler.Validation
 
   defmodule SchemaRule do
@@ -23,6 +24,10 @@ defmodule Rez.Compiler.SchemaBuilder do
 
     'f/3' is the function that implements the schema rule.
 
+    'attr' and 'expr' record the attribute name and the source schema
+    expression (e.g. `{:kind, [:string]}`) the rule was built from so that
+    tools such as `rez schema` can describe the schema.
+
     It gets passed the node being validated, a %Validation{} struct that holds
     validation results, and an id based map of nodes so that other nodes can
     potentially be referred to during validation.
@@ -30,7 +35,7 @@ defmodule Rez.Compiler.SchemaBuilder do
     For example if validating that a node refers to another existing node, the
     id_map can be used to look it up.
     """
-    defstruct [:priority, :description, :f]
+    defstruct [:priority, :description, :f, :attr, :expr]
 
     def new(priority, description, f)
         when is_number(priority) and priority > 0 and is_binary(description) and is_function(f, 3) do
@@ -51,10 +56,13 @@ defmodule Rez.Compiler.SchemaBuilder do
     regex pattern. They have the same priority system as SchemaRules.
 
     The 'pattern' field contains the compiled regex.
+    The 'expr' field records the source schema expression the rule was built
+    from.
+
     The 'f/4' function takes (attr_name, node, validation, lookup) where attr_name
     is the matched attribute name.
     """
-    defstruct [:priority, :description, :pattern, :f]
+    defstruct [:priority, :description, :pattern, :f, :expr]
 
     def new(priority, description, pattern_string, f)
         when is_number(priority) and priority > 0 and is_binary(description) and
@@ -89,8 +97,11 @@ defmodule Rez.Compiler.SchemaBuilder do
     try do
       rules =
         schema_expressions
-        |> Enum.map(fn expression ->
-          rule_fn(attr_name, expression)
+        |> Enum.flat_map(fn expression ->
+          attr_name
+          |> rule_fn(expression)
+          |> List.wrap()
+          |> Enum.map(&%{&1 | attr: attr_name, expr: expression})
         end)
 
       {:ok, rules}
@@ -105,7 +116,12 @@ defmodule Rez.Compiler.SchemaBuilder do
     try do
       rules =
         schema_expressions
-        |> Enum.map(&pattern_rule_fn(pattern_string, &1))
+        |> Enum.flat_map(fn expression ->
+          pattern_string
+          |> pattern_rule_fn(expression)
+          |> List.wrap()
+          |> Enum.map(&%{&1 | expr: expression})
+        end)
 
       {:ok, rules}
     rescue
@@ -541,24 +557,26 @@ defmodule Rez.Compiler.SchemaBuilder do
     )
   end
 
+  # File paths are relative to the game's assets folder, matching how
+  # Rez.AST.Asset resolves an asset's file_path.
   defp rule_fn(attr_name, :file_exists) do
     SchemaRule.new(
       7,
-      "Validate that file path specified in #{attr_name} exists",
+      "Validate that file path specified in #{attr_name} exists in the assets folder",
       fn node, validation, _lookup ->
         case NodeHelper.get_attr(node, attr_name) do
           nil ->
             {node, validation}
 
           %{value: path} ->
-            if File.exists?(path) do
+            if File.exists?(Path.join(Config.asset_path_name(), path)) do
               {node, validation}
             else
               {node,
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} specifies a file path '#{path}' which does not exist"
+                 "#{attr_name} specifies a file path '#{path}' which does not exist in the #{Config.asset_path_name()}/ folder"
                )}
             end
         end

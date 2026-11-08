@@ -668,9 +668,9 @@ The syntax is simple:
 }
 ....
 
-From this point in the source file all `@card` elements will pick up a `hub: false` attribute without you having to set it.
+Every `@card` element will pick up a `hub: false` attribute without you having to set it, wherever it appears in the source. The position of the `@defaults` in the source doesn't matter: it applies to elements defined before it as well as after it.
 
-Note that you can later change issue a new default for `@card` and any `@card` elements defined from that point will inherit the new default instead.
+You can have several `@defaults` for the same element. They are merged, and if two of them set the same attribute, the one that comes later in the source wins. An attribute set on an element itself always overrides its default.
 
 It is possible to set defaults for an `@elem` that will only be set for elements that use the alias. So this is legal:
 
@@ -1495,7 +1495,9 @@ This script will be called during game initialization and before the game has st
 
 == Mixin (Directive)
 
-A `@mixin` defines attributes that can be included into an object at runtime. This differs from `@defaults` which are applied to an element at compile time and become attributes of that object. Essentially each object gets a copy of their defaults. By contrast using a mixin there is only one copy which is shared by all instances using it.
+A `@mixin` defines functions and dynamic properties (`^p{...}`) that can be included into an object at runtime. This differs from `@defaults` which are applied to an element at compile time and become attributes of that object. Essentially each object gets a copy of their defaults. By contrast using a mixin there is only one copy which is shared by all instances using it.
+
+Only functions and `^p{...}` properties are applied from a mixin. Plain values such as `health: 100` in a mixin are ignored, so use `@defaults` (perhaps with an `@elem` alias) to give elements data attributes.
 
 ....
 @mixin named {
@@ -2202,6 +2204,8 @@ Use `min_length` and `max_length` to constrain the number of items in a collecti
 
 ==== File Validation
 
+Use `file_exists` to require that a string attribute names a file that exists. The path is relative to the game's `assets/` folder:
+
 ....
 @schema asset {
   file_path: {kind: :string, file_exists}
@@ -2232,7 +2236,14 @@ Use `and` to require attributes to be used together:
 
 === Alternative Requirements (OR)
 
-Use `or` to specify that at least one of multiple attributes must be present:
+Use `or` to specify that at least one of multiple attributes must be present. Combined with `xor` this requires exactly one of two attributes, which is how `@asset` requires either `file_name` or `file_path`:
+
+....
+@schema asset {
+  file_name: {kind: :string, xor: file_path, or: file_path}
+  file_path: {kind: :string, xor: file_name, file_exists}
+}
+....
 
 ....
 @schema system {

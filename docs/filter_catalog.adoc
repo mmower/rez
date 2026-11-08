@@ -23,40 +23,11 @@ Appends a string to what precedes it which is assumed to be a string already.
 ${"Sam" | append: " lives here."} => "Sam lives here"
 ....
 
-== asset_tag
-
-`String` => `String`
-
-=== Example
-....
-${"asset_1" | asset_tag}
-....
-
-== asset_path
-
-`String` => `String`
-
-=== Example
-....
-${"asset_1" | asset_path}
-....
-
 == bsel
 
 `Boolean`: `List` => `Any`
 
 === Example
-
-== camelize
-
-`String` => `String`
-
-Convert a string to Camel Case.
-
-=== Example
-....
-${"sam spade" | camelize} => "samSpade"
-....
 
 == capitalize
 
@@ -87,12 +58,6 @@ ${"Sam Spade" | contains: "Spade"} => true
 ${9 | inc} => 10
 ....
 
-== decision
-
-=== Example
-....
-....
-
 == downcase
 
 `String` => `String`
@@ -109,6 +74,14 @@ ${"Sam Spade"} => "sam spade"
 === Example
 ....
 ${"Sam Spade" | ends_with: "Spade"} => true
+....
+
+== eq
+
+`Number`: `Number` => `Boolean`
+
+=== Example
+....
 ....
 
 == event
@@ -135,14 +108,6 @@ ${10 | gt: 9} => true
 ....
 ${9 | gte: 10} => false
 ${10 | gte: 10} => true
-....
-
-== eq
-
-`Number`: `Number` => `Boolean`
-
-=== Example
-....
 ....
 
 == inc
@@ -193,25 +158,13 @@ ${10 | gte: 10} => true
 ....
 ....
 
-== scene_switch
-
-=== Example
-....
-....
-
-== scene_interlude
-
-=== Example
-....
-....
-
-== scene_resume
-
-=== Example
-....
-....
-
 == sel
+
+=== Example
+....
+....
+
+== split
 
 === Example
 ....
@@ -225,18 +178,23 @@ ${10 | gte: 10} => true
 ....
 ....
 
-== split
-
-=== Example
-....
-....
-
 == string
 
 `Anything` -> `String`
 
 === Example
 ....
+....
+
+== to_camel_case
+
+`String` => `String`
+
+Convert a string to Camel Case.
+
+=== Example
+....
+${"sam spade" | to_camel_case} => "samSpade"
 ....
 
 == trim

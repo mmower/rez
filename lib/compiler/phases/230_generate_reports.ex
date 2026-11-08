@@ -9,7 +9,7 @@ defmodule Rez.Compiler.Phases.GenerateReports do
   alias Rez.Compiler.Compilation
 
   def run_phase(%Compilation{status: :ok, progress: progress} = compilation) do
-    IO.puts("rez v#{Rez.version()} — compiled to dist folder")
+    IO.puts("rez v#{Rez.version()} — #{success_message(compilation)}")
 
     progress
     |> Enum.reverse()
@@ -19,7 +19,7 @@ defmodule Rez.Compiler.Phases.GenerateReports do
   end
 
   def run_phase(%Compilation{status: :error, errors: errors} = compilation) do
-    IO.puts("rez v#{Rez.version()} — compilation failed")
+    IO.puts("rez v#{Rez.version()} — #{failure_message(compilation)}")
 
     errors
     |> Enum.reverse()
@@ -33,4 +33,10 @@ defmodule Rez.Compiler.Phases.GenerateReports do
 
     compilation
   end
+
+  defp success_message(%Compilation{options: %{lint: true}}), do: "no errors found"
+  defp success_message(_compilation), do: "compiled to dist folder"
+
+  defp failure_message(%Compilation{options: %{lint: true}}), do: "lint failed"
+  defp failure_message(_compilation), do: "compilation failed"
 end

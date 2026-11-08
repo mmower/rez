@@ -102,4 +102,15 @@ defmodule Rez.Compiler.BuildSchemaTest do
     assert String.contains?(overlap_rule.description, "bindings")
     assert String.contains?(overlap_rule.description, "blocks")
   end
+
+  test "rules record the attribute and expression they were built from" do
+    {:ok, [kind_rule, required_rule]} =
+      SchemaBuilder.build("name", [{:kind, [:string]}, {:required, true}])
+
+    assert %{attr: "name", expr: {:kind, [:string]}} = kind_rule
+    assert %{attr: "name", expr: {:required, true}} = required_rule
+
+    {:ok, [pattern_rule]} = SchemaBuilder.build_pattern(".*_id", [{:kind, [:elem_ref]}])
+    assert pattern_rule.expr == {:kind, [:elem_ref]}
+  end
 end

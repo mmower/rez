@@ -152,7 +152,34 @@ defmodule Rez.Compiler do
     )
   end
 
+  # Lint runs every validating phase of the compiler but skips the phases that
+  # create the dist & cache folders or write the game files. CopyStdlib is kept
+  # because the game source includes lib/stdlib.rez and lint must see the same
+  # stdlib that compile would.
+  @lint_excluded_phases [
+    Rez.Compiler.Phases.MakeDistPath,
+    Rez.Compiler.Phases.MakeAssetPath,
+    Rez.Compiler.Phases.MakeCachePath,
+    Rez.Compiler.Phases.CreateRuntime,
+    Rez.Compiler.Phases.WriteGameFile,
+    Rez.Compiler.Phases.CopyAssets
+  ]
+
+  @lint_phases Enum.reject(@compiler_phases, &(&1 in @lint_excluded_phases))
+
   def compile(args, options) when is_list(args) and is_map(options) do
+    run_phases(@compiler_phases, args, options)
+  end
+
+  @doc """
+  Checks a game source for errors without writing any game files. Returns
+  `:ok` or `:error`.
+  """
+  def lint(args, options) when is_list(args) and is_map(options) do
+    run_phases(@lint_phases, args, Map.put(options, :lint, true))
+  end
+
+  defp run_phases(phases, args, options) do
     if Enum.empty?(args) do
       e_log("Error: no files specified to compile.")
       exit(:shutdown)
@@ -168,7 +195,7 @@ defmodule Rez.Compiler do
 
     %Compilation{status: status} =
       Enum.reduce(
-        @compiler_phases,
+        phases,
         %Compilation{source_path: source_path, options: options},
         runner
       )
