@@ -97,6 +97,107 @@ defmodule Rez.AST.Asset do
     real_asset?(asset) && extension(asset) == ".css"
   end
 
+  @font_formats %{
+    ".woff2" => "woff2",
+    ".woff" => "woff",
+    ".ttf" => "truetype",
+    ".otf" => "opentype"
+  }
+
+  @font_mime_types %{
+    ".woff2" => "font/woff2",
+    ".woff" => "font/woff",
+    ".ttf" => "font/ttf",
+    ".otf" => "font/otf"
+  }
+
+  @doc """
+  Returns true if the given path has a web font file extension.
+  """
+  def font_path?(path) when is_binary(path) do
+    Map.has_key?(@font_formats, path |> Path.extname() |> String.downcase())
+  end
+
+  def font_path?(_), do: false
+
+  @doc """
+  Returns true if the asset is a font file that declares a `font_family:`
+  attribute. Such assets get an `@font-face` rule generated for them.
+  """
+  def font_asset?(%Asset{} = asset) do
+    real_asset?(asset) &&
+      font_path?(source_path(asset)) &&
+      NodeHelper.has_attr?(asset, "font_family")
+  end
+
+  def preload_font?(%Asset{} = asset) do
+    font_asset?(asset) &&
+      NodeHelper.get_attr_value(asset, "$preload", false) &&
+      !NodeHelper.get_attr_value(asset, "$inline", false)
+  end
+
+  defp font_ext(%Asset{} = asset) do
+    asset |> source_path() |> Path.extname() |> String.downcase()
+  end
+
+  def font_format(%Asset{} = asset), do: Map.get(@font_formats, font_ext(asset))
+
+  def font_mime_type(%Asset{} = asset), do: Map.get(@font_mime_types, font_ext(asset))
+
+  @doc """
+  Returns the asset's content as a base64 `data:` URL.
+  """
+  def data_url(%Asset{} = asset) do
+    "data:#{mime_type(asset)};base64,#{asset |> read_source() |> Base.encode64()}"
+  end
+
+  defp mime_type(%Asset{} = asset) do
+    if font_path?(source_path(asset)) do
+      font_mime_type(asset)
+    else
+      NodeHelper.get_attr_value(asset, "$detected_mime_type") ||
+        MIME.from_path(source_path(asset))
+    end
+  end
+
+  @doc """
+  The URL to use for the asset in the built game: a `data:` URL for `$inline`
+  assets, otherwise the asset's dist path.
+  """
+  def url_for(%Asset{} = asset) do
+    if NodeHelper.get_attr_value(asset, "$inline", false) do
+      data_url(asset)
+    else
+      asset_path(asset)
+    end
+  end
+
+  @doc """
+  A CSS `url("...")` value for the asset.
+  """
+  def css_url(%Asset{} = asset), do: "url(#{css_string(url_for(asset))})"
+
+  @doc """
+  Generates the `@font-face` CSS rule for a font asset.
+  """
+  def font_face(%Asset{} = asset) do
+    family = NodeHelper.get_attr_value(asset, "font_family")
+    weight = NodeHelper.get_attr_value(asset, "font_weight", 400)
+    style = NodeHelper.get_attr_value(asset, "font_style", "normal")
+    display = NodeHelper.get_attr_value(asset, "font_display", "swap")
+
+    ~s|@font-face { font-family: #{css_string(family)}; src: #{css_url(asset)} format("#{font_format(asset)}"); font-weight: #{weight}; font-style: #{style}; font-display: #{display}; }|
+  end
+
+  def preload_tag(%Asset{} = asset) do
+    ~s(<link rel="preload" href="#{asset_path(asset)}" as="font" type="#{font_mime_type(asset)}" crossorigin>)
+  end
+
+  defp css_string(s) do
+    escaped = s |> to_string() |> String.replace("\\", "\\\\") |> String.replace("\"", "\\\"")
+    ~s("#{escaped}")
+  end
+
   def exists?(%Asset{} = asset) do
     asset |> source_path() |> File.exists?()
   end
@@ -171,7 +272,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
       # Synthetic Assets are created via the plugin API
       # and assumed to have a path already
       NodeHelper.get_meta(asset, :synthetic, false) ->
-        if NodeHelper.get_attr_value(asset, "$inline", false) do
+        if inline_text?(asset, Asset.source_path(asset)) do
           NodeHelper.set_string_attr(asset, "content", Asset.read_source(asset))
         else
           asset
@@ -190,6 +291,20 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
     end
   end
 
+  # Inline font assets are embedded into the generated @font-face rule as a
+  # data: URL, so their binary content is not copied into the runtime.
+  defp inline_text?(%Asset{} = asset, path) do
+    NodeHelper.get_attr_value(asset, "$inline", false) && !Asset.font_path?(path)
+  end
+
+  defp maybe_inline_content(%Asset{} = asset, path) do
+    if Asset.font_path?(path) do
+      asset
+    else
+      NodeHelper.set_string_attr(asset, "content", File.read!(path))
+    end
+  end
+
   defp handle_file_path(%Asset{} = asset) do
     file_path = NodeHelper.get_attr_value(asset, "file_path")
     full_path = Path.join("assets", file_path)
@@ -204,7 +319,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
         |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(full_path))
         |> then(fn asset ->
           if NodeHelper.get_attr_value(asset, "$inline", false) do
-            NodeHelper.set_string_attr(asset, "content", File.read!(full_path))
+            maybe_inline_content(asset, full_path)
           else
             NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{file_path}")
           end
@@ -231,7 +346,7 @@ defimpl Rez.AST.Node, for: Rez.AST.Asset do
             |> NodeHelper.set_string_attr("$detected_mime_type", MIME.from_path(path))
             |> then(fn asset ->
               if NodeHelper.get_attr_value(asset, "$inline", false) do
-                NodeHelper.set_string_attr(asset, "content", File.read!(path))
+                maybe_inline_content(asset, path)
               else
                 NodeHelper.set_string_attr(asset, "$dist_path", "assets/#{relative_path}")
               end

@@ -1786,6 +1786,44 @@ While audio isn't fully integrated yet, you can add it manually:
 }
 ....
 
+==== Fonts
+
+To use a font from a hosted service such as Google Fonts, add its stylesheet URL to the `@game` `links:` attribute and refer to the family in `@styles`:
+....
+@game {
+  links: ["https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&display=swap"]
+}
+
+@styles {
+  body { font-family: "Crimson Pro", serif; }
+}
+....
+
+To bundle a font with your game, put the file (`.woff2`, `.woff`, `.ttf` or `.otf`) in `assets/` and give its `@asset` a `font_family:`. The compiler copies the file and writes the `@font-face` rule for you. Make one asset for each weight and style:
+....
+@asset font_body {
+  file_name: "CrimsonPro-Regular.woff2"
+  font_family: "Crimson Pro"
+  $preload: true
+}
+
+@asset font_body_italic {
+  file_name: "CrimsonPro-Italic.woff2"
+  font_family: "Crimson Pro"
+  font_style: "italic"
+}
+
+@styles {
+  body { font-family: "Crimson Pro", serif; }
+}
+....
+
+`font_weight:` defaults to `400` and can be a number or, for a variable font, a range such as `"100 900"`. `font_style:` (`"normal"`, `"italic"` or `"oblique"`) defaults to `"normal"`, and `font_display:` (`"auto"`, `"block"`, `"swap"`, `"fallback"` or `"optional"`) defaults to `"swap"`. `$preload: true` adds a `<link rel="preload">` so the browser fetches the font straight away; use it for the fonts your first screen needs. `$inline: true` embeds the font in `index.html` as a `data:` URL instead of copying the file.
+
+A font asset without `font_family:` is copied but gets no `@font-face` rule. To write your own rule in `@styles`, refer to the file with `asset(id)`, e.g. `src: asset(font_body) format("woff2");` (see <<Adding Custom CSS>>).
+
+To change fonts for a scene or card, use CSS: give the scene's layout a class and style it in `@styles`.
+
 === Building a Complete Interactive Scene
 
 Let's create a combat system that demonstrates advanced templating and dynamic content:
@@ -2364,6 +2402,24 @@ Use `@styles` to style your game:
   }
 }
 ....
+
+To use an asset's file in CSS, write `asset(id)` wherever CSS expects a `url(...)`. The compiler replaces it with the URL of the asset in the built game, and fails if the id is not an asset:
+....
+@asset img_parchment {
+  file_path: "images/parchment.png"
+}
+
+@asset cur_compass {
+  file_path: "cursors/compass.png"
+}
+
+@styles {
+  .card { background-image: asset(img_parchment); }
+  .map  { cursor: asset(cur_compass), auto; }
+}
+....
+
+`asset(img_parchment)` becomes `url("assets/images/parchment.png")`, or a `data:` URL if the asset has `$inline: true`.
 
 ==== JavaScript Patches
 

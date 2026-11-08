@@ -280,7 +280,57 @@ Assets must specify their source file using either `file_name` or `file_path` (b
 |`width`, `height`
 |String or Number
 |display dimensions of the asset. If one is specified the other must be too
+
+|`font_family`
+|String
+|for a font file (`.woff2`, `.woff`, `.ttf`, `.otf`), the CSS font family name. When given, the compiler writes an `@font-face` rule for the asset into `index.html`
+
+|`font_weight`
+|String or Number
+|the font's weight, e.g. `700`, or a range such as `"100 900"` for a variable font. Defaults to `400`
+
+|`font_style`
+|String
+|`"normal"`, `"italic"` or `"oblique"`. Defaults to `"normal"`
+
+|`font_display`
+|String
+|the CSS `font-display` value: `"auto"`, `"block"`, `"swap"`, `"fallback"` or `"optional"`. Defaults to `"swap"`
+
+|`$preload`
+|Boolean
+|for a font asset, adds a `<link rel="preload">` tag so the browser fetches the font immediately. Ignored for `$inline` assets
+
+|`$inline`
+|Boolean
+|embed the asset rather than copying its file. A font asset is embedded in its `@font-face` rule as a `data:` URL
 |===
+
+=== Fonts
+
+....
+@asset font_body {
+  file_name: "CrimsonPro-Regular.woff2"
+  font_family: "Crimson Pro"
+  $preload: true
+}
+
+@styles {
+  body { font-family: "Crimson Pro", serif; }
+}
+....
+
+Make one asset for each weight and style of a family. For hosted fonts such as Google Fonts, add the stylesheet URL to the `@game` `links:` attribute instead.
+
+=== Using Assets in CSS
+
+In `@styles`, write `asset(id)` wherever CSS expects a `url(...)`. The compiler replaces it with the asset's URL in the built game (a `data:` URL for an `$inline` asset). An id that is not an asset is a compile error.
+
+....
+@styles {
+  .card { background-image: asset(img_parchment); }
+}
+....
 
 === Event Handlers
 

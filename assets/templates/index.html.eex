@@ -9,6 +9,9 @@
     <meta name="author" content="<%= NodeHelper.get_attr_value(@game, "author_name") %>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= NodeHelper.get_attr_value(@game, "title") %></title>
+    <%= for font_asset <- Enum.filter(@font_assets, &Asset.preload_font?/1) do %>
+      <%= Asset.preload_tag(font_asset) %>
+    <% end %>
     <%= for {:string, url} <- NodeHelper.get_attr_value(@game, "links", []) do %>
       <link rel="stylesheet" href="<%= url %>">
     <% end %>
@@ -37,6 +40,11 @@
       @media (prefers-reduced-motion: reduce) {
         .modal .modal-card, .modal .modal-background { animation: none !important; }
       }
+
+      /* Font assets */
+      <%= for font_asset <- @font_assets do %>
+        <%= Asset.font_face(font_asset) %>
+      <% end %>
 
       /* Custom game styles */
       <%= for style <- @styles do %>

@@ -40,6 +40,7 @@
   $js_defer: {kind: :boolean}
   $pre_runtime: {kind: :boolean}
   $inline: {kind: :boolean}
+  $preload: {kind: :boolean}
 
   tags: {kind: :set, coll_kind: :keyword}
 
@@ -47,6 +48,11 @@
   file_path: {kind: :string, xor: file_name, file_exists}
   width: {kind: [:string :number], and: height}
   height: {kind: [:string :number], and: width}
+
+  font_family: {kind: :string}
+  font_weight: {kind: [:string :number]}
+  font_style: {kind: :string, in: ["normal" "italic" "oblique"]}
+  font_display: {kind: :string, in: ["auto" "block" "swap" "fallback" "optional"]}
 }
 
 @defaults asset {
@@ -57,6 +63,7 @@
   $js_defer: false
   $pre_runtime: false
   $inline: false
+  $preload: false
   tags: #{}
 }
 

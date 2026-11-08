@@ -202,7 +202,16 @@ and the inventory has an owner.
 assets: `$js_runtime: true` (bundled into runtime.js), `$pre_runtime: true`,
 `$js_defer: true`. Display with `<.img name="asset_id" />`, which needs
 `width`/`height` on the asset or the tag. `asset.$dist_path` is the file's
-path in the built game.
+path in the built game. Fonts: a `.woff2`/`.woff`/`.ttf`/`.otf` asset with
+`font_family: "Name"` gets a generated `@font-face` rule; optional
+`font_weight:` (default 400, or a range `"100 900"`), `font_style:`
+(`"normal"`/`"italic"`/`"oblique"`), `font_display:` (default `"swap"`),
+`$preload: true` (adds `<link rel="preload">`), `$inline: true` (embeds a
+`data:` URL). One asset per weight/style; then use the family in `@styles`.
+Hosted fonts: put the stylesheet URL in `@game` `links:`.
+In `@styles`, `asset(id)` becomes the asset's `url("...")`, e.g.
+`background-image: asset(img_parchment);` (a compile error if `id` is not
+an asset). Don't hardcode `assets/...` paths in CSS.
 
 **@group** — asset collection resolved at compile time into a `RezList`
 with the group's id whose `values` are the matching asset ids. Required
@@ -629,5 +638,6 @@ Mistakes that compile but misbehave, or fail confusingly.
 14. Event names are lower-cased before lookup.
 15. The CSS directive is `@styles`. An asset needs exactly one of
     `file_name:` (searched for under `assets/`) or `file_path:` (relative
-    to `assets/`), not `file:`.
+    to `assets/`), not `file:`. Refer to assets in `@styles` with
+    `asset(id)`, not `url(...)`.
 16. `$global` elements become bindings everywhere. Keep them few.

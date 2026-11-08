@@ -41,6 +41,7 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
     js_post_runtime_assets = js_post_runtime_assets(assets)
     js_body_runtime_assets = js_body_runtime_assets(assets)
     style_assets = style_assets(assets)
+    font_assets = font_assets(assets)
 
     html =
       render_index(
@@ -48,6 +49,7 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
         styles: styles,
         scripts: scripts,
         style_assets: style_assets,
+        font_assets: font_assets,
         js_pre_runtime_assets: js_pre_runtime_assets,
         js_post_runtime_assets: js_post_runtime_assets,
         js_body_runtime_assets: js_body_runtime_assets
@@ -82,6 +84,12 @@ defmodule Rez.Compiler.Phases.WriteGameFile do
   def js_body_runtime_assets(assets) do
     assets
     |> Enum.filter(&(Asset.compile_time_script?(&1) && Asset.load_in_body?(&1)))
+  end
+
+  def font_assets(assets) do
+    assets
+    |> NodeHelper.reject_templates()
+    |> Enum.filter(&Asset.font_asset?(&1))
   end
 
   def style_assets(assets) do
