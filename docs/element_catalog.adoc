@@ -1110,15 +1110,26 @@ A `@generator` creates a list of copies of an existing element, for example a gr
 
 == Group (Element)
 
-A group specifies a collection of assets that can be selected from. Groups are dynamic: they are defined by a set of tags and collect together all assets carrying any of the `include_tags` (or, alternatively, all assets that do not carry any of the `exclude_tags`).
+A group is a collection of assets selected by type and tags. The compiler works out which assets belong to the group, and at runtime the group becomes a `RezList` with the group's id whose `values` are the ids of the matching assets. You then use the usual `RezList` methods to pick from it.
 
-A group can be used to select an image at random, or cycle through the collection one-by-one.
+An asset belongs to the group when:
+
+* its type (`:image`, `:audio` or `:video`, from the asset's file) matches the group's `type`
+* it has *any* of the `include_tags` (if `include_tags` is given)
+* it has *none* of the `exclude_tags` (if `exclude_tags` is given)
+
+`include_tags` and `exclude_tags` can be used together. Asset templates (`$template: true`) are never included. A group that matches no assets is a compile error.
 
 === Example
 
 ....
 @asset hat_01 {
   file_name: "hat_01.png"
+  tags: #{:hat :red}
+}
+
+@asset hat_02 {
+  file_name: "hat_02.png"
   tags: #{:hat}
 }
 
@@ -1126,7 +1137,23 @@ A group can be used to select an image at random, or cycle through the collectio
   type: :image
   include_tags: #{:hat}
 }
+
+@group plain_hats {
+  type: :image
+  include_tags: #{:hat}
+  exclude_tags: #{:red}
+}
 ....
+
+At runtime:
+
+....
+$("hats").randomFromBag()   // each asset once before any repeat
+$("hats").randomElement()   // any asset, with replacement
+$("hats").nextForCycle()    // each asset in turn
+....
+
+See the `@list` element for the full set of selection methods.
 
 === Required Attributes
 [cols="2,1,4"]
@@ -1134,19 +1161,19 @@ A group can be used to select an image at random, or cycle through the collectio
 |`type`
 |Keyword
 |One of `:image`, `:audio`, `:video` which specifies the type of assets the group should contain
-
-|`include_tags`
-|Set
-|Set of tags that appear on assets that should be included in the group. Exactly one of `include_tags` and `exclude_tags` must be specified
-
-|`exclude_tags`
-|Set
-|Set of tags that appear on assets that should be excluded from the group. Exactly one of `include_tags` and `exclude_tags` must be specified
 |===
 
 === Optional Attributes
 [cols="2,1,4"]
 |===
+|`include_tags`
+|Set
+|Assets with any of these tags are included. If omitted, all assets of the right type are included (subject to `exclude_tags`)
+
+|`exclude_tags`
+|Set
+|Assets with any of these tags are excluded
+
 |`tags`
 |Set
 |a set of keyword tags
@@ -1157,11 +1184,11 @@ A group can be used to select an image at random, or cycle through the collectio
 ==== on_init
 
 ....
-on_init: (group, event = {}) => {...}
+on_init: (list, event = {}) => {...}
 ....
 
 This script will be called during game initialization and before the game has
-started.
+started. It receives the `RezList` the group became.
 
 == Inventory (Element)
 

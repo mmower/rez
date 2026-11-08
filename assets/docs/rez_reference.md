@@ -204,8 +204,19 @@ assets: `$js_runtime: true` (bundled into runtime.js), `$pre_runtime: true`,
 `width`/`height` on the asset or the tag. `asset.$dist_path` is the file's
 path in the built game.
 
-**@group** — dynamic asset collection: `type: :image|:audio|:video` and
-exactly one of `include_tags`/`exclude_tags`. `randomAssetId()`.
+**@group** — asset collection resolved at compile time into a `RezList`
+with the group's id whose `values` are the matching asset ids. Required
+`type: :image|:audio|:video`. Optional `include_tags` (asset has any of
+them) and `exclude_tags` (asset has none of them); both may be combined.
+Matching no assets is a compile error. Select with the `@list` methods,
+e.g. `$("hats").randomFromBag()`.
+```
+@group hats {
+  type: :image
+  include_tags: #{:hat}
+  exclude_tags: #{:red}
+}
+```
 
 **@list** — `values: [...]`, `includes: [#other_list]`. Runtime random
 selection: `randomElement()`, `randomFromBag()`, `nextForCycle()`,

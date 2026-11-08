@@ -57,7 +57,8 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.CompileTemplates,
     Rez.Compiler.Phases.ValidateComponents,
     Rez.Compiler.Phases.ProcessAST,
-    Rez.Compiler.Phases.ReprocessAST
+    Rez.Compiler.Phases.ReprocessAST,
+    Rez.Compiler.Phases.ResolveGroups
   ]
 
   @compiler_phases [
@@ -88,6 +89,7 @@ defmodule Rez.Compiler do
     Rez.Compiler.Phases.ProcessAST,
     # Pragmas with :after_process_ast timing run here (before ReprocessAST)
     Rez.Compiler.Phases.ReprocessAST,
+    Rez.Compiler.Phases.ResolveGroups,
     Rez.Compiler.Phases.InitializationOrder,
     # Pragmas with :before_create_runtime timing run here
     # ** Everything in the Game needs to be ready at this point **

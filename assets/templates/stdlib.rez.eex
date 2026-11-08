@@ -288,13 +288,12 @@
   $template: {kind: :boolean}
   $auto_id_idx: {kind: :number}
   $init_after: {kind: :list, coll_kind: :elem_ref}
-  $js_ctor: {kind: :string}
 
   tags: {kind: :set, coll_kind: :keyword}
 
   type: {kind: :keyword, in: [:image, :audio, :video], required: true}
-  include_tags: {kind: :set, coll_kind: :keyword, xor: exclude_tags}
-  exclude_tags: {kind: :set, coll_kind: :keyword, xor: include_tags}
+  include_tags: {kind: :set, coll_kind: :keyword}
+  exclude_tags: {kind: :set, coll_kind: :keyword}
 }
 
 @defaults group {
