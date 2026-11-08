@@ -615,7 +615,7 @@ class RezBasicObject {
           if(typeof(value.init) === "undefined") {
             copy_initializers[prio-1].push([attrName, value, null]);
           } else {
-            const init_f = new Function("copy", value.init);
+            const init_f = new Function("copy", "owner", value.init);
             copy_initializers[prio-1].push([attrName, value, init_f]);
           }
         } else if(Object.hasOwn(value, "$delegate")) {
@@ -733,14 +733,19 @@ class RezBasicObject {
    * @memberof RezBasicObject#
    * @param {string} attrName - name of the attribute to set
    * @param {object} value - object containing `$copy` field with source element reference
+   * @param {function} [init_f] - optional customisation function `(copy, owner)` compiled
+   * from the `{...}` block of a `^c` initializer
    * @description Creates an attribute by copying a template object. Looks up the source
    * element via the `$copy` reference, creates a copy of it using `addCopy()`, and
-   * stores the new copy's ID in this attribute.
+   * stores the new copy's ID in this attribute. If `init_f` is given it is run as the
+   * copy's `post_init_fn`, called with the new copy and this object (the owner). The
+   * attribute is only set after `addCopy()` returns, so it does not yet refer to the
+   * copy while `init_f` runs.
    */
   createAttributeByCopying(attrName, value, init_f) {
-    const elem_ref = value.$copy;
-    const source = $(elem_ref);
-    this.setAttribute(attrName, source.addCopy({post_init_fn: init_f}).id);
+    const source = $(value.$copy);
+    const post_init_fn = init_f ? (copy) => init_f(copy, this) : undefined;
+    this.setAttribute(attrName, source.addCopy({post_init_fn}).id);
   }
 
   /**

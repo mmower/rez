@@ -2705,6 +2705,87 @@ In this example, `main_hand_id` has priority `1` and initializes first, then
 Note: Copy initializers run before delegate (`^d`) and dynamic (`^i`) initializers,
 so copied elements are available when those initializers execute.
 
+`^copy` is accepted as a longer alias for `^c`, e.g. `^copy:#sword_template`.
+
+*Customising the copy*
+
+A copy initializer can be followed by a block of JavaScript that customises the
+copy, for example to override some of the attributes it inherits from the template:
+
+....
+@actor hero {
+  weapon_id: ^c:#sword_template{copy.name = "Excalibur"; copy.damage = 12;}
+  shield_id: ^c:2:#shield_template{
+    copy.name = "Hero's Shield";
+    copy.armour = copy.armour + 2;
+  }
+}
+....
+
+The block must come immediately after the element id, with no whitespace between
+the id and the opening `{`.
+
+The block is the body of a function that receives two parameters:
+
+* `copy` — the newly created copy
+* `owner` — the element whose attribute is being initialized
+
+The function is passed to `addCopy()` as its `post_init_fn` (see
+<<Procedural Generation>>), which determines when it runs:
+
+1. The template is copied and the copy's `init()` runs, so the copy's own
+   initializers (e.g. `^i`, `^r`) and its `on_init` handler have already run. Any
+   value you assign therefore replaces the one the template's initializer produced,
+   and plain `copy.attr = value` assignment works as normal.
+2. The block runs.
+3. The `copy` event fires, so an `on_copy` handler sees the values the block set.
+
+The block contains statements, not an attribute map. There is no declarative
+`{name: "Excalibur"}` override form, so write `copy.name = "Excalibur";`. Its
+return value is ignored.
+
+Use `owner` rather than looking the owning element up by id. When the owner is
+itself a copy of a template, it has an automatically generated id, so its id isn't
+known when you write the block. Copy initializers don't run on `$template: true`
+elements, only on their copies, so `owner` is always the copy being built:
+
+....
+@item T_sword {
+  $template: true
+  damage: 6
+}
+
+@elem monster = actor
+
+@defaults monster {
+  $template: true
+  weapon_id: ^c:#T_sword{copy.damage = copy.damage + owner.tier * 2;}
+}
+
+@monster T_goblin {
+  tier: 1
+}
+
+@monster T_ogre {
+  tier: 3
+}
+....
+
+Every monster created with `$("T_goblin").addCopy()` or `$("T_ogre").addCopy()`
+gets its own sword. Each sword's damage is based on the `tier` of the monster
+that owns it, so goblin swords do 8 damage and ogre swords do 12.
+
+While the block runs, the owner is only partly initialized:
+
+* The owner's static attributes, and attributes from copy initializers with a
+  higher priority (a lower number), are available.
+* The attribute being initialized is set only after the block returns, so
+  `owner.weapon_id` and `owner.weapon` don't refer to the new copy yet. Use `copy`.
+* The owner's `^i` and `^d` attributes are not available yet, because copy
+  initializers run before them.
+
+`this` is not bound inside the block. Use `owner`.
+
 **Dice Notation**
 ....
 damage: ^r:2d6+3      // Roll 2 six-sided dice, add 3
