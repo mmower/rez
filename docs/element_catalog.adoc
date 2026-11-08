@@ -166,12 +166,13 @@ The `event` argument is a map in the form:
 {
   decision: <decision_obj>,
   inventory_id: <id>,
-  slot_id: <id>,
+  slot_id: <id of the position's @slot>,
+  position: <name of the position>,
   item_id: <id>
 }
 ....
 
-This is a script that can be called to check whether an item can be placed into an inventory slot of a container that they are owner of (See also: inventory#owner)
+Called when an item is about to be added to a position of an inventory this actor owns, after the inventory's own checks have passed. The decision defaults to yes; call `event.decision.no(reason)` to refuse the item. (See also: inventory `owner_id`)
 
 ....
 on_accept_item: (actor, event) => {
@@ -717,7 +718,7 @@ Effects are modifiers to aspects of the game that can be applied and removed dyn
 
 For example an item, when worn, might convey a bonus to the actor wearing it. In this case the effect, attached to the item, is applied when the item is worn and removed when the item is removed.
 
-Effects are applied and removed by `@inventory` when an item carrying the effect is placed into or removed from a slot. There is no support for effects that, for example, wear off over time.
+Effects are applied and removed by `@inventory` when an item carrying the effect is placed into or removed from an inventory position. This only happens when the inventory has an owner and both the inventory and the position's slot have `apply_effects: true`. There is no support for effects that, for example, wear off over time.
 
 === Example
 
@@ -749,24 +750,28 @@ started.
 : `(effect, event) => {...}`
 
     event = {
-      owner_id: <id>,
-      slot_id: <id>,
-      item_id: <id>
+      owner_id: <id of the inventory's owner>,
+      item_id: <id>,
+      inventory_id: <id>,
+      slot_id: <id of the position's @slot>,
+      position: <name of the position>
     }
 
-Called when the effect is applied, i.e. when an item with this effect is placed into an inventory slot.
+Called when the effect is applied, i.e. when an item with this effect is placed into an inventory position.
 
 ==== on_remove
 
 : `(effect, event) => {...}`
 
     event = {
-      owner_id: <id>,
-      slot_id: <id>,
-      item_id: <id>
+      owner_id: <id of the inventory's owner>,
+      item_id: <id>,
+      inventory_id: <id>,
+      slot_id: <id of the position's @slot>,
+      position: <name of the position>
     }
 
-Called when the effect is removed, i.e. when the item is removed from the inventory slot.
+Called when the effect is removed, i.e. when the item is removed from the inventory position.
 
 == Elem (Directive)
 
@@ -1155,13 +1160,15 @@ started.
 
 == Inventory (Element)
 
-The `@inventory` element describes a container that can hold heterogenous items in slots.
+The `@inventory` element describes a container that can hold heterogenous items.
 
-For example, in an RPG it is common to have different slots to hold different types of items like armour, a shield, melee weapon, range weapon, rings, and amulets. In other games you might have slots describing wardrobe items. We can also think of memory (things we know about) as an inventory (where the items are topics we know about) or spell books (where items are individual spells). The `@inventory` element is designed to handle such cases.
+For example, in an RPG it is common to have different places to hold different types of items like armour, a shield, melee weapon, range weapon, rings, and amulets. In other games you might have places for wardrobe items. We can also think of memory (things we know about) as an inventory (where the items are topics we know about) or spell books (where items are individual spells). The `@inventory` element is designed to handle such cases.
 
-An inventory is made up of positions, each declared by a nested `@contains` block. The `@contains` block has its own id, which becomes the name of that position in the inventory, and a `slot_id` naming the `@slot` that defines what the position accepts. This allows the same `@slot` to be re-used for several positions.
+An inventory is made up of _positions_, each declared by a nested `@contains` block. The block's id is the name of the position, and its `slot_id` names the `@slot` that decides what the position accepts. The same `@slot` can be used by several positions, in the same inventory or in different ones.
 
-Slots are matched against items to determine whether it's possible to put an item in a position: an item can be placed in a position if its `type` (including any ``@derive``d types) is what the slot `accepts`.
+An item can be placed in a position if its `type` (including any ``@derive``d types) is what the slot `accepts`, the position is enabled, the slot has room for it (see `@slot` `capacity`), the inventory isn't carrying too much (see `max_weight`), no other occupied position excludes it (see `@slot` `excludes`), and the inventory's owner doesn't refuse it (see `@actor` `on_accept_item`).
+
+An item is only ever in one place. While it is in an inventory its `inventory_id` and `position` attributes say where it is. To put an item somewhere else, take it out first or use the inventory's `move()` method.
 
 An actor owns an inventory by naming it as its `container_id`.
 
@@ -1179,7 +1186,7 @@ An actor owns an inventory by naming it as its `container_id`.
 @inventory player_inventory {
   @contains hat {
     slot_id: #hat_slot
-    initial_contents: [#black_fedora]
+    contents: [#black_fedora]
   }
 
   @contains left_ring {
@@ -1188,7 +1195,7 @@ An actor owns an inventory by naming it as its `container_id`.
 
   @contains right_ring {
     slot_id: #ring_slot
-    initial_enabled: false
+    enabled: false
   }
 }
 
@@ -1198,22 +1205,27 @@ An actor owns an inventory by naming it as its `container_id`.
 ....
 
 === `@contains` Attributes
+
+The id of a `@contains` block is local to its inventory. It is the name of the position and can't be referred to as an element with `#id`. Position names must be unique within an inventory and may not begin with `_`.
+
 [cols="2,1,4"]
 |===
 |`slot_id`
 |Element Ref
-|id of the `@slot` that defines this position
+|*required* id of the `@slot` that decides what the position accepts
 
-|`initial_contents`
+|`contents`
 |List of Element Refs
-|ids of the ``@item``s that are in this position when the game begins
+|ids of the ``@item``s that are in this position when the game begins. These are added in the normal way, so they run `insert` events and apply effects. An item may only be listed in one position.
 
-|`initial_enabled`
+|`enabled`
 |Boolean
-|whether this position is enabled when the game begins (default: true)
+|whether the position is enabled when the game begins (default: true). Items can't be added to a disabled position, although its starting `contents` are still placed.
 |===
 
-Inventories may not also specify a `slots:` attribute directly, it is derived from the `@contains` blocks.
+No other attributes are allowed in a `@contains` block.
+
+`@contains` blocks work the same way in an alias of `@inventory`, for example after `@elem chest = inventory` a `@chest` can contain `@contains` blocks. They aren't allowed in any other element.
 
 === Required Attributes
 
@@ -1228,7 +1240,7 @@ An inventory must have at least one `@contains` block.
 
 |`apply_effects`
 |Boolean
-|whether the effects of items are applied when they are placed in the inventory (default: true)
+|whether the effects of items are applied to the owner when they are placed in the inventory (default: true)
 
 |`max_weight`
 |Number
@@ -1238,6 +1250,20 @@ An inventory must have at least one `@contains` block.
 |Set
 |a set of keyword tags
 |===
+
+=== Runtime
+
+The compiler turns the `@contains` blocks into a `positions` attribute, which holds the state of every position:
+
+....
+positions: {
+  hat: {slot_id: "hat_slot", enabled: true, contents: ["black_fedora"]},
+  left_ring: {slot_id: "ring_slot", enabled: true, contents: []},
+  right_ring: {slot_id: "ring_slot", enabled: false, contents: []}
+}
+....
+
+`positions` can't be authored directly. At runtime, read and change it through the `RezInventory` methods rather than changing it in place. For example `itemsIn(name)`, `add(name, item_id)`, `remove(name, item_id)`, `move(name, item_id)`, `enable(name)`, and `positionOf(item_id)`. Each change replaces the whole `positions` value, so it is saved, views are updated, and an `on_positions_changed` handler is run. `add`, `remove`, and `move` return a `RezDecision` that says, if the change wasn't made, why not. See the `RezInventory` API documentation for details.
 
 === Event Handlers
 
@@ -1256,14 +1282,15 @@ on_insert: (inventory, event) => {...}
 ....
 
     event = {
-      slot_id: <id>,
-      slot_binding: <name of the position>,
+      inventory_id: <id>,
+      slot_id: <id of the position's @slot>,
+      position: <name of the position>,
       item_id: <id>,
-      owner_id: <id>,
-      owner: <object>
+      owner_id: <id, or null if the inventory has no owner>,
+      owner: <the owning actor, or null>
     }
 
-This script will be called when an item has been added to a position of this inventory.
+This script will be called when an item has been added to a position of this inventory. The inventory's `on_insert` runs first, then the slot's, then the item's.
 
 ==== on_remove
 
@@ -1271,15 +1298,9 @@ This script will be called when an item has been added to a position of this inv
 on_remove: (inventory, event) => {...}
 ....
 
-    event = {
-      slot_id: <id>,
-      slot_binding: <name of the position>,
-      item_id: <id>,
-      owner_id: <id>,
-      owner: <object>
-    }
+The event is the same as for `on_insert`.
 
-This script will be called after an item has been removed from a position of this inventory.
+This script will be called after an item has been removed from a position of this inventory. The slot's `on_remove` runs first, then the item's, then the inventory's.
 
 == Item (Alias)
 
@@ -1291,7 +1312,9 @@ Items have a `type` keyword-attribute (defaulting to `:item`) that connects them
 
 The Item/Inventory system is quite flexible so we can also think about spells as Items with the Inventory being a spell-book, or knowledge as Items with an Inventory being memory.
 
-Some items can grant effects, which are applied when the item is put into a slot that has effects enabled (e.g. equipped) and removed when it is taken out.
+Some items can grant effects, which are applied to an inventory's owner when the item is put into one of its positions (e.g. equipped) and removed when it is taken out. Effects are only applied when the inventory has an owner and both the inventory and the position's slot have `apply_effects: true`.
+
+An item is in at most one inventory position at a time. It starts the game in an inventory by being listed in the `contents` of one of the inventory's `@contains` blocks.
 
 === Example
 
@@ -1320,10 +1343,6 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 |Keyword
 |a keyword representing the type of the item, e.g. `:hat`, which may be part of a type hierarchy set up with ``@derive``. Defaults to `:item`. It must match what a slot `accepts` for the item to be placed in it, so in practice you will set it for any item that is to go in a specialised slot
 
-|`container_id`
-|Element Ref
-|`@inventory` this item begins the game inside
-
 |`size`
 |Number
 |where slots have a `capacity`, the amount of it this item uses (default: 1)
@@ -1351,6 +1370,23 @@ In this case an `Item` with `type: :hat` will automatically be tagged as `:weara
 
 Items may carry any other attributes you need (such as `name` or `description`).
 
+=== Runtime attributes
+
+These attributes are set by the inventory the item is in and should not be authored.
+
+[cols="2,1,4"]
+|===
+|`inventory_id`
+|Element Ref
+|the `@inventory` the item is in, or `null` if it isn't in one. `item.inventory` gives the inventory itself.
+
+|`position`
+|String
+|the name of the position the item is in, or `null`
+|===
+
+A copy of an item (e.g. from a `@generator`) starts out not being in any inventory.
+
 === Event Handlers
 
 ==== on_init
@@ -1366,10 +1402,11 @@ started.
 
     event = {
       inventory_id: <id>,
-      slot_id: <id>,
-      slot_binding: <name of the position>,
-      owner_id: <id>,
-      owner: <object>
+      slot_id: <id of the position's @slot>,
+      position: <name of the position>,
+      item_id: <id>,
+      owner_id: <id, or null if the inventory has no owner>,
+      owner: <the owning actor, or null>
     }
 
 Called when the item is placed into an inventory position.
@@ -2138,8 +2175,8 @@ Mark attributes as required using `required: true`:
 Use `min_length` and `max_length` to constrain the number of items in a collection or the number of characters in a string:
 
 ....
-@schema inventory {
-  slots: {kind: :list, coll_kind: :list_binding, min_length: 1}
+@schema shop {
+  stock_ids: {kind: :list, coll_kind: :elem_ref, min_length: 1}
 }
 ....
 
@@ -2346,7 +2383,7 @@ The code defined in the game's `@script` directives will be automatically includ
 
 == Slot (Element)
 
-A `@slot` describes a component of an `@inventory` so that an inventory can hold different types of things.
+A `@slot` describes a kind of place in an `@inventory`, so that an inventory can hold different types of things. Each `@contains` position of an inventory names the `@slot` it uses, and several positions can use the same slot.
 
 For example an inventory representing what a player is wearing might have slots for coats, trousers, and so forth while an inventory representing a spell book might have slots for different levels of spell.
 
@@ -2376,11 +2413,11 @@ See also: <<Type Hierarchy>>
 
 |`has_capacity`
 |Boolean
-|whether the slot limits how much it can hold using `capacity` (default: false)
+|whether each position using the slot limits how much it can hold using `capacity` (default: false)
 
 |`capacity`
 |Number
-|when `has_capacity` is true, the sum of the sizes of ``@item``s that fit in the slot, see <<Item>> `size` attribute
+|when `has_capacity` is true, the sum of the sizes of the ``@item``s that fit in a position using this slot, see <<Item>> `size` attribute
 
 |`apply_effects`
 |Boolean
@@ -2392,7 +2429,7 @@ See also: <<Type Hierarchy>>
 
 |`excludes`
 |Set of Slot Refs
-|set of `@slot` ids that are mutually exclusive with this slot — if any position using an excluded slot type is occupied, this slot cannot accept items (and vice versa)
+|set of `@slot` ids that are mutually exclusive with this slot — within an inventory, if any position using an excluded slot is occupied, positions using this slot cannot accept items (and vice versa)
 |===
 
 === Event Handlers
@@ -2410,13 +2447,15 @@ started.
 
     event = {
       inventory_id: <id>,
+      slot_id: <id of this slot>,
+      position: <name of the position>,
       item_id: <id>,
-      owner_id: <id>,
-      owner: <object>
+      owner_id: <id, or null if the inventory has no owner>,
+      owner: <the owning actor, or null>
     }
 
-When an `@item` is placed into a `@slot` the `on_insert` event handler will be
-called.
+When an `@item` is placed into a position that uses this slot the `on_insert`
+event handler will be called.
 
     on_insert: (slot, event) => {
       // Do something
@@ -2428,13 +2467,15 @@ called.
 
     event = {
       inventory_id: <id>,
+      slot_id: <id of this slot>,
+      position: <name of the position>,
       item_id: <id>,
-      owner_id: <id>,
-      owner: <object>
+      owner_id: <id, or null if the inventory has no owner>,
+      owner: <the owning actor, or null>
     }
 
-When an `@item` is taken out of an inventory `@slot` the `on_remove` event
-handler will be called.
+When an `@item` is taken out of a position that uses this slot the `on_remove`
+event handler will be called.
 
     on_remove: (slot, event) => {
       // Do something

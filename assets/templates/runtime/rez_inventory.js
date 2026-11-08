@@ -6,38 +6,69 @@
  * @class RezInventory
  * @extends RezBasicObject
  * @category Elements
- * @description Manages a collection of slots that can hold items.
+ * @description Holds items in named positions.
  *
- * An inventory is a container system that organizes items into typed slots.
- * Each slot can accept items of a specific type and may have capacity limits.
- * Inventories can be owned by actors, enabling equipment systems with effects.
+ * An inventory is made up of *positions*, each declared by a nested `@contains`
+ * block. The block's id is the position's name and its `slot_id` names the
+ * `@slot` that decides what the position accepts. Several positions, in the same
+ * inventory or in different ones, can use the same `@slot`.
  *
  * Key features:
- * - **Typed Slots**: Each slot accepts only items of a matching type
- * - **Capacity**: Slots can have size limits based on item sizes
- * - **Weight**: Inventories can have an overall `max_weight`, checked against
- *   the total `weight` of all items they contain
- * - **Effects**: Items can apply effects to the inventory's owner when inserted
- * - **Events**: Triggers events on insert/remove for items, slots, and inventory
+ * - **Typed positions**: a position only accepts items whose `type` is (or derives
+ *   from) what its slot `accepts`
+ * - **Capacity**: a slot with `has_capacity: true` limits the total `size` of the
+ *   items in each position that uses it
+ * - **Weight**: an inventory can have a `max_weight`, checked against the total
+ *   `weight` of everything it holds
+ * - **Exclusion**: a slot can `exclude` other slots, so filling one position
+ *   blocks another
+ * - **Enabled state**: positions can be disabled (locked) and enabled at runtime
+ * - **Single location**: an item is in at most one position at a time. The item
+ *   records where it is in its `inventory_id` and `position` attributes. Use
+ *   `move()` to move an item from wherever it is.
+ * - **Effects**: items can apply effects to the inventory's owner while they are
+ *   in it
+ * - **Events**: adding and removing items runs `insert` and `remove` events on the
+ *   inventory, the slot, and the item
  *
- * Slots are defined as a binding list on the `slots` attribute where each
- * binding key (prefix) is the slot position name and the value is a reference
- * to a `@slot` element that defines the slot's type configuration. Multiple
- * positions can share the same slot type definition.
+ * All position state lives in the `positions` attribute, compiled from the
+ * `@contains` blocks:
+ *
+ * <pre><code>
+ * positions: {
+ *   left_ring: {slot_id: "ring_slot", enabled: true, contents: ["silver_ring"]}
+ * }
+ * </code></pre>
+ *
+ * Don't change `positions` directly; use the methods of this class. They replace
+ * the whole record on every change, so the change is saved and observers (such as
+ * views) are told about it, and `on_positions_changed` runs.
  *
  * **Define in Rez:**
  * <pre><code>
  * &#64;inventory player_inv {
- *   slots: [weapon: #s_weapon, armor: #s_armor]
- *   initial_weapon: [#item_sword]
+ *   &#64;contains weapon {
+ *     slot_id: #s_weapon
+ *     contents: [#item_sword]
+ *   }
+ *   &#64;contains left_ring {
+ *     slot_id: #s_ring
+ *   }
+ *   &#64;contains right_ring {
+ *     slot_id: #s_ring
+ *     enabled: false
+ *   }
  * }
  * </code></pre>
  *
  * @example <caption>Add an item at runtime</caption>
  * const inv = $("player_inv");
- * if(inv.canAddItemForSlot("weapon", "item_axe").result) {
- *   inv.addItemToSlot("weapon", "item_axe");
+ * const decision = inv.add("left_ring", "item_gold_ring");
+ * if(decision.wasNo) {
+ *   console.log(decision.reason);
  * }
+ * @example <caption>Move an item from wherever it is</caption>
+ * $("player_inv").move("weapon", "item_axe");
  */
 class RezInventory extends RezBasicObject {
   constructor(id, attributes) {
@@ -47,12 +78,31 @@ class RezInventory extends RezBasicObject {
   /**
    * @function elementInitializer
    * @memberof RezInventory
-   * @description called as part of the init process this creates the initial inventory slots
+   * @description Called during the init process. Resolves the owner, then empties
+   * each position and adds its starting `contents` back through the add path, so
+   * that starting items fire `insert` events and apply effects like any other.
+   * Starting items are placed even in positions that begin disabled.
+   * @throws {Error} if a starting item can't be placed
    */
   elementInitializer() {
     this.resolveOwner();
-    this.addInitialContents();
-    this.addInitialEnabledStates();
+
+    const positions = this.getAttributeValue("positions");
+    const startingContents = Object.entries(positions).map(([name, pos]) => [name, pos.contents]);
+
+    this.#writePositions(Object.fromEntries(
+      Object.entries(positions).map(([name, pos]) => [name, {...pos, contents: []}])
+    ));
+
+    for(const [name, itemIds] of startingContents) {
+      for(const itemId of itemIds) {
+        const decision = this.#checkAdd(name, itemId, {initializing: true});
+        if(!decision.result) {
+          throw new Error(`Inventory |${this.id}|: cannot place starting item |${itemId}| in position |${name}|: ${decision.reason}`);
+        }
+        this.#insertItem(name, itemId);
+      }
+    }
   }
 
   /**
@@ -78,324 +128,332 @@ class RezInventory extends RezBasicObject {
     }
   }
 
-  addInitialContents() {
-    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
-      const initialContents = this.getAttributeValue(`initial_${prefix}`, []);
-      for(const contentId of initialContents) {
-        const decision = this.addItemToSlot(prefix, contentId);
-        if(!decision.result) {
-          throw new Error(`Inventory |${this.id}|: cannot place initial item |${contentId}| in slot |${prefix}|: ${decision.reason}`);
-        }
-      }
-    }
+  //---------------------------------------------------------------------------
+  // Position state
+  //---------------------------------------------------------------------------
+
+  #positions() {
+    return this.getAttributeValue("positions");
   }
 
-  addInitialEnabledStates() {
-    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
-      const enabled = this.getAttributeValue(`initial_${prefix}_enabled`, true);
-      this.setAttribute(`${prefix}_enabled`, enabled);
+  #position(name) {
+    const pos = this.#positions()[name];
+    if(!pos) {
+      throw new Error(`Inventory |${this.id}| does not have a position |${name}|!`);
     }
+    return pos;
   }
 
-  /**
-   * @function addSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix for the slot position
-   * @param {string} slotId - the slot element id (unused but kept for API clarity)
-   * @description add a new slot to the inventory
-   */
-  addSlot(slotBinding, _slotId) {
-    const attrName = `${slotBinding}_contents`;
-    if(!this.hasAttribute(attrName)) {
-      this.setAttribute(attrName, []);
-      this.createStaticProperty(attrName);
-    }
+  #writePositions(positions) {
+    this.setAttribute("positions", positions);
+  }
+
+  // Replaces the record for one position with the result of fn(record). The
+  // record is never changed in place, which is what makes the change visible to
+  // saving and observers, and lets copies of an inventory share a record safely.
+  #updatePosition(name, fn) {
+    const positions = this.#positions();
+    this.#writePositions({...positions, [name]: fn(this.#position(name))});
   }
 
   /**
-   * @function getSlots
+   * @function locationOf
    * @memberof RezInventory
-   * @returns {array} array of {prefix, slot} objects for every slot position in this inventory
+   * @static
+   * @param {string} itemId
+   * @returns {object|null} `{inventory, position}` for the inventory and position
+   * the item is in, or `null` if it isn't in any inventory
    * @example
-   * for(const {prefix, slot} of inv.getSlots()) {
-   *   const available = inv.isSlotAvailable(prefix);
-   *   // render slot UI using prefix (binding name) and slot (RezSlot object with name, accepts, etc.)
+   * const where = RezInventory.locationOf("item_gold_ring");
+   * if(where) console.log(`In ${where.inventory.id}/${where.position}`);
+   */
+  static locationOf(itemId) {
+    // An item that isn't anywhere has a null inventory_id, or a placeholder if
+    // it has never been placed.
+    const item = $(itemId);
+    const inventoryId = item.getAttributeValue("inventory_id", null);
+    if(inventoryId == null || Rez.isPlaceholder(inventoryId)) return null;
+    return {inventory: $(inventoryId), position: item.getAttributeValue("position")};
+  }
+
+  #ownerParams() {
+    const owner = this.owner ?? null;
+    return {owner_id: owner?.id ?? null, owner};
+  }
+
+  /**
+   * @function hasPosition
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @returns {boolean} true if this inventory has a position with the given name
+   */
+  hasPosition(name) {
+    return Object.hasOwn(this.#positions(), name);
+  }
+
+  /**
+   * @function getPositionNames
+   * @memberof RezInventory
+   * @returns {string[]} the names of this inventory's positions
+   */
+  getPositionNames() {
+    return Object.keys(this.#positions());
+  }
+
+  /**
+   * @function getPositions
+   * @memberof RezInventory
+   * @returns {object[]} a `{name, slot, enabled, contents}` description of each
+   * position, where `slot` is the RezSlot and `contents` is an array of item ids
+   * @example
+   * for(const {name, slot, enabled, contents} of inv.getPositions()) {
+   *   const available = inv.isAvailable(name);
+   *   // enabled=false → locked; available=false → excluded by another position
    * }
    */
-  getSlots() {
-    return Object.entries(this.getAttributeValue("slots")).map(([prefix, slotId]) => ({
-      prefix,
-      slot: $t(slotId, "slot", true)
+  getPositions() {
+    return Object.entries(this.#positions()).map(([name, pos]) => ({
+      name,
+      slot: $t(pos.slot_id, "slot", true),
+      enabled: pos.enabled,
+      contents: [...pos.contents]
     }));
   }
 
   /**
    * @function getSlot
    * @memberof RezInventory
-   * @param {string} name - the binding prefix identifying the slot position
-   * @returns {object} reference to the slot element for this binding, or throws
-   * if the binding does not exist in this inventory.
+   * @param {string} name name of a position
+   * @returns {RezSlot} the slot that the position uses
+   * @throws {Error} if there is no such position
    */
   getSlot(name) {
-    const slotId = this.getAttributeValue("slots")[name];
-    if(!slotId) {
-      throw new Error(`Inventory |${this.id}| does not have slot binding |${name}|!`);
+    return $t(this.#position(name).slot_id, "slot", true);
+  }
+
+  /**
+   * @function addPosition
+   * @memberof RezInventory
+   * @param {string} name name of the new position
+   * @param {string} slotId id of the `@slot` the position uses
+   * @param {boolean} [enabled=true] whether the position starts enabled
+   * @description Adds a new, empty position to the inventory at runtime.
+   * @throws {Error} if the position already exists
+   */
+  addPosition(name, slotId, enabled = true) {
+    if(this.hasPosition(name)) {
+      throw new Error(`Inventory |${this.id}| already has a position |${name}|!`);
     }
-    return $t(slotId, "slot", true);
+    $t(slotId, "slot", true);
+    this.#writePositions({...this.#positions(), [name]: {slot_id: slotId, enabled, contents: []}});
   }
 
+  //---------------------------------------------------------------------------
+  // Contents
+  //---------------------------------------------------------------------------
+
   /**
-   * @function getFirstItemForSlot
+   * @function itemsIn
    * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {string} id of first item in the slot
+   * @param {string} name name of a position
+   * @returns {string[]} a copy of the ids of the items in the position
    */
-  getFirstItemForSlot(slotBinding) {
-    return this.getItemsForSlot(slotBinding)[0];
+  itemsIn(name) {
+    return [...this.#position(name).contents];
   }
 
   /**
-   * @function getItemsForSlot
+   * @function firstItemIn
    * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {array} contents of the specified slot
+   * @param {string} name name of a position
+   * @returns {string|undefined} id of the first item in the position
    */
-  getItemsForSlot(slotBinding) {
-    this.getSlot(slotBinding); // validates binding exists
-    return this.getAttribute(`${slotBinding}_contents`);
+  firstItemIn(name) {
+    return this.#position(name).contents[0];
   }
 
   /**
-   * @function slotIsOccupied
+   * @function countItemsIn
    * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {boolean} true if there is at least one item in the slot
+   * @param {string} name name of a position
+   * @returns {number} number of items in the position
    */
-  slotIsOccupied(slotBinding) {
-    return this.countItemsInSlot(slotBinding) > 0;
+  countItemsIn(name) {
+    return this.#position(name).contents.length;
   }
 
   /**
-   * @function isSlotAvailable
+   * @function isOccupied
    * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix identifying the slot position
-   * @returns {boolean} true if the slot is not blocked by any exclusion rule
-   * @description Useful for greying out slot categories in inventory UI.
+   * @param {string} name name of a position
+   * @returns {boolean} true if there is at least one item in the position
    */
-  isSlotAvailable(slotBinding) {
-    return !this.isBlockedByExclusion(slotBinding);
+  isOccupied(name) {
+    return this.countItemsIn(name) > 0;
   }
 
   /**
-   * @function isSlotEnabled
+   * @function allItems
    * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix identifying the slot position
-   * @returns {boolean} true if the slot has been enabled
-   * @description Slots default to enabled. Use `initial_{prefix}_enabled: false` in the
-   * inventory definition to start a slot disabled, then call `enableSlot()` at runtime
-   * when the player unlocks it (e.g. on reaching a required level).
-   * @example <caption>Define a locked slot in Rez</caption>
+   * @returns {string[]} ids of every item in every position
+   */
+  allItems() {
+    return Object.values(this.#positions()).flatMap((pos) => pos.contents);
+  }
+
+  /**
+   * @function positionOf
+   * @memberof RezInventory
+   * @param {string} itemId
+   * @returns {string|undefined} name of the position holding the item, or undefined
+   * if it isn't in this inventory
+   */
+  positionOf(itemId) {
+    return Object.entries(this.#positions()).find(([, pos]) => pos.contents.includes(itemId))?.[0];
+  }
+
+  /**
+   * @function hasItem
+   * @memberof RezInventory
+   * @param {string} itemId
+   * @returns {boolean} true if the item is in any position of this inventory
+   */
+  hasItem(itemId) {
+    return this.positionOf(itemId) !== undefined;
+  }
+
+  //---------------------------------------------------------------------------
+  // Enabled & available
+  //---------------------------------------------------------------------------
+
+  /**
+   * @function isEnabled
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @returns {boolean} true if the position is enabled
+   * @description Positions start enabled unless their `@contains` block says
+   * `enabled: false`. Use `enable()` at runtime when the player unlocks one.
+   * @example <caption>Define a locked position in Rez</caption>
    * // @inventory player_equip {
-   * //   slots: [ring1: #s_ring, ring2: #s_ring]
-   * //   initial_ring2_enabled: false
+   * //   @contains ring1 {slot_id: #s_ring}
+   * //   @contains ring2 {slot_id: #s_ring enabled: false}
    * // }
-   * @example <caption>Unlock at runtime</caption>
+   * @example <caption>Unlock it at runtime</caption>
    * if(player.level >= 5) {
-   *   $("player_equip").enableSlot("ring2");
-   * }
-   * @example <caption>Check in UI</caption>
-   * for(const {prefix, slot} of inv.getSlots()) {
-   *   const enabled = inv.isSlotEnabled(prefix);
-   *   const available = inv.isSlotAvailable(prefix);
-   *   // enabled=false → locked; available=false → excluded by another equipped item
+   *   $("player_equip").enable("ring2");
    * }
    */
-  isSlotEnabled(slotBinding) {
-    return this.getAttributeValue(`${slotBinding}_enabled`, true);
+  isEnabled(name) {
+    return this.#position(name).enabled;
   }
 
   /**
-   * @function enableSlot
+   * @function enable
    * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix identifying the slot position
-   * @description Enables the slot so items can be added to it.
-   * @example
-   * $("player_equip").enableSlot("ring2");
+   * @param {string} name name of a position
+   * @description Enables the position so items can be added to it.
    */
-  enableSlot(slotBinding) {
-    this.getSlot(slotBinding); // validates binding exists
-    this.setAttribute(`${slotBinding}_enabled`, true);
+  enable(name) {
+    this.#updatePosition(name, (pos) => ({...pos, enabled: true}));
   }
 
   /**
-   * @function disableSlot
+   * @function disable
    * @memberof RezInventory
-   * @param {string} slotBinding - the binding prefix identifying the slot position
-   * @description Disables the slot so no further items can be added to it.
-   * @example
-   * $("player_equip").disableSlot("ring2");
+   * @param {string} name name of a position
+   * @description Disables the position so no further items can be added to it.
+   * Items already in it stay there.
    */
-  disableSlot(slotBinding) {
-    this.getSlot(slotBinding); // validates binding exists
-    this.setAttribute(`${slotBinding}_enabled`, false);
+  disable(name) {
+    this.#updatePosition(name, (pos) => ({...pos, enabled: false}));
   }
 
   /**
-   * @function _writeSlotContents
+   * @function isAvailable
    * @memberof RezInventory
-   * @private
-   * @param {string} slotBinding
-   * @param {array} itemIds array of item id's
-   * @description Low-level, unguarded write of a slot's contents array. Does NOT
-   * validate items, fire events, or reconcile effects. Internal use only; author
-   * code should use setSlot/setItemsForSlot/addItemToSlot which go through validation.
+   * @param {string} name name of a position
+   * @returns {boolean} true if the position is not blocked by an exclusion
+   * @description Useful for greying out positions in an inventory UI.
    */
-  _writeSlotContents(slotBinding, itemIds) {
-    this.getSlot(slotBinding); // validates binding exists
-    this.setAttribute(`${slotBinding}_contents`, itemIds);
+  isAvailable(name) {
+    return !this.isBlockedByExclusion(name);
   }
 
   /**
-   * @function setSlot
+   * @function isBlockedByExclusion
    * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {array} itemIds array of item id's
-   * @returns {RezDecision[]} a decision for each item added (see setItemsForSlot)
-   * @description Replaces the slot's contents with the given items. Existing
-   * occupants are removed (firing remove events and releasing their effects) and
-   * each new item is added through the validated path. Alias for setItemsForSlot.
+   * @param {string} name name of a position
+   * @returns {boolean} true if another occupied position's slot excludes this
+   * position's slot, or this position's slot excludes the slot of another occupied
+   * position
    */
-  setSlot(slotBinding, itemIds) {
-    return this.setItemsForSlot(slotBinding, itemIds);
-  }
+  isBlockedByExclusion(name) {
+    // `excludes` holds slot ids; accept {$ref} objects too in case a ref has
+    // not been resolved.
+    const excludedBy = (slotId) => new Set(
+      [...$t(slotId, "slot", true).getAttributeValue("excludes", new Set())].map((ref) => ref?.$ref ?? ref)
+    );
 
-  /**
-   * @function appendItemToSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {RezDecision} the decision from addItemToSlot
-   * @description Appends the given item to the given slot through the validated
-   * add path (fires events, applies effects, and may refuse). Retained for API
-   * compatibility; previously this was an unconditional raw push.
-   */
-  appendItemToSlot(slotBinding, itemId) {
-    return this.addItemToSlot(slotBinding, itemId);
-  }
+    const targetSlotId = this.#position(name).slot_id;
+    const targetExcludes = excludedBy(targetSlotId);
 
-  /**
-   * @function appendToSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string|array} itemOrItems either an item_id or array of item_id's to append to the slot
-   * @returns {RezDecision[]} a decision for each item, in order
-   * @description add either a single item_id or an array of item_ids to the slot,
-   * each through the validated add path.
-   */
-  appendToSlot(slotBinding, itemOrItems) {
-    return ensureArray(itemOrItems).map((itemId) => {
-      return this.addItemToSlot(slotBinding, itemId);
-    });
-  }
-
-  /**
-   * @function setItemForSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {RezDecision[]} a decision for the added item (see setItemsForSlot)
-   * @description replaces any existing item content for the slot with this item
-   */
-  setItemForSlot(slotBinding, itemId) {
-    return this.setItemsForSlot(slotBinding, [itemId]);
-  }
-
-  /**
-   * @function setItemsForSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {array} items array of item ids
-   * @returns {RezDecision[]} a decision for each item added, in order
-   * @description Replaces any existing item content for the slot with these items.
-   * Existing occupants are removed first (firing remove events and releasing their
-   * effects), then each new item is added through the validated path, so an item
-   * the slot can't accept is refused (and reflected in its decision) rather than
-   * silently set.
-   */
-  setItemsForSlot(slotBinding, items) {
-    const current = [...this.getItemsForSlot(slotBinding)];
-    current.forEach((itemId) => this._removeItem(slotBinding, itemId));
-    return ensureArray(items).map((itemId) => this.addItemToSlot(slotBinding, itemId));
-  }
-
-  /**
-   * @function countItemsInSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {integer} number of items in the given slot
-   */
-  countItemsInSlot(slotBinding) {
-    return this.getItemsForSlot(slotBinding).length;
-  }
-
-  /**
-   * @function slotContainsItem
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {boolean} true if the item_id is in the slot
-   */
-  slotContainsItem(slotBinding, itemId) {
-    return this.getItemsForSlot(slotBinding).some((anItemId) => itemId === anItemId);
-  }
-
-  /**
-   * @function containsItem
-   * @memberof RezInventory
-   * @param {string} itemId
-   * @returns {string|undefined} binding prefix of the slot containing the item, or undefined
-   */
-  containsItem(itemId) {
-    for(const prefix of Object.keys(this.getAttributeValue("slots"))) {
-      if(this.slotContainsItem(prefix, itemId)) return prefix;
+    for(const [otherName, other] of Object.entries(this.#positions())) {
+      if(otherName === name || other.contents.length === 0) continue;
+      if(targetExcludes.has(other.slot_id) || excludedBy(other.slot_id).has(targetSlotId)) {
+        return true;
+      }
     }
-    return undefined;
+
+    return false;
+  }
+
+  //---------------------------------------------------------------------------
+  // Fit
+  //---------------------------------------------------------------------------
+
+  /**
+   * @function positionAccepts
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @param {string} itemId
+   * @returns {boolean} true if the item's type is one that the position's slot accepts
+   */
+  positionAccepts(name, itemId) {
+    const accepts = this.getSlot(name).getAttributeValue("accepts");
+    return Rez.isTypeOf($(itemId).getAttributeValue("type"), accepts);
   }
 
   /**
-   * @function itemFitsInSlot
+   * @function itemFits
    * @memberof RezInventory
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
-   * @returns {boolean} true if the item will fit with any other contents of the slot
-   * @description If the slot has `has_capacity: true`, items count towards
-   * `slot.capacity` using their `size` attribute, defaulting to `1` if unset.
-   * This means `capacity: 1` naturally limits a slot to a single item unless
-   * an item explicitly opts out with `size: 0` (e.g. a weightless item) or
-   * takes up more room with `size: 2+`. Slots without `has_capacity: true`
-   * accept any number of items.
+   * @returns {boolean} true if the item fits alongside the position's other contents
+   * @description If the position's slot has `has_capacity: true`, items count
+   * towards `slot.capacity` using their `size` attribute, defaulting to `1` if
+   * unset. This means `capacity: 1` naturally limits a position to a single item
+   * unless an item explicitly opts out with `size: 0` or takes up more room with
+   * `size: 2+`. Slots without `has_capacity: true` accept any number of items.
    */
-  itemFitsInSlot(slotBinding, itemId) {
-    const slot = this.getSlot(slotBinding);
+  itemFits(name, itemId) {
+    const slot = this.getSlot(name);
     if(!slot.has_capacity) return true;
 
-    const itemSize = $(itemId).getAttributeValue("size", 1);
-    const usedCapacity = this.getItemsForSlot(slotBinding).reduce((amount, id) => {
-      return amount + $(id).getAttributeValue("size", 1);
-    }, 0);
-    return usedCapacity + itemSize <= slot.capacity;
+    const sizeOf = (id) => $(id).getAttributeValue("size", 1);
+    const used = this.#position(name).contents
+      .filter((id) => id !== itemId)
+      .reduce((amount, id) => amount + sizeOf(id), 0);
+    return used + sizeOf(itemId) <= slot.capacity;
   }
 
   /**
    * @function totalWeight
    * @memberof RezInventory
-   * @returns {number} sum of the `weight` attribute of every item in every slot
+   * @returns {number} sum of the `weight` attribute of every item in every position
    */
   totalWeight() {
-    return Object.keys(this.getAttributeValue("slots")).reduce((total, prefix) => {
-      return total + this.getItemsForSlot(prefix).reduce((amount, itemId) => {
-        return amount + $(itemId).getAttributeValue("weight", 0);
-      }, 0);
+    return this.allItems().reduce((total, itemId) => {
+      return total + $(itemId).getAttributeValue("weight", 0);
     }, 0);
   }
 
@@ -430,81 +488,60 @@ class RezInventory extends RezBasicObject {
    * @function itemFitsWeight
    * @memberof RezInventory
    * @param {string} itemId
-   * @returns {boolean} true if adding this item would not exceed `max_weight`
+   * @returns {boolean} true if this inventory can hold the item without exceeding
+   * `max_weight`. An item already in this inventory is only counted once.
    */
   itemFitsWeight(itemId) {
-    return this.totalWeight() + $(itemId).getAttributeValue("weight", 0) <= this.maxWeight();
+    const alreadyHere = this.hasItem(itemId) ? $(itemId).getAttributeValue("weight", 0) : 0;
+    return this.totalWeight() - alreadyHere + $(itemId).getAttributeValue("weight", 0) <= this.maxWeight();
   }
 
-  /**
-   * @function isBlockedByExclusion
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {boolean} true if an occupied slot excludes this slot, or this slot excludes an occupied slot
-   */
-  isBlockedByExclusion(slotBinding) {
-    const slots = this.getAttributeValue("slots");
-    const targetSlotId = slots[slotBinding];
-    const targetExcludes = this.getSlot(slotBinding).getAttributeValue("excludes", new Set());
-
-    for(const [prefix, slotId] of Object.entries(slots)) {
-      if(prefix === slotBinding) continue;
-      if(!this.slotIsOccupied(prefix)) continue;
-
-      // Direction 1: target slot excludes this occupied position's slot type
-      if([...targetExcludes].some(ref => ref.$ref === slotId)) {
-        return true;
-      }
-
-      // Direction 2: this occupied position's slot type excludes the target slot
-      const otherExcludes = $t(slotId, "slot", true).getAttributeValue("excludes", new Set());
-      if([...otherExcludes].some(ref => ref.$ref === targetSlotId)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
+  //---------------------------------------------------------------------------
+  // Adding, removing & moving
+  //---------------------------------------------------------------------------
 
   /**
-   * @function slotAcceptsItem
+   * @function canAdd
    * @memberof RezInventory
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
-   * @returns {boolean} true if the given item has a type that this slot accepts
+   * @returns {RezDecision} whether the item can be added to the position
+   * @description Checks, in order: the position is enabled; the item isn't
+   * already somewhere (`failed_on: "located"`, use `move()` instead); the slot
+   * accepts the item's type; the position isn't blocked by an exclusion; the item
+   * fits the slot's capacity; the item fits the inventory's `max_weight`; and
+   * finally the owner's `on_accept_item` handler. When the decision is no, its
+   * `failed_on` data says which check failed.
    */
-  slotAcceptsItem(slotBinding, itemId) {
-    const slot = this.getSlot(slotBinding);
-    const accepts = slot.getAttributeValue("accepts");
+  canAdd(name, itemId) {
+    return this.#checkAdd(name, itemId);
+  }
+
+  #checkAdd(name, itemId, {initializing = false, moving = false} = {}) {
+    const decision = new RezDecision("canAdd");
+    decision.setData("inventory_id", this.id);
+    decision.setData("position", name);
+    decision.setData("item_id", itemId);
+
     const item = $(itemId);
-    const type = item.getAttributeValue("type");
-    return Rez.isTypeOf(type, accepts);
-  }
 
-  /**
-   * @function canAddItemForSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {RezDecision} decision object with result
-   */
-  canAddItemForSlot(slotBinding, itemId) {
-    const decision = new RezDecision("canItemForSlot");
-
-    if(!this.isSlotEnabled(slotBinding)) {
-      decision.no("slot is not enabled").setData("failed_on", "enabled");
-    } else if(!this.slotAcceptsItem(slotBinding, itemId)) {
+    if(!initializing && !this.isEnabled(name)) {
+      decision.no("position is not enabled").setData("failed_on", "enabled");
+    } else if(!moving && RezInventory.locationOf(itemId)) {
+      const {inventory, position} = RezInventory.locationOf(itemId);
       decision
-        .no("slot doesn't take this kind of item")
-        .setData("failed_on", "accepts");
-    } else if(this.isBlockedByExclusion(slotBinding)) {
-      decision.no("slot is blocked by exclusion").setData("failed_on", "excludes");
-    } else if(!this.itemFitsInSlot(slotBinding, itemId)) {
+        .no(`item is already in |${inventory.id}/${position}|`)
+        .setData("failed_on", "located");
+    } else if(!this.positionAccepts(name, itemId)) {
+      decision.no("position doesn't take this kind of item").setData("failed_on", "accepts");
+    } else if(this.isBlockedByExclusion(name)) {
+      decision.no("position is blocked by exclusion").setData("failed_on", "excludes");
+    } else if(!this.itemFits(name, itemId)) {
       decision.no("does not fit").setData("failed_on", "capacity");
     } else if(!this.itemFitsWeight(itemId)) {
       decision.no("too heavy").setData("failed_on", "weight");
     } else if(this.owner != null) {
-      const actorDecision = this.owner.checkItem(this.id, slotBinding, itemId);
+      const actorDecision = this.owner.checkItem(this.id, this.getSlot(name).id, name, itemId);
       if(actorDecision.result) {
         decision.yes();
       } else {
@@ -518,204 +555,243 @@ class RezInventory extends RezBasicObject {
   }
 
   /**
-   * @function canRemoveItemFromSlot
+   * @function add
    * @memberof RezInventory
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
-   * @returns {RezDecision} decision object with result, defaulting to yes
-   */
-  canRemoveItemFromSlot(slotBinding, itemId) {
-    const decision = new RezDecision("canRemoveItemFromSlot");
-    decision.defaultYes();
-    decision.setData("inventory_id", this.id);
-    decision.setData("slot_id", slotBinding);
-    decision.setData("item_id", itemId);
-    return decision;
-  }
-
-  /**
-   * @function addItemToSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {RezDecision} the decision from canAddItemForSlot; when it is yes the
-   * item has been inserted, otherwise the slot is unchanged and the decision carries
-   * the reason and `failed_on` data.
-   * @description Adds the given item to the given slot if `canAddItemForSlot` allows
-   * it, notifying inventory, slot & item and applying effects. Callers may inspect
-   * the returned decision; callers that ignore it simply get a no-op on refusal.
+   * @returns {RezDecision} the decision from `canAdd`. When it is yes the item has
+   * been added; otherwise nothing has changed and the decision says why.
+   * @description Adds an item, that isn't already somewhere, to the position. Runs
+   * `insert` events on the inventory, the slot, and the item (in that order), and
+   * applies the item's effects to the owner.
    * @example
-   * const d = inv.addItemToSlot("weapon", "item_axe");
+   * const d = inv.add("weapon", "item_axe");
    * if(d.wasNo) showMessage(d.reason);
    */
-  addItemToSlot(slotBinding, itemId) {
-    const decision = this.canAddItemForSlot(slotBinding, itemId);
+  add(name, itemId) {
+    const decision = this.canAdd(name, itemId);
     if(decision.result) {
-      this._insertItem(slotBinding, itemId);
+      this.#insertItem(name, itemId);
     }
     return decision;
   }
 
   /**
-   * @function _insertItem
+   * @function canRemove
    * @memberof RezInventory
-   * @private
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
-   * @description Low-level, unguarded insert. Appends the item, fires the insert
-   * events on inventory, slot & item, and applies effects. Performs no acceptance
-   * checks beyond requiring the item to define a `type`. Internal use only.
+   * @returns {RezDecision} whether the item can be removed from the position. The
+   * decision is no (`failed_on: "missing"`) if the item isn't in it.
    */
-  _insertItem(slotBinding, itemId) {
-    const item = $(itemId);
+  canRemove(name, itemId) {
+    const decision = new RezDecision("canRemove");
+    decision.setData("inventory_id", this.id);
+    decision.setData("position", name);
+    decision.setData("item_id", itemId);
 
-    if(!item.hasAttribute("type")) {
-      throw new Error(`Attempt to add ${itemId} to inventory, which does not define a 'type'!`);
+    if(!this.#position(name).contents.includes(itemId)) {
+      return decision
+        .no(`No item |${itemId}| in position |${name}| of inventory |${this.id}|!`)
+        .setData("failed_on", "missing");
     }
 
-    this.getItemsForSlot(slotBinding).push(itemId);
-
-    const ownerId = this.getAttributeValue("owner_id", null);
-    const owner = ownerId ? this.owner : null;
-    const slot = this.getSlot(slotBinding);
-
-    this.runEvent("insert", { slot_id: slot.id, slot_binding: slotBinding, item_id: itemId, owner_id: ownerId, owner });
-    slot.runEvent("insert", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
-    item.runEvent("insert", { inventory_id: this.id, slot_id: slot.id, slot_binding: slotBinding, owner_id: ownerId, owner });
-
-    this.applyEffects(slotBinding, itemId);
+    decision.defaultYes();
+    return decision;
   }
+
+  /**
+   * @function remove
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @param {string} itemId
+   * @returns {RezDecision} the decision from `canRemove`. When it is yes the item has
+   * been removed; otherwise nothing has changed and the decision says why.
+   * @description Removes the item from the position. Runs `remove` events on the
+   * slot, the item, and the inventory (in that order), and removes the item's
+   * effects from the owner.
+   */
+  remove(name, itemId) {
+    const decision = this.canRemove(name, itemId);
+    if(decision.result) {
+      this.#removeItem(name, itemId);
+    }
+    return decision;
+  }
+
+  /**
+   * @function clear
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @description Removes every item from the position.
+   */
+  clear(name) {
+    for(const itemId of this.itemsIn(name)) {
+      this.remove(name, itemId);
+    }
+  }
+
+  /**
+   * @function setContents
+   * @memberof RezInventory
+   * @param {string} name name of a position
+   * @param {string|string[]} itemIds the item or items the position should hold
+   * @returns {RezDecision[]} a decision for each item added, in order
+   * @description Empties the position, then adds each item. An item that can't
+   * be added is left where it was and its decision says why.
+   */
+  setContents(name, itemIds) {
+    this.clear(name);
+    return ensureArray(itemIds).map((itemId) => this.add(name, itemId));
+  }
+
+  /**
+   * @function canMove
+   * @memberof RezInventory
+   * @param {string} name name of a position in this inventory
+   * @param {string} itemId
+   * @returns {RezDecision} whether the item can be moved from wherever it is now
+   * into the position. Combines `canRemove` at its current position (if it has one)
+   * with the checks of `canAdd`.
+   */
+  canMove(name, itemId) {
+    const location = RezInventory.locationOf(itemId);
+    if(location) {
+      if(location.inventory === this && location.position === name) {
+        const decision = new RezDecision("canMove");
+        decision.yes();
+        return decision;
+      }
+      const removal = location.inventory.canRemove(location.position, itemId);
+      if(!removal.result) {
+        return removal;
+      }
+    }
+    return this.#checkAdd(name, itemId, {moving: true});
+  }
+
+  /**
+   * @function move
+   * @memberof RezInventory
+   * @param {string} name name of a position in this inventory
+   * @param {string} itemId
+   * @returns {RezDecision} the decision from `canMove`. When it is yes the item has
+   * been removed from where it was (if anywhere) and added to the position.
+   * @description Moves an item into the position from wherever it is, which may be
+   * another position of this inventory, another inventory, or nowhere.
+   * @example
+   * $("chest").move("contents", "item_gold_ring");
+   */
+  move(name, itemId) {
+    const decision = this.canMove(name, itemId);
+    if(!decision.result) {
+      return decision;
+    }
+
+    const location = RezInventory.locationOf(itemId);
+    if(location?.inventory === this && location.position === name) {
+      return decision;
+    }
+    if(location) {
+      location.inventory.#removeItem(location.position, itemId);
+    }
+    this.#insertItem(name, itemId);
+    return decision;
+  }
+
+  #insertItem(name, itemId) {
+    const item = $(itemId);
+    if(!item.hasAttribute("type")) {
+      throw new Error(`Attempt to add |${itemId}| to inventory |${this.id}|, but it does not define a 'type'!`);
+    }
+
+    this.#updatePosition(name, (pos) => ({...pos, contents: [...pos.contents, itemId]}));
+    item.setAttribute("inventory_id", this.id);
+    item.setAttribute("position", name);
+
+    const slot = this.getSlot(name);
+    const params = {inventory_id: this.id, slot_id: slot.id, position: name, item_id: itemId, ...this.#ownerParams()};
+
+    this.runEvent("insert", params);
+    slot.runEvent("insert", params);
+    item.runEvent("insert", params);
+
+    this.applyEffects(name, itemId);
+  }
+
+  #removeItem(name, itemId) {
+    const item = $(itemId);
+
+    this.#updatePosition(name, (pos) => ({...pos, contents: pos.contents.filter((id) => id !== itemId)}));
+    item.setAttribute("inventory_id", null);
+    item.setAttribute("position", null);
+
+    const slot = this.getSlot(name);
+    const params = {inventory_id: this.id, slot_id: slot.id, position: name, item_id: itemId, ...this.#ownerParams()};
+
+    slot.runEvent("remove", params);
+    item.runEvent("remove", params);
+    this.runEvent("remove", params);
+
+    this.removeEffects(name, itemId);
+  }
+
+  //---------------------------------------------------------------------------
+  // Effects
+  //---------------------------------------------------------------------------
 
   /**
    * @function shouldApplyEffects
    * @memberof RezInventory
-   * @param {string} slotBinding
-   * @returns {boolean} whether effects should be applied for this slot
+   * @param {string} name name of a position
+   * @returns {boolean} true if items in the position apply their effects: the
+   * inventory has an owner and both the inventory and the position's slot have
+   * `apply_effects: true`
    */
-  shouldApplyEffects(slotBinding) {
-    if(this.owner) {
-      if(this.apply_effects) {
-        const slot = this.getSlot(slotBinding);
-        return slot.apply_effects;
-      }
-      return false;
-    }
-    return false;
+  shouldApplyEffects(name) {
+    return this.owner != null && this.apply_effects && this.getSlot(name).apply_effects;
   }
 
   /**
    * @function applyEffects
    * @memberof RezInventory
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
-   * @returns {boolean} whether the effect was applied
+   * @returns {boolean} whether any effects were applied
    */
-  applyEffects(slotBinding, itemId) {
-    if(!this.shouldApplyEffects(slotBinding)) {
-      return false;
-    }
+  applyEffects(name, itemId) {
+    if(!this.shouldApplyEffects(name)) return false;
 
-    const item = $(itemId);
-    if(!item.hasAttribute("effect_ids")) {
-      return false;
-    }
+    const effectIds = $(itemId).getAttributeValue("effect_ids", null);
+    if(!effectIds) return false;
 
-    for(const effectId of item.getAttributeValue("effect_ids")) {
-      const effect = $t(effectId, "effect");
-      effect.apply(this.owner_id, slotBinding, itemId);
-    }
+    const location = {inventory_id: this.id, slot_id: this.getSlot(name).id, position: name};
 
+    for(const effectId of effectIds) {
+      $t(effectId, "effect").apply(this.owner_id, itemId, location);
+    }
     return true;
-  }
-
-  /**
-   * @function removeItemFromSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @returns {RezDecision} the decision from canRemoveItemFromSlot; when it is yes
-   * the item has been removed (firing remove events and releasing effects), otherwise
-   * the slot is unchanged and the decision carries the reason. An item that isn't in
-   * the slot yields a `no` decision (`failed_on: "missing"`) rather than throwing.
-   * @description removes the specified item from the specified inventory slot
-   */
-  removeItemFromSlot(slotBinding, itemId) {
-    const decision = this.canRemoveItemFromSlot(slotBinding, itemId);
-
-    if(!this.getItemsForSlot(slotBinding).includes(itemId)) {
-      return decision
-        .no(`No item |${itemId}| in slot binding |${slotBinding}| on inventory |${this.id}|!`)
-        .setData("failed_on", "missing");
-    }
-
-    if(decision.result) {
-      this._removeItem(slotBinding, itemId);
-    }
-
-    return decision;
-  }
-
-  /**
-   * @function _removeItem
-   * @memberof RezInventory
-   * @private
-   * @param {string} slotBinding
-   * @param {string} itemId
-   * @description Low-level, unguarded removal. Rewrites the slot contents without the
-   * item, fires the remove events on slot, item & inventory, and removes effects.
-   * Assumes the item is present. Internal use only.
-   */
-  _removeItem(slotBinding, itemId) {
-    const contents = this.getItemsForSlot(slotBinding);
-    this._writeSlotContents(slotBinding, contents.filter((id) => id !== itemId));
-
-    const ownerId = this.getAttributeValue("owner_id", null);
-    const owner = ownerId ? this.owner : null;
-
-    const slot = this.getSlot(slotBinding);
-    slot.runEvent("remove", { inventory_id: this.id, item_id: itemId, owner_id: ownerId, owner });
-
-    const item = $(itemId);
-    item.runEvent("remove", { inventory_id: this.id, slot_id: slot.id, slot_binding: slotBinding, owner_id: ownerId, owner });
-
-    this.runEvent("remove", { slot_id: slot.id, slot_binding: slotBinding, item_id: itemId, owner_id: ownerId, owner });
-
-    this.removeEffects(slotBinding, itemId);
   }
 
   /**
    * @function removeEffects
    * @memberof RezInventory
-   * @param {string} slotBinding
+   * @param {string} name name of a position
    * @param {string} itemId
+   * @returns {boolean} whether any effects were removed
    */
-  removeEffects(slotBinding, itemId) {
-    if(!this.shouldApplyEffects(slotBinding)) {
-      return false;
-    }
+  removeEffects(name, itemId) {
+    if(!this.shouldApplyEffects(name)) return false;
 
-    const item = $(itemId);
-    if(!item.hasAttribute("effect_ids")) {
-      return false;
-    }
+    const effectIds = $(itemId).getAttributeValue("effect_ids", null);
+    if(!effectIds) return false;
 
-    for(const effectId of item.getAttributeValue("effect_ids")) {
-      const effect = $t(effectId, "effect");
-      effect.remove(this.owner_id, slotBinding, itemId);
-    }
-  }
+    const location = {inventory_id: this.id, slot_id: this.getSlot(name).id, position: name};
 
-  /**
-   * @function clearSlot
-   * @memberof RezInventory
-   * @param {string} slotBinding
-   * @description remove all items from the given slot, removing any effects granted by those items
-   */
-  clearSlot(slotBinding) {
-    const items = this.getItemsForSlot(slotBinding);
-    items.forEach((itemId) => {
-      this.removeItemFromSlot(slotBinding, itemId);
-    });
+    for(const effectId of effectIds) {
+      $t(effectId, "effect").remove(this.owner_id, itemId, location);
+    }
+    return true;
   }
 }
 

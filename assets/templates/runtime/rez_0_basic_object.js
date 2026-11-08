@@ -473,7 +473,7 @@ class RezBasicObject {
       Object.defineProperty(this, directAttrName, {
         get: function () {
           const ref_id = this.getAttribute(attrName);
-          if(isPlaceholder(ref_id)) return undefined;
+          if(ref_id == null || isPlaceholder(ref_id)) return undefined;
           return $(ref_id);
         },
         set: function (ref) {
@@ -527,7 +527,7 @@ class RezBasicObject {
 
     for (const attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
-      if(typeof value === "object") {
+      if(value !== null && typeof value === "object") {
         if(Object.hasOwn(value, "ptable")) {
           this.createProbabilityTable(attrName, value);
         } else if(Object.hasOwn(value, "property")) {
@@ -606,7 +606,7 @@ class RezBasicObject {
 
     for(const attrName of Object.keys(this.attributes)) {
       const value = this.getAttribute(attrName);
-      if(typeof value === "object") {
+      if(value !== null && typeof value === "object") {
         if(Object.hasOwn(value, "initializer") || Object.hasOwn(value, "dieroll")) {
           const prio = parseInt(value.priority, 10);
           dyn_initializers[prio-1].push([attrName, value]);
@@ -846,6 +846,13 @@ class RezBasicObject {
     copy.setAttribute("$auto_id_idx", 0, false);
     copy.setAttribute("$template", false, false);
     copy.setAttribute("$original_id", this.id, false);
+
+    // An item is in at most one inventory position, recorded on the item. A copy
+    // of an item starts out not being anywhere.
+    if(copy.getAttributeValue("is_item", false) && copy.hasAttribute("inventory_id")) {
+      copy.setAttribute("inventory_id", null, false);
+      copy.setAttribute("position", null, false);
+    }
 
     return copy;
   }

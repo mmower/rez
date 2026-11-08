@@ -17,24 +17,25 @@ class RezActor extends RezBasicObject {
   /**
    * @function checkItem
    * @memberof RezActor
-   * @param {string} inventory_id
-   * @param {string} slot_id
-   * @param {string} item_id
+   * @param {string} inventoryId id of an inventory this actor owns
+   * @param {string} slotId id of the `@slot` the position uses
+   * @param {string} position name of the position
+   * @param {string} itemId
    * @returns {RezDecision}
-   * @description when it is attempted to put the specified item into the
-   * specified inventory slot, call this actors 'on_accept_item' event handler
-   * to give the actor the opportunity to decide whether to accept it or not.
+   * @description When an item is about to be added to a position of an inventory
+   * this actor owns, runs the actor's `on_accept_item` event handler so the actor
+   * can refuse it.
    *
    * The params passed to the event handler are:
-   * decision
-   * inventory_id
-   * slot_id
-   * item_id
+   * - decision
+   * - inventory_id
+   * - slot_id
+   * - position
+   * - item_id
    *
-   * The RezDecision will default to yes. The event handler should return an
-   * appropriate RezDecision.
+   * The decision defaults to yes. Call `params.decision.no(reason)` to refuse.
    */
-  checkItem(inventoryId, slotId, itemId) {
+  checkItem(inventoryId, slotId, position, itemId) {
     const decision = new RezDecision("Filter Item");
     decision.defaultYes();
     if(this.willHandleEvent("accept_item")) {
@@ -42,6 +43,7 @@ class RezActor extends RezBasicObject {
         decision: decision,
         inventory_id: inventoryId,
         slot_id: slotId,
+        position: position,
         item_id: itemId,
       });
     }

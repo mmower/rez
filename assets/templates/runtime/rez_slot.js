@@ -6,9 +6,16 @@
  * @class RezSlot
  * @extends RezBasicObject
  * @category Elements
- * @description Represents an inventory slot in the Rez game engine. Slots define
- * compartments within inventories where items can be stored. Each slot has properties
- * like capacity, item type restrictions, and accessor names for template binding.
+ * @description Represents a kind of place in an inventory. Each position of an
+ * inventory (declared with a `@contains` block) names the slot it uses, and the slot
+ * decides what the position accepts (`accepts`), how much it holds (`has_capacity`,
+ * `capacity`), which other slots it excludes (`excludes`), and whether items in it
+ * apply their effects (`apply_effects`). Several positions can use the same slot.
+ *
+ * A slot also receives the `insert` and `remove` events for items added to, or
+ * removed from, any position that uses it.
+ *
+ * @see RezInventory
  */
 class RezSlot extends RezBasicObject {
   /**

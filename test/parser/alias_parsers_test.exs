@@ -40,6 +40,55 @@ defmodule Rez.Parser.AliasParsesTest do
     assert %Rez.AST.Attribute{value: true} = NodeHelper.get_attr(ast, "magic")
   end
 
+  test "parses @contains positions in an alias of @inventory" do
+    input = """
+    @chest strongbox {
+      max_weight: 10
+      @contains tray {
+        slot_id: #ring_slot
+        contents: [#coin]
+      }
+      @contains floor {
+        slot_id: #ring_slot
+      }
+    }
+    """
+
+    assert %{status: :ok, ast: ast} =
+             Ergo.parse(aliased_element(), input,
+               data: %{
+                 id_map: %{},
+                 source: dummy_source(input),
+                 aliases: %{"chest" => "inventory"}
+               }
+             )
+
+    assert %Rez.AST.Inventory{id: "strongbox"} = ast
+    assert %Rez.AST.Attribute{value: 10} = NodeHelper.get_attr(ast, "max_weight")
+
+    assert [%Rez.AST.Contains{id: "tray"}, %Rez.AST.Contains{id: "floor"}] =
+             NodeHelper.get_meta(ast, "nested_contains")
+  end
+
+  test "rejects @contains in an alias of an element other than @inventory" do
+    input = """
+    @npc bob {
+      @contains pocket {
+        slot_id: #ring_slot
+      }
+    }
+    """
+
+    assert %{status: {:fatal, _}} =
+             Ergo.parse(aliased_element(), input,
+               data: %{
+                 id_map: %{},
+                 source: dummy_source(input),
+                 aliases: %{"npc" => "actor"}
+               }
+             )
+  end
+
   # test "parse merges default & defined tags" do
   #   input = """
   #   @class warlord begin

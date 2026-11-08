@@ -2,8 +2,9 @@ defmodule Rez.AST.Inventory do
   @moduledoc """
   `Rez.AST.Inventory` contains the `Inventory` struct.
 
-  An `Inventory` represents the idea of a container that uses `Slots` to
-  control and reflect what it contains.
+  An `Inventory` holds items in named *positions*, each declared by a nested
+  `@contains` block (see `Rez.AST.Contains`) that names the `@slot` type
+  controlling what the position accepts.
   """
   defstruct status: :ok,
             game_element: true,
@@ -15,7 +16,7 @@ defmodule Rez.AST.Inventory do
 end
 
 defimpl Rez.AST.Node, for: Rez.AST.Inventory do
-  alias Rez.AST.{Attribute, NodeHelper}
+  alias Rez.AST.{Attribute, Contains, NodeHelper}
 
   defdelegate js_initializer(inventory), to: NodeHelper
   defdelegate html_processor(inventory, attr), to: NodeHelper
@@ -26,22 +27,49 @@ defimpl Rez.AST.Node, for: Rez.AST.Inventory do
     NodeHelper.get_attr_value(inventory, "$js_ctor", "RezInventory")
   end
 
+  # Builds the `positions` attribute from the inventory's `@contains` blocks.
+  # It is the only place an inventory keeps position state at runtime:
+  #
+  #   positions: {left_ring: {slot_id: "ring_slot", enabled: true, contents: ["silver_ring"]}}
+  #
+  # `contents` holds the items the position starts with. At runtime the
+  # inventory empties each position and adds these items back through its
+  # validated add path, so they fire events and apply effects.
+  #
+  # `process/2` runs again in ReprocessAST, by which time the `@contains`
+  # blocks have been consumed, so it leaves `positions` alone.
   def process(inventory, _resources) do
-    slots = NodeHelper.get_attr_value(inventory, "slots")
-
-    inventory =
-      Enum.reduce(slots, inventory, fn {:list_binding, {prefix, _source}}, inv ->
-        NodeHelper.set_list_attr(inv, "#{prefix}_contents", [])
-      end)
-
-    slot_table =
-      Enum.reduce(slots, %{}, fn {:list_binding, {prefix, source}}, acc ->
-        Map.put(acc, prefix, Attribute.string(prefix, extract_slot_id(source)))
-      end)
-
-    NodeHelper.set_table_attr(inventory, "slots", slot_table)
+    case NodeHelper.get_meta(inventory, "nested_contains", []) do
+      [] -> inventory
+      contains -> build_positions(inventory, contains)
+    end
   end
 
-  defp extract_slot_id({:source, _deref, {:elem_ref, id}}), do: id
-  defp extract_slot_id({:literal, {:string, id}}), do: id
+  defp build_positions(inventory, contains) do
+    positions =
+      Map.new(contains, fn %Contains{id: pos_id} = pos ->
+        {pos_id, Attribute.table(pos_id, position_table(pos))}
+      end)
+
+    inventory
+    |> NodeHelper.set_table_attr("positions", positions)
+    |> NodeHelper.set_meta("nested_contains", [])
+  end
+
+  defp position_table(%Contains{} = pos) do
+    %{
+      "slot_id" => Attribute.string("slot_id", ref_id(NodeHelper.get_attr_value(pos, "slot_id"))),
+      "enabled" => Attribute.boolean("enabled", NodeHelper.get_attr_value(pos, "enabled", true)),
+      "contents" =>
+        Attribute.list(
+          "contents",
+          pos
+          |> NodeHelper.get_attr_value("contents", [])
+          |> Enum.map(&{:string, ref_id(&1)})
+        )
+    }
+  end
+
+  defp ref_id({:elem_ref, id}), do: id
+  defp ref_id(id) when is_binary(id), do: id
 end

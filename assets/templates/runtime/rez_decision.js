@@ -268,7 +268,7 @@ class RezDecision {
     if(this.result) {
       return `Result was yes`;
     } else {
-      if(this.hidden) {
+      if(this.isHidden) {
         return `Result was no (${this.reason}) and hide the decision`;
       } else {
         return `Result was no (${this.reason})`;

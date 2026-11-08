@@ -3,7 +3,7 @@ defmodule Rez.Compiler.Phases.ApplySchema do
   Compiler phase that applies the schema rules to all game elements for which
   a schema has been defined.
   """
-  alias Rez.AST.NodeHelper
+  alias Rez.AST.{Contains, Inventory, NodeHelper}
 
   alias Rez.Compiler.Compilation
   alias Rez.Compiler.Validation
@@ -40,8 +40,51 @@ defmodule Rez.Compiler.Phases.ApplySchema do
   end
 
   def apply_schema(%{} = schema, content, lookup) when is_list(content) do
-    Enum.map(content, &apply_schema_to_node(&1, schema_for_node(&1, schema), lookup))
+    Enum.map(content, fn node ->
+      node
+      |> apply_schema_to_node(schema_for_node(node, schema), lookup)
+      |> apply_schema_to_positions(schema, lookup)
+    end)
   end
+
+  # The `@contains` blocks nested in an `@inventory` are not part of the
+  # content so validate them here, against `@schema contains`, and report any
+  # errors against their inventory.
+  defp apply_schema_to_positions(%Inventory{id: inv_id} = inventory, schema, lookup) do
+    {positions, errors} =
+      inventory
+      |> NodeHelper.get_meta("nested_contains", [])
+      |> Enum.map_reduce([], fn %Contains{id: pos_id} = pos, errors ->
+        pos = apply_schema_to_node(pos, schema_for_node(pos, schema), lookup)
+        {pos, errors ++ position_errors(pos, inv_id, pos_id)}
+      end)
+
+    inventory = NodeHelper.set_meta(inventory, "nested_contains", positions)
+
+    case errors do
+      [] ->
+        inventory
+
+      errors ->
+        validation = inventory.validation || %Validation{}
+
+        %{
+          inventory
+          | status: :error,
+            validation: %{validation | errors: validation.errors ++ errors}
+        }
+    end
+  end
+
+  defp apply_schema_to_positions(node, _schema, _lookup), do: node
+
+  defp position_errors(%Contains{validation: %Validation{errors: errors}}, inv_id, pos_id) do
+    Enum.map(errors, fn {_type, _id, error} ->
+      {"inventory", inv_id, "@contains #{pos_id}: #{error}"}
+    end)
+  end
+
+  defp position_errors(_pos, _inv_id, _pos_id), do: []
 
   def apply_schema_to_node(node, [], _) do
     node

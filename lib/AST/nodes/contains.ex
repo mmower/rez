@@ -2,14 +2,18 @@ defmodule Rez.AST.Contains do
   @moduledoc """
   `Rez.AST.Contains` contains the `Contains` struct.
 
-  A `@contains` block is nested inside an `@inventory` and declares one slot
-  *position*, naming the `@slot` *type* it uses (`slot_id`) and any
-  position-specific `initial_contents`/`initial_enabled`.
+  A `@contains` block is nested inside an `@inventory` and declares one
+  *position* in it. The block's id is the position's name, `slot_id` names the
+  `@slot` *type* the position uses, and `contents`/`enabled` give the
+  position's state when the game starts.
 
-  `Contains` is a compile-time-only construct, fully consumed by
-  `Rez.Compiler.Phases.ExpandInventorySlots`. It never appears in
-  `compilation.content`, has no `id_map` entry, and generates no runtime
-  object — its `id` is local to its parent `@inventory`.
+  `Contains` is a compile-time-only construct. It lives in its inventory's
+  `metadata["nested_contains"]`, is validated by
+  `Rez.Compiler.Phases.ValidateInventoryPositions` and against
+  `@schema contains`, and is turned into the inventory's `positions` attribute
+  by `Rez.AST.Inventory.process/2`. It never appears in `compilation.content`,
+  has no `id_map` entry, and generates no runtime object — its `id` is local to
+  its parent `@inventory`.
   """
   defstruct status: :ok,
             game_element: false,
@@ -18,4 +22,22 @@ defmodule Rez.AST.Contains do
             attributes: %{},
             metadata: %{},
             validation: nil
+end
+
+defimpl Rez.AST.Node, for: Rez.AST.Contains do
+  def node_type(_contains), do: "contains"
+
+  def process(contains, _resources), do: contains
+
+  def js_ctor(_contains) do
+    raise "@contains does not generate a runtime object"
+  end
+
+  def js_initializer(_contains) do
+    raise "@contains does not generate a runtime object"
+  end
+
+  def html_processor(_contains, _attr) do
+    raise "@contains does not generate a runtime object"
+  end
 end

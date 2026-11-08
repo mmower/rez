@@ -184,7 +184,12 @@ defmodule Rez.Parser.AliasParsers do
           iws(),
           block_begin(),
           commit(),
-          attribute_list(),
+          # An alias of @inventory may contain @contains blocks. Any other
+          # element with nested blocks is an error, reported below once the
+          # alias has been resolved. Called by its full name, not imported, as
+          # ElementsParser and this module would otherwise depend on each other
+          # at compile time.
+          attribute_and_child_list(Rez.Parser.ElementsParser.contains_element()),
           iws(),
           block_end()
         ],
@@ -206,7 +211,7 @@ defmodule Rez.Parser.AliasParsers do
           )
         end,
         ctx: fn %Context{
-                  ast: [alias_tag, alias_id, attr_list],
+                  ast: [alias_tag, alias_id, {attr_list, children}],
                   entry_points: [{line, col} | _],
                   data: %{source: source, aliases: aliases}
                 } = ctx ->
@@ -218,21 +223,43 @@ defmodule Rez.Parser.AliasParsers do
 
             target_tag ->
               target_module = aliased_struct(target_tag, aliases)
-              attributes = attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
-              {source_file, source_line} = LogicalFile.resolve_line(source, line)
-              block = create_block(target_module, alias_id, attributes, source_file, source_line, col)
 
-              ctx_with_block_and_id_mapped(
-                ctx,
-                block,
-                alias_id,
-                target_tag,
-                source_file,
-                source_line
-              )
+              if children != [] and target_module != Rez.AST.Inventory do
+                ctx
+                |> Context.add_error(
+                  :unexpected_child_block,
+                  "@#{alias_tag} #{alias_id}: @contains is only allowed in an @inventory (or an alias of one)"
+                )
+                |> Context.make_error_fatal()
+              else
+                attributes =
+                  attr_list_to_map(attr_list ++ [Attribute.string("$alias", alias_tag)])
+
+                {source_file, source_line} = LogicalFile.resolve_line(source, line)
+
+                block =
+                  target_module
+                  |> create_block(alias_id, attributes, source_file, source_line, col)
+                  |> nest_contains(children)
+
+                ctx_with_block_and_id_mapped(
+                  ctx,
+                  block,
+                  alias_id,
+                  target_tag,
+                  source_file,
+                  source_line
+                )
+              end
           end
         end
       )
     )
   end
+
+  defp nest_contains(%Rez.AST.Inventory{} = inventory, children) do
+    NodeHelper.set_meta(inventory, "nested_contains", children)
+  end
+
+  defp nest_contains(block, []), do: block
 end

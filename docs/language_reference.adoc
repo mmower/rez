@@ -1096,18 +1096,19 @@ Use `$foreach()` to loop through lists or arrays:
 @card inventory {
   bindings: [
     player: #hero,
-    items: () => $("hero").inventory.items
+    items: () => $("hero").container.allItems().refs()
   ]
   content: ```
   <h3>Your Inventory</h3>
 
-  $if(items.length > 0) {%
+  $if(items.length > 0) -> {%
     <ul>
     $foreach(item: items) {%
       <li>${item.name} - ${item.description}</li>
     %}
     </ul>
-  %}, {%
+  %}
+  () -> {%
     <p>Your inventory is empty.</p>
   %}
   ```
@@ -1169,6 +1170,279 @@ bindings: [
 ....
 
 This can be useful if you want to give a name to a transient value you are using in an expression. Note that such expressions can only be simple values such as numbers and strings, or lists of such values. You use complex attributes or arbitrary expressions like `2+2`.
+
+=== Items and Inventories
+
+Most games need the player to carry things: a sword, a lantern, a ring, a spell they've learned. Rez builds this from four pieces:
+
+* an **`@item`** is something that can be held. Its `type` says what kind of thing it is.
+* a **`@slot`** is a kind of place to keep things. It says which types of item it `accepts` and how much it can hold.
+* an **`@inventory`** is a container, made up of named **positions**. Each position is declared with a `@contains` block that says which `@slot` it uses.
+* an **`@actor`** can own an inventory. Effects from the items in it, such as a ring that makes you stronger, are applied to the owner.
+
+Items don't have to be physical objects. A spell book can be an inventory whose items are spells, and an NPC's memory can be an inventory whose items are conversation topics.
+
+==== Items and their types
+
+An item's `type` is a keyword that connects it to the slots that can hold it. Use `@derive` to arrange types in a hierarchy, so that a slot that accepts a general type also accepts the more specific ones:
+
+....
+@derive :ring :jewellery
+@derive :jewellery :item
+@derive :tool :item
+
+@item ring_of_strength {
+  type: :ring
+  name: "Ring of Strength"
+  weight: 0
+  effect_ids: [#strength_bonus]
+}
+
+@item rope {
+  type: :tool
+  name: "coil of rope"
+  weight: 3
+  size: 2
+}
+
+@item lantern {
+  type: :tool
+  name: "brass lantern"
+  weight: 2
+}
+....
+
+Here a ring is jewellery, and both jewellery and tools are items. `type` defaults to `:item`. `weight` and `size` are optional and are explained below.
+
+==== Slots
+
+A `@slot` describes a kind of place:
+
+....
+@slot ring_slot {
+  name: "Finger"
+  accepts: :ring
+  has_capacity: true
+  capacity: 1
+}
+
+@slot backpack_slot {
+  name: "Backpack"
+  accepts: :item
+  has_capacity: true
+  capacity: 10
+  apply_effects: false
+}
+....
+
+A ring slot only takes rings. With `has_capacity: true`, the `size` of the items in a position (1 if not given) must add up to no more than `capacity`, so a finger holds one ring. The backpack takes any item, because everything derives from `:item`, up to a total size of 10. A slot can also list other slots it `excludes`: for example a two-handed weapon slot could exclude the shield slot, so that only one of them can be filled.
+
+==== Inventories and positions
+
+An inventory lists its positions with `@contains` blocks. Each block's id names the position, and its `slot_id` says which slot it uses. Several positions can use the same slot:
+
+....
+@inventory player_inv {
+  max_weight: 20
+
+  @contains left_hand {
+    slot_id: #ring_slot
+  }
+
+  @contains right_hand {
+    slot_id: #ring_slot
+  }
+
+  @contains backpack {
+    slot_id: #backpack_slot
+    contents: [#ring_of_strength #rope #lantern]
+  }
+}
+
+@actor player {
+  name: "Ada"
+  strength: 10
+  container_id: #player_inv
+}
+....
+
+* `contents` lists the items a position holds when the game begins.
+* `enabled: false` starts a position locked. Unlock it later with `inventory.enable("left_hand")`, for example when the player reaches a certain level.
+* `max_weight` limits the total `weight` of everything in the inventory.
+* The player owns the inventory by naming it as their `container_id`. In code, `$("player").container` is the inventory.
+
+Position names belong to their inventory. Every inventory can have its own `left_hand`, and you can't refer to a position as an element with `#left_hand`. A `@contains` block only takes `slot_id`, `contents`, and `enabled`.
+
+==== Working with an inventory
+
+At runtime an inventory is a `RezInventory`. These are its most useful methods, where `pos` is a position name and `item_id` an item's id:
+
+[cols="2,4"]
+|===
+|`itemsIn(pos)`
+|the ids of the items in a position
+
+|`allItems()`
+|the ids of every item in the inventory
+
+|`positionOf(item_id)`
+|which position holds an item, or `undefined`
+
+|`add(pos, item_id)`
+|put an item that isn't anywhere yet into a position
+
+|`remove(pos, item_id)`
+|take an item out of a position
+
+|`move(pos, item_id)`
+|move an item into a position from wherever it is: another position, another inventory, or nowhere
+
+|`isEnabled(pos)`, `enable(pos)`, `disable(pos)`
+|check, unlock, or lock a position
+
+|`isAvailable(pos)`
+|false if another occupied position's slot excludes this one
+
+|`totalWeight()`, `remainingWeight()`
+|how much the inventory is carrying, and how much more it can take
+|===
+
+**An item is only ever in one place.** While it's in an inventory, `item.inventory` and `item.position` say where. Adding an item that is already somewhere is refused; use `move()` instead.
+
+`add`, `remove`, and `move` return a <<using-decisions,`RezDecision`>> rather than throwing an error when they can't do what you asked. If the decision is no, nothing has changed, `decision.reason` explains why, and `decision.getData("failed_on")` says which check failed:
+
+[cols="1,4"]
+|===
+|`enabled`
+|the position is disabled
+
+|`located`
+|the item is already somewhere (from `add`)
+
+|`accepts`
+|the slot doesn't accept the item's type
+
+|`excludes`
+|another occupied position excludes this one
+
+|`capacity`
+|the item is too big for the space left in the position
+
+|`weight`
+|the item would take the inventory over its `max_weight`
+
+|`actor`
+|the inventory's owner refused the item (see below)
+
+|`missing`
+|the item isn't in that position (from `remove`)
+|===
+
+[TIP]
+====
+Don't change an inventory's `positions` attribute yourself. Always go through these methods: they check the rules, run events, apply effects, and make sure the change is saved.
+====
+
+==== A ring on your hand, or in your backpack
+
+An item's `effect_ids` list ``@effect``s that are applied to the inventory's owner while the item is in a position whose slot has `apply_effects` (the default). The ring slot applies effects but the backpack doesn't, so the ring only makes Ada stronger when she wears it:
+
+....
+@effect strength_bonus {
+  on_apply: (effect, event) => {
+    $(event.owner_id).strength += 2;
+  }
+
+  on_remove: (effect, event) => {
+    $(event.owner_id).strength -= 2;
+  }
+}
+....
+
+Moving the ring from the backpack to `left_hand` runs `on_apply`, raising Ada's strength from 10 to 12. Moving it back runs `on_remove`. The event also says where the item is: `item_id`, `inventory_id`, `slot_id`, and `position`.
+
+Effects are only applied when the inventory has an owner. Set `apply_effects: false` on the inventory itself to turn them off for the whole inventory.
+
+==== Letting an actor refuse an item
+
+The owner gets the final say through `on_accept_item`, which runs after all the inventory's own checks have passed. Its event carries a decision that defaults to yes:
+
+....
+@item cursed_ring {
+  type: :ring
+  name: "Ring of Woe"
+}
+
+@actor player {
+  ...
+  on_accept_item: (player, event) => {
+    if(event.item_id === "cursed_ring" && event.position !== "backpack") {
+      event.decision.no("you feel a chill and think better of it");
+    }
+  }
+}
+....
+
+Ada will carry the cursed ring but won't put it on.
+
+==== Reacting to changes
+
+Adding an item runs an `insert` event on the inventory, then the item's slot, then the item. Removing it runs `remove` on the slot, then the item, then the inventory. Each gets the same event:
+
+....
+{
+  inventory_id: <id>,
+  slot_id: <id of the position's @slot>,
+  position: <name of the position>,
+  item_id: <id>,
+  owner_id: <id, or null if the inventory has no owner>,
+  owner: <the owning actor, or null>
+}
+....
+
+So `on_insert` on an item can react to being picked up, and `on_insert` on a slot can react to anything put in a position that uses it. Every change to an inventory also runs its `on_positions_changed` handler.
+
+==== An inventory card
+
+Putting it together, this card lists the backpack, with a link to wear each item. The item's id is passed to the event handler in a `data-item` attribute:
+
+....
+@card c_backpack {
+  bindings: [
+    player: #player
+    backpack: (block, source, bindings) => {return $("player_inv").itemsIn("backpack").refs()}
+  ]
+  content: ```
+  <p>${player.name} has a strength of ${player.strength}.</p>
+  $if(backpack.length > 0) -> {%
+    <ul>
+    $foreach(item: backpack) {%
+      <li>${item.name} <a data-event="wear" data-item="${item.id}">Wear</a></li>
+    %}
+    </ul>
+  %}
+  () -> {%
+    <p>Your backpack is empty.</p>
+  %}
+  ```
+
+  on_wear: (card, params) => {
+    const inv = $("player_inv");
+    let decision = inv.move("left_hand", params.item);
+    if(decision.wasNo && decision.getData("failed_on") === "capacity") {
+      decision = inv.move("right_hand", params.item);
+    }
+    if(decision.wasNo) {
+      return RezEvent.flash(`You can't wear that: ${decision.reason}`);
+    }
+    return RezEvent.render();
+  }
+}
+....
+
+`itemsIn()` returns ids, and `refs()` turns a list of ids into the objects themselves so the template can use `item.name`. The handler tries the left hand and, if it's full, the right. Wearing the rope gives "You can't wear that: position doesn't take this kind of item".
+
+For every attribute of `@inventory`, `@slot`, and `@item`, see the Element Catalog. For every method, see the https://rez-lang.com/docs/api/RezInventory.html[RezInventory API documentation].
 
 === Forms and User Input
 
@@ -2647,29 +2921,41 @@ Let's look at an example:
 
 How an author chooses to use these elements in their game is up to them, there are many ways that class membership & perks could be applied to in-game situations. You'd write callbacks or behaviours that make use of them. These elements can be referenced by `$(<id>)`, the same as other elements and implement the `__basic_object__` abstraction.
 
+[[using-decisions]]
 === Using Decisions
 
-`RezDecision` is an object that doesn't have an element. You create them when you want code (or perhaps users) to make a yes/no decision.
+`RezDecision` is an object that doesn't have an element. You create one when you want code (or perhaps the player) to make a yes/no decision, and to say why if the answer is no. Rez uses them itself: for example inventory methods such as `add()` return a decision, and an actor's `on_accept_item` handler receives one to answer.
 
 You can use a decision like this:
 
 ....
-const decision = new RezDecision("Include Adult themes", {info: "Toggle this on to include themes of sex & violence that might not be suitable for all. Leave it off for a family friendly experience."});
-decision.default_no();
+const decision = new RezDecision("Include adult themes", {info: "Toggle this on to include themes of sex & violence that might not be suitable for all. Leave it off for a family friendly experience."});
+decision.defaultNo();
 some_function_making_the_decision(decision);
-if(decision.result) {
+if(decision.wasYes) {
   // do something
 } else {
-  // do something else
+  console.log(`No, because: ${decision.reason}`);
 }
 ....
 
-In this case the `some_function_making_the_decision(decision)` is expected to call either `decision.yes()` or `decision.no("reason")` before returning. In most cases you will be passing a decision to a script. In this case if neither function gets called the decision will default to 'no' (`false`). If we had used `decision.default_yes()` it would work the other way around.
+The first argument describes what the decision is for (it's available as `decision.purpose`). The optional second argument is a data object, see below.
 
-RezDecision also supports `decision.hide()` which is "no, and don't even mention it". For example
-we may have a door which could be locked but also hidden. A RezDecision supports hide (player doesn't know about it yet), no (door is locked), yes (door has been unlocked).
+`some_function_making_the_decision(decision)` is expected to call either `decision.yes()` or `decision.no("reason")`. If it calls neither, the decision stays as `defaultNo()` left it: no. If we had used `decision.defaultYes()` it would work the other way around. `decision.usedDefault` tells you whether the answer is still the default, and `defaultNo()` can be given a reason too.
 
-You can pass data into a decision either through the second argument to `new RezDecision()` or using the `setData(key, value)` API. After receiving a decision you can use the `data()` API to retrieve data. This way the callee can pass other information back with the decision.
+A decision that nothing has answered, not even a default, is no, and `decision.wasMade` is false.
+
+To read the answer use `decision.result` (or `wasYes`), which is true for yes, or `wasNo`. These are properties, not methods. `decision.reason` is the reason given for a no, and `decision.explain()` gives a description of the whole outcome, useful when debugging.
+
+`yes()`, `no()`, `defaultYes()`, `defaultNo()`, and `setData()` all return the decision, so calls can be chained:
+
+....
+return decision.no("too heavy").setData("failed_on", "weight");
+....
+
+RezDecision also supports `decision.hide()`, which is "no, and don't even mention it". For example we may have a door which could be locked but also hidden: hide (the player doesn't know about it yet), no (the door is locked), yes (the door has been unlocked). `decision.isHidden` is true after `hide()`.
+
+You can pass data into a decision either through the second argument to `new RezDecision()` or with `decision.setData(key, value)`, and `decision.yes({key: value})` sets data too. Whoever receives the decision reads a value with `decision.getData(key)`, which also takes a default to return if the key isn't set (`decision.getData("failed_on", "unknown")`), or gets the whole data object from the `decision.data` property. This way the code making the decision can pass other information back along with it.
 
 === Using your own prototypes
 

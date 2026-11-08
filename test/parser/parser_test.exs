@@ -234,11 +234,11 @@ defmodule Rez.Parser.ParserTest do
       }
       @contains off_hand {
         slot_id: #off_hand_slot
-        initial_contents: [#starter_dagger]
+        contents: [#starter_dagger]
       }
       @contains two_handed {
         slot_id: #two_handed_slot
-        initial_enabled: false
+        enabled: false
       }
     }
     """
@@ -299,8 +299,8 @@ defmodule Rez.Parser.ParserTest do
                        type: :elem_ref,
                        value: "off_hand_slot"
                      },
-                     "initial_contents" => %Rez.AST.Attribute{
-                       name: "initial_contents",
+                     "contents" => %Rez.AST.Attribute{
+                       name: "contents",
                        type: :list,
                        value: [{:elem_ref, "starter_dagger"}]
                      }
@@ -314,8 +314,8 @@ defmodule Rez.Parser.ParserTest do
                        type: :elem_ref,
                        value: "two_handed_slot"
                      },
-                     "initial_enabled" => %Rez.AST.Attribute{
-                       name: "initial_enabled",
+                     "enabled" => %Rez.AST.Attribute{
+                       name: "enabled",
                        type: :boolean,
                        value: false
                      }

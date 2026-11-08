@@ -312,14 +312,21 @@
   tags: {kind: :set, coll_kind: :keyword}
 
   owner_id: {kind: :elem_ref, ref_elem: @actor}
-  slots: {kind: :list, coll_kind: :list_binding, ref_elem: @slot, required: true, min_length: 1}
   apply_effects: {kind: :boolean}
   max_weight: {kind: :number, min: 0}
 
   on_insert: {kind: :function}
   on_remove: {kind: :function}
+}
 
-  ?/^initial_/: {kind: :list, coll_kind: :elem_ref}
+%% A @contains block is nested inside an @inventory and declares one position
+%% in it. It is not an element in its own right: the compiler validates it
+%% against this schema and turns the positions into the inventory's
+%% `positions` attribute.
+@schema contains {
+  slot_id: {kind: :elem_ref, ref_elem: @slot, required: true}
+  contents: {kind: :list, coll_kind: :elem_ref, ref_elem: @item}
+  enabled: {kind: :boolean}
 }
 
 @defaults inventory {
@@ -340,7 +347,12 @@
   %% type refers to an accept: for a slot
   type: {kind: :keyword, required: true, is_a: @slot/accepts}
 
-  container_id: {kind: :elem_ref, ref_elem: @inventory}
+  %% Where the item is. Set by the inventory at runtime, not authored: an item
+  %% starts the game in an inventory by being listed in the `contents` of one
+  %% of its @contains positions.
+  inventory_id: {kind: :elem_ref, ref_elem: @inventory}
+  position: {kind: :string}
+
   size: {kind: :number, min: 0}
   weight: {kind: :number, min: 0}
   uses: {kind: :number, min: 0}
@@ -354,6 +366,8 @@
   $auto_id_idx: 0
   is_item: true
   type: :item
+  inventory_id: _
+  position: _
 }
 
 @schema list {
