@@ -23,6 +23,7 @@ Elements describe in-game concepts.
 * <<Effect (Element), Effect>>
 * <<Faction (Element), Faction>>
 * <<Game (Element), Game>>
+* <<Generator (Element), Generator>>
 * <<Group (Element), Group>>
 * <<Inventory (Element), Inventory>>
 * <<Item (Alias), Item>>
@@ -47,7 +48,7 @@ Directives modify in-game concepts.
 * <<Derive (Directive), Derive>>
 * <<Elem (Directive), Elem>>
 * <<Filter (Directive), Filter>>
-* <<Generator (Directive), Generator>>
+* <<Layout (Directive), Layout>>
 * <<Mixin (Directive), Mixin>>
 * <<Patch (Directive), Patch>>
 * <<Pragma (Directive), Pragma>>
@@ -958,6 +959,10 @@ The `@game` element has an implicit ID of `game`.
 |Template
 |template that surrounds the game content. It must contain `${content}`. The default layout includes the flash message, banner, and modal components around `${content}`
 
+|`layout_id`
+|Element Ref
+|id of a `@layout` whose `layout`, `bindings`, `blocks`, `css_class` and render handlers are copied into the game at compile time. The layout must use `layout_mode: :single`. See <<Layout (Directive), Layout>>
+
 |`author_email`
 |String
 |contact email for the author
@@ -1057,7 +1062,7 @@ Called before and after the view is rendered.
 
 Called before the game is saved and after a saved game has been loaded.
 
-== Generator (Directive)
+== Generator (Element)
 
 A `@generator` creates a list of copies of an existing element, for example a group of similar monsters. At runtime a generator becomes a `RezList` with the same id whose values are the ids of the newly created copies.
 
@@ -1445,6 +1450,76 @@ Modifiers are optional. **Where the shift modifier is used the keyName should be
 KeyNames follow the https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values[Javascript KeyboardEvent rules].
 
 Event processing follows the usual custom event processing rules (card -> scene -> game) allowing for processing events in different places.
+
+== Layout (Directive)
+
+The `@layout` directive lets several `@scene` elements (or the `@game`) share the same layout. Each element refers to it with `layout_id: #layout_id`. A `@layout` exists only at compile time: its attributes are copied into each element that refers to it and there is no `@layout` object at runtime. See "Sharing Layouts with @layout" in the language reference for the full rules.
+
+The copied attributes sit between `@defaults` and the element's own attributes, so a scene can override anything the layout defines. When both define `bindings` or `blocks` the lists are combined, the layout's entries first, and a scene entry with the same name replaces the layout's. After the import `layout_id` is replaced with `$layout_reference`, the id of the layout, which is used in error messages.
+
+`layout_id` must be a literal element id. A `@layout` cannot itself use `layout_id`. The `@game` can only use a layout whose `layout_mode` is `:single`.
+
+=== Example
+
+....
+@layout l_two_column {
+  layout_mode: :stack
+  blocks: [sidebar: #c_sidebar]
+  layout: ```
+  <div class="columns">
+    <div class="column">${content}</div>
+    <div class="column is-3">${sidebar}</div>
+  </div>
+  ```
+}
+
+@scene s_market {
+  layout_id: #l_two_column
+  initial_card_id: #c_stalls
+}
+....
+
+=== Required Attributes
+[cols="2,1,4"]
+|===
+|`layout`
+|Template
+|template in which content is embedded. Must contain `${content}`
+|===
+
+=== Optional Attributes
+[cols="2,1,4"]
+|===
+|`layout_mode`
+|Keyword
+|`:single` or `:stack`, see <<Scene (Element), Scene>>. Must be `:single` (or not given) for a layout used by the `@game`
+
+|`layout_separator`
+|String
+|markup inserted between cards in stack mode
+
+|`layout_reverse`
+|Boolean
+|in reverse mode new cards are played at the top of the stack
+
+|`bindings`
+|List
+|bindings available to the layout template, combined with the scene's own
+
+|`blocks`
+|List
+|blocks available to the layout template, combined with the scene's own
+
+|`css_class`
+|String
+|CSS class(es) added to the scene (or game) wrapper element
+
+|`on_will_render` / `on_did_render`
+|Function
+|render event handlers, chained with the scene's own using `+`
+|===
+
+No other attributes are allowed in a `@layout`. Because a `@layout` is a directive and not game content, it cannot be referred to at runtime: `$("l_two_column")` does not exist.
 
 == List (Element)
 
@@ -1939,6 +2014,10 @@ Lastly a `@scene` may optionally have a `blocks: [name_1: #card_id_1 name_2: #ca
 |`layout`
 |Template
 |template containing the scene content in which cards are embedded. Must contain `${content}` (default: `${content}`)
+
+|`layout_id`
+|Element Ref
+|id of a `@layout` whose attributes are copied into the scene at compile time. The scene's own attributes override the layout's. See <<Layout (Directive), Layout>>
 
 |`bindings`
 |List

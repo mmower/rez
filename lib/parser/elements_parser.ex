@@ -44,10 +44,6 @@ defmodule Rez.Parser.ElementsParser do
     cached_parser(block_with_id("faction", Rez.AST.Faction))
   end
 
-  def filter_element() do
-    cached_parser(block_with_id("filter", Rez.AST.Filter))
-  end
-
   def game_element() do
     cached_parser(block("game", Rez.AST.Game, "game"))
   end
@@ -72,10 +68,6 @@ defmodule Rez.Parser.ElementsParser do
 
   def list_element() do
     cached_parser(block_with_id("list", Rez.AST.List))
-  end
-
-  def mixin_element() do
-    cached_parser(block_with_id("mixin", Rez.AST.Mixin))
   end
 
   def object_element() do
@@ -117,12 +109,10 @@ defmodule Rez.Parser.ElementsParser do
           behaviour_element(),
           effect_element(),
           faction_element(),
-          filter_element(),
           generator_element(),
           group_element(),
           inventory_element(),
           list_element(),
-          mixin_element(),
           object_element(),
           plot_element(),
           quest_element(),

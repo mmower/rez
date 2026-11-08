@@ -360,7 +360,7 @@ The `@game` element is the only element where you don't specify the element id, 
 }
 ....
 
-The `layout:` attribute of the game and its scenes and the `content:` attribute of cards are where you put the HTML markup that is shown to the player.
+The `layout:` attribute of the game and its scenes and the `content:` attribute of cards are where you put the HTML markup that is shown to the player. Scenes that share a layout can define it once with the `@layout` directive, see <<sharing-layouts,Sharing Layouts with @layout>>.
 
 ==== Element Unique Identifiers
 
@@ -1215,6 +1215,76 @@ bindings: [
 ....
 
 This is useful for giving a name to a fixed value used in your template. The value must be a literal: a string, number, boolean, keyword, or a list of these. Expressions such as `2+2` are not allowed; to compute a value, use a function binding instead.
+
+[[sharing-layouts]]
+=== Sharing Layouts with @layout
+
+A scene's `layout:` describes the markup wrapped around its cards. When several scenes should look the
+same, define the layout once with the `@layout` directive and refer to it from each scene with `layout_id:`.
+
+....
+@layout l_two_column {
+  layout_mode: :stack
+  layout_separator: "<hr/>"
+  blocks: [sidebar: #c_sidebar]
+  layout: ```
+  <div class="columns">
+    <div class="column">${content}</div>
+    <div class="column is-3">${sidebar}</div>
+  </div>
+  ```
+}
+
+@scene s_market {
+  layout_id: #l_two_column
+  initial_card_id: #c_stalls
+}
+
+@scene s_harbour {
+  layout_id: #l_two_column
+  initial_card_id: #c_quayside
+  bindings: [ship: #the_endeavour]
+}
+....
+
+`@layout` is a directive, like `@elem` and `@defaults`, rather than an element: it exists only while your game is being compiled. The compiler copies the layout's attributes
+into every scene that refers to it, so at runtime each scene has its own `layout`, `layout_mode` and so on,
+exactly as if you had written them in the scene. The `layout_id` attribute is removed and replaced by a
+`$layout_reference` attribute holding the id of the layout, which error messages use to tell you which
+`@layout` a problem came from. There is no `@layout` object at runtime.
+
+A `@layout` has an id and a body of attributes like an element, but it can define only the following attributes and no others: `layout`, `layout_mode`, `layout_separator`,
+`layout_reverse`, `bindings`, `blocks`, `css_class`, `on_will_render` and `on_did_render`.
+
+**Precedence.** A scene's own attributes win over its layout's, and the layout's attributes win over
+`@defaults`. In order from least to most specific:
+
+. `@defaults scene`
+. `@defaults` for the scene's `@elem` type, if it has one
+. the `@layout`
+. the scene itself
+
+So in the example above `s_market` could still write `layout_mode: :single` to change just that one thing.
+Event handlers follow the same rules as `@defaults`: a scene that writes `on_did_render: +() => {...}` runs
+its handler after the layout's, while `on_did_render: () => {...}` replaces it.
+
+`layout_id` can itself come from `@defaults`, for example `@defaults scene { layout_id: #l_main }` gives
+every scene a layout unless it says otherwise.
+
+**Bindings and blocks.** When both the layout and the scene define `bindings:` (or `blocks:`), the two lists
+are combined instead of the scene's replacing the layout's. The layout's entries come first, then the
+scene's. If the scene has an entry with the same name as one of the layout's, the scene's entry takes its
+place. In the example above `s_harbour` ends up with the `sidebar` block from the layout and its own `ship`
+binding.
+
+**Rules.**
+
+* `layout_id` must be a literal element id such as `#l_two_column`. A constant or any other kind of value
+  is an error.
+* A `@layout` cannot itself have a `layout_id`. Layouts do not nest.
+* The `@game` can use a `@layout` too, but only one whose `layout_mode` is `:single` (or not given).
+  Only the `layout`, `bindings`, `blocks`, `css_class`, `on_will_render` and `on_did_render` attributes are
+  copied into the game.
 
 === Items and Inventories
 

@@ -196,6 +196,8 @@
   author_email: {kind: :string}
   archive_format: {kind: :number, required: true}
   layout: {kind: :source_template, required: true, contains: "${content}"}
+  layout_id: {kind: :elem_ref, ref_elem: @layout}
+  $layout_reference: {kind: :string}
   initial_scene_id: {kind: :elem_ref, ref_elem: @scene, required: true}
   IFID: {kind: :string, required: true}
 
@@ -370,6 +372,20 @@
   position: _
 }
 
+%% A @layout is compile-time only. Its attributes are imported into each
+%% @scene (or the @game) that references it with layout_id: #layout_id
+@schema layout {
+  layout: {kind: :source_template, required: true, contains: "${content}"}
+  layout_mode: {kind: :keyword, in: [:single :stack]}
+  layout_separator: {kind: :string}
+  layout_reverse: {kind: :boolean}
+  bindings: {kind: :list, coll_kind: :list_binding, no_key_overlap: "blocks"}
+  blocks: {kind: :list, coll_kind: :list_binding, ref_elem: @card}
+  css_class: {kind: :string}
+  on_will_render: {kind: :function}
+  on_did_render: {kind: :function}
+}
+
 @schema list {
   $global: {kind: :boolean}
   $template: {kind: :boolean}
@@ -518,6 +534,8 @@
   tags: {kind: :set, coll_kind: :keyword}
 
   layout: {kind: :source_template, contains: "${content}"}
+  layout_id: {kind: :elem_ref, ref_elem: @layout}
+  $layout_reference: {kind: :string}
   layout_mode: {kind: :keyword, in: [:single :stack]}
   layout_separator: {kind: :string}
   layout_reverse: {kind: :boolean}

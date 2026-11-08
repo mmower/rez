@@ -129,6 +129,29 @@ defmodule Rez.Parser.DirectiveParsers do
     )
   end
 
+  @doc """
+  Parses the `@filter` directive that defines a template expression filter.
+  """
+  def filter_directive() do
+    cached_parser(block_with_id("filter", Rez.AST.Filter))
+  end
+
+  @doc """
+  Parses the `@mixin` directive that defines functions and dynamic properties
+  shared, at runtime, by the elements that include it with `$mixins`.
+  """
+  def mixin_directive() do
+    cached_parser(block_with_id("mixin", Rez.AST.Mixin))
+  end
+
+  @doc """
+  Parses the compile-time `@layout` directive. Its body is an attribute block
+  like an element's, but it is never written to the runtime.
+  """
+  def layout_directive() do
+    cached_parser(block_with_id("layout", Rez.AST.Layout))
+  end
+
   defp derive_directive() do
     sequence(
       [
@@ -322,7 +345,10 @@ defmodule Rez.Parser.DirectiveParsers do
           const_directive(),
           defaults_directive(),
           derive_directive(),
+          filter_directive(),
           keybinding_directive(),
+          layout_directive(),
+          mixin_directive(),
           schema_directive(),
           pragma_directive()
         ],

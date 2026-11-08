@@ -22,5 +22,11 @@ defmodule Rez.Compiler.Phases.MapAliases do
     |> NodeHelper.set_attr(Attribute.list("$kinds", Enum.map(chain, &{:string, &1})))
   end
 
+  # @layout is a compile-time directive (not a game element) but is validated against
+  # `@schema layout` in ApplySchema, which finds schemas via the alias chain.
+  def map_node_aliases(%Rez.AST.Layout{} = layout, _compilation) do
+    NodeHelper.set_meta(layout, "alias_chain", ["layout"])
+  end
+
   def map_node_aliases(node, _compilation), do: node
 end

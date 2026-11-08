@@ -187,6 +187,31 @@ defmodule Rez.Parser.ParserTest do
            } = context.ast
   end
 
+  test "parses layout directive" do
+    input = """
+    @layout l_two_column {
+      layout_mode: :stack
+      layout: ```
+      <div>${content}</div>
+      ```
+    }
+    """
+
+    context =
+      Ergo.parse(Rez.Parser.DirectiveParsers.layout_directive(), input, data: %{source: dummy_source(input), id_map: %{}})
+
+    assert %{status: :ok} = context
+
+    assert %Rez.AST.Layout{
+             id: "l_two_column",
+             game_element: false,
+             attributes: %{
+               "layout_mode" => %Rez.AST.Attribute{type: :keyword, value: "stack"},
+               "layout" => %Rez.AST.Attribute{type: :source_template}
+             }
+           } = context.ast
+  end
+
   test "parses card element" do
     input = """
     @card first_card {

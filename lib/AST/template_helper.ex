@@ -11,6 +11,7 @@ defmodule Rez.AST.TemplateHelper do
   alias Rez.AST.NodeHelper
   alias Rez.AST.HtmlTransformer
 
+  alias Rez.Compiler.LayoutImport
   alias Rez.Compiler.TemplateCompiler
   alias Rez.Parser.TemplateParser
 
@@ -92,11 +93,18 @@ defmodule Rez.AST.TemplateHelper do
 
   defp add_template_errors(node, name, errors) when is_list(errors) do
     Enum.reduce(errors, node, fn {error_type, {line, col}, message}, acc ->
-      NodeHelper.add_error(acc, "#{name}:#{line}:#{col} #{error_type}: #{message}")
+      NodeHelper.add_error(
+        acc,
+        template_error(node, name, "#{name}:#{line}:#{col} #{error_type}: #{message}")
+      )
     end)
   end
 
   defp add_template_errors(node, name, error) when is_binary(error) do
-    NodeHelper.add_error(node, "#{name}: #{error}")
+    NodeHelper.add_error(node, template_error(node, name, "#{name}: #{error}"))
   end
+
+  # A layout template may have been imported from a @layout
+  defp template_error(node, "layout", message), do: LayoutImport.attribute_error(node, message)
+  defp template_error(_node, _name, message), do: message
 end

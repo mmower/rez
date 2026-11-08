@@ -10,6 +10,7 @@ defmodule Rez.Compiler.SchemaBuilder do
   alias Rez.AST.NodeHelper
 
   alias Rez.Compiler.Config
+  alias Rez.Compiler.LayoutImport
   alias Rez.Compiler.Validation
 
   defmodule SchemaRule do
@@ -809,7 +810,10 @@ defmodule Rez.Compiler.SchemaBuilder do
                Validation.add_error(
                  validation,
                  node,
-                 "#{attr_name} and #{other_attr} have conflicting names: #{conflict_list}"
+                 LayoutImport.attribute_error(
+                   node,
+                   "#{attr_name} and #{other_attr} have conflicting names: #{conflict_list}"
+                 )
                )}
             else
               {node, validation}

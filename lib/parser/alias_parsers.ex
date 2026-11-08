@@ -66,6 +66,7 @@ defmodule Rez.Parser.AliasParsers do
     "generator",
     "group",
     "inventory",
+    "layout",
     "list",
     "mixin",
     "object",

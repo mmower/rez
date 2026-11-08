@@ -139,7 +139,8 @@ attribute list with types and defaults.
 `resume_event: function(params) { return RezEvent.render(); }` (what happens
 when an interlude returns). Handlers: `on_start`, `on_ready`, `on_finish`,
 `on_interrupt`, `on_resume`, `on_card_will_start`, `on_card_did_start`,
-`on_card_did_finish`, `on_will_render`, `on_did_render`.
+`on_card_did_finish`, `on_will_render`, `on_did_render`. `layout_id:
+#layout` imports a shared `@layout` (see `directives`).
 
 **@card** — content the player sees. Required `content: ```...````. `back`
 (face shown after the card finishes in a `:stack` scene), `title`,
@@ -210,6 +211,18 @@ exactly one of `include_tags`/`exclude_tags`. `randomAssetId()`.
 selection: `randomElement()`, `randomFromBag()`, `nextForCycle()`,
 `randomWithoutStarvation()`, `randomWalk()`.
 
+**@generator** — becomes a `RezList` with the generator's id whose values
+are the ids of copies of a template, made at runtime. Required
+`source_id`; `copies` (number, roll or function); `customize: (copy, idx)`
+must return the copy.
+```
+@generator goblins {
+  source_id: #T_goblin
+  copies: 5
+  customize: (goblin, idx) => { goblin.name = `Goblin ${idx + 1}`; return goblin; }
+}
+```
+
 **@plot** — progress clock. Required `stages` (≥1). `priority`, `stage`,
 `active`. `start()`, `advance(n)`, `revert(n)`, `isComplete`. Handlers
 `on_start`, `on_advance`, `on_complete`; subscribers (`subscribe(id)`) get
@@ -242,7 +255,7 @@ evt) => {}`, `after_event: (system, evt, result) => { return result; }`,
 **@behaviour** — behaviour-tree node. See `behaviours`.
 
 ## directives
-Directives that define types, defaults, code and styles.
+Directives that define types, defaults, shared layouts, code and styles.
 
 ```
 @elem npc = actor                %% new element type; may chain (@elem boss = npc)
@@ -288,12 +301,6 @@ Directives that define types, defaults, code and styles.
 
 @keybinding ctrl+shift+C :show_sheet   %% key → custom event (shift needs upper-case key)
 
-@generator goblins {             %% RezList "goblins" of copies of a template
-  source_id: #T_goblin
-  copies: 5
-  customize: (goblin, idx) => { goblin.name = `Goblin ${idx + 1}`; return goblin; }
-}
-
 @behaviour_template order_whisky ^[$sequence [at_bar] [say msg="Whisky."]]
 
 @pragma(after_process_ast) write_id_map("ids.txt")
@@ -307,6 +314,28 @@ Directives that define types, defaults, code and styles.
   `"..."` strings containing `${...}` are evaluated as JS template literals.
 - `@pragma` timings: `after_build_schema`, `after_schema_apply`,
   `after_process_ast`, `before_create_runtime`, `after_copy_assets`.
+
+**@layout** — directive (compile-time only, not game content): shares a
+layout between scenes.
+```
+@layout l_two_column {
+  layout_mode: :stack
+  blocks: [sidebar: #c_sidebar]
+  layout: ```
+  <div class="columns"><div class="column">${content}</div><div class="column is-3">${sidebar}</div></div>
+  ```
+}
+@scene s_market { layout_id: #l_two_column initial_card_id: #c_stalls }
+```
+Allowed: `layout` (required), `layout_mode`, `layout_separator`,
+`layout_reverse`, `bindings`, `blocks`, `css_class`, `on_will_render`,
+`on_did_render`. Copied into the scene at compile time: `@defaults` <
+`@layout` < the scene's own attributes (`+` handlers chain after the
+layout's). `bindings`/`blocks` are combined, layout entries first; a scene
+entry with the same name replaces the layout's. `layout_id` must be a literal
+`#id` (no constants), is removed after the import and replaced by
+`$layout_reference: "<layout id>"`; there is no runtime `@layout` object.
+Layouts can't nest. `@game` may use `layout_id` only with a `:single` layout.
 
 ## schema
 Writing @schema rules for your own elements.

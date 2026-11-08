@@ -25,51 +25,116 @@ defmodule Rez.Compiler.Phases.ApplyDefaults do
       @defaults foo    { on_start:  ()=>{F} }   # replaces O
       @foo f_instance  { on_start: +()=>{I} }   # chains after F only
       # result: F → I
+
+  ## Layouts
+
+  An element that references a `@layout` with `layout_id:` has the layout's
+  attributes imported as an extra level between its `@defaults` and its own
+  attributes. See `Rez.Compiler.LayoutImport`.
   """
   alias Rez.AST.NodeHelper
 
   alias Rez.Compiler.Compilation
+  alias Rez.Compiler.LayoutImport
 
   def run_phase(%Compilation{status: :ok, content: content, defaults: defaults} = compilation) do
-    %{
-      compilation
-      | content: Enum.map(content, &apply_defaults(&1, defaults))
-    }
+    layouts = LayoutImport.layouts(content)
+
+    compilation =
+      layouts
+      |> LayoutImport.validate_layouts()
+      |> Enum.reduce(compilation, &Compilation.add_error(&2, &1))
+
+    {content, compilation} =
+      Enum.map_reduce(content, compilation, fn node, compilation ->
+        case apply_defaults(node, defaults, layouts) do
+          {:ok, node} -> {node, compilation}
+          {:error, node, message} -> {node, Compilation.add_error(compilation, message)}
+        end
+      end)
+
+    %{compilation | content: content}
   end
 
   def run_phase(compilation), do: compilation
 
+  @doc """
+  Applies the defaults of the node's alias chain to the node, without
+  importing any `@layout`. See `apply_defaults/3`.
+  """
   def apply_defaults(%{game_element: true} = node, defaults) do
-    alias_chain = NodeHelper.get_meta(node, "alias_chain", [])
+    merge_attrs(node, merge_alias_chain_defaults(node, defaults), nil)
+  end
 
-    defaults_merged =
-      alias_chain
-      |> Enum.reverse()
-      |> Enum.reduce(%{}, fn target, acc ->
-        case Map.get(defaults, target) do
-          nil ->
-            acc
+  def apply_defaults(node, _defaults), do: node
 
-          level_defaults ->
-            acc
-            |> merge_level(level_defaults)
-            |> consolidate_merge_sets()
-            |> consolidate_append_functions()
-        end
-      end)
+  @doc """
+  Applies the defaults of the node's alias chain to the node and imports the
+  `@layout` it references with `layout_id` (if any). The layout sits between
+  the defaults and the node's own attributes (see `Rez.Compiler.LayoutImport`).
 
+  Returns `{:ok, node}` or `{:error, node, message}`. On error the node has
+  had its defaults applied but no layout imported.
+  """
+  def apply_defaults(%{game_element: true} = node, defaults, layouts) do
+    defaults_merged = merge_alias_chain_defaults(node, defaults)
+
+    case LayoutImport.resolve(node, defaults_merged, layouts) do
+      :none ->
+        {:ok, merge_attrs(node, defaults_merged, nil)}
+
+      {:ok, layout_id, layout_attrs} ->
+        {:ok, merge_attrs(node, defaults_merged, {layout_id, layout_attrs})}
+
+      {:error, message} ->
+        {:error, merge_attrs(node, defaults_merged, nil), message}
+    end
+  end
+
+  def apply_defaults(node, _defaults, _layouts), do: {:ok, node}
+
+  defp merge_alias_chain_defaults(node, defaults) do
+    node
+    |> NodeHelper.get_meta("alias_chain", [])
+    |> Enum.reverse()
+    |> Enum.reduce(%{}, fn target, acc ->
+      case Map.get(defaults, target) do
+        nil -> acc
+        level_defaults -> merge_level_and_consolidate(acc, level_defaults)
+      end
+    end)
+  end
+
+  defp merge_attrs(node, defaults_merged, nil) do
     merged_attrs =
       defaults_merged
-      |> merge_level(node.attributes)
-      |> consolidate_merge_sets()
-      |> consolidate_append_functions()
+      |> merge_level_and_consolidate(node.attributes)
       |> tag_from_defaults(defaults_merged, node.attributes)
 
     %{node | attributes: merged_attrs}
   end
 
-  def apply_defaults(node, _defaults) do
-    node
+  # The layout is the most specific level below the node itself. Attributes
+  # imported from it are tagged as coming from defaults, so that shared
+  # handlers are de-duplicated in the runtime.
+  defp merge_attrs(node, defaults_merged, {layout_id, layout_attrs}) do
+    base_attrs = merge_level_and_consolidate(defaults_merged, layout_attrs)
+    element_attrs = LayoutImport.merge_element_attrs(node.attributes, layout_attrs)
+
+    merged_attrs =
+      base_attrs
+      |> merge_level_and_consolidate(element_attrs)
+      |> tag_from_defaults(base_attrs, element_attrs)
+      |> LayoutImport.finalize(layout_id)
+
+    %{node | attributes: merged_attrs}
+  end
+
+  defp merge_level_and_consolidate(base_attrs, new_attrs) do
+    base_attrs
+    |> merge_level(new_attrs)
+    |> consolidate_merge_sets()
+    |> consolidate_append_functions()
   end
 
   # Merges new_attrs (more specific) on top of base_attrs (less specific).
