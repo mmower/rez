@@ -46,7 +46,7 @@ class RezGroup extends RezBasicObject {
 
     // Does the asset have the right type
     const selectedType = this.getAttributeValue("type");
-    assets = assets.filter((asset) => asset.type === selectedType);
+    assets = assets.filter((asset) => asset.assetType === selectedType);
 
     // Assets without tags can't be in a group
     assets = assets.filter((asset) => asset.hasAttribute("tags") && asset.getAttributeValue("tags").size > 0);
@@ -69,7 +69,7 @@ class RezGroup extends RezBasicObject {
       });
     }
 
-    if(assets.size === 0) {
+    if(assets.length === 0) {
       console.log("Attempt to create group that matches 0 assets!");
     }
 
@@ -87,7 +87,7 @@ class RezGroup extends RezBasicObject {
    * @throws {Error} if no matching assets are found
    */
   randomAssetId() {
-    if(this.assets.size === 0) {
+    if(this.assets.length === 0) {
       this.filterAssets();
     }
 
