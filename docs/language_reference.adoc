@@ -1169,7 +1169,7 @@ bindings: [
 ]
 ....
 
-This can be useful if you want to give a name to a transient value you are using in an expression. Note that such expressions can only be simple values such as numbers and strings, or lists of such values. You use complex attributes or arbitrary expressions like `2+2`.
+This is useful for giving a name to a fixed value used in your template. The value must be a literal: a string, number, boolean, keyword, or a list of these. Expressions such as `2+2` are not allowed; to compute a value, use a function binding instead.
 
 === Items and Inventories
 
