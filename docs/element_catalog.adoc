@@ -299,7 +299,7 @@ Assets must specify their source file using either `file_name` or `file_path` (b
 
 |`$preload`
 |Boolean
-|for a font asset, adds a `<link rel="preload">` tag so the browser fetches the font immediately. Ignored for `$inline` assets
+|for a font asset, adds a `<link rel="preload">` tag so the browser fetches the font immediately. Ignored for `$inline` assets. When the game is opened from a `file://` URL the browser may warn that the preload was not used. This is harmless and doesn't happen when the game is served over `http(s)`
 
 |`$inline`
 |Boolean

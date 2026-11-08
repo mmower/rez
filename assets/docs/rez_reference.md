@@ -206,8 +206,9 @@ path in the built game. Fonts: a `.woff2`/`.woff`/`.ttf`/`.otf` asset with
 `font_family: "Name"` gets a generated `@font-face` rule; optional
 `font_weight:` (default 400, or a range `"100 900"`), `font_style:`
 (`"normal"`/`"italic"`/`"oblique"`), `font_display:` (default `"swap"`),
-`$preload: true` (adds `<link rel="preload">`), `$inline: true` (embeds a
-`data:` URL). One asset per weight/style; then use the family in `@styles`.
+`$preload: true` (adds `<link rel="preload">`; browsers warn it is unused
+when the game is opened from `file://`, which is harmless), `$inline: true`
+(embeds a `data:` URL). One asset per weight/style; then use the family in `@styles`.
 Hosted fonts: put the stylesheet URL in `@game` `links:`.
 In `@styles`, `asset(id)` becomes the asset's `url("...")`, e.g.
 `background-image: asset(img_parchment);` (a compile error if `id` is not

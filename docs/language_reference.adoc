@@ -1820,6 +1820,8 @@ To bundle a font with your game, put the file (`.woff2`, `.woff`, `.ttf` or `.ot
 
 `font_weight:` defaults to `400` and can be a number or, for a variable font, a range such as `"100 900"`. `font_style:` (`"normal"`, `"italic"` or `"oblique"`) defaults to `"normal"`, and `font_display:` (`"auto"`, `"block"`, `"swap"`, `"fallback"` or `"optional"`) defaults to `"swap"`. `$preload: true` adds a `<link rel="preload">` so the browser fetches the font straight away; use it for the fonts your first screen needs. `$inline: true` embeds the font in `index.html` as a `data:` URL instead of copying the file.
 
+NOTE: When you open a game straight from disk (a `file://` URL), the browser console may warn that a preloaded font "is not used because the request credentials mode does not match", or was "preloaded using link preload but not used". The browser loads fonts from `file://` pages differently, so it can't reuse the preloaded copy and fetches the font again. The font still works. The warnings go away when the game is served over `http(s)`, e.g. by running `python3 -m http.server` in the `dist` folder. To silence them while developing, leave out `$preload: true`. If the second warning appears over `http(s)` too, nothing on the first screen uses that font, so it doesn't need preloading.
+
 A font asset without `font_family:` is copied but gets no `@font-face` rule. To write your own rule in `@styles`, refer to the file with `asset(id)`, e.g. `src: asset(font_body) format("woff2");` (see <<Adding Custom CSS>>).
 
 To change fonts for a scene or card, use CSS: give the scene's layout a class and style it in `@styles`.

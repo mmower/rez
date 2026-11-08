@@ -333,12 +333,11 @@ class RezList extends RezBasicObject {
    * @description Gets the current walk state, creating it if it doesn't exist.
    */
   getWalk(walkId) {
-    const walk = this.getAttributeValue(`walk_${walkId}`);
-    if(typeof(walk) === "undefined") {
+    const attrName = `walk_${walkId}`;
+    if(!this.hasAttribute(attrName)) {
       return this.resetWalk(walkId);
-    } else {
-      return walk;
     }
+    return this.getAttributeValue(attrName);
   }
 
   /**
