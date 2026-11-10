@@ -3016,6 +3016,38 @@ treasure: ^r:d100     %% Roll 1 hundred-sided die
 healing: ^r:1d4+1     %% Roll 1 four-sided die, add 1
 ....
 
+**Dice Pipelines (RezRoll)**
+
+`^r:` covers simple `NdX+M` rolls. For game-specific roll rules, build a `RezRoll` in JavaScript. A `RezRoll` rolls a pool of dice, passes them through a list of transformers (keep highest/lowest, explode, check for crits, sum, count successes, ...) and then hands the final value to an evaluator that decides the result. Every stage is kept in `roll.rolls`, so you can show the player the raw dice (`roll.dice`), the kept dice and the total.
+
+....
+// 2d6 + bonus must beat 8. Advantage: roll 3d6, keep the best 2.
+const check = new RezRoll(3, 6, [
+  RezRoll.keepHighest(2),
+  RezRoll.critOnAll(),          // kept double 6 / double 1 set roll.flags.critical
+  RezRoll.sum(player.bonus)
+], RezRoll.outcome([
+  ["crit_success", (total, roll) => roll.flags.critical === "success"],
+  ["crit_failure", (total, roll) => roll.flags.critical === "failure"],
+  ["success",      (total) => total > 8],
+  ["failure",      () => true]
+]));
+
+check.roll();       // => "failure" (assuming player.bonus is 0)
+check.dice;         // => [1, 3, 4]
+check.rolls[1];     // => [3, 4]   (the kept dice)
+....
+
+Transformers are functions `(roll, value) => newValue` and evaluators are `(final, roll) => result`, so you can write your own. The same pattern covers dice-pool systems, e.g. `RezRoll.countSuccesses({successOn: 5, failOn: 1})` or `RezRoll.highest()`. There are two presets: `RezRoll.twoD6({bonus, target, mode})`, where `mode` is `"normal"`, `"advantage"` or `"disadvantage"`, and `RezRoll.blades(pool)`, a Blades in the Dark action roll that gives `"critical"`, `"success"`, `"partial"` or `"failure"`.
+
+After the roll you can change the dice and then recompute. Any extra dice rolled by transformers (such as explosions) are replayed, so only your edit changes the outcome:
+
+....
+check.setDie(0, 6, "spent fate");  // also adjustDie(i, delta), rerollDie(i)
+check.recompute();                 // => "success" (kept [4, 6] = 10)
+check.edits;                       // => [{action: "set", index: 0, from: 1, to: 6, reason: "spent fate"}]
+....
+
 **Probability Table**
 ....
 loot_type: |:common 60 :uncommon 25 :rare 10 :legendary 5|

@@ -95,7 +95,7 @@ Every attribute value type and its literal syntax.
 | dynamic initializer | `^i{ return Math.rand_int(10); }` | computed once at init; `^i:3{...}` sets priority 1–10 (1 first, default 10) |
 | copy initializer | `^c:#T_sword` | copies a `$template` element at init, assigns the copy's id (use on `_id` attributes). `^c:2:#T_sword` priority. `^c:#T_sword{copy.name = "X";}` customises the copy (params `copy`, `owner`; no space before `{`) |
 | delegate | `^d:spell_book` | reads the same-named attribute from the object in `spell_book_id` |
-| die roll | `^r:2d6+3` | a `RezDie`; `.roll()` at runtime |
+| die roll | `^r:2d6+3` | a `RezDieRoll`; `.roll()` at runtime (for custom roll rules see `RezRoll` under `runtime`) |
 | initializer roll | `^ir:2d6` | rolled once at init to a number |
 | probability table | `\|:common 60 :rare 10\|` | weighted choice |
 | behaviour tree | `^[$select [cond] [action opt=1]]` | see `behaviours` |
@@ -592,6 +592,24 @@ Any element (`RezBasicObject`):
 `RezDecision`: `new RezDecision("purpose")`, `yes()`, `no("why")`,
 `defaultYes()`, `defaultNo()`, `hide()`, `wasYes`/`result`, `wasNo`,
 `reason`, `setData(k, v)`, `getData(k, default)`.
+
+`RezRoll` (dice pipeline; use instead of `RezDieRoll` for custom roll rules):
+
+- `new RezRoll(number, sides, transformers, evaluator)`; `r.roll()` returns
+  the result. `r.dice` is the raw dice, `r.rolls` has every stage, `r.final`
+  is the last stage, and `r.flags` holds annotations (e.g. `critical`).
+- Transformers `(roll, value) => next`: `RezRoll.keepHighest(n)`,
+  `keepLowest(n)`, `explode({on, chain, extraOffset})`,
+  `critOnAll({max, min})`, `sum(mod)`, `highest()`, `countIf(pred)`,
+  `countSuccesses({successOn, failOn, mod})` → `{successes, failures, net}`.
+- Evaluators `(final, roll) => result`: `RezRoll.beats(n)` (`>`),
+  `meets(n)` (`>=`), `outcome([[name, (final, roll) => bool], ...])`
+  (first match wins).
+- Edit after the roll: `setDie(i, v, reason)`, `adjustDie(i, delta)`,
+  `rerollDie(i)`, then `recompute()`. Extra dice (explosions) are replayed,
+  not re-rolled. `r.edits` logs every change.
+- Presets: `RezRoll.twoD6({bonus, target, mode: "advantage"})` (3d6 keep the
+  best 2, double 6/1 crits) and `RezRoll.blades(pool)`.
 
 Array/collection helpers (stdlib patches):
 

@@ -11,6 +11,7 @@
   "scripts": {
     "postinstall": "node scripts/patch-better-docs.js",
     "docs:js": "jsdoc -c jsdoc.conf.json",
-    "docs:watch": "jsdoc -c jsdoc.conf.json --watch"
+    "docs:watch": "jsdoc -c jsdoc.conf.json --watch",
+    "test:js": "node --test 'test/js/*.test.mjs'"
   }
 }
