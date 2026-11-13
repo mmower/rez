@@ -37,6 +37,11 @@ class RezGame extends RezBasicObject {
   constructor(id, attributes) {
     super("game", id, attributes);
 
+    const seed = attributes?.rng_seed;
+    if(typeof(seed) !== "undefined") {
+      window.Rez.rng.seed(seed);
+    }
+
     this.#undoManager = new RezUndoManager();
     this.#eventProcessor = new RezEventProcessor(this);
     this.#tagIndex = {};
@@ -47,6 +52,16 @@ class RezGame extends RezBasicObject {
 
   get undoManager() {
     return this.#undoManager;
+  }
+
+  /**
+   * @function rng
+   * @memberof RezGame#
+   * @returns {RezRandom} the game's random number generator, which `Math.random()` draws from
+   * @description Set `rng_seed` on `@game` to get the same sequence every time the game runs.
+   */
+  get rng() {
+    return window.Rez.rng;
   }
 
   get eventProcessor() {
@@ -134,6 +149,7 @@ class RezGame extends RezBasicObject {
   gameArchive() {
     return {
       archive_format: this.archive_format,
+      rng_state: window.Rez.rng.state,
       data: this.dataArchive()
     };
   }
@@ -232,6 +248,11 @@ class RezGame extends RezBasicObject {
         this.addToTagIndex(obj);
       }
       obj.runEvent("did_load");
+    }
+
+    // Saves made before the random number generator was saved don't have rng_state
+    if(Array.isArray(wrapper.rng_state)) {
+      window.Rez.rng.state = wrapper.rng_state;
     }
 
     // Restore the game state

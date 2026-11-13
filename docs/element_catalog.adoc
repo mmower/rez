@@ -1017,6 +1017,10 @@ The `@game` element has an implicit ID of `game`.
 |String
 |contact email for the author
 
+|`rng_seed`
+|Number or String
+|seed for the random number generator, so that the game produces the same random numbers every time it runs. If it is not set, the seed is random
+
 |`links`
 |List of Strings
 |URLs of stylesheets to link into the game page

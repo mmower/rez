@@ -202,6 +202,7 @@
   author: {kind: :string, required: true}
   author_email: {kind: :string}
   archive_format: {kind: :number, required: true}
+  rng_seed: {kind: [:number :string]}
   layout: {kind: :source_template, required: true, contains: "${content}"}
   layout_id: {kind: :elem_ref, ref_elem: @layout}
   $layout_reference: {kind: :string}

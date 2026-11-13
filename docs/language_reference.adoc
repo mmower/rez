@@ -2586,6 +2586,21 @@ A save file can only be loaded by a game with the same `archive_format`, otherwi
 error. Increase it when you change your game in a way that would make existing saves wrong, for example
 by renaming or removing attributes that are saved.
 
+==== Random Numbers
+
+All random numbers in a Rez game, including dice rolls, `Math.rand_int`, `fyShuffle()`, list
+selection and calls to `Math.random()` in your own code, come from one seedable generator, `$game.rng`.
+Its state is stored in save files, so a loaded game makes the same rolls it would have made had it
+carried on. Set `rng_seed` (a number or string) on `@game` to get the same sequence every time the
+game runs, which is useful for testing:
+
+....
+@game {
+  ...
+  rng_seed: "test-run-1"
+}
+....
+
 ==== Save and Load Events
 
 Objects receive an `on_will_save` event just before the save file is written and an `on_did_load`

@@ -125,6 +125,9 @@ attribute list with types and defaults.
 
 **@game** (no id; it is `#game`; `$game` in JS). Required: `name`, `title`,
 `author`, `IFID`, `archive_format` (number), `initial_scene_id: #scene`.
+Optional `rng_seed` (number/string) gives the same random numbers on every run.
+All randomness, including `Math.random()`, comes from `$game.rng`, and its
+state is saved with the game.
 `layout: ```...${content}...```` must contain `${content}`. Optional
 `bindings`, `blocks`, `links`/`scripts` (URL lists), `start_events`. Handlers:
 `on_game_will_start`, `on_game_did_start`, `on_scene_will_start`,
@@ -546,6 +549,15 @@ Behaviour trees for NPC logic.
   `$either` (p, 2 children) `$random_choice` `$random_each` `$always`
   `$never` `$invert` `$fail` `$succeed`.
 - Reuse subtrees: `@behaviour_template t ^[...]`, then `[&t]` in a tree.
+- Lookahead: `actor.behaviours.lookahead()` runs the tree, then rolls back
+  its changes and returns whether it succeeded. The general form is
+  `$game.lookahead(fn, {rng: "isolated"|"shared"})`. Rolled back:
+  attribute assignments, `modifyAttribute`, tag changes, objects added or
+  removed, and the random number generator's state. `"isolated"` (the
+  default) draws different random numbers; `"shared"` draws the ones the game
+  will draw next. During a lookahead no `on_*_changed`/`on_attr_change`
+  handlers run. Changes made in place (`list.push`) and view/scene/DOM
+  effects are NOT rolled back, so guard them with `if(!$game.inLookahead)`.
 
 ## runtime
 The JavaScript API used in handlers, methods and bindings.
@@ -609,7 +621,11 @@ Any element (`RezBasicObject`):
   `rerollDie(i)`, then `recompute()`. Extra dice (explosions) are replayed,
   not re-rolled. `r.edits` logs every change.
 - Presets: `RezRoll.twoD6({bonus, target, mode: "advantage"})` (3d6 keep the
-  best 2, double 6/1 crits) and `RezRoll.blades(pool)`.
+  best 2, double 6/1 crits), `RezRoll.d20({bonus, dc, mode, crits})` (d20 +
+  bonus `>=` dc; advantage/disadvantage roll 2d20 keep the higher/lower;
+  natural 20/1 crit unless `crits: false`) and `RezRoll.blades(pool)`.
+  `twoD6` and `d20` give `"crit_success"`, `"crit_failure"`, `"success"` or
+  `"failure"`.
 
 Array/collection helpers (stdlib patches):
 

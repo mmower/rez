@@ -96,6 +96,51 @@ test("twoD6 rejects an unknown mode", () => {
   assert.throws(() => RezRoll.twoD6({mode: "sideways"}), /unknown mode/);
 });
 
+test("d20 meets the DC with bonus", () => {
+  const r = withDice(RezRoll.d20({bonus: 3, dc: 15}), 12);
+  assert.equal(r.number, 1);
+  assert.equal(r.sides, 20);
+  assert.equal(r.roll(), "success"); // 15 >= 15
+  assert.equal(r.final, 15);
+  assert.equal(withDice(RezRoll.d20({bonus: 3, dc: 15}), 11).roll(), "failure");
+  assert.equal(withDice(RezRoll.d20(), 10).roll(), "success"); // default DC 10
+});
+
+test("d20 natural 20 and 1 are crits regardless of total", () => {
+  assert.equal(withDice(RezRoll.d20({bonus: -10, dc: 30}), 20).roll(), "crit_success");
+  assert.equal(withDice(RezRoll.d20({bonus: 20, dc: 5}), 1).roll(), "crit_failure");
+});
+
+test("d20 crits can be turned off", () => {
+  assert.equal(withDice(RezRoll.d20({dc: 25, crits: false}), 20).roll(), "failure");
+  assert.equal(withDice(RezRoll.d20({bonus: 5, dc: 5, crits: false}), 1).roll(), "success");
+});
+
+test("d20 advantage keeps the higher die, disadvantage the lower", () => {
+  const adv = withDice(RezRoll.d20({mode: "advantage", dc: 12}), 4, 13);
+  assert.equal(adv.number, 2);
+  assert.equal(adv.roll(), "success");
+  assert.deepEqual(plain(adv.rolls[1]), [13]);
+
+  const dis = withDice(RezRoll.d20({mode: "disadvantage", dc: 12}), 4, 13);
+  assert.equal(dis.roll(), "failure");
+  assert.equal(dis.final, 4);
+
+  assert.equal(withDice(RezRoll.d20({mode: "advantage"}), 1, 20).roll(), "crit_success");
+  assert.equal(withDice(RezRoll.d20({mode: "disadvantage", bonus: 20}), 1, 20).roll(), "crit_failure");
+});
+
+test("d20 recompute after setting the die", () => {
+  const r = withDice(RezRoll.d20({bonus: 2, dc: 15}), 5);
+  assert.equal(r.roll(), "failure");
+  r.setDie(0, 20, "inspiration");
+  assert.equal(r.recompute(), "crit_success");
+});
+
+test("d20 rejects an unknown mode", () => {
+  assert.throws(() => RezRoll.d20({mode: "sideways"}), /unknown mode/);
+});
+
 test("explode chains and supports an offset", () => {
   const r = withDice(new RezRoll(2, 6, RezRoll.explode()), 6, 3, 6, 2);
   r.roll();
